@@ -50,8 +50,22 @@ local chamsCache = {}
 local offScreenArrows = {}
 local skeletonCache = {}
 
-if not getgenv().GestioSavedPos then
-    getgenv().GestioSavedPos = {
+pcall(function()
+    table.insert(connections, Workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
+        camera = Workspace.CurrentCamera or Workspace:FindFirstChildOfClass("Camera")
+    end))
+end)
+
+-- Safe global environment: works in executors and does not crash if getgenv is absent.
+local gestioEnv = {}
+pcall(function()
+    if type(getgenv) == "function" then
+        gestioEnv = getgenv()
+    end
+end)
+
+if not gestioEnv.GestioSavedPos then
+    gestioEnv.GestioSavedPos = {
         OpenBtn = UDim2.new(0.5, -45, 0, 15)
     }
 end
@@ -350,14 +364,18 @@ local function createBulletTracer(origin, hitPosition)
         local steps = 15
         for i = 1, steps do
             task.wait(tracerBeamDuration / steps)
+            if not part.Parent then return end
             part.Transparency = 0.2 + (0.8 * (i / steps))
         end
-        part:Destroy()
+        if part.Parent then
+            part:Destroy()
+        end
     end)
 end
 
 local function cleanup()
     for _, c in pairs(connections) do pcall(function() c:Disconnect() end) end
+    connections = {}
     for _, holder in pairs(activeEspHolders) do
         pcall(function() holder.Holder:Destroy() end)
         if holder.Highlight then pcall(function() holder.Highlight:Destroy() end) end
@@ -419,7 +437,7 @@ local function cleanup()
     pcall(function() if targetGui:FindFirstChild("GestioCrosshairGui") then targetGui.GestioCrosshairGui:Destroy() end end)
 end
 
-if getgenv then getgenv().GestioRunning = cleanup end
+gestioEnv.GestioRunning = cleanup
 
 local function bindTouch(btn, callback)
     btn.Activated:Connect(callback)
@@ -619,7 +637,7 @@ local function renderSkeletonESP()
             local torso = char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso")
             local root = char:FindFirstChild("HumanoidRootPart") or torso
             local lArm = char:FindFirstChild("LeftUpperArm") or char:FindFirstChild("Left Arm")
-            let rArm = char:FindFirstChild("RightUpperArm") or char:FindFirstChild("Right Arm")
+            local rArm = char:FindFirstChild("RightUpperArm") or char:FindFirstChild("Right Arm")
             local lHand = char:FindFirstChild("LeftHand") or lArm
             local rHand = char:FindFirstChild("RightHand") or rArm
             local lLeg = char:FindFirstChild("LeftUpperLeg") or char:FindFirstChild("Left Leg")
@@ -901,6 +919,25 @@ local function getOrCreateGrenadeUI(nadeInstance)
     return data
 end
 
+-- Returns true when a BasePart belongs to a player character.
+-- The original script called this helper but never defined it.
+local function isEntityCharacter(part)
+    if not part or not part:IsA("BasePart") then
+        return false
+    end
+
+    local model = part:FindFirstAncestorOfClass("Model")
+    if not model then
+        return false
+    end
+
+    if Players:GetPlayerFromCharacter(model) then
+        return true
+    end
+
+    return model:FindFirstChildOfClass("Humanoid") ~= nil
+end
+
 local function renderGrenadeOverlays()
     if not grenadeEspEnabled then
         for _, v in pairs(grenadePool) do
@@ -1038,7 +1075,10 @@ local function isTargetVisible(originPos, targetPart, targetChar)
 end
 
 local function getClosestTarget()
-    if not camera then camera = Workspace.CurrentCamera if not camera then return nil end end
+    if not camera or not camera.Parent then
+        camera = Workspace.CurrentCamera or Workspace:FindFirstChildOfClass("Camera")
+        if not camera then return nil end
+    end
     local closestTarget = nil
     local closestDist = aimFov
     local vp = camera.ViewportSize
@@ -1087,7 +1127,7 @@ triggerRayParams.FilterType = Enum.RaycastFilterType.Exclude
 triggerRayParams.IgnoreWater = true
 
 local function runMobileTriggerbot()
-    if not triggerbotEnabled then return end
+    if not triggerbotEnabled or not camera then return end
     local now = tick()
     if (now - lastTriggerTick) < triggerbotDelay then return end
     local vp = camera.ViewportSize
@@ -1297,7 +1337,10 @@ for _, v in pairs(Players:GetPlayers()) do attachEspToPlayer(v) end
 table.insert(connections, Players.PlayerAdded:Connect(attachEspToPlayer))
 
 table.insert(connections, RunService.RenderStepped:Connect(function(dt)
-    if not camera then camera = Workspace.CurrentCamera return end
+    if not camera or not camera.Parent then
+        camera = Workspace.CurrentCamera or Workspace:FindFirstChildOfClass("Camera")
+        if not camera then return end
+    end
     local localPos = camera.CFrame.Position
 
     fpsCounter = fpsCounter + 1
@@ -1528,7 +1571,7 @@ toggleGui.IgnoreGuiInset = true
 
 local openBtn = Instance.new("TextButton", toggleGui)
 openBtn.Size = UDim2.new(0, 85, 0, 30)
-openBtn.Position = getgenv().GestioSavedPos.OpenBtn
+openBtn.Position = gestioEnv.GestioSavedPos.OpenBtn
 openBtn.BackgroundColor3 = currentTheme.Background
 openBtn.Text = "Gestio"
 openBtn.TextColor3 = currentTheme.Accent
@@ -1580,7 +1623,7 @@ UserInputService.InputChanged:Connect(function(input)
         local delta = input.Position - btnInputStart
         local newPos = UDim2.new(btnStartPos.X.Scale, btnStartPos.X.Offset + delta.X, btnStartPos.Y.Scale, btnStartPos.Y.Offset + delta.Y)
         openBtn.Position = newPos
-        getgenv().GestioSavedPos.OpenBtn = newPos
+        gestioEnv.GestioSavedPos.OpenBtn = newPos
     end
 end)
 
@@ -1763,7 +1806,8 @@ local function addInspectorSlider(y, txt, min, max, cur, isFloat, onChange)
 
     local drag = false
     local function update(input)
-        local pct = math.clamp(input.Position.X - track.AbsolutePosition.X, 0, track.AbsoluteSize.X) / track.AbsoluteSize.X
+        local trackWidth = math.max(track.AbsoluteSize.X, 1)
+        local pct = math.clamp(input.Position.X - track.AbsolutePosition.X, 0, trackWidth) / trackWidth
         local rawVal = min + (max - min) * pct
         local val = isFloat and (math.floor(rawVal * 100) / 100) or math.floor(rawVal)
         fill.Size = UDim2.new(pct, 0, 1, 0)
