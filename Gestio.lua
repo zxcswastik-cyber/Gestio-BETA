@@ -1,4 +1,3 @@
--- Gestio UI
 local gestioEnv = (type(getgenv) == "function" and getgenv()) or _G or {}
 
 pcall(function()
@@ -27,40 +26,29 @@ local camera = Workspace.CurrentCamera or Workspace:FindFirstChildOfClass("Camer
 local visRayParams = RaycastParams.new()
 visRayParams.FilterType = Enum.RaycastFilterType.Exclude
 visRayParams.IgnoreWater = true
-
 local originalCameraMode = player.CameraMode
 local originalCameraMinZoom = player.CameraMinZoomDistance
 local originalCameraMaxZoom = player.CameraMaxZoomDistance
 local viewmodelBackup = {}
-local grenadeScanInterval = 0.35
-local lastGrenadeScan = 0
-local cachedGrenadeList = {}
+local antiFlashBackups = {}
 
 local function getSafeGui()
     local gui = nil
     pcall(function()
-        if type(gethui) == "function" then
-            gui = gethui()
-        end
+        if type(gethui) == "function" then gui = gethui() end
     end)
     if gui then return gui end
-
-    pcall(function()
-        if CoreGui and not RunService:IsStudio() then
-            gui = CoreGui
-        end
-    end)
+    pcall(function() if CoreGui then gui = CoreGui end end)
     if gui then return gui end
-
-    return player:FindFirstChildOfClass("PlayerGui") or player:WaitForChild("PlayerGui", 10)
+    local playerGui = player and player:FindFirstChildOfClass("PlayerGui")
+    if playerGui then return playerGui end
+    return player and player:WaitForChild("PlayerGui", 10)
 end
 
 local targetGui = getSafeGui()
 if not targetGui then
-    warn("[Gestio] Could not find a valid GUI parent.")
     return
 end
-
 local connections = {}
 local activeEspHolders = {}
 local screenEspCache = {}
@@ -68,6 +56,7 @@ local grenadePool = {}
 local chamsCache = {}
 local offScreenArrows = {}
 local skeletonCache = {}
+local smokeCandidates = {}
 
 local function trackConn(conn)
     if conn then
@@ -86,9 +75,6 @@ if not gestioEnv.GestioSavedPos then
     }
 end
 
--- ==========================================
--- THEME CONFIGURATION
--- ==========================================
 local currentTheme = {
     Name = "Charcoal Crimson",
     Background = Color3.fromRGB(24, 25, 28),
@@ -121,9 +107,6 @@ local currentTheme = {
     CrystalLightColor = Color3.fromRGB(255, 0, 25)
 }
 
--- ==========================================
--- MODULE CONFIGURATION
--- ==========================================
 local nametagsEnabled = false
 local espMaxDist = 3000
 local espShowDistance = true
@@ -173,11 +156,10 @@ local crystalLightEnabled = true
 local crystalLightBrightness = 4.0
 local crystalLightRange = 12
 
-local grenadeEspEnabled = false
-local showGrenadePath = true
-local showMolotovRadius = true
-local showSmokeRadius = true
-local grenadeMaxDist = 1500
+local smokeEspEnabled = false
+local smokeTrajectoryEnabled = true
+local smokeRadiusEnabled = true
+local smokeMaxDist = 1500
 
 local aimbotEnabled = false
 local aimbotSpeed = 25.0
@@ -225,7 +207,7 @@ local nightModeEnabled = false
 local nightClockTime = 0.0
 local nightBrightness = 0.2
 local nightOutdoorAmbient = Color3.fromRGB(25, 25, 40)
-local removeFogEnabled = true
+local removeFogEnabled = false
 
 local defaultLighting = {
     Brightness = Lighting.Brightness,
@@ -395,10 +377,7 @@ end
 local function restoreViewmodelChams()
     for part, state in pairs(viewmodelBackup) do
         if part and part.Parent and state then
-            pcall(function()
-                part.Material = state.Material
-                part.Color = state.Color
-            end)
+            pcall(function() part.Material = state.Material part.Color = state.Color end)
         end
         viewmodelBackup[part] = nil
     end
@@ -407,7 +386,6 @@ end
 local function cleanup()
     for _, c in pairs(connections) do pcall(function() c:Disconnect() end) end
     connections = {}
-    
     for _, holder in pairs(activeEspHolders) do
         pcall(function() holder.Holder:Destroy() end)
         if holder.Highlight then pcall(function() holder.Highlight:Destroy() end) end
@@ -438,15 +416,16 @@ local function cleanup()
         for _, line in pairs(sk) do pcall(function() line:Destroy() end) end
     end
     
-    restoreViewmodelChams()
     activeEspHolders = {}
     screenEspCache = {}
     grenadePool = {}
-    cachedGrenadeList = {}
     chamsCache = {}
     offScreenArrows = {}
     skeletonCache = {}
+    smokeCandidates = {}
+    restoreViewmodelChams()
     
+    pcall(function() hitSoundInstance:Destroy() end)
     pcall(function() worldContainer:Destroy() end)
     pcall(function()
         player.CameraMinZoomDistance = originalCameraMinZoom
@@ -479,7 +458,6 @@ local function cleanup()
             if g then g:Destroy() end
         end)
     end
-    pcall(function() hitSoundInstance:Destroy() end)
 end
 
 gestioEnv.GestioRunning = cleanup
@@ -507,7 +485,6 @@ fovStroke.Thickness = 1.5
 local fovCorner = Instance.new("UICorner", fovFrame)
 fovCorner.CornerRadius = UDim.new(1, 0)
 
--- Watermark
 local watermarkGui = Instance.new("ScreenGui")
 watermarkGui.Name = "GestioWatermarkGui"
 watermarkGui.ResetOnSpawn = false
@@ -574,7 +551,7 @@ local function getPlayerSide(plr)
         local tName = tostring(plr.Team.Name):lower()
         if tName:find("counter") or tName:find("ct") or tName:find("police") or tName:find("swat") or tName:find("guard") or tName:find("defend") then
             return "CT"
-        elseif tName:find("terror") or tName == "t" or tName:find("terrorist") or tName:find("anarch") or tName:find("rebel") or tName:find("attack") then
+        elseif tName:find("terror") or tName:find("terrorist") or tName:find("anarch") or tName == "t" or tName:find("rebel") or tName:find("attack") then
             return "T"
         end
     end
@@ -638,9 +615,6 @@ local function isEntityAlive(char, hum)
     return (char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso") or char:FindFirstChild("Head")) ~= nil
 end
 
--- ==========================================
--- SKELETON ESP ENGINE
--- ==========================================
 local function getOrCreateSkeleton(plr)
     if skeletonCache[plr] then return skeletonCache[plr] end
     local lines = {}
@@ -697,13 +671,12 @@ local function renderSkeletonESP()
             local root = char:FindFirstChild("HumanoidRootPart") or torso
             local lArm = char:FindFirstChild("LeftUpperArm") or char:FindFirstChild("Left Arm")
             local rArm = char:FindFirstChild("RightUpperArm") or char:FindFirstChild("Right Arm")
-            local lHand = char:FindFirstChild("LeftHand") or lArm
-            local rHand = char:FindFirstChild("RightHand") or rArm
+            local lHand = char:FindFirstChild("LeftHand") or char:FindFirstChild("Left Arm") or lArm
+            local rHand = char:FindFirstChild("RightHand") or char:FindFirstChild("Right Arm") or rArm
             local lLeg = char:FindFirstChild("LeftUpperLeg") or char:FindFirstChild("Left Leg")
             local rLeg = char:FindFirstChild("RightUpperLeg") or char:FindFirstChild("Right Leg")
-            local lFoot = char:FindFirstChild("LeftFoot") or lLeg
-            local rFoot = char:FindFirstChild("RightFoot") or rLeg
-
+            local lFoot = char:FindFirstChild("LeftFoot") or char:FindFirstChild("Left Leg") or lLeg
+            local rFoot = char:FindFirstChild("RightFoot") or char:FindFirstChild("Right Leg") or rLeg
             drawSkeletonBone(lines[1], head, torso)
             drawSkeletonBone(lines[2], torso, root)
             drawSkeletonBone(lines[3], torso, lArm)
@@ -721,9 +694,6 @@ local function renderSkeletonESP()
     end
 end
 
--- ==========================================
--- CORRECTED OFF-SCREEN ARROWS
--- ==========================================
 local function getOrCreateArrow(plr)
     if offScreenArrows[plr] then return offScreenArrows[plr] end
     local arrow = Instance.new("ImageLabel", arrowContainer)
@@ -789,9 +759,6 @@ local function renderOffScreenArrows()
     end
 end
 
--- ==========================================
--- VIEWMODEL CHAMS CONTROLLER
--- ==========================================
 local function backupViewmodelPart(part)
     if not viewmodelBackup[part] then
         viewmodelBackup[part] = {Material = part.Material, Color = part.Color}
@@ -800,38 +767,26 @@ end
 
 local function updateViewmodelChams()
     local char = player.Character
-    if not char then
-        restoreViewmodelChams()
-        return
-    end
+    if not char then restoreViewmodelChams() return end
     if not viewmodelChamsEnabled then
         if next(viewmodelBackup) ~= nil then
             restoreViewmodelChams()
         end
         return
     end
-    local tool = char:FindFirstChildOfClass("Tool")
-    if tool then
-        for _, p in ipairs(tool:GetDescendants()) do
-            if p:IsA("BasePart") then
-                backupViewmodelPart(p)
-                p.Material = viewmodelChamsMaterial
-                p.Color = currentTheme.ViewmodelColor
-            end
-        end
+    local function apply(part)
+        if not part:IsA("BasePart") then return end
+        backupViewmodelPart(part)
+        part.Material = viewmodelChamsMaterial
+        part.Color = currentTheme.ViewmodelColor
     end
-    for _, p in ipairs(char:GetChildren()) do
-        if (p.Name:find("Arm") or p.Name:find("Hand")) and p:IsA("BasePart") then
-            backupViewmodelPart(p)
-            p.Material = viewmodelChamsMaterial
-            p.Color = currentTheme.ViewmodelColor
-        end
+    local tool = char:FindFirstChildOfClass("Tool")
+    if tool then for _, p in ipairs(tool:GetDescendants()) do apply(p) end end
+    for _, p in ipairs(char:GetDescendants()) do
+        if p:IsA("BasePart") and (p.Name:find("Arm") or p.Name:find("Hand")) then apply(p) end
     end
 end
 
--- ==========================================
--- ROBUST HITMARKER & WEAPON FIRE LISTENER
--- ==========================================
 local function setupHitmarkerForCharacter(plr, char)
     if not char or plr == player then return end
     local hum = char:WaitForChild("Humanoid", 3)
@@ -889,9 +844,6 @@ end
 if player.Character then hookPlayerTool(player.Character) end
 trackConn(player.CharacterAdded:Connect(hookPlayerTool))
 
--- ==========================================
--- GRENADE & CRYSTAL CHAMS ENGINE
--- ==========================================
 local function getOrCreateCrystalChams(plr)
     if chamsCache[plr] then return chamsCache[plr] end
     local hl = Instance.new("Highlight")
@@ -942,12 +894,12 @@ local function getOrCreateCrystalChams(plr)
     return data
 end
 
-local grenadeRayParams = RaycastParams.new()
-grenadeRayParams.FilterType = Enum.RaycastFilterType.Exclude
-grenadeRayParams.IgnoreWater = true
+local smokeRayParams = RaycastParams.new()
+smokeRayParams.FilterType = Enum.RaycastFilterType.Exclude
+smokeRayParams.IgnoreWater = true
 
-local function getOrCreateGrenadeUI(nadeInstance)
-    if grenadePool[nadeInstance] then return grenadePool[nadeInstance] end
+local function getOrCreateSmokeUI(smokeInstance)
+    if grenadePool[smokeInstance] then return grenadePool[smokeInstance] end
     local tag = Instance.new("Frame", grenadeContainer)
     tag.Size = UDim2.new(0, 0, 0, 14)
     tag.AutomaticSize = Enum.AutomaticSize.X
@@ -987,166 +939,142 @@ local function getOrCreateGrenadeUI(nadeInstance)
         seg.Visible = false
         table.insert(data.Lines, seg)
     end
-    grenadePool[nadeInstance] = data
+    grenadePool[smokeInstance] = data
     return data
 end
 
 local function isEntityCharacter(part)
-    if not part or not part:IsA("BasePart") then return false end
+    if not part or not part:IsA("BasePart") then
+        return false
+    end
+
     local model = part:FindFirstAncestorOfClass("Model")
-    if not model then return false end
-    if Players:GetPlayerFromCharacter(model) then return true end
+    if not model then
+        return false
+    end
+
+    if Players:GetPlayerFromCharacter(model) then
+        return true
+    end
+
     return model:FindFirstChildOfClass("Humanoid") ~= nil
 end
 
-local function updateGrenadeCache()
-    cachedGrenadeList = {}
-    for _, item in ipairs(Workspace:GetDescendants()) do
-        if item:IsA("BasePart") and not isEntityCharacter(item) then
-            local nName = item.Name:lower()
-            if nName:find("molotov") or nName:find("incendiary") or nName:find("smoke") or nName:find("grenade") or nName:find("frag") or nName:find("c4") or nName:find("flash") then
-                table.insert(cachedGrenadeList, item)
-            end
-        end
-    end
+local function isSmokePart(inst)
+    if not inst or not inst:IsA("BasePart") or not inst.Parent then return false end
+    if isEntityCharacter(inst) then return false end
+    local n = inst.Name:lower()
+    return n:find("smoke") ~= nil or n:find("smokegas") ~= nil or n:find("smokegrenade") ~= nil
 end
 
-local function renderGrenadeOverlays()
-    if not grenadeEspEnabled or not camera or not camera.Parent then
-        for _, v in pairs(grenadePool) do
-            v.Tag.Visible = false
-            v.RadiusCircle.Visible = false
-            for _, l in ipairs(v.Lines) do l.Visible = false end
-        end
+local function hideSmokeUI(data)
+    data.Tag.Visible = false
+    data.RadiusCircle.Visible = false
+    for _, line in ipairs(data.Lines) do line.Visible = false end
+end
+
+local function renderSmokeOverlay()
+    if not smokeEspEnabled or not camera or not camera.Parent then
+        for _, data in pairs(grenadePool) do hideSmokeUI(data) end
         return
     end
 
-    local now = os.clock()
-    if now - lastGrenadeScan > grenadeScanInterval then
-        lastGrenadeScan = now
-        updateGrenadeCache()
-    end
-
     local camPos = camera.CFrame.Position
-    local activeGrenades = {}
-    
-    for _, item in ipairs(cachedGrenadeList) do
-        if item and item.Parent and item:IsA("BasePart") then
-            local nName = item.Name:lower()
-            local isNade, nadeType, nadeColor, effectRadiusStuds = false, "NADE", currentTheme.HEColor, 14
+    local active = {}
 
-            if nName:find("molotov") or nName:find("incendiary") or nName:find("fire") or nName:find("burn") then
-                isNade, nadeType, nadeColor, effectRadiusStuds = true, "MOLOTOV", currentTheme.MolotovColor, 17
-            elseif nName:find("smoke") then
-                isNade, nadeType, nadeColor, effectRadiusStuds = true, "SMOKE", currentTheme.SmokeColor, 20
-            elseif nName:find("c4") then
-                isNade, nadeType, nadeColor, effectRadiusStuds = true, "C4", Color3.fromRGB(255, 215, 0), 18
-            elseif nName:find("grenade") or nName:find("hegrenade") or nName:find("frag") then
-                isNade, nadeType, nadeColor, effectRadiusStuds = true, "HE", currentTheme.HEColor, 15
-            elseif nName:find("flash") then
-                isNade, nadeType, nadeColor, effectRadiusStuds = true, "FLASH", Color3.fromRGB(245, 235, 120), 10
-            end
+    for smokePart in pairs(smokeCandidates) do
+        if not smokePart.Parent or not isSmokePart(smokePart) then
+            smokeCandidates[smokePart] = nil
+        else
+            local dist = (smokePart.Position - camPos).Magnitude
+            if dist <= smokeMaxDist then
+                active[smokePart] = true
+                local ui = getOrCreateSmokeUI(smokePart)
+                local screen, onScreen = camera:WorldToViewportPoint(smokePart.Position)
+                if onScreen and screen.Z > 0 then
+                    ui.Tag.Position = UDim2.fromOffset(screen.X, screen.Y - 6)
+                    ui.Label.Text = string.format("SMOKE [%dm]", math.floor(dist))
+                    ui.Label.TextColor3 = currentTheme.SmokeColor or Color3.fromRGB(180, 180, 180)
+                    ui.Tag.Visible = true
 
-            if isNade then
-                local dist = (item.Position - camPos).Magnitude
-                if dist <= grenadeMaxDist then
-                    activeGrenades[item] = true
-                    local ui = getOrCreateGrenadeUI(item)
-                    local scrPos, onScreen = camera:WorldToViewportPoint(item.Position)
-                    
-                    if onScreen and scrPos.Z > 0 then
-                        ui.Tag.Position = UDim2.new(0, scrPos.X, 0, scrPos.Y - 6)
-                        ui.Label.Text = string.format("%s [%dm]", nadeType, math.floor(dist))
-                        ui.Label.TextColor3 = nadeColor
-                        ui.Tag.Visible = true
+                    if smokeTrajectoryEnabled and smokePart.AssemblyLinearVelocity.Magnitude > 1 then
+                        local vel = smokePart.AssemblyLinearVelocity
+                        local simPos = smokePart.Position
+                        local stepTime = 0.06
+                        local gravity = Vector3.new(0, -Workspace.Gravity, 0)
+                        smokeRayParams.FilterDescendantsInstances = {player.Character, smokePart, camera}
 
-                        if showGrenadePath and item.AssemblyLinearVelocity and item.AssemblyLinearVelocity.Magnitude > 1 then
-                            local vel = item.AssemblyLinearVelocity
-                            local simPos = item.Position
-                            local stepTime = 0.06
-                            local grav = Vector3.new(0, -Workspace.Gravity, 0)
-                            grenadeRayParams.FilterDescendantsInstances = {player.Character, item, camera}
+                        for step = 1, #ui.Lines do
+                            local nextPos = simPos + (vel * stepTime) + (0.5 * gravity * stepTime * stepTime)
+                            vel = vel + (gravity * stepTime)
+                            local hit = Workspace:Raycast(simPos, nextPos - simPos, smokeRayParams)
+                            if hit then nextPos = hit.Position end
 
-                            for step = 1, #ui.Lines do
-                                local nextPos = simPos + (vel * stepTime) + (0.5 * grav * stepTime * stepTime)
-                                vel = vel + (grav * stepTime)
-                                local castHit = Workspace:Raycast(simPos, nextPos - simPos, grenadeRayParams)
-                                if castHit then nextPos = castHit.Position end
-
-                                local p1, v1 = camera:WorldToViewportPoint(simPos)
-                                local p2, v2 = camera:WorldToViewportPoint(nextPos)
-                                if v1 and v2 and p1.Z > 0 and p2.Z > 0 then
-                                    local lFrame = ui.Lines[step]
-                                    local startV2 = Vector2.new(p1.X, p1.Y)
-                                    local endV2 = Vector2.new(p2.X, p2.Y)
-                                    local lDist = (endV2 - startV2).Magnitude
-                                    local center = (startV2 + endV2) * 0.5
-                                    local angle = math.deg(math.atan2(endV2.Y - startV2.Y, endV2.X - startV2.X))
-                                    lFrame.Size = UDim2.new(0, lDist, 0, 1.5)
-                                    lFrame.Position = UDim2.new(0, center.X, 0, center.Y)
-                                    lFrame.Rotation = angle
-                                    lFrame.BackgroundColor3 = nadeColor
-                                    lFrame.Visible = true
-                                else
-                                    ui.Lines[step].Visible = false
-                                end
-                                if castHit then
-                                    for rem = step + 1, #ui.Lines do ui.Lines[rem].Visible = false end
-                                    break
-                                end
-                                simPos = nextPos
-                            end
-                        else
-                            for _, l in ipairs(ui.Lines) do l.Visible = false end
-                        end
-
-                        local shouldShowRadius = (nadeType == "MOLOTOV" and showMolotovRadius) or (nadeType == "SMOKE" and showSmokeRadius)
-                        if shouldShowRadius then
-                            grenadeRayParams.FilterDescendantsInstances = {player.Character, item, camera}
-                            local groundCast = Workspace:Raycast(item.Position, Vector3.new(0, -60, 0), grenadeRayParams)
-                            local groundPos = groundCast and groundCast.Position or item.Position
-                            local cCenter, cVisible = camera:WorldToViewportPoint(groundPos)
-                            local cEdge, _ = camera:WorldToViewportPoint(groundPos + (camera.CFrame.RightVector * effectRadiusStuds))
-                            if cVisible and cCenter.Z > 0 then
-                                local rPix = (Vector2.new(cEdge.X, cEdge.Y) - Vector2.new(cCenter.X, cCenter.Y)).Magnitude
-                                ui.RadiusCircle.Size = UDim2.new(0, rPix * 2, 0, rPix * 2)
-                                ui.RadiusCircle.Position = UDim2.new(0, cCenter.X, 0, cCenter.Y)
-                                ui.RadiusStroke.Color = nadeColor
-                                ui.RadiusCircle.Visible = true
+                            local a, av = camera:WorldToViewportPoint(simPos)
+                            local b, bv = camera:WorldToViewportPoint(nextPos)
+                            local line = ui.Lines[step]
+                            if av and bv and a.Z > 0 and b.Z > 0 then
+                                local va, vb = Vector2.new(a.X, a.Y), Vector2.new(b.X, b.Y)
+                                local delta = vb - va
+                                line.Size = UDim2.fromOffset(delta.Magnitude, 1.5)
+                                line.Position = UDim2.fromOffset((va.X + vb.X) * 0.5, (va.Y + vb.Y) * 0.5)
+                                line.Rotation = math.deg(math.atan2(delta.Y, delta.X))
+                                line.BackgroundColor3 = currentTheme.SmokeColor or Color3.fromRGB(180, 180, 180)
+                                line.Visible = true
                             else
-                                ui.RadiusCircle.Visible = false
+                                line.Visible = false
                             end
+                            if hit then
+                                for rem = step + 1, #ui.Lines do ui.Lines[rem].Visible = false end
+                                break
+                            end
+                            simPos = nextPos
+                        end
+                    else
+                        for _, line in ipairs(ui.Lines) do line.Visible = false end
+                    end
+
+                    if smokeRadiusEnabled then
+                        smokeRayParams.FilterDescendantsInstances = {player.Character, smokePart, camera}
+                        local groundHit = Workspace:Raycast(smokePart.Position, Vector3.new(0, -60, 0), smokeRayParams)
+                        local groundPos = groundHit and groundHit.Position or smokePart.Position
+                        local center, visible = camera:WorldToViewportPoint(groundPos)
+                        local edge = camera:WorldToViewportPoint(groundPos + camera.CFrame.RightVector * 20)
+                        if visible and center.Z > 0 then
+                            local radiusPx = (Vector2.new(edge.X, edge.Y) - Vector2.new(center.X, center.Y)).Magnitude
+                            ui.RadiusCircle.Size = UDim2.fromOffset(radiusPx * 2, radiusPx * 2)
+                            ui.RadiusCircle.Position = UDim2.fromOffset(center.X, center.Y)
+                            ui.RadiusStroke.Color = currentTheme.SmokeColor or Color3.fromRGB(180, 180, 180)
+                            ui.RadiusCircle.Visible = true
                         else
                             ui.RadiusCircle.Visible = false
                         end
                     else
-                        ui.Tag.Visible = false
                         ui.RadiusCircle.Visible = false
-                        for _, l in ipairs(ui.Lines) do l.Visible = false end
                     end
+                else
+                    hideSmokeUI(ui)
                 end
             end
         end
     end
 
     for inst, data in pairs(grenadePool) do
-        if not activeGrenades[inst] or not inst.Parent then
+        if not active[inst] or not inst.Parent or not smokeCandidates[inst] then
             data.Tag:Destroy()
             data.RadiusCircle:Destroy()
-            for _, l in ipairs(data.Lines) do l:Destroy() end
+            for _, line in ipairs(data.Lines) do line:Destroy() end
             grenadePool[inst] = nil
         end
     end
 end
 
--- ==========================================
--- PRECISE AIM ENGINE & RAYCAST TARGETING
--- ==========================================
 local function isTargetVisible(originPos, targetPart, targetChar)
     if not visibleCheck then return true end
     visRayParams.FilterDescendantsInstances = {player.Character, camera}
     local hit = Workspace:Raycast(originPos, targetPart.Position - originPos, visRayParams)
-    return hit and (hit.Instance:IsDescendantOf(targetChar) or hit.Instance == targetPart)
+    if not hit then return true end
+    return hit.Instance == targetPart or hit.Instance:IsDescendantOf(targetChar)
 end
 
 local function getClosestTarget()
@@ -1202,7 +1130,7 @@ triggerRayParams.FilterType = Enum.RaycastFilterType.Exclude
 triggerRayParams.IgnoreWater = true
 
 local function runMobileTriggerbot()
-    if not triggerbotEnabled or not camera or not camera.Parent then return end
+    if not triggerbotEnabled or not camera then return end
     local now = tick()
     if (now - lastTriggerTick) < triggerbotDelay then return end
     local vp = camera.ViewportSize
@@ -1210,8 +1138,8 @@ local function runMobileTriggerbot()
     triggerRayParams.FilterDescendantsInstances = {player.Character, camera}
     local res = Workspace:Raycast(ray.Origin, ray.Direction * 1000, triggerRayParams)
     if res and res.Instance then
-        local hitChar = res.Instance.Parent
-        local hitPlr = Players:GetPlayerFromCharacter(hitChar) or (hitChar.Parent and Players:GetPlayerFromCharacter(hitChar.Parent))
+        local hitChar = res.Instance:FindFirstAncestorOfClass("Model")
+        local hitPlr = hitChar and Players:GetPlayerFromCharacter(hitChar) or (hitChar.Parent and Players:GetPlayerFromCharacter(hitChar.Parent))
         if hitPlr and isTargetEnemy(hitPlr, hitChar) and isEntityAlive(hitChar, hitChar:FindFirstChildOfClass("Humanoid")) then
             if triggerbotHeadOnly and res.Instance.Name ~= "Head" then return end
             lastTriggerTick = now
@@ -1558,6 +1486,13 @@ local function attachEspToPlayer(plr)
     trackConn(plr.CharacterAdded:Connect(setupCharacter))
 end
 
+trackConn(Workspace.DescendantAdded:Connect(function(inst)
+    if isSmokePart(inst) then smokeCandidates[inst] = true end
+end))
+trackConn(Workspace.DescendantRemoving:Connect(function(inst)
+    smokeCandidates[inst] = nil
+end))
+
 for _, v in pairs(Players:GetPlayers()) do attachEspToPlayer(v) end
 trackConn(Players.PlayerAdded:Connect(attachEspToPlayer))
 
@@ -1600,7 +1535,7 @@ trackConn(RunService.RenderStepped:Connect(function(dt)
         if lockedTarget and lockedTarget.Position then
             local targetPos = lockedTarget.Position
             if predictionEnabled and lockedTarget.Part and lockedTarget.Part.AssemblyLinearVelocity then
-                targetPos = lockedTarget.Part.Position + (lockedTarget.Part.AssemblyLinearVelocity * predictionFactor)
+                targetPos = targetPos + (targetPart and targetPart.AssemblyLinearVelocity * predictionFactor or Vector3.zero)
             end
             local targetLook = CFrame.lookAt(camera.CFrame.Position, targetPos)
             if snapAimMode or aimbotSmoothness <= 0.001 then
@@ -1616,7 +1551,7 @@ trackConn(RunService.RenderStepped:Connect(function(dt)
 
     runMobileTriggerbot()
     renderTacticalOverlay()
-    renderGrenadeOverlays()
+    renderSmokeOverlay()
     renderSkeletonESP()
     renderOffScreenArrows()
     updateViewmodelChams()
@@ -1626,9 +1561,9 @@ trackConn(RunService.RenderStepped:Connect(function(dt)
         player.CameraMinZoomDistance = thirdpersonDistance
         player.CameraMaxZoomDistance = thirdpersonDistance
     else
-        player.CameraMode = originalCameraMode
         player.CameraMinZoomDistance = originalCameraMinZoom
         player.CameraMaxZoomDistance = originalCameraMaxZoom
+        player.CameraMode = originalCameraMode
     end
 
     local timeTick = tick() * crystalOrbitSpeed
@@ -1721,13 +1656,26 @@ trackConn(RunService.RenderStepped:Connect(function(dt)
         Lighting.OutdoorAmbient = nightOutdoorAmbient
     end
 
-    if removeFogEnabled then Lighting.FogEnd = 100000 end
+    if removeFogEnabled then
+        Lighting.FogEnd = 100000
+    else
+        Lighting.FogEnd = defaultLighting.FogEnd
+        Lighting.FogColor = defaultLighting.FogColor
+    end
     if antiFlashEnabled then
         pcall(function()
             for _, v in pairs(Lighting:GetChildren()) do
-                if v:IsA("ColorCorrectionEffect") and v.Saturation < -0.5 then v.Enabled = false end
+                if v:IsA("ColorCorrectionEffect") and v.Saturation < -0.5 then
+                    if antiFlashBackups[v] == nil then antiFlashBackups[v] = v.Enabled end
+                    v.Enabled = false
+                end
             end
         end)
+    else
+        for effect, oldEnabled in pairs(antiFlashBackups) do
+            if effect and effect.Parent then pcall(function() effect.Enabled = oldEnabled end) end
+            antiFlashBackups[effect] = nil
+        end
     end
 end))
 
@@ -1783,9 +1731,6 @@ trackConn(RunService.Heartbeat:Connect(function(dt)
     end
 end))
 
--- ==========================================
--- RESPONSIVE USER INTERFACE
--- ==========================================
 local toggleGui = Instance.new("ScreenGui", targetGui)
 toggleGui.Name = "GestioToggleGui"
 toggleGui.ResetOnSpawn = false
@@ -2177,12 +2122,11 @@ local function openInspectorFor(moduleName)
         addInspectorSlider(70, "Light Brightness", 1.0, 15.0, crystalLightBrightness, true, function(v) crystalLightBrightness = v end)
         addInspectorSlider(102, "Light Range", 4, 30, crystalLightRange, false, function(v) crystalLightRange = v end)
         addInspectorToggle(140, "Crystal Light (Aura)", crystalLightEnabled, function(v) crystalLightEnabled = v end)
-    elseif moduleName == "Grenade ESP" then
-        insContent.CanvasSize = UDim2.new(0, 0, 0, 220)
-        addInspectorSlider(6, "Max Distance", 200, 3000, grenadeMaxDist, false, function(v) grenadeMaxDist = v end)
-        addInspectorToggle(42, "Trajectory Path", showGrenadePath, function(v) showGrenadePath = v end)
-        addInspectorToggle(70, "Molotov Radius", showMolotovRadius, function(v) showMolotovRadius = v end)
-        addInspectorToggle(98, "Smoke Radius", showSmokeRadius, function(v) showSmokeRadius = v end)
+    elseif moduleName == "Smoke ESP" then
+        insContent.CanvasSize = UDim2.new(0, 0, 0, 150)
+        addInspectorSlider(6, "Max Distance", 200, 3000, smokeMaxDist, false, function(v) smokeMaxDist = v end)
+        addInspectorToggle(42, "Trajectory Path", smokeTrajectoryEnabled, function(v) smokeTrajectoryEnabled = v end)
+        addInspectorToggle(70, "Smoke Radius", smokeRadiusEnabled, function(v) smokeRadiusEnabled = v end)
     elseif moduleName == "Bhop Engine" then
         insContent.CanvasSize = UDim2.new(0, 0, 0, 200)
         addInspectorSlider(6, "Jump Power", 30, 100, bhopJumpPower, false, function(v) bhopJumpPower = v end)
@@ -2281,7 +2225,6 @@ local function addCard(parent, name, defaultState, onToggle)
     end)
 end
 
--- Tab Registration
 addCard(cPage, "Tracking", aimbotEnabled, function(v) aimbotEnabled = v end)
 addCard(cPage, "RCS", rcsEnabled, function(v) rcsEnabled = v end)
 addCard(cPage, "Trigger Assistant", triggerbotEnabled, function(v) triggerbotEnabled = v end)
@@ -2298,7 +2241,7 @@ addCard(ePage, "Highlight", highlightEnabled, function(v) highlightEnabled = v e
 addCard(ePage, "Box Overlay", boxEspEnabled, function(v) boxEspEnabled = v end)
 addCard(ePage, "Head Dot", headDotEnabled, function(v) headDotEnabled = v end)
 addCard(ePage, "Snaplines", tracersEnabled, function(v) tracersEnabled = v end)
-addCard(ePage, "Grenade ESP", grenadeEspEnabled, function(v) grenadeEspEnabled = v end)
+addCard(ePage, "Smoke ESP", smokeEspEnabled, function(v) smokeEspEnabled = v end)
 
 addCard(vPage, "Crosshair", customCrosshairEnabled, function(v) customCrosshairEnabled = v updateCrosshairStyle() end)
 addCard(vPage, "Hitmarkers", hitmarkerEnabled, function(v) hitmarkerEnabled = v end)
@@ -2310,7 +2253,20 @@ addCard(envPage, "Night Mode", nightModeEnabled, function(v) nightModeEnabled = 
 addCard(envPage, "FullBright", fullBrightEnabled, function(v) fullBrightEnabled = v end)
 addCard(envPage, "Anti-Flash", antiFlashEnabled, function(v) antiFlashEnabled = v end)
 
-addCard(micsPage, "Anti-AFK", true, function(v) end)
+local antiAfkEnabled = true
+local antiAfkConnection
+local function setAntiAfk(enabled)
+    antiAfkEnabled = enabled
+    if antiAfkConnection then pcall(function() antiAfkConnection:Disconnect() end) antiAfkConnection = nil end
+    if enabled then
+        antiAfkConnection = player.Idled:Connect(function()
+            pcall(function() VirtualUser:CaptureController() VirtualUser:ClickButton2(Vector2.new(0, 0)) end)
+        end)
+        trackConn(antiAfkConnection)
+    end
+end
+setAntiAfk(true)
+addCard(micsPage, "Anti-AFK", antiAfkEnabled, setAntiAfk)
 addCard(micsPage, "Theme Sync", true, function(v) end)
 
 updateCrosshairStyle()
