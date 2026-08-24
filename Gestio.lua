@@ -1,11 +1,5 @@
 -- Gestio UI
--- Delta-compatible bootstrap: executor-only globals are optional.
-local gestioEnv = {}
-pcall(function()
-    if type(getgenv) == "function" then
-        gestioEnv = getgenv()
-    end
-end)
+local gestioEnv = (type(getgenv) == "function" and getgenv()) or _G or {}
 
 pcall(function()
     if type(gestioEnv.GestioRunning) == "function" then
@@ -30,16 +24,11 @@ end
 
 local camera = Workspace.CurrentCamera or Workspace:FindFirstChildOfClass("Camera")
 
--- Shared visibility/bullet raycast parameters. Declared before any function that uses them.
 local visRayParams = RaycastParams.new()
 visRayParams.FilterType = Enum.RaycastFilterType.Exclude
 visRayParams.IgnoreWater = true
 
 local function getSafeGui()
-    -- PlayerGui is the most portable parent for normal Roblox ScreenGuis.
-    local playerGui = player and player:FindFirstChildOfClass("PlayerGui")
-    if playerGui then return playerGui end
-
     local gui = nil
     pcall(function()
         if type(gethui) == "function" then
@@ -49,20 +38,21 @@ local function getSafeGui()
     if gui then return gui end
 
     pcall(function()
-        if CoreGui then
+        if CoreGui and not RunService:IsStudio() then
             gui = CoreGui
         end
     end)
     if gui then return gui end
 
-    return player and player:WaitForChild("PlayerGui", 10)
+    return player:FindFirstChildOfClass("PlayerGui") or player:WaitForChild("PlayerGui", 10)
 end
 
 local targetGui = getSafeGui()
 if not targetGui then
-    warn("[Gestio] Could not find a valid GUI parent (PlayerGui/CoreGui/gethui).")
+    warn("[Gestio] Could not find a valid GUI parent.")
     return
 end
+
 local connections = {}
 local activeEspHolders = {}
 local screenEspCache = {}
@@ -71,13 +61,17 @@ local chamsCache = {}
 local offScreenArrows = {}
 local skeletonCache = {}
 
-pcall(function()
-    table.insert(connections, Workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
-        camera = Workspace.CurrentCamera or Workspace:FindFirstChildOfClass("Camera")
-    end))
-end)
+local function trackConn(conn)
+    if conn then
+        table.insert(connections, conn)
+    end
+    return conn
+end
 
--- Safe global environment initialized in the bootstrap above.
+trackConn(Workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
+    camera = Workspace.CurrentCamera or Workspace:FindFirstChildOfClass("Camera")
+end))
+
 if not gestioEnv.GestioSavedPos then
     gestioEnv.GestioSavedPos = {
         OpenBtn = UDim2.new(0.5, -45, 0, 15)
@@ -85,7 +79,7 @@ if not gestioEnv.GestioSavedPos then
 end
 
 -- ==========================================
--- THEME CONFIGURATION (CHARCOAL CRIMSON)
+-- THEME CONFIGURATION
 -- ==========================================
 local currentTheme = {
     Name = "Charcoal Crimson",
@@ -134,7 +128,6 @@ local tagShowWeapon = true
 
 local boxEspEnabled = false
 local boxThickness = 1.0
--- Box ESP modes: "2D Full", "Corner Box", "3D Box", "Filled Box"
 local boxMode = "2D Full"
 local boxFillTransparency = 0.78
 local boxCornerLength = 0.28
@@ -453,14 +446,14 @@ local function cleanup()
     pcall(function() if targetGui:FindFirstChild("GestioFovGui") then targetGui.GestioFovGui:Destroy() end end)
     pcall(function() if targetGui:FindFirstChild("GestioWatermarkGui") then targetGui.GestioWatermarkGui:Destroy() end end)
     pcall(function() if targetGui:FindFirstChild("GestioMainContainer") then targetGui.GestioMainContainer:Destroy() end end)
-    pcall(function() if targetGui:FindFirstChild("GestioHitmarkerGui") then targetGui.GestioHitmarkerGui:Destroy() end end)
-    pcall(function() if targetGui:FindFirstChild("GestioCrosshairGui") then targetGui.GestioCrosshairGui:Destroy() end end)
+    pcall(function() if targetGui:FindFirstChild("GestioHitmarkerGui") then targetGui.HitmarkerGui:Destroy() end end)
+    pcall(function() if targetGui:FindFirstChild("GestioCrosshairGui") then targetGui.CrosshairGui:Destroy() end end)
 end
 
 gestioEnv.GestioRunning = cleanup
 
 local function bindTouch(btn, callback)
-    btn.Activated:Connect(callback)
+    trackConn(btn.Activated:Connect(callback))
 end
 
 local fovGui = Instance.new("ScreenGui")
@@ -629,7 +622,10 @@ local function getOrCreateSkeleton(plr)
 end
 
 local function drawSkeletonBone(line, partA, partB)
-    if not partA or not partB then line.Visible = false return end
+    if not camera or not camera.Parent or not partA or not partB then 
+        if line then line.Visible = false end 
+        return 
+    end
     local p1, on1 = camera:WorldToViewportPoint(partA.Position)
     local p2, on2 = camera:WorldToViewportPoint(partB.Position)
     if on1 and on2 and p1.Z > 0 and p2.Z > 0 then
@@ -649,9 +645,11 @@ local function drawSkeletonBone(line, partA, partB)
 end
 
 local function renderSkeletonESP()
-    for plr, lines in pairs(skeletonCache) do
+    for _, plr in ipairs(Players:GetPlayers()) do
         local char = plr.Character
         local hum = char and char:FindFirstChildOfClass("Humanoid")
+        local lines = getOrCreateSkeleton(plr)
+
         if skeletonEspEnabled and char and isTargetEnemy(plr, char) and isEntityAlive(char, hum) then
             local head = char:FindFirstChild("Head")
             local torso = char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso")
@@ -683,7 +681,7 @@ local function renderSkeletonESP()
 end
 
 -- ==========================================
--- CORRECTED OFF-SCREEN ARROWS (FOV-CONSTRAINED)
+-- CORRECTED OFF-SCREEN ARROWS
 -- ==========================================
 local function getOrCreateArrow(plr)
     if offScreenArrows[plr] then return offScreenArrows[plr] end
@@ -699,7 +697,7 @@ local function getOrCreateArrow(plr)
 end
 
 local function renderOffScreenArrows()
-    if not offScreenArrowsEnabled then
+    if not offScreenArrowsEnabled or not camera or not camera.Parent then
         for _, arrow in pairs(offScreenArrows) do
             arrow.Visible = false
         end
@@ -721,7 +719,6 @@ local function renderOffScreenArrows()
             local rootPos = root.Position
             local relPos = camCFrame:PointToObjectSpace(rootPos)
             
-            -- Проверяем, находится ли целиком вне экрана или за спиной / вне FOV аимбота
             local scrPos, onScreen = camera:WorldToViewportPoint(rootPos)
             local isOutside = false
 
@@ -735,7 +732,6 @@ local function renderOffScreenArrows()
             end
 
             if isOutside then
-                -- Корректный расчет угла в пространстве экрана по отношению к центру
                 local angle = math.atan2(relPos.X, -relPos.Y)
                 local arrowPos = screenCenter + Vector2.new(math.sin(angle), math.cos(angle)) * fovRadius
 
@@ -780,8 +776,6 @@ end
 -- ==========================================
 -- ROBUST HITMARKER & WEAPON FIRE LISTENER
 -- ==========================================
-local trackedCharacters = {}
-
 local function setupHitmarkerForCharacter(plr, char)
     if not char or plr == player then return end
     local hum = char:WaitForChild("Humanoid", 3)
@@ -794,18 +788,17 @@ local function setupHitmarkerForCharacter(plr, char)
         end
         lastHp = newHp
     end)
-    table.insert(connections, conn)
+    trackConn(conn)
 end
 
 for _, p in ipairs(Players:GetPlayers()) do
     if p.Character then setupHitmarkerForCharacter(p, p.Character) end
-    p.CharacterAdded:Connect(function(char) setupHitmarkerForCharacter(p, char) end)
+    trackConn(p.CharacterAdded:Connect(function(char) setupHitmarkerForCharacter(p, char) end))
 end
-table.insert(connections, Players.PlayerAdded:Connect(function(p)
-    p.CharacterAdded:Connect(function(char) setupHitmarkerForCharacter(p, char) end)
+trackConn(Players.PlayerAdded:Connect(function(p)
+    trackConn(p.CharacterAdded:Connect(function(char) setupHitmarkerForCharacter(p, char) end))
 end))
 
--- Bullet Beams on actual tool activation
 local function onToolActivated(tool)
     if not bulletTracersEnabled then return end
     local myChar = player.Character
@@ -828,20 +821,20 @@ end
 local function hookPlayerTool(char)
     local function onChildAdded(child)
         if child:IsA("Tool") then
-            child.Activated:Connect(function()
+            trackConn(child.Activated:Connect(function()
                 onToolActivated(child)
-            end)
+            end))
         end
     end
-    char.ChildAdded:Connect(onChildAdded)
+    trackConn(char.ChildAdded:Connect(onChildAdded))
     for _, c in ipairs(char:GetChildren()) do onChildAdded(c) end
 end
 
 if player.Character then hookPlayerTool(player.Character) end
-table.insert(connections, player.CharacterAdded:Connect(hookPlayerTool))
+trackConn(player.CharacterAdded:Connect(hookPlayerTool))
 
 -- ==========================================
--- GRENADE & CRYSTAL CHAMS ENGINE (FIXED)
+-- GRENADE & CRYSTAL CHAMS ENGINE
 -- ==========================================
 local function getOrCreateCrystalChams(plr)
     if chamsCache[plr] then return chamsCache[plr] end
@@ -942,27 +935,16 @@ local function getOrCreateGrenadeUI(nadeInstance)
     return data
 end
 
--- Returns true when a BasePart belongs to a player character.
--- The original script called this helper but never defined it.
 local function isEntityCharacter(part)
-    if not part or not part:IsA("BasePart") then
-        return false
-    end
-
+    if not part or not part:IsA("BasePart") then return false end
     local model = part:FindFirstAncestorOfClass("Model")
-    if not model then
-        return false
-    end
-
-    if Players:GetPlayerFromCharacter(model) then
-        return true
-    end
-
+    if not model then return false end
+    if Players:GetPlayerFromCharacter(model) then return true end
     return model:FindFirstChildOfClass("Humanoid") ~= nil
 end
 
 local function renderGrenadeOverlays()
-    if not grenadeEspEnabled then
+    if not grenadeEspEnabled or not camera or not camera.Parent then
         for _, v in pairs(grenadePool) do
             v.Tag.Visible = false
             v.RadiusCircle.Visible = false
@@ -974,7 +956,6 @@ local function renderGrenadeOverlays()
     local camPos = camera.CFrame.Position
     local activeGrenades = {}
     
-    -- Сканируем Workspace и папки с проектами гранат на предмет брошенных объектов
     for _, item in ipairs(Workspace:GetDescendants()) do
         if item:IsA("BasePart") and not isEntityCharacter(item) then
             local nName = item.Name:lower()
@@ -1146,7 +1127,7 @@ triggerRayParams.FilterType = Enum.RaycastFilterType.Exclude
 triggerRayParams.IgnoreWater = true
 
 local function runMobileTriggerbot()
-    if not triggerbotEnabled or not camera then return end
+    if not triggerbotEnabled or not camera or not camera.Parent then return end
     local now = tick()
     if (now - lastTriggerTick) < triggerbotDelay then return end
     local vp = camera.ViewportSize
@@ -1160,10 +1141,12 @@ local function runMobileTriggerbot()
             if triggerbotHeadOnly and res.Instance.Name ~= "Head" then return end
             lastTriggerTick = now
             if triggerbotMobileAutoFire then
-                pcall(function()
-                    VirtualUser:Button1Down(Vector2.new(0, 0))
-                    task.wait(0.02)
-                    VirtualUser:Button1Up(Vector2.new(0, 0))
+                task.spawn(function()
+                    pcall(function()
+                        VirtualUser:Button1Down(Vector2.new(0, 0))
+                        task.wait(0.02)
+                        VirtualUser:Button1Up(Vector2.new(0, 0))
+                    end)
                 end)
             end
         end
@@ -1194,13 +1177,11 @@ local function getOrCreateScreenEsp(plr)
     stroke.Thickness = boxThickness
     stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
-    -- Corner Box: 8 short segments around the 2D bounds.
     local cornerLines = {}
     for i = 1, 8 do
         cornerLines[i] = makeEspLine(overlayContainer)
     end
 
-    -- 3D Box: 12 projected edges of the character's oriented bounding box.
     local box3DLines = {}
     for i = 1, 12 do
         box3DLines[i] = makeEspLine(overlayContainer)
@@ -1265,6 +1246,7 @@ local function hideBoxParts(esp)
 end
 
 local function getProjectedBoundingBox(char)
+    if not camera or not camera.Parent then return nil end
     local cf, size = char:GetBoundingBox()
     local half = size * 0.5
     local corners = {
@@ -1351,7 +1333,7 @@ local function renderBoxEsp(esp, char, sideColor)
     end
 end
 
-table.insert(connections, Players.PlayerRemoving:Connect(function(plr)
+trackConn(Players.PlayerRemoving:Connect(function(plr)
     local cache = screenEspCache[plr]
     if cache then
         pcall(function()
@@ -1383,6 +1365,7 @@ table.insert(connections, Players.PlayerRemoving:Connect(function(plr)
 end))
 
 local function renderTacticalOverlay()
+    if not camera or not camera.Parent then return end
     local camPos = camera.CFrame.Position
     for _, plr in ipairs(Players:GetPlayers()) do
         local esp = getOrCreateScreenEsp(plr)
@@ -1400,8 +1383,6 @@ local function renderTacticalOverlay()
                 local bottomScreen, _ = camera:WorldToViewportPoint(bottomWorld)
 
                 if topVisible and topScreen.Z > 0 then
-                    local boxHeight = math.abs(bottomScreen.Y - topScreen.Y)
-                    local boxWidth = boxHeight * 0.65
                     local side = getPlayerSide(plr)
                     local sideColor = (side == "T") and currentTheme.T_Accent or currentTheme.CT_Accent
 
@@ -1489,13 +1470,13 @@ local function attachEspToPlayer(plr)
         end)
     end
     if plr.Character then setupCharacter(plr.Character) end
-    plr.CharacterAdded:Connect(setupCharacter)
+    trackConn(plr.CharacterAdded:Connect(setupCharacter))
 end
 
 for _, v in pairs(Players:GetPlayers()) do attachEspToPlayer(v) end
-table.insert(connections, Players.PlayerAdded:Connect(attachEspToPlayer))
+trackConn(Players.PlayerAdded:Connect(attachEspToPlayer))
 
-table.insert(connections, RunService.RenderStepped:Connect(function(dt)
+trackConn(RunService.RenderStepped:Connect(function(dt)
     if not camera or not camera.Parent then
         camera = Workspace.CurrentCamera or Workspace:FindFirstChildOfClass("Camera")
         if not camera then return end
@@ -1555,7 +1536,6 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     renderOffScreenArrows()
     updateViewmodelChams()
 
-    -- Reliable Thirdperson Engine
     if thirdpersonEnabled then
         player.CameraMode = Enum.CameraMode.Custom
         player.CameraMinZoomDistance = thirdpersonDistance
@@ -1665,27 +1645,25 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     end
 end))
 
--- Input Handlers for Mobile & PC Aiming
-UserInputService.InputBegan:Connect(function(input, gpe)
+trackConn(UserInputService.InputBegan:Connect(function(input, gpe)
     if gpe then return end
     if input.UserInputType == Enum.UserInputType.MouseButton2 or input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         isAiming = true
     end
-end)
+end))
 
-UserInputService.InputEnded:Connect(function(input, gpe)
+trackConn(UserInputService.InputEnded:Connect(function(input, gpe)
     if input.UserInputType == Enum.UserInputType.MouseButton2 or input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         isAiming = false
         lockedTarget = nil
     end
-end)
+end))
 
--- Movement Controller Loop
 local groundRayParams = RaycastParams.new()
 groundRayParams.FilterType = Enum.RaycastFilterType.Exclude
 groundRayParams.IgnoreWater = true
 
-table.insert(connections, RunService.Heartbeat:Connect(function(dt)
+trackConn(RunService.Heartbeat:Connect(function(dt)
     local char = player.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
     local hum = char and char:FindFirstChildOfClass("Humanoid")
@@ -1714,15 +1692,13 @@ table.insert(connections, RunService.Heartbeat:Connect(function(dt)
         hrp.AssemblyLinearVelocity = Vector3.new(targetVel.X, hrp.AssemblyLinearVelocity.Y, targetVel.Z)
     end
 
-    if flightEnabled then
+    if flightEnabled and camera and camera.Parent then
         hrp.AssemblyLinearVelocity = camera.CFrame.LookVector * flightSpeed
     end
 end))
 
-warn("[Gestio] Core initialized; building UI...")
-
 -- ==========================================
--- RESPONSIVE USER INTERFACE (TOUCH READY)
+-- RESPONSIVE USER INTERFACE
 -- ==========================================
 local toggleGui = Instance.new("ScreenGui", targetGui)
 toggleGui.Name = "GestioToggleGui"
@@ -1771,31 +1747,31 @@ masterLayout.Padding = UDim.new(0, 6)
 local function toggleMenu() masterFrame.Visible = not masterFrame.Visible end
 
 local btnDrag, btnStartPos, btnInputStart = false, nil, nil
-openBtn.InputBegan:Connect(function(input)
+trackConn(openBtn.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         btnDrag = true
         btnStartPos = openBtn.Position
         btnInputStart = input.Position
     end
-end)
+end))
 
-UserInputService.InputChanged:Connect(function(input)
+trackConn(UserInputService.InputChanged:Connect(function(input)
     if btnDrag and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
         local delta = input.Position - btnInputStart
         local newPos = UDim2.new(btnStartPos.X.Scale, btnStartPos.X.Offset + delta.X, btnStartPos.Y.Scale, btnStartPos.Y.Offset + delta.Y)
         openBtn.Position = newPos
         gestioEnv.GestioSavedPos.OpenBtn = newPos
     end
-end)
+end))
 
-UserInputService.InputEnded:Connect(function(input)
+trackConn(UserInputService.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         if btnDrag then
             btnDrag = false
             if (input.Position - btnInputStart).Magnitude < 15 then toggleMenu() end
         end
     end
-end)
+end))
 
 local mainFrame = Instance.new("Frame", masterFrame)
 mainFrame.Size = UDim2.new(0.58, 0, 1, 0)
@@ -1968,7 +1944,7 @@ local function addInspectorSlider(y, txt, min, max, cur, isFloat, onChange)
     local drag = false
     local function update(input)
         local trackWidth = math.max(track.AbsoluteSize.X, 1)
-        local pct = math.clamp(input.Position.X - track.AbsolutePosition.X, 0, trackWidth) / trackWidth
+        local pct = math.clamp((input.Position.X - track.AbsolutePosition.X) / trackWidth, 0, 1)
         local rawVal = min + (max - min) * pct
         local val = isFloat and (math.floor(rawVal * 100) / 100) or math.floor(rawVal)
         fill.Size = UDim2.new(pct, 0, 1, 0)
@@ -1976,22 +1952,22 @@ local function addInspectorSlider(y, txt, min, max, cur, isFloat, onChange)
         onChange(val)
     end
 
-    track.InputBegan:Connect(function(input)
+    trackConn(track.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             drag = true
             update(input)
         end
-    end)
-    UserInputService.InputEnded:Connect(function(input)
+    end))
+    trackConn(UserInputService.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             drag = false
         end
-    end)
-    UserInputService.InputChanged:Connect(function(input)
+    end))
+    trackConn(UserInputService.InputChanged:Connect(function(input)
         if drag and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
             update(input)
         end
-    end)
+    end))
 end
 
 local function addInspectorToggle(y, txt, default, onToggle)
@@ -2253,7 +2229,3 @@ addCard(micsPage, "Theme Sync", true, function(v) end)
 
 updateCrosshairStyle()
 openInspectorFor("Tracking")
-
-
--- Gestio Delta compatibility marker
-warn("[Gestio] Script reached the end successfully.")
