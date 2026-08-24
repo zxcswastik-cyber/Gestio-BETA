@@ -1,7 +1,15 @@
 -- Gestio UI
+-- Delta-compatible bootstrap: executor-only globals are optional.
+local gestioEnv = {}
 pcall(function()
-    if getgenv and getgenv().GestioRunning then
-        getgenv().GestioRunning()
+    if type(getgenv) == "function" then
+        gestioEnv = getgenv()
+    end
+end)
+
+pcall(function()
+    if type(gestioEnv.GestioRunning) == "function" then
+        gestioEnv.GestioRunning()
     end
 end)
 
@@ -23,25 +31,33 @@ end
 local camera = Workspace.CurrentCamera or Workspace:FindFirstChildOfClass("Camera")
 
 local function getSafeGui()
+    -- PlayerGui is the most portable parent for normal Roblox ScreenGuis.
+    local playerGui = player and player:FindFirstChildOfClass("PlayerGui")
+    if playerGui then return playerGui end
+
     local gui = nil
     pcall(function()
-        if gethui then 
-            gui = gethui() 
+        if type(gethui) == "function" then
+            gui = gethui()
         end
     end)
     if gui then return gui end
-    
+
     pcall(function()
-        if CoreGui and not RunService:IsStudio() then
+        if CoreGui then
             gui = CoreGui
         end
     end)
     if gui then return gui end
-    
-    return player:FindFirstChildOfClass("PlayerGui") or player:WaitForChild("PlayerGui", 5)
+
+    return player and player:WaitForChild("PlayerGui", 10)
 end
 
 local targetGui = getSafeGui()
+if not targetGui then
+    warn("[Gestio] Could not find a valid GUI parent (PlayerGui/CoreGui/gethui).")
+    return
+end
 local connections = {}
 local activeEspHolders = {}
 local screenEspCache = {}
@@ -56,14 +72,7 @@ pcall(function()
     end))
 end)
 
--- Safe global environment: works in executors and does not crash if getgenv is absent.
-local gestioEnv = {}
-pcall(function()
-    if type(getgenv) == "function" then
-        gestioEnv = getgenv()
-    end
-end)
-
+-- Safe global environment initialized in the bootstrap above.
 if not gestioEnv.GestioSavedPos then
     gestioEnv.GestioSavedPos = {
         OpenBtn = UDim2.new(0.5, -45, 0, 15)
@@ -120,6 +129,10 @@ local tagShowWeapon = true
 
 local boxEspEnabled = false
 local boxThickness = 1.0
+-- Box ESP modes: "2D Full", "Corner Box", "3D Box", "Filled Box"
+local boxMode = "2D Full"
+local boxFillTransparency = 0.78
+local boxCornerLength = 0.28
 
 local skeletonEspEnabled = false
 local skeletonThickness = 1.2
@@ -383,6 +396,8 @@ local function cleanup()
     for _, esp in pairs(screenEspCache) do
         pcall(function()
             esp.Box:Destroy()
+            for _, line in ipairs(esp.CornerLines or {}) do line:Destroy() end
+            for _, line in ipairs(esp.Box3DLines or {}) do line:Destroy() end
             esp.TagCard:Destroy()
         end)
     end
@@ -1151,17 +1166,41 @@ local function runMobileTriggerbot()
     end
 end
 
+local function makeEspLine(parent)
+    local line = Instance.new("Frame", parent)
+    line.AnchorPoint = Vector2.new(0.5, 0.5)
+    line.BorderSizePixel = 0
+    line.BackgroundColor3 = currentTheme.T_Accent
+    line.Visible = false
+    line.ZIndex = 8
+    return line
+end
+
 local function getOrCreateScreenEsp(plr)
     if screenEspCache[plr] then return screenEspCache[plr] end
+
     local box = Instance.new("Frame", overlayContainer)
     box.BackgroundTransparency = 1
     box.BorderSizePixel = 0
     box.Visible = false
+    box.ZIndex = 7
 
     local stroke = Instance.new("UIStroke", box)
     stroke.Color = currentTheme.T_Accent
     stroke.Thickness = boxThickness
     stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+
+    -- Corner Box: 8 short segments around the 2D bounds.
+    local cornerLines = {}
+    for i = 1, 8 do
+        cornerLines[i] = makeEspLine(overlayContainer)
+    end
+
+    -- 3D Box: 12 projected edges of the character's oriented bounding box.
+    local box3DLines = {}
+    for i = 1, 12 do
+        box3DLines[i] = makeEspLine(overlayContainer)
+    end
 
     local tagCard = Instance.new("Frame", overlayContainer)
     tagCard.AnchorPoint = Vector2.new(0.5, 1)
@@ -1171,6 +1210,7 @@ local function getOrCreateScreenEsp(plr)
     tagCard.BackgroundTransparency = tagTransparency
     tagCard.BorderSizePixel = 0
     tagCard.Visible = false
+    tagCard.ZIndex = 8
 
     Instance.new("UICorner", tagCard).CornerRadius = UDim.new(0, 4)
     local pad = Instance.new("UIPadding", tagCard)
@@ -1184,10 +1224,127 @@ local function getOrCreateScreenEsp(plr)
     tagLabel.TextColor3 = currentTheme.NametagTextColor
     tagLabel.TextSize = espTextSize
     tagLabel.Font = Enum.Font.GothamBold
+    tagLabel.ZIndex = 9
 
-    local data = { Box = box, BoxStroke = stroke, TagCard = tagCard, TagLabel = tagLabel, LastText = "" }
+    local data = {
+        Box = box,
+        BoxStroke = stroke,
+        CornerLines = cornerLines,
+        Box3DLines = box3DLines,
+        TagCard = tagCard,
+        TagLabel = tagLabel,
+        LastText = ""
+    }
     screenEspCache[plr] = data
     return data
+end
+
+local function setEspLine(line, a, b, color, thickness)
+    if not line then return end
+    local delta = b - a
+    local length = delta.Magnitude
+    if length < 0.5 then
+        line.Visible = false
+        return
+    end
+    line.Position = UDim2.fromOffset((a.X + b.X) * 0.5, (a.Y + b.Y) * 0.5)
+    line.Size = UDim2.fromOffset(length, math.max(1, thickness))
+    line.Rotation = math.deg(math.atan2(delta.Y, delta.X))
+    line.BackgroundColor3 = color
+    line.Visible = true
+end
+
+local function hideBoxParts(esp)
+    esp.Box.Visible = false
+    for _, line in ipairs(esp.CornerLines or {}) do line.Visible = false end
+    for _, line in ipairs(esp.Box3DLines or {}) do line.Visible = false end
+end
+
+local function getProjectedBoundingBox(char)
+    local cf, size = char:GetBoundingBox()
+    local half = size * 0.5
+    local corners = {
+        cf * Vector3.new(-half.X, -half.Y, -half.Z),
+        cf * Vector3.new( half.X, -half.Y, -half.Z),
+        cf * Vector3.new( half.X,  half.Y, -half.Z),
+        cf * Vector3.new(-half.X,  half.Y, -half.Z),
+        cf * Vector3.new(-half.X, -half.Y,  half.Z),
+        cf * Vector3.new( half.X, -half.Y,  half.Z),
+        cf * Vector3.new( half.X,  half.Y,  half.Z),
+        cf * Vector3.new(-half.X,  half.Y,  half.Z),
+    }
+
+    local projected = {}
+    local minX, minY = math.huge, math.huge
+    local maxX, maxY = -math.huge, -math.huge
+    local anyFront = false
+    for i, worldPos in ipairs(corners) do
+        local screen, visible = camera:WorldToViewportPoint(worldPos)
+        projected[i] = screen
+        if screen.Z > 0 then anyFront = true end
+        if visible and screen.Z > 0 then
+            minX = math.min(minX, screen.X)
+            minY = math.min(minY, screen.Y)
+            maxX = math.max(maxX, screen.X)
+            maxY = math.max(maxY, screen.Y)
+        end
+    end
+
+    if minX == math.huge or not anyFront then
+        return nil
+    end
+    return projected, minX, minY, maxX, maxY
+end
+
+local BOX3D_EDGES = {
+    {1,2},{2,3},{3,4},{4,1},
+    {5,6},{6,7},{7,8},{8,5},
+    {1,5},{2,6},{3,7},{4,8}
+}
+
+local function renderBoxEsp(esp, char, sideColor)
+    hideBoxParts(esp)
+    if not boxEspEnabled then return end
+
+    local projected, minX, minY, maxX, maxY = getProjectedBoundingBox(char)
+    if not projected then return end
+
+    local width = math.max(2, maxX - minX)
+    local height = math.max(2, maxY - minY)
+    local thickness = math.max(1, boxThickness)
+
+    if boxMode == "2D Full" or boxMode == "Filled Box" then
+        esp.Box.Position = UDim2.fromOffset(minX, minY)
+        esp.Box.Size = UDim2.fromOffset(width, height)
+        esp.Box.BackgroundColor3 = sideColor
+        esp.Box.BackgroundTransparency = (boxMode == "Filled Box") and boxFillTransparency or 1
+        esp.BoxStroke.Color = sideColor
+        esp.BoxStroke.Thickness = thickness
+        esp.Box.Visible = true
+    elseif boxMode == "Corner Box" then
+        local cw = math.max(4, width * boxCornerLength)
+        local ch = math.max(4, height * boxCornerLength)
+        local pts = {
+            Vector2.new(minX, minY), Vector2.new(maxX, minY),
+            Vector2.new(maxX, maxY), Vector2.new(minX, maxY)
+        }
+        local segs = {
+            {pts[1], pts[1] + Vector2.new(cw,0)}, {pts[1], pts[1] + Vector2.new(0,ch)},
+            {pts[2], pts[2] - Vector2.new(cw,0)}, {pts[2], pts[2] + Vector2.new(0,ch)},
+            {pts[3], pts[3] - Vector2.new(cw,0)}, {pts[3], pts[3] - Vector2.new(0,ch)},
+            {pts[4], pts[4] + Vector2.new(cw,0)}, {pts[4], pts[4] - Vector2.new(0,ch)},
+        }
+        for i, seg in ipairs(segs) do
+            setEspLine(esp.CornerLines[i], seg[1], seg[2], sideColor, thickness)
+        end
+    elseif boxMode == "3D Box" then
+        for i, edge in ipairs(BOX3D_EDGES) do
+            local a, b = projected[edge[1]], projected[edge[2]]
+            if a.Z > 0 and b.Z > 0 then
+                setEspLine(esp.Box3DLines[i], Vector2.new(a.X, a.Y), Vector2.new(b.X, b.Y), sideColor, thickness)
+            end
+        end
+    end
 end
 
 table.insert(connections, Players.PlayerRemoving:Connect(function(plr)
@@ -1195,6 +1352,8 @@ table.insert(connections, Players.PlayerRemoving:Connect(function(plr)
     if cache then
         pcall(function()
             cache.Box:Destroy()
+            for _, line in ipairs(cache.CornerLines or {}) do line:Destroy() end
+            for _, line in ipairs(cache.Box3DLines or {}) do line:Destroy() end
             cache.TagCard:Destroy()
         end)
         screenEspCache[plr] = nil
@@ -1243,13 +1402,9 @@ local function renderTacticalOverlay()
                     local sideColor = (side == "T") and currentTheme.T_Accent or currentTheme.CT_Accent
 
                     if boxEspEnabled then
-                        esp.BoxStroke.Color = sideColor
-                        esp.BoxStroke.Thickness = boxThickness
-                        esp.Box.Size = UDim2.new(0, boxWidth, 0, boxHeight)
-                        esp.Box.Position = UDim2.new(0, topScreen.X - (boxWidth * 0.5), 0, topScreen.Y)
-                        esp.Box.Visible = true
+                        renderBoxEsp(esp, char, sideColor)
                     else
-                        esp.Box.Visible = false
+                        hideBoxParts(esp)
                     end
 
                     if nametagsEnabled then
@@ -1272,15 +1427,15 @@ local function renderTacticalOverlay()
                         esp.TagCard.Visible = false
                     end
                 else
-                    esp.Box.Visible = false
+                    hideBoxParts(esp)
                     esp.TagCard.Visible = false
                 end
             else
-                esp.Box.Visible = false
+                hideBoxParts(esp)
                 esp.TagCard.Visible = false
             end
         else
-            esp.Box.Visible = false
+            hideBoxParts(esp)
             esp.TagCard.Visible = false
         end
     end
@@ -1559,6 +1714,8 @@ table.insert(connections, RunService.Heartbeat:Connect(function(dt)
         hrp.AssemblyLinearVelocity = camera.CFrame.LookVector * flightSpeed
     end
 end))
+
+warn("[Gestio] Core initialized; building UI...")
 
 -- ==========================================
 -- RESPONSIVE USER INTERFACE (TOUCH READY)
@@ -1874,6 +2031,43 @@ local function addInspectorToggle(y, txt, default, onToggle)
     end)
 end
 
+local function addInspectorCycle(y, txt, options, current, onChange)
+    local f = Instance.new("Frame", insContent)
+    f.Size = UDim2.new(0.86, 0, 0, 28)
+    f.Position = UDim2.new(0.07, 0, 0, y)
+    f.BackgroundTransparency = 1
+    f.ZIndex = 7
+
+    local t = Instance.new("TextLabel", f)
+    t.Size = UDim2.new(0.38, 0, 1, 0)
+    t.BackgroundTransparency = 1
+    t.Text = txt
+    t.TextColor3 = currentTheme.TextSecondary
+    t.TextXAlignment = Enum.TextXAlignment.Left
+    t.TextSize = 8.5
+    t.Font = Enum.Font.GothamBold
+    t.ZIndex = 7
+
+    local btn = Instance.new("TextButton", f)
+    btn.Size = UDim2.new(0.58, 0, 0, 22)
+    btn.Position = UDim2.new(0.42, 0, 0, 3)
+    btn.BackgroundColor3 = currentTheme.CardBg
+    btn.TextColor3 = currentTheme.TextPrimary
+    btn.TextSize = 8
+    btn.Font = Enum.Font.GothamBold
+    btn.Text = current
+    btn.ZIndex = 8
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
+    Instance.new("UIStroke", btn).Color = currentTheme.Border
+
+    local index = table.find(options, current) or 1
+    bindTouch(btn, function()
+        index = (index % #options) + 1
+        btn.Text = options[index]
+        onChange(options[index])
+    end)
+end
+
 local function openInspectorFor(moduleName)
     insHeader.Text = moduleName
     for _, child in pairs(insContent:GetChildren()) do child:Destroy() end
@@ -1929,6 +2123,12 @@ local function openInspectorFor(moduleName)
         addInspectorSlider(38, "Speed Boost", 1.0, 3.0, bhopSpeedBoost, true, function(v) bhopSpeedBoost = v end)
         addInspectorToggle(76, "Auto Jump", bhopAutoJump, function(v) bhopAutoJump = v end)
         addInspectorToggle(102, "Air Strafe", bhopAirStrafe, function(v) bhopAirStrafe = v end)
+    elseif moduleName == "Box Overlay" then
+        insContent.CanvasSize = UDim2.new(0, 0, 0, 220)
+        addInspectorCycle(6, "Mode", {"2D Full", "Corner Box", "3D Box", "Filled Box"}, boxMode, function(v) boxMode = v end)
+        addInspectorSlider(42, "Thickness", 1.0, 4.0, boxThickness, true, function(v) boxThickness = v end)
+        addInspectorSlider(74, "Fill Alpha", 0.0, 0.95, boxFillTransparency, true, function(v) boxFillTransparency = v end)
+        addInspectorSlider(106, "Corner Length", 0.10, 0.50, boxCornerLength, true, function(v) boxCornerLength = v end)
     elseif moduleName == "Nametags" then
         insContent.CanvasSize = UDim2.new(0, 0, 0, 340)
         addInspectorSlider(6, "Max Distance", 100, 5000, espMaxDist, false, function(v) espMaxDist = v end)
@@ -2049,3 +2249,7 @@ addCard(micsPage, "Theme Sync", true, function(v) end)
 
 updateCrosshairStyle()
 openInspectorFor("Tracking")
+
+
+-- Gestio Delta compatibility marker
+warn("[Gestio] Script reached the end successfully.")
