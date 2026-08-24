@@ -30,6 +30,11 @@ end
 
 local camera = Workspace.CurrentCamera or Workspace:FindFirstChildOfClass("Camera")
 
+-- Shared visibility/bullet raycast parameters. Declared before any function that uses them.
+local visRayParams = RaycastParams.new()
+visRayParams.FilterType = Enum.RaycastFilterType.Exclude
+visRayParams.IgnoreWater = true
+
 local function getSafeGui()
     -- PlayerGui is the most portable parent for normal Roblox ScreenGuis.
     local playerGui = player and player:FindFirstChildOfClass("PlayerGui")
@@ -808,6 +813,9 @@ local function onToolActivated(tool)
     local root = myChar:FindFirstChild("HumanoidRootPart") or myChar:FindFirstChild("Torso")
     if not root then return end
 
+    camera = camera and camera.Parent and camera or Workspace.CurrentCamera or Workspace:FindFirstChildOfClass("Camera")
+    if not camera then return end
+
     local origin = root.Position + Vector3.new(0, 1, 0)
     local mouseRay = camera:ViewportPointToRay(camera.ViewportSize.X * 0.5, camera.ViewportSize.Y * 0.5)
     visRayParams.FilterDescendantsInstances = {myChar, camera}
@@ -1078,10 +1086,6 @@ end
 -- ==========================================
 -- PRECISE AIM ENGINE & RAYCAST TARGETING
 -- ==========================================
-local visRayParams = RaycastParams.new()
-visRayParams.FilterType = Enum.RaycastFilterType.Exclude
-visRayParams.IgnoreWater = true
-
 local function isTargetVisible(originPos, targetPart, targetChar)
     if not visibleCheck then return true end
     visRayParams.FilterDescendantsInstances = {player.Character, camera}
