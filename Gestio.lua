@@ -49,7 +49,6 @@ local grenadePool = {}
 local chamsCache = {}
 local offScreenArrows = {}
 local skeletonCache = {}
-local jumpCircles = {}
 
 if not getgenv().GestioSavedPos then
     getgenv().GestioSavedPos = {
@@ -93,7 +92,7 @@ local currentTheme = {
 }
 
 -- ==========================================
--- MODULE CONFIGURATION & STYLES
+-- MODULE CONFIGURATION
 -- ==========================================
 local nametagsEnabled = false
 local espMaxDist = 3000
@@ -107,26 +106,6 @@ local tagShowWeapon = true
 
 local boxEspEnabled = false
 local boxThickness = 1.0
-local boxMode = "2D Full"
-
-local jumpCircleEnabled = false
-local jumpCircleMode = "Gradient Fade"
-local jumpCircleRadius = 6.0
-local jumpCircleDuration = 0.85
-
-local playerTrailEnabled = false
-local playerTrailMode = "Speed-Based Fade"
-
-local grenadeTrailEnabled = false
-local grenadeTrailMode = "Glow Rope"
-
-local bulletTracersEnabled = false
-local bulletTracerMode = "Beam Tracers"
-local tracerBeamDuration = 0.65
-
--- Advanced Chams Styles
-local advancedChamsEnabled = false
-local advancedChamsStyle = "Glow" -- "Glow", "Metallic / Gold", "Glass / Crystal", "Wireframe", "Flat", "Animated / Texture"
 
 local skeletonEspEnabled = false
 local skeletonThickness = 1.2
@@ -143,6 +122,9 @@ local crosshairDot = true
 local hitmarkerEnabled = false
 local hitmarkerSoundEnabled = true
 local hitmarkerSoundId = "rbxassetid://4817809188"
+
+local bulletTracersEnabled = false
+local tracerBeamDuration = 0.65
 
 local viewmodelChamsEnabled = false
 local viewmodelChamsMaterial = Enum.Material.ForceField
@@ -233,9 +215,10 @@ local overlayContainer = Instance.new("Folder", mainContainer)
 local grenadeContainer = Instance.new("Folder", mainContainer)
 local skeletonContainer = Instance.new("Folder", mainContainer)
 local arrowContainer = Instance.new("Folder", mainContainer)
-local effectContainer = Instance.new("Folder", mainContainer)
-effectContainer.Name = "Gestio_Effects3D"
-effectContainer.Parent = Workspace
+
+local worldContainer = Instance.new("Folder")
+worldContainer.Name = "Gestio_World3D"
+worldContainer.Parent = Workspace
 
 local hitSoundInstance = Instance.new("Sound")
 hitSoundInstance.Name = "GestioHitSound"
@@ -347,7 +330,7 @@ local function triggerHitmarker()
     end)
 end
 
-local function createBulletTracer(origin, hitPosition, isHit)
+local function createBulletTracer(origin, hitPosition)
     if not bulletTracersEnabled then return end
     local part = Instance.new("Part")
     part.Name = "GestioBeamTracer"
@@ -355,7 +338,7 @@ local function createBulletTracer(origin, hitPosition, isHit)
     part.CanCollide = false
     part.CastShadow = false
     part.Material = Enum.Material.Neon
-    part.Color = isHit and currentTheme.T_Accent or currentTheme.BeamColor
+    part.Color = currentTheme.BeamColor
     part.Transparency = 0.2
     
     local dist = (hitPosition - origin).Magnitude
@@ -373,267 +356,6 @@ local function createBulletTracer(origin, hitPosition, isHit)
     end)
 end
 
-local function spawnJumpCircle(pos)
-    if not jumpCircleEnabled then return end
-    local part = Instance.new("Part")
-    part.Name = "GestioJumpCircle"
-    part.Anchored = true
-    part.CanCollide = false
-    part.CastShadow = false
-    part.Transparency = 1
-    part.Position = pos - Vector3.new(0, 2.5, 0)
-    part.Parent = effectContainer
-
-    if jumpCircleMode == "Gradient Fade" then
-        local cyl = Instance.new("Part")
-        cyl.Size = Vector3.new(0.2, 0.1, 0.1)
-        cyl.Shape = Enum.PartType.Cylinder
-        cyl.Material = Enum.Material.Neon
-        cyl.Color = currentTheme.Accent
-        cyl.Anchored = true
-        cyl.CanCollide = false
-        cyl.CastShadow = false
-        cyl.CFrame = part.CFrame * CFrame.Angles(0, 0, math.rad(90))
-        cyl.Parent = part
-        task.spawn(function()
-            local startTick = tick()
-            while true do
-                local alpha = (tick() - startTick) / jumpCircleDuration
-                if alpha >= 1 then break end
-                local curR = jumpCircleRadius * alpha
-                cyl.Size = Vector3.new(0.2, curR * 2, curR * 2)
-                cyl.Transparency = alpha
-                task.wait()
-            end
-            part:Destroy()
-        end)
-    elseif jumpCircleMode == "Blur & Neon" then
-        local ring = Instance.new("Part")
-        ring.Size = Vector3.new(0.4, 0.2, 0.2)
-        ring.Shape = Enum.PartType.Cylinder
-        ring.Material = Enum.Material.Glass
-        ring.Color = currentTheme.Accent
-        ring.Anchored = true
-        ring.CanCollide = false
-        ring.Transparency = 0.2
-        ring.CFrame = part.CFrame * CFrame.Angles(0, 0, math.rad(90))
-        ring.Parent = part
-        local pl = Instance.new("PointLight", ring)
-        pl.Color = currentTheme.Accent
-        pl.Range = 14
-        pl.Brightness = 6
-        task.spawn(function()
-            local startTick = tick()
-            while true do
-                local alpha = (tick() - startTick) / jumpCircleDuration
-                if alpha >= 1 then break end
-                local curR = (jumpCircleRadius * 1.2) * alpha
-                ring.Size = Vector3.new(0.4, curR * 2, curR * 2)
-                ring.Transparency = 0.2 + (0.8 * alpha)
-                pl.Brightness = 6 * (1 - alpha)
-                task.wait()
-            end
-            part:Destroy()
-        end)
-    elseif jumpCircleMode == "Particle Ring" then
-        local sparks = {}
-        for i = 1, 16 do
-            local sp = Instance.new("Part")
-            sp.Size = Vector3.new(0.25, 0.25, 0.25)
-            sp.Shape = Enum.PartType.Ball
-            sp.Material = Enum.Material.Neon
-            sp.Color = currentTheme.Accent
-            sp.Anchored = true
-            sp.CanCollide = false
-            sp.Position = part.Position
-            sp.Parent = part
-            table.insert(sparks, {Part = sp, Angle = (i / 16) * (math.pi * 2), Speed = math.random(8, 14)})
-        end
-        task.spawn(function()
-            local startTick = tick()
-            while true do
-                RunService.RenderStepped:Wait()
-                local alpha = (tick() - startTick) / jumpCircleDuration
-                if alpha >= 1 then break end
-                for _, s in ipairs(sparks) do
-                    local dist = s.Speed * alpha * jumpCircleRadius * 0.4
-                    local x = math.cos(s.Angle) * dist
-                    local z = math.sin(s.Angle) * dist
-                    s.Part.Position = part.Position + Vector3.new(x, alpha * 1.5, z)
-                    s.Part.Transparency = alpha
-                end
-            end
-            part:Destroy()
-        end)
-    elseif jumpCircleMode == "Textured / Wave" then
-        local wave = Instance.new("Part")
-        wave.Size = Vector3.new(0.3, 0.1, 0.1)
-        wave.Shape = Enum.PartType.Cylinder
-        wave.Material = Enum.Material.Neon
-        wave.Color = currentTheme.T_Accent
-        wave.Anchored = true
-        wave.CanCollide = false
-        wave.CFrame = part.CFrame * CFrame.Angles(0, 0, math.rad(90))
-        wave.Parent = part
-        task.spawn(function()
-            local startTick = tick()
-            while true do
-                local alpha = (tick() - startTick) / jumpCircleDuration
-                if alpha >= 1 then break end
-                local curR = jumpCircleRadius * math.sin(alpha * math.pi * 1.5)
-                wave.Size = Vector3.new(0.3, curR * 2, curR * 2)
-                wave.Transparency = alpha
-                task.wait()
-            end
-            part:Destroy()
-        end)
-    end
-end
-
--- ==========================================
--- ADVANCED CHAMS APPLIER
--- ==========================================
-local function applyAdvancedChams(char)
-    if not char then return end
-    for _, part in ipairs(char:GetDescendants()) do
-        if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
-            if advancedChamsEnabled then
-                if advancedChamsStyle == "Glow" then
-                    part.Material = Enum.Material.Neon
-                    part.Color = currentTheme.T_Accent
-                elseif advancedChamsStyle == "Metallic / Gold" then
-                    part.Material = Enum.Material.Metal
-                    part.Color = Color3.fromRGB(255, 215, 0)
-                elseif advancedChamsStyle == "Glass / Crystal" then
-                    part.Material = Enum.Material.Glass
-                    part.Transparency = 0.3
-                    part.Color = currentTheme.CrystalColor
-                elseif advancedChamsStyle == "Wireframe" then
-                    part.Material = Enum.Material.SmoothPlastic
-                    part.Color = currentTheme.T_Accent
-                elseif advancedChamsStyle == "Flat" then
-                    part.Material = Enum.Material.SmoothPlastic
-                    part.Color = currentTheme.T_Accent
-                elseif advancedChamsStyle == "Animated / Texture" then
-                    part.Material = Enum.Material.ForceField
-                    part.Color = Color3.fromHSV((tick() % 3) / 3, 1, 1)
-                end
-            end
-        end
-    end
-end
-
-table.insert(connections, RunService.RenderStepped:Connect(function()
-    local char = player.Character
-    local hrp = char and char:FindFirstChild("HumanoidRootPart")
-
-    if playerTrailEnabled and hrp then
-        if playerTrailMode == "Speed-Based Fade" and hrp.AssemblyLinearVelocity.Magnitude > 8 then
-            local trailPart = Instance.new("Part")
-            trailPart.Size = Vector3.new(2, 4, 1)
-            trailPart.CFrame = hrp.CFrame
-            trailPart.Anchored = true
-            trailPart.CanCollide = false
-            trailPart.Material = Enum.Material.Glass
-            trailPart.Color = currentTheme.T_Accent
-            trailPart.Transparency = 0.4
-            trailPart.Parent = effectContainer
-            task.spawn(function()
-                for i = 1, 10 do
-                    trailPart.Transparency = 0.4 + (0.6 * (i / 10))
-                    task.wait(0.03)
-                end
-                trailPart:Destroy()
-            end)
-        elseif playerTrailMode == "RGB Rainbow Wave" then
-            local trailPart = Instance.new("Part")
-            trailPart.Size = Vector3.new(1.5, 3, 1)
-            trailPart.CFrame = hrp.CFrame
-            trailPart.Anchored = true
-            trailPart.CanCollide = false
-            trailPart.Material = Enum.Material.Neon
-            trailPart.Color = Color3.fromHSV((tick() % 5) / 5, 1, 1)
-            trailPart.Transparency = 0.3
-            trailPart.Parent = effectContainer
-            task.spawn(function()
-                for i = 1, 8 do
-                    trailPart.Transparency = 0.3 + (0.7 * (i / 8))
-                    task.wait(0.04)
-                end
-                trailPart:Destroy()
-            end)
-        elseif playerTrailMode == "Wireframe / Mesh" and hrp.AssemblyLinearVelocity.Magnitude > 5 then
-            local ghost = Instance.new("Part")
-            ghost.Size = Vector3.new(2, 5, 2)
-            ghost.CFrame = hrp.CFrame
-            ghost.Anchored = true
-            ghost.CanCollide = false
-            ghost.Material = Enum.Material.ForceField
-            ghost.Color = currentTheme.Accent
-            ghost.Transparency = 0.5
-            ghost.Parent = effectContainer
-            task.spawn(function()
-                for i = 1, 12 do
-                    ghost.Transparency = 0.5 + (0.5 * (i / 12))
-                    task.wait(0.04)
-                end
-                ghost:Destroy()
-            end)
-        end
-    end
-
-    if grenadeTrailEnabled then
-        for _, item in ipairs(Workspace:GetDescendants()) do
-            if item:IsA("BasePart") and (item.Name:lower():find("grenade") or item.Name:lower():find("molotov") or item.Name:lower():find("smoke") or item.Name:lower():find("flash")) then
-                if item.AssemblyLinearVelocity.Magnitude > 3 then
-                    local p = Instance.new("Part")
-                    p.Size = Vector3.new(0.4, 0.4, 0.4)
-                    p.Shape = Enum.PartType.Ball
-                    p.Material = Enum.Material.Neon
-                    p.Color = (grenadeTrailMode == "Glow Rope") and currentTheme.MolotovColor or Color3.fromRGB(255, 255, 255)
-                    p.Position = item.Position
-                    p.Anchored = true
-                    p.CanCollide = false
-                    p.Parent = effectContainer
-                    task.spawn(function()
-                        for i = 1, 10 do
-                            p.Transparency = i / 10
-                            task.wait(0.03)
-                        end
-                        p:Destroy()
-                    end)
-                end
-            end
-        end
-    end
-
-    if advancedChamsEnabled then
-        for _, p in ipairs(Players:GetPlayers()) do
-            if p ~= player and p.Character and isTargetEnemy(p, p.Character) then
-                applyAdvancedChams(p.Character)
-            end
-        end
-    end
-end))
-
-local lastJumpTick = 0
-table.insert(connections, RunService.RenderStepped:Connect(function()
-    if not jumpCircleEnabled then return end
-    local char = player.Character
-    local hrp = char and char:FindFirstChild("HumanoidRootPart")
-    local hum = char and char:FindFirstChildOfClass("Humanoid")
-    if char and hrp and hum then
-        local state = nil
-        pcall(function() state = hum:GetState() end)
-        if state == Enum.HumanoidStateType.Jumping or (hrp.AssemblyLinearVelocity.Y > 2 and hum.FloorMaterial == Enum.Material.Air) then
-            if (tick() - lastJumpTick) > 0.4 then
-                lastJumpTick = tick()
-                spawnJumpCircle(hrp.Position)
-            end
-        end
-    end
-end))
-
 local function cleanup()
     for _, c in pairs(connections) do pcall(function() c:Disconnect() end) end
     for _, holder in pairs(activeEspHolders) do
@@ -642,7 +364,8 @@ local function cleanup()
     end
     for _, esp in pairs(screenEspCache) do
         pcall(function()
-            for _, p in pairs(esp.Parts) do p:Destroy() end
+            esp.Box:Destroy()
+            esp.TagCard:Destroy()
         end)
     end
     for _, gUi in pairs(grenadePool) do
@@ -671,7 +394,6 @@ local function cleanup()
     skeletonCache = {}
     
     pcall(function() worldContainer:Destroy() end)
-    pcall(function() effectContainer:Destroy() end)
     pcall(function()
         player.CameraMinZoomDistance = 0.5
         player.CameraMaxZoomDistance = 400
@@ -690,11 +412,11 @@ local function cleanup()
 
     pcall(function() if targetGui:FindFirstChild("GestioScreenGui") then targetGui.GestioScreenGui:Destroy() end end)
     pcall(function() if targetGui:FindFirstChild("GestioToggleGui") then targetGui.GestioToggleGui:Destroy() end end)
-    pcall(function() if targetGui:FindFirstChild("GestioFovGui") then targetGui.FovGui:Destroy() end end)
-    pcall(function() if targetGui:FindFirstChild("GestioWatermarkGui") then targetGui.WatermarkGui:Destroy() end end)
+    pcall(function() if targetGui:FindFirstChild("GestioFovGui") then targetGui.GestioFovGui:Destroy() end end)
+    pcall(function() if targetGui:FindFirstChild("GestioWatermarkGui") then targetGui.GestioWatermarkGui:Destroy() end end)
     pcall(function() if targetGui:FindFirstChild("GestioMainContainer") then targetGui.GestioMainContainer:Destroy() end end)
-    pcall(function() if targetGui:FindFirstChild("GestioHitmarkerGui") then targetGui.HitmarkerGui:Destroy() end end)
-    pcall(function() if targetGui:FindFirstChild("GestioCrosshairGui") then targetGui.CrosshairGui:Destroy() end end)
+    pcall(function() if targetGui:FindFirstChild("GestioHitmarkerGui") then targetGui.GestioHitmarkerGui:Destroy() end end)
+    pcall(function() if targetGui:FindFirstChild("GestioCrosshairGui") then targetGui.GestioCrosshairGui:Destroy() end end)
 end
 
 if getgenv then getgenv().GestioRunning = cleanup end
@@ -783,16 +505,624 @@ wmMetrics.Font = Enum.Font.GothamBold
 local fpsCounter = 0
 local lastFpsUpdate = tick()
 
+local function getPlayerSide(plr)
+    if not plr then return "T" end
+    if plr.Team then
+        local tName = tostring(plr.Team.Name):lower()
+        if tName:find("counter") or tName:find("ct") or tName:find("police") or tName:find("swat") or tName:find("guard") or tName:find("blue") or tName:find("defend") or tName:find("spec") then
+            return "CT"
+        elseif tName:find("terror") or tName:find("t") or tName:find("anarch") or tName:find("rebel") or tName:find("red") or tName:find("attack") then
+            return "T"
+        end
+    end
+    if plr.TeamColor then
+        local colName = plr.TeamColor.Name:lower()
+        if colName:find("blue") or colName:find("navy") or colName:find("cyan") or colName:find("teal") or colName:find("lapis") or colName:find("grey") or colName:find("gray") or colName:find("black") then
+            return "CT"
+        elseif colName:find("red") or colName:find("orange") or colName:find("yellow") or colName:find("rust") or colName:find("crimson") then
+            return "T"
+        end
+    end
+    local char = plr.Character
+    local teamAttr = plr:GetAttribute("Team") or (char and char:GetAttribute("Team")) or plr:GetAttribute("Side") or (char and char:GetAttribute("Side"))
+    if teamAttr ~= nil then
+        local tStr = tostring(teamAttr):lower()
+        if tStr:find("ct") or tStr:find("counter") or tStr == "2" or tStr:find("blue") or tStr:find("defend") then
+            return "CT"
+        elseif tStr:find("t") or tStr:find("terror") or tStr == "1" or tStr:find("red") or tStr:find("attack") then
+            return "T"
+        end
+    end
+    if plr ~= player and player.Team and plr.Team then
+        return (plr.Team == player.Team) and getPlayerSide(player) or ((getPlayerSide(player) == "CT") and "T" or "CT")
+    end
+    return "T"
+end
+
+local function isTargetEnemy(plr, char)
+    if not plr or plr == player then return false end
+    if char and char == player.Character then return false end
+    if player.Neutral or plr.Neutral then return true end
+    if plr.Team ~= nil and player.Team ~= nil then return plr.Team ~= player.Team end
+    if plr.TeamColor ~= nil and player.TeamColor ~= nil and plr.TeamColor ~= BrickColor.new("White") then return plr.TeamColor ~= player.TeamColor end
+    return getPlayerSide(player) ~= getPlayerSide(plr)
+end
+
+local function getTargetHitbox(char)
+    if not char then return nil end
+    if bodyAimOnly then
+        return char:FindFirstChild("UpperTorso") or char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso")
+    end
+    if aimboneIndex == 1 then
+        return char:FindFirstChild("Head") or char:FindFirstChild("UpperTorso")
+    elseif aimboneIndex == 2 then
+        return char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso") or char:FindFirstChild("Head")
+    else
+        return char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("UpperTorso") or char:FindFirstChild("Head")
+    end
+end
+
+local function isEntityAlive(char, hum)
+    if not char or not char.Parent or not char:IsDescendantOf(Workspace) then return false end
+    if hum and hum.Parent then
+        local health = 100
+        pcall(function() health = hum.Health end)
+        if health <= 0 or hum:GetState() == Enum.HumanoidStateType.Dead then return false end
+    end
+    return (char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso") or char:FindFirstChild("Head")) ~= nil
+end
+
+-- ==========================================
+-- SKELETON ESP ENGINE
+-- ==========================================
+local function getOrCreateSkeleton(plr)
+    if skeletonCache[plr] then return skeletonCache[plr] end
+    local lines = {}
+    for i = 1, 14 do
+        local l = Instance.new("Frame", skeletonContainer)
+        l.BorderSizePixel = 0
+        l.AnchorPoint = Vector2.new(0.5, 0.5)
+        l.BackgroundColor3 = currentTheme.SkeletonColor
+        l.Visible = false
+        table.insert(lines, l)
+    end
+    skeletonCache[plr] = lines
+    return lines
+end
+
+local function drawSkeletonBone(line, partA, partB)
+    if not partA or not partB then line.Visible = false return end
+    local p1, on1 = camera:WorldToViewportPoint(partA.Position)
+    local p2, on2 = camera:WorldToViewportPoint(partB.Position)
+    if on1 and on2 and p1.Z > 0 and p2.Z > 0 then
+        local v1 = Vector2.new(p1.X, p1.Y)
+        local v2 = Vector2.new(p2.X, p2.Y)
+        local dist = (v2 - v1).Magnitude
+        local center = (v1 + v2) * 0.5
+        local angle = math.deg(math.atan2(v2.Y - v1.Y, v2.X - v1.X))
+        line.Size = UDim2.new(0, dist, 0, skeletonThickness)
+        line.Position = UDim2.new(0, center.X, 0, center.Y)
+        line.Rotation = angle
+        line.BackgroundColor3 = currentTheme.SkeletonColor
+        line.Visible = true
+    else
+        line.Visible = false
+    end
+end
+
+local function renderSkeletonESP()
+    for plr, lines in pairs(skeletonCache) do
+        local char = plr.Character
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        if skeletonEspEnabled and char and isTargetEnemy(plr, char) and isEntityAlive(char, hum) then
+            local head = char:FindFirstChild("Head")
+            local torso = char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso")
+            local root = char:FindFirstChild("HumanoidRootPart") or torso
+            local lArm = char:FindFirstChild("LeftUpperArm") or char:FindFirstChild("Left Arm")
+            let rArm = char:FindFirstChild("RightUpperArm") or char:FindFirstChild("Right Arm")
+            local lHand = char:FindFirstChild("LeftHand") or lArm
+            local rHand = char:FindFirstChild("RightHand") or rArm
+            local lLeg = char:FindFirstChild("LeftUpperLeg") or char:FindFirstChild("Left Leg")
+            local rLeg = char:FindFirstChild("RightUpperLeg") or char:FindFirstChild("Right Leg")
+            local lFoot = char:FindFirstChild("LeftFoot") or lLeg
+            local rFoot = char:FindFirstChild("RightFoot") or rLeg
+
+            drawSkeletonBone(lines[1], head, torso)
+            drawSkeletonBone(lines[2], torso, root)
+            drawSkeletonBone(lines[3], torso, lArm)
+            drawSkeletonBone(lines[4], lArm, lHand)
+            drawSkeletonBone(lines[5], torso, rArm)
+            drawSkeletonBone(lines[6], rArm, rHand)
+            drawSkeletonBone(lines[7], root, lLeg)
+            drawSkeletonBone(lines[8], lLeg, lFoot)
+            drawSkeletonBone(lines[9], root, rLeg)
+            drawSkeletonBone(lines[10], rLeg, rFoot)
+            for i = 11, #lines do lines[i].Visible = false end
+        else
+            for _, l in ipairs(lines) do l.Visible = false end
+        end
+    end
+end
+
+-- ==========================================
+-- CORRECTED OFF-SCREEN ARROWS (FOV-CONSTRAINED)
+-- ==========================================
+local function getOrCreateArrow(plr)
+    if offScreenArrows[plr] then return offScreenArrows[plr] end
+    local arrow = Instance.new("ImageLabel", arrowContainer)
+    arrow.Size = UDim2.new(0, arrowSize, 0, arrowSize)
+    arrow.AnchorPoint = Vector2.new(0.5, 0.5)
+    arrow.BackgroundTransparency = 1
+    arrow.Image = "rbxassetid://6031094678"
+    arrow.ImageColor3 = currentTheme.ArrowColor
+    arrow.Visible = false
+    offScreenArrows[plr] = arrow
+    return arrow
+end
+
+local function renderOffScreenArrows()
+    if not offScreenArrowsEnabled then
+        for _, arrow in pairs(offScreenArrows) do
+            arrow.Visible = false
+        end
+        return
+    end
+
+    local vp = camera.ViewportSize
+    local screenCenter = Vector2.new(vp.X * 0.5, vp.Y * 0.5)
+    local fovRadius = math.clamp(aimFov, 40, math.min(vp.X, vp.Y) * 0.48)
+
+    for _, plr in ipairs(Players:GetPlayers()) do
+        local arrow = getOrCreateArrow(plr)
+        local char = plr.Character
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        local root = char and (char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso"))
+
+        if char and isTargetEnemy(plr, char) and isEntityAlive(char, hum) and root then
+            local camCFrame = camera.CFrame
+            local rootPos = root.Position
+            local relPos = camCFrame:PointToObjectSpace(rootPos)
+            
+            -- Проверяем, находится ли целиком вне экрана или за спиной / вне FOV аимбота
+            local scrPos, onScreen = camera:WorldToViewportPoint(rootPos)
+            local isOutside = false
+
+            if onScreen and scrPos.Z > 0 then
+                local distFromCenter = (Vector2.new(scrPos.X, scrPos.Y) - screenCenter).Magnitude
+                if distFromCenter > fovRadius then
+                    isOutside = true
+                end
+            else
+                isOutside = true
+            end
+
+            if isOutside then
+                -- Корректный расчет угла в пространстве экрана по отношению к центру
+                local angle = math.atan2(relPos.X, -relPos.Y)
+                local arrowPos = screenCenter + Vector2.new(math.sin(angle), math.cos(angle)) * fovRadius
+
+                arrow.Position = UDim2.new(0, arrowPos.X, 0, arrowPos.Y)
+                arrow.Rotation = math.deg(angle)
+                arrow.ImageColor3 = (getPlayerSide(plr) == "T") and currentTheme.T_Accent or currentTheme.CT_Accent
+                arrow.Visible = true
+            else
+                arrow.Visible = false
+            end
+        else
+            arrow.Visible = false
+        end
+    end
+end
+
+-- ==========================================
+-- VIEWMODEL CHAMS CONTROLLER
+-- ==========================================
+local function updateViewmodelChams()
+    local char = player.Character
+    if not char then return end
+    local tool = char:FindFirstChildOfClass("Tool")
+    if viewmodelChamsEnabled then
+        if tool then
+            for _, p in ipairs(tool:GetDescendants()) do
+                if p:IsA("BasePart") then
+                    p.Material = viewmodelChamsMaterial
+                    p.Color = currentTheme.ViewmodelColor
+                end
+            end
+        end
+        for _, p in ipairs(char:GetChildren()) do
+            if (p.Name:find("Arm") or p.Name:find("Hand")) and p:IsA("BasePart") then
+                p.Material = viewmodelChamsMaterial
+                p.Color = currentTheme.ViewmodelColor
+            end
+        end
+    end
+end
+
+-- ==========================================
+-- ROBUST HITMARKER & WEAPON FIRE LISTENER
+-- ==========================================
+local trackedCharacters = {}
+
+local function setupHitmarkerForCharacter(plr, char)
+    if not char or plr == player then return end
+    local hum = char:WaitForChild("Humanoid", 3)
+    if not hum then return end
+
+    local lastHp = hum.Health
+    local conn = hum.HealthChanged:Connect(function(newHp)
+        if newHp < lastHp and isTargetEnemy(plr, char) then
+            triggerHitmarker()
+        end
+        lastHp = newHp
+    end)
+    table.insert(connections, conn)
+end
+
+for _, p in ipairs(Players:GetPlayers()) do
+    if p.Character then setupHitmarkerForCharacter(p, p.Character) end
+    p.CharacterAdded:Connect(function(char) setupHitmarkerForCharacter(p, char) end)
+end
+table.insert(connections, Players.PlayerAdded:Connect(function(p)
+    p.CharacterAdded:Connect(function(char) setupHitmarkerForCharacter(p, char) end)
+end))
+
+-- Bullet Beams on actual tool activation
+local function onToolActivated(tool)
+    if not bulletTracersEnabled then return end
+    local myChar = player.Character
+    if not myChar then return end
+    local root = myChar:FindFirstChild("HumanoidRootPart") or myChar:FindFirstChild("Torso")
+    if not root then return end
+
+    local origin = root.Position + Vector3.new(0, 1, 0)
+    local mouseRay = camera:ViewportPointToRay(camera.ViewportSize.X * 0.5, camera.ViewportSize.Y * 0.5)
+    visRayParams.FilterDescendantsInstances = {myChar, camera}
+    local hit = Workspace:Raycast(mouseRay.Origin, mouseRay.Direction * 1500, visRayParams)
+    local endPoint = hit and hit.Position or (mouseRay.Origin + mouseRay.Direction * 500)
+    
+    createBulletTracer(origin, endPoint)
+end
+
+local function hookPlayerTool(char)
+    local function onChildAdded(child)
+        if child:IsA("Tool") then
+            child.Activated:Connect(function()
+                onToolActivated(child)
+            end)
+        end
+    end
+    char.ChildAdded:Connect(onChildAdded)
+    for _, c in ipairs(char:GetChildren()) do onChildAdded(c) end
+end
+
+if player.Character then hookPlayerTool(player.Character) end
+table.insert(connections, player.CharacterAdded:Connect(hookPlayerTool))
+
+-- ==========================================
+-- GRENADE & CRYSTAL CHAMS ENGINE (FIXED)
+-- ==========================================
+local function getOrCreateCrystalChams(plr)
+    if chamsCache[plr] then return chamsCache[plr] end
+    local hl = Instance.new("Highlight")
+    hl.Name = "GestioCrystalOutline_" .. plr.Name
+    hl.FillColor = currentTheme.CrystalColor
+    hl.OutlineColor = currentTheme.CrystalOutline
+    hl.FillTransparency = 1.0
+    hl.OutlineTransparency = 0.0
+    hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    hl.Enabled = false
+    hl.Parent = worldContainer
+
+    local crystalFolder = Instance.new("Folder")
+    crystalFolder.Name = "Crystals_" .. plr.Name
+    crystalFolder.Parent = worldContainer
+
+    local crystals, lights = {}, {}
+    for i = 1, crystalCount do
+        local p = Instance.new("Part")
+        p.Name = "RadiantShard"
+        p.Size = Vector3.new(0.6, 1.1, 0.6)
+        p.Material = Enum.Material.Neon
+        p.Color = currentTheme.CrystalColor
+        p.CanCollide = false
+        p.Anchored = true
+        p.CastShadow = false
+        p.Transparency = 0.1
+
+        local sm = Instance.new("SpecialMesh", p)
+        sm.MeshType = Enum.MeshType.FileMesh
+        sm.MeshId = "rbxassetid://9756362"
+        sm.Scale = Vector3.new(0.4, 0.7, 0.4)
+
+        local pl = Instance.new("PointLight")
+        pl.Color = currentTheme.CrystalLightColor
+        pl.Brightness = crystalLightBrightness
+        pl.Range = crystalLightRange
+        pl.Shadows = false
+        pl.Enabled = true
+        pl.Parent = p
+
+        p.Parent = crystalFolder
+        table.insert(crystals, p)
+        table.insert(lights, pl)
+    end
+    local data = { Highlight = hl, CrystalFolder = crystalFolder, Crystals = crystals, Lights = lights }
+    chamsCache[plr] = data
+    return data
+end
+
+local grenadeRayParams = RaycastParams.new()
+grenadeRayParams.FilterType = Enum.RaycastFilterType.Exclude
+grenadeRayParams.IgnoreWater = true
+
+local function getOrCreateGrenadeUI(nadeInstance)
+    if grenadePool[nadeInstance] then return grenadePool[nadeInstance] end
+    local tag = Instance.new("Frame", grenadeContainer)
+    tag.Size = UDim2.new(0, 0, 0, 14)
+    tag.AutomaticSize = Enum.AutomaticSize.X
+    tag.AnchorPoint = Vector2.new(0.5, 1)
+    tag.BackgroundColor3 = Color3.fromRGB(18, 19, 22)
+    tag.BackgroundTransparency = 0.35
+    tag.BorderSizePixel = 0
+    tag.Visible = false
+    Instance.new("UICorner", tag).CornerRadius = UDim.new(0, 3)
+
+    local pad = Instance.new("UIPadding", tag)
+    pad.PaddingLeft = UDim.new(0, 4)
+    pad.PaddingRight = UDim.new(0, 4)
+
+    local lbl = Instance.new("TextLabel", tag)
+    lbl.AutomaticSize = Enum.AutomaticSize.X
+    lbl.Size = UDim2.new(0, 0, 1, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.TextSize = 7.5
+    lbl.Font = Enum.Font.GothamBold
+    lbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+    local radiusCircle = Instance.new("Frame", grenadeContainer)
+    radiusCircle.AnchorPoint = Vector2.new(0.5, 0.5)
+    radiusCircle.BackgroundTransparency = 1
+    radiusCircle.BorderSizePixel = 0
+    radiusCircle.Visible = false
+    Instance.new("UICorner", radiusCircle).CornerRadius = UDim.new(1, 0)
+    local radStroke = Instance.new("UIStroke", radiusCircle)
+    radStroke.Thickness = 1.5
+
+    local data = { Tag = tag, Label = lbl, RadiusCircle = radiusCircle, RadiusStroke = radStroke, Lines = {} }
+    for j = 1, 10 do
+        local seg = Instance.new("Frame", grenadeContainer)
+        seg.BorderSizePixel = 0
+        seg.AnchorPoint = Vector2.new(0.5, 0.5)
+        seg.Visible = false
+        table.insert(data.Lines, seg)
+    end
+    grenadePool[nadeInstance] = data
+    return data
+end
+
+local function renderGrenadeOverlays()
+    if not grenadeEspEnabled then
+        for _, v in pairs(grenadePool) do
+            v.Tag.Visible = false
+            v.RadiusCircle.Visible = false
+            for _, l in ipairs(v.Lines) do l.Visible = false end
+        end
+        return
+    end
+
+    local camPos = camera.CFrame.Position
+    local activeGrenades = {}
+    
+    -- Сканируем Workspace и папки с проектами гранат на предмет брошенных объектов
+    for _, item in ipairs(Workspace:GetDescendants()) do
+        if item:IsA("BasePart") and not isEntityCharacter(item) then
+            local nName = item.Name:lower()
+            local isNade, nadeType, nadeColor, effectRadiusStuds = false, "NADE", currentTheme.HEColor, 14
+
+            if nName:find("molotov") or nName:find("incendiary") or nName:find("fire") or nName:find("burn") then
+                isNade, nadeType, nadeColor, effectRadiusStuds = true, "MOLOTOV", currentTheme.MolotovColor, 17
+            elseif nName:find("smoke") then
+                isNade, nadeType, nadeColor, effectRadiusStuds = true, "SMOKE", currentTheme.SmokeColor, 20
+            elseif nName:find("grenade") or nName:find("hegrenade") or nName:find("frag") or nName:find("c4") then
+                isNade, nadeType, nadeColor, effectRadiusStuds = true, "HE", currentTheme.HEColor, 15
+            elseif nName:find("flash") then
+                isNade, nadeType, nadeColor, effectRadiusStuds = true, "FLASH", Color3.fromRGB(245, 235, 120), 10
+            end
+
+            if isNade then
+                local mainPart = item
+                local dist = (mainPart.Position - camPos).Magnitude
+                if dist <= grenadeMaxDist then
+                    activeGrenades[mainPart] = true
+                    local ui = getOrCreateGrenadeUI(mainPart)
+                    local scrPos, onScreen = camera:WorldToViewportPoint(mainPart.Position)
+                    
+                    if onScreen and scrPos.Z > 0 then
+                        ui.Tag.Position = UDim2.new(0, scrPos.X, 0, scrPos.Y - 6)
+                        ui.Label.Text = string.format("%s [%dm]", nadeType, math.floor(dist))
+                        ui.Label.TextColor3 = nadeColor
+                        ui.Tag.Visible = true
+
+                        if showGrenadePath and mainPart.AssemblyLinearVelocity and mainPart.AssemblyLinearVelocity.Magnitude > 1 then
+                            local vel = mainPart.AssemblyLinearVelocity
+                            local simPos = mainPart.Position
+                            local stepTime = 0.06
+                            local grav = Vector3.new(0, -Workspace.Gravity, 0)
+                            grenadeRayParams.FilterDescendantsInstances = {player.Character, mainPart, camera}
+
+                            for step = 1, #ui.Lines do
+                                local nextPos = simPos + (vel * stepTime) + (0.5 * grav * stepTime * stepTime)
+                                vel = vel + (grav * stepTime)
+                                local castHit = Workspace:Raycast(simPos, nextPos - simPos, grenadeRayParams)
+                                if castHit then nextPos = castHit.Position end
+
+                                local p1, v1 = camera:WorldToViewportPoint(simPos)
+                                local p2, v2 = camera:WorldToViewportPoint(nextPos)
+                                if v1 and v2 and p1.Z > 0 and p2.Z > 0 then
+                                    local lFrame = ui.Lines[step]
+                                    local startV2 = Vector2.new(p1.X, p1.Y)
+                                    local endV2 = Vector2.new(p2.X, p2.Y)
+                                    local lDist = (endV2 - startV2).Magnitude
+                                    local center = (startV2 + endV2) * 0.5
+                                    local angle = math.deg(math.atan2(endV2.Y - startV2.Y, endV2.X - startV2.X))
+                                    lFrame.Size = UDim2.new(0, lDist, 0, 1.5)
+                                    lFrame.Position = UDim2.new(0, center.X, 0, center.Y)
+                                    lFrame.Rotation = angle
+                                    lFrame.BackgroundColor3 = nadeColor
+                                    lFrame.Visible = true
+                                else
+                                    ui.Lines[step].Visible = false
+                                end
+                                if castHit then
+                                    for rem = step + 1, #ui.Lines do ui.Lines[rem].Visible = false end
+                                    break
+                                end
+                                simPos = nextPos
+                            end
+                        else
+                            for _, l in ipairs(ui.Lines) do l.Visible = false end
+                        end
+
+                        local shouldShowRadius = (nadeType == "MOLOTOV" and showMolotovRadius) or (nadeType == "SMOKE" and showSmokeRadius)
+                        if shouldShowRadius then
+                            grenadeRayParams.FilterDescendantsInstances = {player.Character, mainPart, camera}
+                            local groundCast = Workspace:Raycast(mainPart.Position, Vector3.new(0, -60, 0), grenadeRayParams)
+                            local groundPos = groundCast and groundCast.Position or mainPart.Position
+                            local cCenter, cVisible = camera:WorldToViewportPoint(groundPos)
+                            local cEdge, _ = camera:WorldToViewportPoint(groundPos + (camera.CFrame.RightVector * effectRadiusStuds))
+                            if cVisible and cCenter.Z > 0 then
+                                local rPix = (Vector2.new(cEdge.X, cEdge.Y) - Vector2.new(cCenter.X, cCenter.Y)).Magnitude
+                                ui.RadiusCircle.Size = UDim2.new(0, rPix * 2, 0, rPix * 2)
+                                ui.RadiusCircle.Position = UDim2.new(0, cCenter.X, 0, cCenter.Y)
+                                ui.RadiusStroke.Color = nadeColor
+                                ui.RadiusCircle.Visible = true
+                            else
+                                ui.RadiusCircle.Visible = false
+                            end
+                        else
+                            ui.RadiusCircle.Visible = false
+                        end
+                    else
+                        ui.Tag.Visible = false
+                        ui.RadiusCircle.Visible = false
+                        for _, l in ipairs(ui.Lines) do l.Visible = false end
+                    end
+                end
+            end
+        end
+    end
+
+    for inst, data in pairs(grenadePool) do
+        if not activeGrenades[inst] or not inst.Parent then
+            data.Tag:Destroy()
+            data.RadiusCircle:Destroy()
+            for _, l in ipairs(data.Lines) do l:Destroy() end
+            grenadePool[inst] = nil
+        end
+    end
+end
+
+-- ==========================================
+-- PRECISE AIM ENGINE & RAYCAST TARGETING
+-- ==========================================
+local visRayParams = RaycastParams.new()
+visRayParams.FilterType = Enum.RaycastFilterType.Exclude
+visRayParams.IgnoreWater = true
+
+local function isTargetVisible(originPos, targetPart, targetChar)
+    if not visibleCheck then return true end
+    visRayParams.FilterDescendantsInstances = {player.Character, camera}
+    local hit = Workspace:Raycast(originPos, targetPart.Position - originPos, visRayParams)
+    return hit and (hit.Instance:IsDescendantOf(targetChar) or hit.Instance == targetPart)
+end
+
+local function getClosestTarget()
+    if not camera then camera = Workspace.CurrentCamera if not camera then return nil end end
+    local closestTarget = nil
+    local closestDist = aimFov
+    local vp = camera.ViewportSize
+    local screenCenter = Vector2.new(vp.X * 0.5, vp.Y * 0.5)
+    local camPos = camera.CFrame.Position
+    local camLook = camera.CFrame.LookVector
+
+    for _, plr in ipairs(Players:GetPlayers()) do
+        local char = plr.Character
+        if char and plr ~= player and isTargetEnemy(plr, char) then
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            if isEntityAlive(char, hum) then
+                local targetPart = getTargetHitbox(char)
+                if targetPart then
+                    local targetPos = targetPart.Position
+                    if predictionEnabled and targetPart.AssemblyLinearVelocity then
+                        targetPos = targetPos + (targetPart.AssemblyLinearVelocity * predictionFactor)
+                    end
+                    
+                    local dirToTarget = (targetPos - camPos).Unit
+                    if camLook:Dot(dirToTarget) > 0 then
+                        local screenPos, onScreen = camera:WorldToViewportPoint(targetPos)
+                        if onScreen and screenPos.Z > 0 then
+                            local screenDist = (Vector2.new(screenPos.X, screenPos.Y) - screenCenter).Magnitude
+                            if screenDist <= closestDist and isTargetVisible(camPos, targetPart, char) then
+                                closestDist = screenDist
+                                closestTarget = {
+                                    Player = plr,
+                                    Char = char,
+                                    Part = targetPart,
+                                    Hum = hum,
+                                    Position = targetPos
+                                }
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return closestTarget
+end
+
+local triggerRayParams = RaycastParams.new()
+triggerRayParams.FilterType = Enum.RaycastFilterType.Exclude
+triggerRayParams.IgnoreWater = true
+
+local function runMobileTriggerbot()
+    if not triggerbotEnabled then return end
+    local now = tick()
+    if (now - lastTriggerTick) < triggerbotDelay then return end
+    local vp = camera.ViewportSize
+    local ray = camera:ViewportPointToRay(vp.X * 0.5, vp.Y * 0.5)
+    triggerRayParams.FilterDescendantsInstances = {player.Character, camera}
+    local res = Workspace:Raycast(ray.Origin, ray.Direction * 1000, triggerRayParams)
+    if res and res.Instance then
+        local hitChar = res.Instance.Parent
+        local hitPlr = Players:GetPlayerFromCharacter(hitChar) or (hitChar.Parent and Players:GetPlayerFromCharacter(hitChar.Parent))
+        if hitPlr and isTargetEnemy(hitPlr, hitChar) and isEntityAlive(hitChar, hitChar:FindFirstChildOfClass("Humanoid")) then
+            if triggerbotHeadOnly and res.Instance.Name ~= "Head" then return end
+            lastTriggerTick = now
+            if triggerbotMobileAutoFire then
+                pcall(function()
+                    VirtualUser:Button1Down(Vector2.new(0, 0))
+                    task.wait(0.02)
+                    VirtualUser:Button1Up(Vector2.new(0, 0))
+                end)
+            end
+        end
+    end
+end
+
 local function getOrCreateScreenEsp(plr)
     if screenEspCache[plr] then return screenEspCache[plr] end
-    local parts = {}
-    for i = 1, 8 do
-        local line = Instance.new("Frame", overlayContainer)
-        line.BackgroundColor3 = currentTheme.T_Accent
-        line.BorderSizePixel = 0
-        line.Visible = false
-        table.insert(parts, line)
-    end
+    local box = Instance.new("Frame", overlayContainer)
+    box.BackgroundTransparency = 1
+    box.BorderSizePixel = 0
+    box.Visible = false
+
+    local stroke = Instance.new("UIStroke", box)
+    stroke.Color = currentTheme.T_Accent
+    stroke.Thickness = boxThickness
+    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+
     local tagCard = Instance.new("Frame", overlayContainer)
     tagCard.AnchorPoint = Vector2.new(0.5, 1)
     tagCard.Size = UDim2.new(0, 0, 0, 16)
@@ -801,10 +1131,12 @@ local function getOrCreateScreenEsp(plr)
     tagCard.BackgroundTransparency = tagTransparency
     tagCard.BorderSizePixel = 0
     tagCard.Visible = false
+
     Instance.new("UICorner", tagCard).CornerRadius = UDim.new(0, 4)
     local pad = Instance.new("UIPadding", tagCard)
     pad.PaddingRight = UDim.new(0, 5)
     pad.PaddingLeft = UDim.new(0, 5)
+
     local tagLabel = Instance.new("TextLabel", tagCard)
     tagLabel.AutomaticSize = Enum.AutomaticSize.X
     tagLabel.Size = UDim2.new(0, 0, 1, 0)
@@ -812,10 +1144,40 @@ local function getOrCreateScreenEsp(plr)
     tagLabel.TextColor3 = currentTheme.NametagTextColor
     tagLabel.TextSize = espTextSize
     tagLabel.Font = Enum.Font.GothamBold
-    local data = { Parts = parts, TagCard = tagCard, TagLabel = tagLabel, LastText = "" }
+
+    local data = { Box = box, BoxStroke = stroke, TagCard = tagCard, TagLabel = tagLabel, LastText = "" }
     screenEspCache[plr] = data
     return data
 end
+
+table.insert(connections, Players.PlayerRemoving:Connect(function(plr)
+    local cache = screenEspCache[plr]
+    if cache then
+        pcall(function()
+            cache.Box:Destroy()
+            cache.TagCard:Destroy()
+        end)
+        screenEspCache[plr] = nil
+    end
+    local ch = chamsCache[plr]
+    if ch then
+        pcall(function()
+            if ch.Highlight then ch.Highlight:Destroy() end
+            if ch.CrystalFolder then ch.CrystalFolder:Destroy() end
+        end)
+        chamsCache[plr] = nil
+    end
+    local arrow = offScreenArrows[plr]
+    if arrow then
+        pcall(function() arrow:Destroy() end)
+        offScreenArrows[plr] = nil
+    end
+    local sk = skeletonCache[plr]
+    if sk then
+        for _, line in pairs(sk) do pcall(function() line:Destroy() end) end
+        skeletonCache[plr] = nil
+    end
+end))
 
 local function renderTacticalOverlay()
     local camPos = camera.CFrame.Position
@@ -837,91 +1199,17 @@ local function renderTacticalOverlay()
                 if topVisible and topScreen.Z > 0 then
                     local boxHeight = math.abs(bottomScreen.Y - topScreen.Y)
                     local boxWidth = boxHeight * 0.65
-                    local boxPosX = topScreen.X - (boxWidth * 0.5)
-                    local boxPosY = topScreen.Y
                     local side = getPlayerSide(plr)
                     local sideColor = (side == "T") and currentTheme.T_Accent or currentTheme.CT_Accent
 
                     if boxEspEnabled then
-                        for _, p in ipairs(esp.Parts) do p.Visible = false end
-                        if boxMode == "2D Full" then
-                            local line = esp.Parts[1]
-                            line.Size = UDim2.new(0, boxWidth, 0, boxThickness)
-                            line.Position = UDim2.new(0, boxPosX, 0, boxPosY)
-                            line.BackgroundColor3 = sideColor
-                            line.Visible = true
-
-                            local line2 = esp.Parts[2]
-                            line2.Size = UDim2.new(0, boxWidth, 0, boxThickness)
-                            line2.Position = UDim2.new(0, boxPosX, 0, boxPosY + boxHeight)
-                            line2.BackgroundColor3 = sideColor
-                            line2.Visible = true
-
-                            local line3 = esp.Parts[3]
-                            line3.Size = UDim2.new(0, boxThickness, 0, boxHeight)
-                            line3.Position = UDim2.new(0, boxPosX, 0, boxPosY)
-                            line3.BackgroundColor3 = sideColor
-                            line3.Visible = true
-
-                            local line4 = esp.Parts[4]
-                            line4.Size = UDim2.new(0, boxThickness, 0, boxHeight)
-                            line4.Position = UDim2.new(0, boxPosX + boxWidth, 0, boxPosY)
-                            line4.BackgroundColor3 = sideColor
-                            line4.Visible = true
-                        elseif boxMode == "2D Corner" then
-                            local cLenX = math.max(4, boxWidth * 0.25)
-                            local cLenY = math.max(4, boxHeight * 0.25)
-
-                            local tl1 = esp.Parts[1]
-                            tl1.Size = UDim2.new(0, cLenX, 0, boxThickness)
-                            tl1.Position = UDim2.new(0, boxPosX, 0, boxPosY)
-                            tl1.BackgroundColor3 = sideColor
-                            tl1.Visible = true
-
-                            local tl2 = esp.Parts[2]
-                            tl2.Size = UDim2.new(0, boxThickness, 0, cLenY)
-                            tl2.Position = UDim2.new(0, boxPosX, 0, boxPosY)
-                            tl2.BackgroundColor3 = sideColor
-                            tl2.Visible = true
-
-                            local tr1 = esp.Parts[3]
-                            tr1.Size = UDim2.new(0, cLenX, 0, boxThickness)
-                            tr1.Position = UDim2.new(0, boxPosX + boxWidth - cLenX, 0, boxPosY)
-                            tr1.BackgroundColor3 = sideColor
-                            tr1.Visible = true
-
-                            local tr2 = esp.Parts[4]
-                            tr2.Size = UDim2.new(0, boxThickness, 0, cLenY)
-                            tr2.Position = UDim2.new(0, boxPosX + boxWidth, 0, boxPosY)
-                            tr2.BackgroundColor3 = sideColor
-                            tr2.Visible = true
-
-                            local bl1 = esp.Parts[5]
-                            bl1.Size = UDim2.new(0, cLenX, 0, boxThickness)
-                            bl1.Position = UDim2.new(0, boxPosX, 0, boxPosY + boxHeight)
-                            bl1.BackgroundColor3 = sideColor
-                            bl1.Visible = true
-
-                            local bl2 = esp.Parts[6]
-                            bl2.Size = UDim2.new(0, boxThickness, 0, cLenY)
-                            bl2.Position = UDim2.new(0, boxPosX, 0, boxPosY + boxHeight - cLenY)
-                            bl2.BackgroundColor3 = sideColor
-                            bl2.Visible = true
-
-                            local br1 = esp.Parts[7]
-                            br1.Size = UDim2.new(0, cLenX, 0, boxThickness)
-                            br1.Position = UDim2.new(0, boxPosX + boxWidth - cLenX, 0, boxPosY + boxHeight)
-                            br1.BackgroundColor3 = sideColor
-                            br1.Visible = true
-
-                            local br2 = esp.Parts[8]
-                            br2.Size = UDim2.new(0, boxThickness, 0, cLenY)
-                            br2.Position = UDim2.new(0, boxPosX + boxWidth, 0, boxPosY + boxHeight - cLenY)
-                            br2.BackgroundColor3 = sideColor
-                            br2.Visible = true
-                        end
+                        esp.BoxStroke.Color = sideColor
+                        esp.BoxStroke.Thickness = boxThickness
+                        esp.Box.Size = UDim2.new(0, boxWidth, 0, boxHeight)
+                        esp.Box.Position = UDim2.new(0, topScreen.X - (boxWidth * 0.5), 0, topScreen.Y)
+                        esp.Box.Visible = true
                     else
-                        for _, p in ipairs(esp.Parts) do p.Visible = false end
+                        esp.Box.Visible = false
                     end
 
                     if nametagsEnabled then
@@ -944,15 +1232,15 @@ local function renderTacticalOverlay()
                         esp.TagCard.Visible = false
                     end
                 else
-                    for _, p in ipairs(esp.Parts) do p.Visible = false end
+                    esp.Box.Visible = false
                     esp.TagCard.Visible = false
                 end
             else
-                for _, p in ipairs(esp.Parts) do p.Visible = false end
+                esp.Box.Visible = false
                 esp.TagCard.Visible = false
             end
         else
-            for _, p in ipairs(esp.Parts) do p.Visible = false end
+            esp.Box.Visible = false
             esp.TagCard.Visible = false
         end
     end
@@ -1065,6 +1353,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     renderOffScreenArrows()
     updateViewmodelChams()
 
+    -- Reliable Thirdperson Engine
     if thirdpersonEnabled then
         player.CameraMode = Enum.CameraMode.Custom
         player.CameraMinZoomDistance = thirdpersonDistance
@@ -1174,6 +1463,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     end
 end))
 
+-- Input Handlers for Mobile & PC Aiming
 UserInputService.InputBegan:Connect(function(input, gpe)
     if gpe then return end
     if input.UserInputType == Enum.UserInputType.MouseButton2 or input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -1188,6 +1478,7 @@ UserInputService.InputEnded:Connect(function(input, gpe)
     end
 end)
 
+-- Movement Controller Loop
 local groundRayParams = RaycastParams.new()
 groundRayParams.FilterType = Enum.RaycastFilterType.Exclude
 groundRayParams.IgnoreWater = true
@@ -1439,7 +1730,7 @@ insContent.Size = UDim2.new(1, 0, 1, -32)
 insContent.Position = UDim2.new(0, 0, 0, 30)
 insContent.BackgroundTransparency = 1
 insContent.ScrollBarThickness = 2
-insContent.CanvasSize = UDim2.new(0, 0, 0, 950)
+insContent.CanvasSize = UDim2.new(0, 0, 0, 650)
 insContent.ZIndex = 6
 
 local function addInspectorSlider(y, txt, min, max, cur, isFloat, onChange)
@@ -1539,102 +1830,11 @@ local function addInspectorToggle(y, txt, default, onToggle)
     end)
 end
 
-local function addInspectorDropdown(y, txt, options, currentVal, onSelect)
-    local f = Instance.new("Frame", insContent)
-    f.Size = UDim2.new(0.86, 0, 0, 32)
-    f.Position = UDim2.new(0.07, 0, 0, y)
-    f.BackgroundTransparency = 1
-    f.ZIndex = 7
-
-    local t = Instance.new("TextLabel", f)
-    t.Size = UDim2.new(1, 0, 0, 12)
-    t.BackgroundTransparency = 1
-    t.Text = txt
-    t.TextColor3 = currentTheme.TextSecondary
-    t.TextXAlignment = Enum.TextXAlignment.Left
-    t.TextSize = 8.5
-    t.Font = Enum.Font.GothamBold
-    t.ZIndex = 7
-
-    local dropBtn = Instance.new("TextButton", f)
-    dropBtn.Size = UDim2.new(1, 0, 0, 18)
-    dropBtn.Position = UDim2.new(0, 0, 0, 14)
-    dropBtn.BackgroundColor3 = currentTheme.CardBg
-    dropBtn.Text = "  " .. currentVal .. " ▼"
-    dropBtn.TextColor3 = currentTheme.TextPrimary
-    dropBtn.TextSize = 8
-    dropBtn.TextXAlignment = Enum.TextXAlignment.Left
-    dropBtn.Font = Enum.Font.GothamBold
-    dropBtn.ZIndex = 8
-    Instance.new("UICorner", dropBtn).CornerRadius = UDim.new(0, 4)
-    local dropStroke = Instance.new("UIStroke", dropBtn)
-    dropStroke.Color = currentTheme.Border
-
-    local listFrame = Instance.new("Frame", insContent)
-    listFrame.Size = UDim2.new(0.86, 0, 0, #options * 20)
-    listFrame.Position = UDim2.new(0.07, 0, 0, y + 34)
-    listFrame.BackgroundColor3 = currentTheme.Sidebar
-    listFrame.BorderSizePixel = 0
-    listFrame.Visible = false
-    listFrame.ZIndex = 25
-    Instance.new("UICorner", listFrame).CornerRadius = UDim.new(0, 4)
-    local listStroke = Instance.new("UIStroke", listFrame)
-    listStroke.Color = currentTheme.Accent
-
-    local listLayout = Instance.new("UIListLayout", listFrame)
-    listLayout.FillDirection = Enum.FillDirection.Vertical
-
-    for _, opt in ipairs(options) do
-        local optBtn = Instance.new("TextButton", listFrame)
-        optBtn.Size = UDim2.new(1, 0, 0, 20)
-        optBtn.BackgroundTransparency = 1
-        optBtn.Text = "  " .. opt
-        optBtn.TextColor3 = (opt == currentVal) and currentTheme.Accent or currentTheme.TextPrimary
-        optBtn.TextSize = 8
-        optBtn.TextXAlignment = Enum.TextXAlignment.Left
-        optBtn.Font = Enum.Font.GothamBold
-        optBtn.ZIndex = 26
-
-        bindTouch(optBtn, function()
-            currentVal = opt
-            dropBtn.Text = "  " .. opt .. " ▼"
-            listFrame.Visible = false
-            onSelect(opt)
-        end)
-    end
-
-    bindTouch(dropBtn, function()
-        listFrame.Visible = not listFrame.Visible
-    end)
-end
-
 local function openInspectorFor(moduleName)
     insHeader.Text = moduleName
     for _, child in pairs(insContent:GetChildren()) do child:Destroy() end
 
-    if moduleName == "Advanced Chams" then
-        insContent.CanvasSize = UDim2.new(0, 0, 0, 100)
-        addInspectorDropdown(6, "Chams Style", {"Glow", "Metallic / Gold", "Glass / Crystal", "Wireframe", "Flat", "Animated / Texture"}, advancedChamsStyle, function(v) advancedChamsStyle = v end)
-    elseif moduleName == "Box Overlay" then
-        insContent.CanvasSize = UDim2.new(0, 0, 0, 160)
-        addInspectorSlider(6, "Max Distance", 100, 5000, espMaxDist, false, function(v) espMaxDist = v end)
-        addInspectorSlider(38, "Thickness", 1.0, 3.0, boxThickness, true, function(v) boxThickness = v end)
-        addInspectorDropdown(76, "Box Style", {"2D Full", "2D Corner"}, boxMode, function(v) boxMode = v end)
-    elseif moduleName == "Jump Circle" then
-        insContent.CanvasSize = UDim2.new(0, 0, 0, 160)
-        addInspectorSlider(6, "Radius", 3, 15, jumpCircleRadius, false, function(v) jumpCircleRadius = v end)
-        addInspectorSlider(38, "Duration", 0.3, 2.0, jumpCircleDuration, true, function(v) jumpCircleDuration = v end)
-        addInspectorDropdown(76, "Circle Style", {"Gradient Fade", "Blur & Neon", "Particle Ring", "Textured / Wave"}, jumpCircleMode, function(v) jumpCircleMode = v end)
-    elseif moduleName == "Player Trail" then
-        insContent.CanvasSize = UDim2.new(0, 0, 0, 100)
-        addInspectorDropdown(6, "Trail Style", {"Speed-Based Fade", "RGB Rainbow Wave", "Wireframe / Mesh"}, playerTrailMode, function(v) playerTrailMode = v end)
-    elseif moduleName == "Grenade Trail" then
-        insContent.CanvasSize = UDim2.new(0, 0, 0, 100)
-        addInspectorDropdown(6, "Trail Style", {"Glow Rope", "Particle Sparkle"}, grenadeTrailMode, function(v) grenadeTrailMode = v end)
-    elseif moduleName == "Bullet Beams" then
-        insContent.CanvasSize = UDim2.new(0, 0, 0, 100)
-        addInspectorSlider(6, "Duration", 0.1, 2.0, tracerBeamDuration, true, function(v) tracerBeamDuration = v end)
-    elseif moduleName == "Tracking" then
+    if moduleName == "Tracking" then
         insContent.CanvasSize = UDim2.new(0, 0, 0, 580)
         addInspectorSlider(6, "FOV Radius", 50, 400, aimFov, false, function(v) aimFov = v end)
         addInspectorSlider(38, "Speed", 1.0, 50.0, aimbotSpeed, true, function(v) aimbotSpeed = v end)
@@ -1663,6 +1863,9 @@ local function openInspectorFor(moduleName)
     elseif moduleName == "Hitmarkers" then
         insContent.CanvasSize = UDim2.new(0, 0, 0, 100)
         addInspectorToggle(6, "Hit Sound", hitmarkerSoundEnabled, function(v) hitmarkerSoundEnabled = v end)
+    elseif moduleName == "Bullet Beams" then
+        insContent.CanvasSize = UDim2.new(0, 0, 0, 100)
+        addInspectorSlider(6, "Duration", 0.1, 2.0, tracerBeamDuration, true, function(v) tracerBeamDuration = v end)
     elseif moduleName == "Crystal Chams" then
         insContent.CanvasSize = UDim2.new(0, 0, 0, 240)
         addInspectorSlider(6, "Orbit Speed", 1.0, 10.0, crystalOrbitSpeed, true, function(v) crystalOrbitSpeed = v end)
@@ -1776,20 +1979,16 @@ addCard(cPage, "Trigger Assistant", triggerbotEnabled, function(v) triggerbotEna
 addCard(mPage, "Bhop Engine", bunnyHopEnabled, function(v) bunnyHopEnabled = v end)
 addCard(mPage, "Speed Boost", speedEnabled, function(v) speedEnabled = v end)
 addCard(mPage, "Flight", flightEnabled, function(v) flightEnabled = v end)
-addCard(mPage, "Jump Circle", jumpCircleEnabled, function(v) jumpCircleEnabled = v end)
-addCard(mPage, "Player Trail", playerTrailEnabled, function(v) playerTrailEnabled = v end)
 
 addCard(ePage, "Nametags", nametagsEnabled, function(v) nametagsEnabled = v end)
 addCard(ePage, "Skeleton", skeletonEspEnabled, function(v) skeletonEspEnabled = v end)
 addCard(ePage, "Arrows", offScreenArrowsEnabled, function(v) offScreenArrowsEnabled = v end)
 addCard(ePage, "Crystal Chams", chamsEnabled, function(v) chamsEnabled = v end)
-addCard(ePage, "Advanced Chams", advancedChamsEnabled, function(v) advancedChamsEnabled = v end)
 addCard(ePage, "Highlight", highlightEnabled, function(v) highlightEnabled = v end)
 addCard(ePage, "Box Overlay", boxEspEnabled, function(v) boxEspEnabled = v end)
 addCard(ePage, "Head Dot", headDotEnabled, function(v) headDotEnabled = v end)
 addCard(ePage, "Snaplines", tracersEnabled, function(v) tracersEnabled = v end)
 addCard(ePage, "Grenade ESP", grenadeEspEnabled, function(v) grenadeEspEnabled = v end)
-addCard(ePage, "Grenade Trail", grenadeTrailEnabled, function(v) grenadeTrailEnabled = v end)
 
 addCard(vPage, "Crosshair", customCrosshairEnabled, function(v) customCrosshairEnabled = v updateCrosshairStyle() end)
 addCard(vPage, "Hitmarkers", hitmarkerEnabled, function(v) hitmarkerEnabled = v end)
