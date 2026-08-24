@@ -124,20 +124,9 @@ local bulletTracersEnabled = false
 local bulletTracerMode = "Beam Tracers"
 local tracerBeamDuration = 0.65
 
+-- Advanced Chams Styles
 local advancedChamsEnabled = false
-local advancedChamsStyle = "Glow"
-
--- Advanced World & Screen Customization
-local worldModulationEnabled = false
-local worldModulationColor = Color3.fromRGB(25, 25, 35)
-
-local customFogEnabled = false
-local fogStart = 0
-local fogEnd = 1000
-local fogColor = Color3.fromRGB(40, 42, 50)
-
-local customAmbientEnabled = false
-local ambientColor = Color3.fromRGB(210, 45, 55)
+local advancedChamsStyle = "Glow" -- "Glow", "Metallic / Gold", "Glass / Crystal", "Wireframe", "Flat", "Animated / Texture"
 
 local skeletonEspEnabled = false
 local skeletonThickness = 1.2
@@ -501,6 +490,9 @@ local function spawnJumpCircle(pos)
     end
 end
 
+-- ==========================================
+-- ADVANCED CHAMS APPLIER
+-- ==========================================
 local function applyAdvancedChams(char)
     if not char then return end
     for _, part in ipairs(char:GetDescendants()) do
@@ -528,26 +520,6 @@ local function applyAdvancedChams(char)
                 end
             end
         end
-    end
-end
-
--- World Modulation & Environment Applier
-local function applyWorldModulation()
-    if worldModulationEnabled then
-        for _, obj in ipairs(Workspace:GetDescendants()) do
-            if obj:IsA("BasePart") and not Players:GetPlayerFromCharacter(obj.Parent) and obj.Name ~= "GestioJumpCircle" and obj.Name ~= "GestioBeamTracer" then
-                obj.Color = worldModulationColor
-            end
-        end
-    end
-    if customFogEnabled then
-        Lighting.FogStart = fogStart
-        Lighting.FogEnd = fogEnd
-        Lighting.FogColor = fogColor
-    end
-    if customAmbientEnabled then
-        Lighting.Ambient = ambientColor
-        Lighting.OutdoorAmbient = ambientColor
     end
 end
 
@@ -642,11 +614,10 @@ table.insert(connections, RunService.RenderStepped:Connect(function()
             end
         end
     end
-
-    applyWorldModulation()
 end))
 
 local lastJumpTick = 0
+table.Inst = table.insert
 table.insert(connections, RunService.RenderStepped:Connect(function()
     if not jumpCircleEnabled then return end
     local char = player.Character
@@ -1642,17 +1613,7 @@ local function openInspectorFor(moduleName)
     insHeader.Text = moduleName
     for _, child in pairs(insContent:GetChildren()) do child:Destroy() end
 
-    if moduleName == "World Modulation" then
-        insContent.CanvasSize = UDim2.new(0, 0, 0, 60)
-        addInspectorToggle(6, "Enable World Mod", worldModulationEnabled, function(v) worldModulationEnabled = v end)
-    elseif moduleName == "Fog Controller" then
-        insContent.CanvasSize = UDim2.new(0, 0, 0, 100)
-        addInspectorToggle(6, "Custom Fog", customFogEnabled, function(v) customFogEnabled = v end)
-        addInspectorSlider(32, "Fog End", 100, 100000, fogEnd, false, function(v) fogEnd = v end)
-    elseif moduleName == "Ambient Lighting" then
-        insContent.CanvasSize = UDim2.new(0, 0, 0, 60)
-        addInspectorToggle(6, "Custom Ambient", customAmbientEnabled, function(v) customAmbientEnabled = v end)
-    elseif moduleName == "Advanced Chams" then
+    if moduleName == "Advanced Chams" then
         insContent.CanvasSize = UDim2.new(0, 0, 0, 100)
         addInspectorDropdown(6, "Chams Style", {"Glow", "Metallic / Gold", "Glass / Crystal", "Wireframe", "Flat", "Animated / Texture"}, advancedChamsStyle, function(v) advancedChamsStyle = v end)
     elseif moduleName == "Box Overlay" then
@@ -1840,9 +1801,6 @@ addCard(vPage, "Thirdperson", thirdpersonEnabled, function(v) thirdpersonEnabled
 addCard(envPage, "Night Mode", nightModeEnabled, function(v) nightModeEnabled = v end)
 addCard(envPage, "FullBright", fullBrightEnabled, function(v) fullBrightEnabled = v end)
 addCard(envPage, "Anti-Flash", antiFlashEnabled, function(v) antiFlashEnabled = v end)
-addCard(envPage, "World Modulation", worldModulationEnabled, function(v) worldModulationEnabled = v end)
-addCard(envPage, "Fog Controller", customFogEnabled, function(v) customFogEnabled = v end)
-addCard(envPage, "Ambient Lighting", customAmbientEnabled, function(v) customAmbientEnabled = v end)
 
 addCard(micsPage, "Anti-AFK", true, function(v) end)
 addCard(micsPage, "Theme Sync", true, function(v) end)
