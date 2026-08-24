@@ -617,7 +617,6 @@ table.insert(connections, RunService.RenderStepped:Connect(function()
 end))
 
 local lastJumpTick = 0
-table.Inst = table.insert
 table.insert(connections, RunService.RenderStepped:Connect(function()
     if not jumpCircleEnabled then return end
     local char = player.Character
