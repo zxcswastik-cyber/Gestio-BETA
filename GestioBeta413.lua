@@ -191,7 +191,7 @@ local aimSensitivity = 1.0
 local lockOnJump = true
 
 -- ==========================================
--- CRIMSON NEON HITMARKER
+-- CRIMSON NEON HITMARKER & THIRD PERSON
 -- ==========================================
 local hitmarkerEnabled = false
 local hitmarkerDuration = 0.28
@@ -203,11 +203,7 @@ local hitmarkerBusy = false
 local thirdPersonEnabled = false
 local thirdPersonDistance = 12
 local thirdPersonHeight = 1.5
-
-local debugModeEnabled = false
-local debugLog = {}
-local debugMaxEntries = 120
-local debugGui = nil
+local thirdPersonPreviousOffset = nil
 
 -- ==========================================
 -- RECOIL CONTROL SYSTEM (RCS) VARIABLES
@@ -478,9 +474,45 @@ local function showHitmarker()
     end)
 end
 
--- Expose a safe trigger for the weapon/hit logic if it becomes available.
 if genv then
     genv.GestioShowHitmarker = showHitmarker
+end
+
+-- ==========================================
+-- THIRD PERSON CAMERA CONTROLLER
+-- ==========================================
+local function applyThirdPerson()
+    local cam = Workspace.CurrentCamera
+    local char = player.Character
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    if not cam or not hum then return end
+
+    if thirdPersonEnabled then
+        if thirdPersonPreviousOffset == nil then
+            thirdPersonPreviousOffset = hum.CameraOffset
+        end
+        cam.CameraSubject = hum
+        cam.CameraType = Enum.CameraType.Custom
+        hum.CameraOffset = Vector3.new(0, thirdPersonHeight, -thirdPersonDistance)
+    else
+        if thirdPersonPreviousOffset ~= nil then
+            hum.CameraOffset = thirdPersonPreviousOffset
+            thirdPersonPreviousOffset = nil
+        else
+            hum.CameraOffset = Vector3.zero
+        end
+    end
+end
+
+local function setThirdPersonEnabled(enabled)
+    thirdPersonEnabled = enabled
+    applyThirdPerson()
+end
+
+local function refreshThirdPerson()
+    if thirdPersonEnabled then
+        applyThirdPerson()
+    end
 end
 
 -- ==========================================
@@ -534,103 +566,7 @@ local function clearActiveJumpCircle()
     activeJumpCircleData = nil
 end
 
--- ==========================================
--- GESTIO DEBUG MODE
--- ==========================================
-local function debugPush(tag, message)
-    if not debugModeEnabled then return end
-    local entry = string.format("[%s] %s | %s", os.date("%H:%M:%S"), tostring(tag), tostring(message))
-    table.insert(debugLog, entry)
-    while #debugLog > debugMaxEntries do table.remove(debugLog, 1) end
-    print("[GESTIO DEBUG] " .. entry)
-end
-
-local function debugState()
-    local char = player.Character
-    local hum = char and char:FindFirstChildOfClass("Humanoid")
-    local hrp = char and char:FindFirstChild("HumanoidRootPart")
-    local camera = Workspace.CurrentCamera
-
-    return table.concat({
-        "=== GESTIO 413 DEBUG ===",
-        "Mobile: " .. tostring(UserInputService.TouchEnabled),
-        "Character: " .. tostring(char ~= nil),
-        "Humanoid: " .. tostring(hum ~= nil),
-        "Alive: " .. tostring(char and hum and isEntityAlive(char, hum) or false),
-        "MoveDirection: " .. tostring(hum and hum.MoveDirection or Vector3.zero),
-        "Velocity: " .. tostring(hrp and hrp.AssemblyLinearVelocity or Vector3.zero),
-        "CameraType: " .. tostring(camera and camera.CameraType),
-        "CameraSubject: " .. tostring(camera and camera.CameraSubject),
-        "CameraOffset: " .. tostring(hum and hum.CameraOffset or Vector3.zero),
-        "ThirdPerson: " .. tostring(thirdPersonEnabled),
-        "ThirdDistance: " .. tostring(thirdPersonDistance),
-        "ThirdHeight: " .. tostring(thirdPersonHeight),
-        "Slide: " .. tostring(slideEnabled),
-        "Sliding: " .. tostring(isSliding),
-        "Flight: " .. tostring(flightEnabled),
-        "Speed: " .. tostring(speedEnabled),
-        "Bhop: " .. tostring(bhopEnabled),
-        "Hitmarker: " .. tostring(hitmarkerEnabled),
-        "========================"
-    }, "\n")
-end
-
-local function debugCopy()
-    local report = debugState()
-    if setclipboard then
-        pcall(setclipboard, report)
-    end
-    print(report)
-    debugPush("COPY", "Debug report generated")
-    return report
-end
-
-local function createDebugGui()
-    if debugGui or not mainContainer then return end
-
-    debugGui = Instance.new("TextButton")
-    debugGui.Name = "GestioDebugButton"
-    debugGui.Size = UDim2.new(0, 58, 0, 38)
-    debugGui.Position = UDim2.new(1, -70, 0, 12)
-    debugGui.BackgroundColor3 = currentTheme.CardBg
-    debugGui.BackgroundTransparency = 0.15
-    debugGui.Text = "DEBUG"
-    debugGui.TextSize = 10
-    debugGui.Font = Enum.Font.GothamBold
-    debugGui.TextColor3 = currentTheme.Accent
-    debugGui.ZIndex = 100
-    debugGui.Visible = false
-    debugGui.Parent = mainContainer
-
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 8)
-    corner.Parent = debugGui
-
-    local stroke = Instance.new("UIStroke")
-    stroke.Color = currentTheme.Border
-    stroke.Thickness = 1
-    stroke.Parent = debugGui
-
-    table.insert(connections, debugGui.Activated:Connect(function()
-        debugCopy()
-    end))
-end
-
-createDebugGui()
-
-table.insert(connections, ScriptContext.Error:Connect(function(message, trace, scriptInstance)
-    if debugModeEnabled then
-        debugPush("ERROR", tostring(message) .. " | Script=" .. tostring(scriptInstance) .. " | " .. tostring(trace))
-    end
-end))
-
 local function cleanup()
-    debugModeEnabled = false
-    debugLog = {}
-    pcall(function()
-        if debugGui then debugGui:Destroy() end
-        debugGui = nil
-    end)
     pcall(function() setThirdPersonEnabled(false) end)
     for _, c in pairs(connections) do 
         pcall(function() c:Disconnect() end) 
@@ -840,7 +776,7 @@ local function isEntityAlive(char, hum)
 end
 
 -- ==========================================
--- VISIBILITY CHECK SYSTEM (Raycast для стен)
+-- VISIBILITY CHECK SYSTEM
 -- ==========================================
 local wallRayParams = RaycastParams.new()
 wallRayParams.FilterType = Enum.RaycastFilterType.Exclude
@@ -1773,7 +1709,6 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         camera.CFrame = camera.CFrame * CFrame.Angles(rcsComp * rcsPitchFactor, 0, 0)
     end
 
-    -- Мгновенный снап-аимбот (за миллисекунды)
     if aimbotEnabled and isAiming then
         if not lockedTarget or not isEntityAlive(lockedTarget.Char, lockedTarget.Hum) then
             lockedTarget = getClosestTarget()
@@ -1940,6 +1875,16 @@ end
 local mobileSlideDragging = false
 local mobileSlideToggleActive = false
 
+local function positionMobileSlideButton(jumpBtn)
+    if not mobileSlideBtn or not jumpBtn then return end
+    mobileSlideBtn.Position = UDim2.new(
+        jumpBtn.Position.X.Scale,
+        jumpBtn.Position.X.Offset - 60,
+        jumpBtn.Position.Y.Scale,
+        jumpBtn.Position.Y.Offset
+    )
+end
+
 local function updateMobileSlideIndicator()
     if not mobileSlideBtn then return end
 
@@ -2056,13 +2001,11 @@ local function createMobileSlideButton()
     stroke.Thickness = 1.2
     stroke.Parent = mobileSlideBtn
 
-    -- Tap toggles Slide. No global InputChanged/InputEnded hooks.
     local tapConn = mobileSlideBtn.Activated:Connect(function()
         toggleMobileSlide()
     end)
     table.insert(connections, tapConn)
 
-    -- Safe drag using the button's own drag events.
     local dragStart = nil
     local buttonStart = nil
     local dragConn = mobileSlideBtn.InputBegan:Connect(function(input)
@@ -2140,21 +2083,18 @@ createMobileSlideButton()
 hookMobileJumpButton()
 
 table.insert(connections, player.CharacterAdded:Connect(function(char)
-    if debugModeEnabled then debugPush("RESPAWN", "CharacterAdded") end
     thirdPersonPreviousOffset = nil
     task.defer(function()
         if thirdPersonEnabled then
             applyThirdPerson()
         end
     end)
-mobileSlideToggleActive = false
+    mobileSlideToggleActive = false
     mobileSlideDragging = false
     isSliding = false
     currentSlideVel = Vector3.zero
-    isSliding = false
     mobileSlideInputActive = false
     mobileSlideInput = nil
-    currentSlideVel = Vector3.zero
     defaultHipHeightCaptured = false
     local hum = char:WaitForChild("Humanoid", 5)
     if hum then
@@ -2207,67 +2147,29 @@ end)
 table.insert(connections, inEndedConn)
 
 -- ==========================================
--- HITMARKER TARGET HEALTH MONITOR
+-- HITMARKER TARGET HEALTH MONITOR (ALL ENEMIES)
 -- ==========================================
 table.insert(connections, RunService.Heartbeat:Connect(function()
     if not hitmarkerEnabled then return end
 
-    local target = lockedTarget
-    local char = target and target.Char
-    local hum = target and target.Hum
+    for _, targetPlr in ipairs(Players:GetPlayers()) do
+        if targetPlr ~= player then
+            local char = targetPlr.Character
+            local hum = char and char:FindFirstChildOfClass("Humanoid")
 
-    if not char or not hum or not isEntityAlive(char, hum) then
-        return
+            if char and hum and isTargetEnemy(targetPlr, char) and isEntityAlive(char, hum) then
+                local currentHealth = hum.Health
+                local previousHealth = hitmarkerLastHealth[hum]
+
+                if previousHealth and currentHealth < previousHealth and (previousHealth - currentHealth) > 0.01 then
+                    showHitmarker()
+                end
+
+                hitmarkerLastHealth[hum] = currentHealth
+            end
+        end
     end
-
-    local currentHealth = hum.Health
-    local previousHealth = hitmarkerLastHealth[hum]
-
-    if previousHealth and currentHealth < previousHealth and (previousHealth - currentHealth) > 0.01 then
-        showHitmarker()
-    end
-
-    hitmarkerLastHealth[hum] = currentHealth
 end))
-
--- ==========================================
--- THIRD PERSON CAMERA (MOBILE FRIENDLY)
--- ==========================================
-local thirdPersonPreviousOffset = nil
-
-local function applyThirdPerson()
-    local camera = Workspace.CurrentCamera
-    local char = player.Character
-    local hum = char and char:FindFirstChildOfClass("Humanoid")
-    if not camera or not hum then return end
-
-    if thirdPersonEnabled then
-        if thirdPersonPreviousOffset == nil then
-            thirdPersonPreviousOffset = hum.CameraOffset
-        end
-        camera.CameraSubject = hum
-        camera.CameraType = Enum.CameraType.Custom
-        hum.CameraOffset = Vector3.new(0, thirdPersonHeight, thirdPersonDistance)
-    else
-        if thirdPersonPreviousOffset ~= nil then
-            hum.CameraOffset = thirdPersonPreviousOffset
-            thirdPersonPreviousOffset = nil
-        else
-            hum.CameraOffset = Vector3.zero
-        end
-    end
-end
-
-local function setThirdPersonEnabled(enabled)
-    thirdPersonEnabled = enabled
-    applyThirdPerson()
-end
-
-local function refreshThirdPerson()
-    if thirdPersonEnabled then
-        applyThirdPerson()
-    end
-end
 
 -- ==========================================
 -- UNIFIED PHYSICS & KINEMATICS HEARTBEAT
@@ -2287,7 +2189,7 @@ table.insert(connections, RunService.Heartbeat:Connect(function(dt)
     local finalVelocity = nil
     local activeMode = "Normal"
 
-    -- 1. FLIGHT (Highest Priority)
+    -- 1. FLIGHT
     if flightEnabled then
         activeMode = "Flight"
         local camLook = camera.CFrame.LookVector
@@ -2347,14 +2249,13 @@ table.insert(connections, RunService.Heartbeat:Connect(function(dt)
         )
     end
 
-    -- ЕДИНСТВЕННАЯ ТОЧКА ЗАПИСИ VELOCITY
     if finalVelocity then
         hrp.AssemblyLinearVelocity = finalVelocity
     end
 end))
 
 -- ==========================================
--- UI SCOPE FIX (prevents the main chunk from exceeding Luau local-variable limit)
+-- UI SCOPE FIX
 -- ==========================================
 local function buildGestioUI()
 
@@ -2576,7 +2477,7 @@ local function makeCategorySection(page, title, layoutOrder)
 
     local grid = Instance.new("UIGridLayout", gridFrame)
     grid.CellSize = UDim2.new(0, 58, 0, 58)
-    grid.CellPadding = UDim2.new(0, 5, 0, 5)
+    grid.CellPadding = UDim.new(0, 5, 0, 5)
 
     return gridFrame
 end
@@ -3082,14 +2983,6 @@ addCard(envLightSection, "Anti-Flash", antiFlashEnabled, function(v) antiFlashEn
 
 -- MISC TAB
 local miscGeneralSection = makeCategorySection(micsPage, "Utilities", 1)
-addCard(miscGeneralSection, "Debug Mode", debugModeEnabled, function(v)
-    debugModeEnabled = v
-    if debugGui then
-        debugGui.Visible = v
-        debugGui.Text = v and "COPY" or "DEBUG"
-    end
-    if v then debugPush("START", "Debug Mode enabled") end
-end)
 addCard(miscGeneralSection, "Third Person", thirdPersonEnabled, function(v)
     setThirdPersonEnabled(v)
 end)
