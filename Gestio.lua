@@ -83,7 +83,7 @@ local themeLibrary = {
         GridSquare = Color3.fromRGB(30, 32, 36),
         Enemy_Accent = Color3.fromRGB(235, 75, 75),
         Enemy_Fill = Color3.fromRGB(220, 50, 50),
-        Enemy_Hidden = Color3.fromRGB(120, 125, 135), -- Серый цвет для противников за стеной
+        Enemy_Hidden = Color3.fromRGB(120, 125, 135),
         NametagTextColor = Color3.fromRGB(255, 255, 255),
         HealthHigh = Color3.fromRGB(46, 204, 113),
         HealthMid = Color3.fromRGB(241, 196, 15),
@@ -229,7 +229,7 @@ local espTextSize = 8.5
 local tagTransparency = 0.25
 local tagBgColor = Color3.fromRGB(16, 17, 20)
 local tagOffsetY = 2.6
-local tagShowWeapon = true
+local tagShowWeapon = false
 
 local boxEspEnabled = false
 local cornerBoxEnabled = false
@@ -1246,7 +1246,6 @@ local function renderTacticalOverlay()
             local dist = (rootPart.Position - camPos).Magnitude
 
             if dist <= espMaxDist then
-                -- Проверяем, виден ли противник в поле зрения (без преград)
                 local isVisible = isVisibleThroughWalls(head or rootPart, char)
                 local sideColor = isVisible and currentTheme.Enemy_Accent or currentTheme.Enemy_Hidden
 
@@ -1323,7 +1322,6 @@ local function renderTacticalOverlay()
                         end
                     end
 
-                    -- [ИСПРАВЛЕНО]: Логика Health Bar теперь корректно работает
                     if (boxEspEnabled or cornerBoxEnabled) and healthBarEnabled and hum then
                         local maxHp = hum.MaxHealth > 0 and hum.MaxHealth or 100
                         local curHp = math.clamp(hum.Health, 0, maxHp)
@@ -1351,16 +1349,26 @@ local function renderTacticalOverlay()
                         esp.HealthBarBg.Visible = false
                     end
 
-                    -- [ИЗМЕНЕНО]: Намтеги сделаны короче и компактнее
                     if nametagsEnabled then
                         esp.TagCard.BackgroundTransparency = tagTransparency
                         esp.TagCardStroke.Color = currentTheme.Border
                         esp.TagLabel.TextSize = espTextSize
 
-                        local infoText = string.format("%d", math.floor(dist))
+                        local parts = {}
                         if espShowHealth and hum then
-                            infoText = string.format("%dHP | %dm", math.floor(hum.Health), math.floor(dist))
+                            table.insert(parts, string.format("%dHP", math.floor(hum.Health)))
                         end
+                        if espShowDistance then
+                            table.insert(parts, string.format("%dm", math.floor(dist)))
+                        end
+                        if tagShowWeapon then
+                            local tool = char:FindFirstChildOfClass("Tool")
+                            if tool then
+                                table.insert(parts, tool.Name)
+                            end
+                        end
+
+                        local infoText = #parts > 0 and table.concat(parts, " | ") or (plr.DisplayName or plr.Name)
 
                         if esp.LastText ~= infoText then
                             esp.TagLabel.Text = infoText
@@ -1506,7 +1514,6 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         camera.CFrame = camera.CFrame * CFrame.Angles(rcsComp * rcsPitchFactor, 0, 0)
     end
 
-    -- Мгновенный снап-аимбот (за миллисекунды)
     if aimbotEnabled and isAiming then
         if not lockedTarget or not isEntityAlive(lockedTarget.Char, lockedTarget.Hum) then
             lockedTarget = getClosestTarget()
