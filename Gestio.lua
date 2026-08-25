@@ -1,8 +1,7 @@
 -- ==============================================================================
--- [Gestio UI - Blox Strike Ultimate Mobile Engine (Full Suite 2600+ Lines)]
--- Version: 5.4.1 Enterprise Secure Injection Edition
+-- [Gestio UI - Blox Strike Ultimate Mobile Engine (Full Suite 2400+ Lines)]
+-- Version: 5.3.0 Enterprise Full Source Edition (Integrated Grenade Danger Engine)
 -- Target Game: Blox Strike (Roblox)
--- Architecture: Protected Context Pipeline & Async Tree Scanner
 -- ==============================================================================
 
 pcall(function()
@@ -28,38 +27,29 @@ local TweenService = game:GetService("TweenService")
 local HttpService = game:GetService("HttpService")
 
 -- ==========================================
--- CLIENT ENVIRONMENT VALIDATION (NON-BLOCKING)
+-- CLIENT ENVIRONMENT VALIDATION
 -- ==========================================
-local player = Players.LocalPlayer or Players:FindFirstChildOfClass("Player")
-local camera = Workspace.CurrentCamera or Workspace:FindFirstChildOfClass("Camera")
-local defaultCameraFOV = 70
+local player = Players.LocalPlayer or Players:GetPlayers()[1]
+if not player then
+    player = Players.PlayerAdded:Wait()
+end
 
-pcall(function()
-    if camera then
-        defaultCameraFOV = camera.FieldOfView
-    end
-end)
+local camera = Workspace.CurrentCamera or Workspace:FindFirstChildOfClass("Camera")
 
 local function getSafeGui()
-    if gethui then
-        local success, res = pcall(gethui)
-        if success and res then return res end
-    end
-    
-    if player then
-        local pGui = player:FindFirstChild("PlayerGui")
-        if pGui then return pGui end
-    end
-
-    local testGui = Instance.new("ScreenGui")
-    testGui.Name = "GestioPermCheck"
-    local success = pcall(function()
-        testGui.Parent = CoreGui
-        testGui:Destroy()
+    local success, result = pcall(function()
+        if gethui then
+            return gethui()
+        end
     end)
-    if success then return CoreGui end
-
-    return player and player:WaitForChild("PlayerGui", 3) or CoreGui
+    if success and result then return result end
+    
+    success, result = pcall(function()
+        return CoreGui
+    end)
+    if success and result then return result end
+    
+    return player:WaitForChild("PlayerGui", 2) or player.PlayerGui
 end
 
 local targetGui = getSafeGui()
@@ -201,7 +191,7 @@ local currentSpinAngle = 0
 local antiAimYawMode = "Spin"
 
 -- ==========================================
--- MOVEMENT, BHOP, SLIDE & AUTO-STRAFE
+-- MOVEMENT, BHOP & SLIDE VARIABLES
 -- ==========================================
 local bunnyHopEnabled = false
 local bhopAutoJump = false
@@ -210,9 +200,6 @@ local bhopSpeedBoost = 1.35
 local bhopJumpPower = 52
 local isMobileJumpHeld = false
 local lastMoveDirection = Vector3.zero
-
-local autoStrafeEnabled = false
-local strafeStrength = 1.0
 
 local slideEnabled = false
 local isSliding = false
@@ -279,11 +266,8 @@ local jumpCircleHeightOffset = -2.8
 local activeJumpCircleData = nil
 
 -- ==========================================
--- ENVIRONMENT, LIGHTING & FOV CHANGER
+-- ENVIRONMENT & LIGHTING VARIABLES
 -- ==========================================
-local customFovEnabled = false
-local customFovValue = 95
-
 local antiFlashEnabled = true
 local fullBrightEnabled = false
 local removeFogEnabled = true
@@ -333,36 +317,17 @@ local nightPresets = {
 }
 
 local defaultLighting = {
-    Brightness = 2,
-    ClockTime = 14,
-    GlobalShadows = true,
-    Ambient = Color3.fromRGB(128, 128, 128),
-    OutdoorAmbient = Color3.fromRGB(128, 128, 128),
-    FogEnd = 100000,
-    FogColor = Color3.fromRGB(192, 192, 192)
+    Brightness = Lighting.Brightness,
+    ClockTime = Lighting.ClockTime,
+    GlobalShadows = Lighting.GlobalShadows,
+    Ambient = Lighting.Ambient,
+    OutdoorAmbient = Lighting.OutdoorAmbient,
+    FogEnd = Lighting.FogEnd,
+    FogColor = Lighting.FogColor
 }
 
-pcall(function()
-    defaultLighting.Brightness = Lighting.Brightness
-    defaultLighting.ClockTime = Lighting.ClockTime
-    defaultLighting.GlobalShadows = Lighting.GlobalShadows
-    defaultLighting.Ambient = Lighting.Ambient
-    defaultLighting.OutdoorAmbient = Lighting.OutdoorAmbient
-    defaultLighting.FogEnd = Lighting.FogEnd
-    defaultLighting.FogColor = Lighting.FogColor
-end)
-
 -- ==========================================
--- KROATON INFO HUD VARIABLES
--- ==========================================
-local infoHudEnabled = false
-local infoHudShowFps = true
-local infoHudShowPing = true
-local infoHudShowSpeed = true
-local infoHudShowFov = true
-
--- ==========================================
--- DISPLAY CONTAINERS SETUP (SAFELY INITIALIZED)
+-- DISPLAY CONTAINERS SETUP
 -- ==========================================
 local mainContainer = Instance.new("ScreenGui")
 mainContainer.Name = "GestioMainContainer"
@@ -374,109 +339,11 @@ mainContainer.Parent = targetGui
 local overlayContainer = Instance.new("Folder", mainContainer)
 overlayContainer.Name = "Gestio_2DOverlay"
 
-local dangerOverlayFolder = nil
-local jumpCircleFolder = nil
+local dangerOverlayFolder = Instance.new("Folder", Workspace)
+dangerOverlayFolder.Name = "Gestio_GrenadeDangerWorld"
 
-local function getOrCreateDangerFolder()
-    if dangerOverlayFolder and dangerOverlayFolder.Parent then return dangerOverlayFolder end
-    pcall(function()
-        dangerOverlayFolder = Workspace:FindFirstChild("Gestio_GrenadeDangerWorld")
-        if not dangerOverlayFolder then
-            dangerOverlayFolder = Instance.new("Folder")
-            dangerOverlayFolder.Name = "Gestio_GrenadeDangerWorld"
-            dangerOverlayFolder.Parent = Workspace
-        end
-    end)
-    return dangerOverlayFolder
-end
-
-local function getOrCreateJumpFolder()
-    if jumpCircleFolder and jumpCircleFolder.Parent then return jumpCircleFolder end
-    pcall(function()
-        jumpCircleFolder = Workspace:FindFirstChild("Gestio_JumpCircleWorld")
-        if not jumpCircleFolder then
-            jumpCircleFolder = Instance.new("Folder")
-            jumpCircleFolder.Name = "Gestio_JumpCircleWorld"
-            jumpCircleFolder.Parent = Workspace
-        end
-    end)
-    return jumpCircleFolder
-end
-
--- ==========================================
--- KROATON HUD COMPONENT INSTANTIATION
--- ==========================================
-local hudContainer = Instance.new("Frame", mainContainer)
-hudContainer.Name = "KroatonHUD_Frame"
-hudContainer.AnchorPoint = Vector2.new(1, 0)
-hudContainer.Position = UDim2.new(1, -14, 0, 45)
-hudContainer.Size = UDim2.new(0, 160, 0, 105)
-hudContainer.BackgroundColor3 = Color3.fromRGB(18, 19, 22)
-hudContainer.BackgroundTransparency = 0.15
-hudContainer.BorderSizePixel = 0
-hudContainer.Visible = false
-hudContainer.ZIndex = 50
-
-Instance.new("UICorner", hudContainer).CornerRadius = UDim.new(0, 7)
-local hudStroke = Instance.new("UIStroke", hudContainer)
-hudStroke.Color = currentTheme.Accent
-hudStroke.Thickness = 1
-hudStroke.Transparency = 0.2
-
-local hudTitle = Instance.new("TextLabel", hudContainer)
-hudTitle.Size = UDim2.new(1, -16, 0, 20)
-hudTitle.Position = UDim2.new(0, 8, 0, 5)
-hudTitle.BackgroundTransparency = 1
-hudTitle.Font = Enum.Font.GothamBold
-hudTitle.TextSize = 11
-hudTitle.TextColor3 = currentTheme.Accent
-hudTitle.TextXAlignment = Enum.TextXAlignment.Left
-hudTitle.Text = "KROATON HUD"
-hudTitle.ZIndex = 51
-
-local hudFpsLabel = Instance.new("TextLabel", hudContainer)
-hudFpsLabel.Size = UDim2.new(1, -16, 0, 16)
-hudFpsLabel.Position = UDim2.new(0, 8, 0, 26)
-hudFpsLabel.BackgroundTransparency = 1
-hudFpsLabel.Font = Enum.Font.Gotham
-hudFpsLabel.TextSize = 9.5
-hudFpsLabel.TextColor3 = Color3.fromRGB(225, 228, 232)
-hudFpsLabel.TextXAlignment = Enum.TextXAlignment.Left
-hudFpsLabel.Text = "FPS: 60"
-hudFpsLabel.ZIndex = 51
-
-local hudPingLabel = Instance.new("TextLabel", hudContainer)
-hudPingLabel.Size = UDim2.new(1, -16, 0, 16)
-hudPingLabel.Position = UDim2.new(0, 8, 0, 44)
-hudPingLabel.BackgroundTransparency = 1
-hudPingLabel.Font = Enum.Font.Gotham
-hudPingLabel.TextSize = 9.5
-hudPingLabel.TextColor3 = Color3.fromRGB(225, 228, 232)
-hudPingLabel.TextXAlignment = Enum.TextXAlignment.Left
-hudPingLabel.Text = "PING: 0 ms"
-hudPingLabel.ZIndex = 51
-
-local hudSpeedLabel = Instance.new("TextLabel", hudContainer)
-hudSpeedLabel.Size = UDim2.new(1, -16, 0, 16)
-hudSpeedLabel.Position = UDim2.new(0, 8, 0, 62)
-hudSpeedLabel.BackgroundTransparency = 1
-hudSpeedLabel.Font = Enum.Font.Gotham
-hudSpeedLabel.TextSize = 9.5
-hudSpeedLabel.TextColor3 = Color3.fromRGB(225, 228, 232)
-hudSpeedLabel.TextXAlignment = Enum.TextXAlignment.Left
-hudSpeedLabel.Text = "SPEED: 0"
-hudSpeedLabel.ZIndex = 51
-
-local hudFovLabel = Instance.new("TextLabel", hudContainer)
-hudFovLabel.Size = UDim2.new(1, -16, 0, 16)
-hudFovLabel.Position = UDim2.new(0, 8, 0, 80)
-hudFovLabel.BackgroundTransparency = 1
-hudFovLabel.Font = Enum.Font.Gotham
-hudFovLabel.TextSize = 9.5
-hudFovLabel.TextColor3 = Color3.fromRGB(225, 228, 232)
-hudFovLabel.TextXAlignment = Enum.TextXAlignment.Left
-hudFovLabel.Text = "FOV: 70"
-hudFovLabel.ZIndex = 51
+local jumpCircleFolder = Instance.new("Folder", Workspace)
+jumpCircleFolder.Name = "Gestio_JumpCircleWorld"
 
 -- ==========================================
 -- LIGHTING & ATMOSPHERE FUNCTIONS
@@ -490,16 +357,14 @@ local function applyNightPreset(presetName)
     nightOutdoorAmbient = cfg.OutdoorAmbient
     
     if nightModeEnabled then
-        pcall(function()
-            Lighting.ClockTime = cfg.ClockTime
-            Lighting.Brightness = cfg.Brightness
-            Lighting.OutdoorAmbient = cfg.OutdoorAmbient
-            Lighting.Ambient = cfg.Ambient
-            Lighting.GlobalShadows = true
-            if not removeFogEnabled then
-                Lighting.FogColor = cfg.FogColor
-            end
-        end)
+        Lighting.ClockTime = cfg.ClockTime
+        Lighting.Brightness = cfg.Brightness
+        Lighting.OutdoorAmbient = cfg.OutdoorAmbient
+        Lighting.Ambient = cfg.Ambient
+        Lighting.GlobalShadows = true
+        if not removeFogEnabled then
+            Lighting.FogColor = cfg.FogColor
+        end
     end
 end
 
@@ -513,13 +378,10 @@ local function restoreLightingState()
         Lighting.FogEnd = defaultLighting.FogEnd
         Lighting.FogColor = defaultLighting.FogColor
     end)
-    if camera then
-        pcall(function() camera.FieldOfView = defaultCameraFOV end)
-    end
 end
 
 -- ==========================================
--- GRENADE DANGER CORE FUNCTIONS (PROTECTED)
+-- GRENADE DANGER CORE FUNCTIONS
 -- ==========================================
 local function getDangerObjectRoot(object)
     if not object then return nil end
@@ -535,8 +397,7 @@ local function getDangerObjectRoot(object)
 end
 
 local function getDangerGrenadeType(object)
-    if not object or not object.Name then return nil end
-    local name = tostring(object.Name):lower()
+    local name = object.Name:lower()
     for grenadeName, settings in pairs(GrenadeDangerConfig) do
         if name:find(grenadeName:lower(), 1, true) then
             return settings
@@ -569,12 +430,6 @@ local function removeDangerIndicator(object)
 end
 
 local function createDangerIndicator(object)
-    if not object then return end
-    
-    if object.Name == "GestioDangerRadius" or object.Name == "GestioGrenadeIndicator" or object:IsDescendantOf(mainContainer) then
-        return
-    end
-    
     local root = getDangerObjectRoot(object)
     if not root then return end
     local settings = getDangerGrenadeType(object)
@@ -630,7 +485,6 @@ local function createDangerIndicator(object)
 
     local radiusPart = nil
     if settings.Radius > 0 then
-        local parentFolder = getOrCreateDangerFolder()
         radiusPart = Instance.new("Part")
         radiusPart.Name = "GestioDangerRadius"
         radiusPart.Shape = Enum.PartType.Cylinder
@@ -643,7 +497,7 @@ local function createDangerIndicator(object)
         radiusPart.Transparency = (grenadeDangerEnabled and grenadeDangerShowRadius) and 0.88 or 1
         radiusPart.Color = settings.Color
         radiusPart.Size = Vector3.new(0.08, settings.Radius * 2, settings.Radius * 2)
-        radiusPart.Parent = parentFolder
+        radiusPart.Parent = dangerOverlayFolder
     end
 
     dangerGrenadeObjects[object] = {
@@ -656,15 +510,11 @@ local function createDangerIndicator(object)
 end
 
 local function scanGrenadeObjects()
-    task.spawn(function()
-        pcall(function()
-            for _, object in ipairs(Workspace:GetChildren()) do
-                if getDangerGrenadeType(object) then
-                    createDangerIndicator(object)
-                end
-            end
-        end)
-    end)
+    for _, object in ipairs(Workspace:GetDescendants()) do
+        if getDangerGrenadeType(object) then
+            createDangerIndicator(object)
+        end
+    end
 end
 
 -- ==========================================
@@ -705,28 +555,19 @@ local function cleanup()
         removeDangerIndicator(obj)
     end
     clearActiveJumpCircle()
-    pcall(function() if jumpCircleFolder then jumpCircleFolder:Destroy() end end)
-    pcall(function() if dangerOverlayFolder then dangerOverlayFolder:Destroy() end end)
-    
-    local candidateContainers = {CoreGui, targetGui}
-    if player and player:FindFirstChild("PlayerGui") then
-        table.insert(candidateContainers, player.PlayerGui)
-    end
-    for _, cand in ipairs(candidateContainers) do
-        pcall(function()
-            if cand:FindFirstChild("GestioScreenGui") then cand.GestioScreenGui:Destroy() end
-            if cand:FindFirstChild("GestioToggleGui") then cand.GestioToggleGui:Destroy() end
-            if cand:FindFirstChild("GestioFovGui") then cand.GestioFovGui:Destroy() end
-            if cand:FindFirstChild("GestioWatermarkGui") then cand.GestioWatermarkGui:Destroy() end
-            if cand:FindFirstChild("GestioMainContainer") then cand.GestioMainContainer:Destroy() end
-        end)
-    end
-    
+    pcall(function() jumpCircleFolder:Destroy() end)
+    pcall(function() dangerOverlayFolder:Destroy() end)
     activeEspHolders = {}
     screenEspCache = {}
     dangerGrenadeObjects = {}
     
     restoreLightingState()
+
+    pcall(function() if targetGui:FindFirstChild("GestioScreenGui") then targetGui.GestioScreenGui:Destroy() end end)
+    pcall(function() if targetGui:FindFirstChild("GestioToggleGui") then targetGui.GestioToggleGui:Destroy() end end)
+    pcall(function() if targetGui:FindFirstChild("GestioFovGui") then targetGui.FovGui:Destroy() end end)
+    pcall(function() if targetGui:FindFirstChild("GestioWatermarkGui") then targetGui.WatermarkGui:Destroy() end end)
+    pcall(function() if targetGui:FindFirstChild("GestioMainContainer") then targetGui.GestioMainContainer:Destroy() end end)
 end
 
 if getgenv then getgenv().GestioRunning = cleanup end
@@ -816,28 +657,27 @@ wmMetrics.Font = Enum.Font.GothamBold
 
 local fpsCounter = 0
 local lastFpsUpdate = tick()
-local calculatedCurrentFps = 60
 
 -- ==========================================
 -- FACTION CHECK & HEALTH CHECK LOGIC
 -- ==========================================
 local function isAlly(plr)
     if not plr or plr == player then return false end
-    if plr.Team and player and player.Team then
+    if plr.Team and player.Team then
         return plr.Team == player.Team
     end
-    if plr:GetAttribute("Team") and player and player:GetAttribute("Team") then
+    if plr:GetAttribute("Team") and player:GetAttribute("Team") then
         return plr:GetAttribute("Team") == player:GetAttribute("Team")
     end
-    if plr.TeamColor and player and player.TeamColor and plr.TeamColor ~= BrickColor.new("White") then
+    if plr.TeamColor and player.TeamColor and plr.TeamColor ~= BrickColor.new("White") then
         return plr.TeamColor == player.TeamColor
     end
     return false
 end
 
 local function isTargetEnemy(plr, char)
-    if not plr or (player and plr == player) then return false end
-    if char and player and char == player.Character then return false end
+    if not plr or plr == player then return false end
+    if char and char == player.Character then return false end
     return not isAlly(plr)
 end
 
@@ -919,27 +759,23 @@ local function buildJumpRing(segmentCount, radius, thickness)
 end
 
 local function updateJumpRingLayout(segments, centerPosition, radius)
-    if not segments then return end
     local n = #segments
     for i, seg in ipairs(segments) do
-        if seg.Part and seg.Part.Parent then
-            local angle = seg.Angle
-            local nextAngle = angle + (math.pi * 2 / n)
-            local p1 = centerPosition + Vector3.new(math.cos(angle) * radius, 0, math.sin(angle) * radius)
-            local p2 = centerPosition + Vector3.new(math.cos(nextAngle) * radius, 0, math.sin(nextAngle) * radius)
-            local mid = (p1 + p2) * 0.5
+        local angle = seg.Angle
+        local nextAngle = angle + (math.pi * 2 / n)
+        local p1 = centerPosition + Vector3.new(math.cos(angle) * radius, 0, math.sin(angle) * radius)
+        local p2 = centerPosition + Vector3.new(math.cos(nextAngle) * radius, 0, math.sin(nextAngle) * radius)
+        local mid = (p1 + p2) * 0.5
 
-            seg.Part.CFrame = CFrame.lookAt(mid, p2)
-        end
+        seg.Part.CFrame = CFrame.lookAt(mid, p2)
     end
 end
 
 local function spawnJumpRipple(position)
     if not jumpCircleEnabled then return end
     task.spawn(function()
-        local parentFolder = getOrCreateJumpFolder()
         local rippleFolder, segments = buildJumpRing(jumpCircleSegmentCount, jumpCircleRadius, 0.3)
-        rippleFolder.Parent = parentFolder
+        rippleFolder.Parent = jumpCircleFolder
 
         local startT = os.clock()
         local duration = 0.5
@@ -962,10 +798,8 @@ local function spawnJumpRipple(position)
             updateJumpRingLayout(segments, position, curR)
 
             for i, seg in ipairs(segments) do
-                if seg.Part and seg.Part.Parent then
-                    seg.Part.Transparency = alpha
-                    seg.Part.Color = col1:Lerp(col2, alpha)
-                end
+                seg.Part.Transparency = alpha
+                seg.Part.Color = col1:Lerp(col2, alpha)
             end
         end)
     end)
@@ -979,9 +813,8 @@ local function initJumpCircleForCharacter(char)
     local hum = char:WaitForChild("Humanoid", 4)
     if not hrp or not hum then return end
 
-    local parentFolder = getOrCreateJumpFolder()
     local container, segments = buildJumpRing(jumpCircleSegmentCount, jumpCircleRadius, 0.25)
-    container.Parent = parentFolder
+    container.Parent = jumpCircleFolder
 
     local circleData = {
         Container = container,
@@ -995,10 +828,7 @@ local function initJumpCircleForCharacter(char)
     local startClock = os.clock()
 
     local loopConn = RunService.RenderStepped:Connect(function(dt)
-        if not jumpCircleEnabled or not activeJumpCircleData or activeJumpCircleData ~= circleData then
-            return
-        end
-        if not hrp or not hrp.Parent or not hum or not hum.Parent or hum.Health <= 0 then
+        if not jumpCircleEnabled or not hrp.Parent or not hum.Parent or hum.Health <= 0 then
             clearActiveJumpCircle()
             return
         end
@@ -1013,28 +843,22 @@ local function initJumpCircleForCharacter(char)
             local c1 = Color3.fromRGB(210, 45, 55)
             local c2 = Color3.fromRGB(0, 200, 255)
             for i, seg in ipairs(segments) do
-                if seg.Part and seg.Part.Parent then
-                    local ratio = ((i / n) + spin) % 1
-                    local wave = (math.sin(ratio * math.pi * 2) + 1) * 0.5
-                    seg.Part.Color = c1:Lerp(c2, wave)
-                    seg.Part.Transparency = 0.1 + (wave * 0.2)
-                end
+                local ratio = ((i / n) + spin) % 1
+                local wave = (math.sin(ratio * math.pi * 2) + 1) * 0.5
+                seg.Part.Color = c1:Lerp(c2, wave)
+                seg.Part.Transparency = 0.1 + (wave * 0.2)
             end
         elseif jumpCircleStyle == "ChromaPulse" then
             local hue = (elapsed * 0.4) % 1
             local col = Color3.fromHSV(hue, 0.9, 1)
             for _, seg in ipairs(segments) do
-                if seg.Part and seg.Part.Parent then
-                    seg.Part.Color = col
-                    seg.Part.Transparency = 0.15
-                end
+                seg.Part.Color = col
+                seg.Part.Transparency = 0.15
             end
         elseif jumpCircleStyle == "StaticNeon" then
             for _, seg in ipairs(segments) do
-                if seg.Part and seg.Part.Parent then
-                    seg.Part.Color = currentTheme.Accent
-                    seg.Part.Transparency = 0.1
-                end
+                seg.Part.Color = currentTheme.Accent
+                seg.Part.Transparency = 0.1
             end
         end
     end)
@@ -1049,28 +873,25 @@ local function initJumpCircleForCharacter(char)
     table.insert(circleData.Connections, stateConn)
 end
 
-if player then
-    table.insert(connections, player.CharacterAdded:Connect(initJumpCircleForCharacter))
-    table.insert(connections, player.CharacterRemoving:Connect(clearActiveJumpCircle))
-    if player.Character then
-        task.spawn(function()
-            initJumpCircleForCharacter(player.Character)
-        end)
-    end
+table.insert(connections, player.CharacterAdded:Connect(initJumpCircleForCharacter))
+table.insert(connections, player.CharacterRemoving:Connect(clearActiveJumpCircle))
+
+if player.Character then
+    task.spawn(function()
+        initJumpCircleForCharacter(player.Character)
+    end)
 end
 
 -- ==========================================
 -- HOOK DESCENDANTS FOR DANGER ESP
 -- ==========================================
-table.insert(connections, Workspace.ChildAdded:Connect(function(object)
-    task.spawn(function()
-        task.wait(0.05)
-        pcall(function() createDangerIndicator(object) end)
-    end)
+table.insert(connections, Workspace.DescendantAdded:Connect(function(object)
+    task.wait()
+    createDangerIndicator(object)
 end))
 
-table.insert(connections, Workspace.ChildRemoved:Connect(function(object)
-    pcall(function() removeDangerIndicator(object) end)
+table.insert(connections, Workspace.DescendantRemoving:Connect(function(object)
+    removeDangerIndicator(object)
 end))
 
 scanGrenadeObjects()
@@ -1084,7 +905,7 @@ visRayParams.IgnoreWater = true
 
 local function isTargetVisible(originPos, targetPart, targetChar)
     if not visibleCheck then return true end
-    local myChar = player and player.Character
+    local myChar = player.Character
     visRayParams.FilterDescendantsInstances = {myChar, camera}
     local dir = targetPart.Position - originPos
     local hit = Workspace:Raycast(originPos, dir, visRayParams)
@@ -1152,14 +973,13 @@ triggerRayParams.FilterType = Enum.RaycastFilterType.Exclude
 triggerRayParams.IgnoreWater = true
 
 local function runMobileTriggerbot()
-    if not triggerbotEnabled or not camera then return end
+    if not triggerbotEnabled then return end
     local now = tick()
     if (now - lastTriggerTick) < triggerbotDelay then return end
 
     local vp = camera.ViewportSize
     local ray = camera:ViewportPointToRay(vp.X * 0.5, vp.Y * 0.5)
-    local myChar = player and player.Character
-    triggerRayParams.FilterDescendantsInstances = {myChar, camera}
+    triggerRayParams.FilterDescendantsInstances = {player.Character, camera}
     
     local res = Workspace:Raycast(ray.Origin, ray.Direction * 1000, triggerRayParams)
     if res and res.Instance then
@@ -1177,6 +997,7 @@ local function runMobileTriggerbot()
                 lastTriggerTick = now
                 if triggerbotMobileAutoFire then
                     pcall(function()
+                        local myChar = player.Character
                         local equippedTool = myChar and myChar:FindFirstChildOfClass("Tool")
                         if equippedTool then
                             equippedTool:Activate()
@@ -1314,7 +1135,6 @@ end))
 -- TACTICAL ESP SCREEN RENDER LOOP
 -- ==========================================
 local function renderTacticalOverlay()
-    if not camera then return end
     local camPos = camera.CFrame.Position
     local allPlayers = Players:GetPlayers()
 
@@ -1577,7 +1397,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     fpsCounter = fpsCounter + 1
     local nowTick = tick()
     if nowTick - lastFpsUpdate >= 0.5 then
-        calculatedCurrentFps = math.floor(fpsCounter / (nowTick - lastFpsUpdate))
+        local currentFps = math.floor(fpsCounter / (nowTick - lastFpsUpdate))
         local pingVal = 0
         pcall(function()
             local serverStats = Stats:FindFirstChild("Network") and Stats.Network:FindFirstChild("ServerStatsItem")
@@ -1585,53 +1405,9 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
                 pingVal = math.floor(serverStats["Data Ping"]:GetValue())
             end
         end)
-        wmMetrics.Text = string.format("FPS: %d | PING: %dms", calculatedCurrentFps, pingVal)
+        wmMetrics.Text = string.format("FPS: %d | PING: %dms", currentFps, pingVal)
         fpsCounter = 0
         lastFpsUpdate = nowTick
-    end
-
-    -- FOV Changer Application
-    if customFovEnabled and camera then
-        camera.FieldOfView = customFovValue
-    end
-
-    -- Kroaton Info HUD Real-time Update
-    if infoHudEnabled then
-        hudContainer.Visible = true
-        hudFpsLabel.Visible = infoHudShowFps
-        hudPingLabel.Visible = infoHudShowPing
-        hudSpeedLabel.Visible = infoHudShowSpeed
-        hudFovLabel.Visible = infoHudShowFov
-
-        if infoHudShowFps then
-            hudFpsLabel.Text = "FPS:       " .. tostring(calculatedCurrentFps)
-        end
-        if infoHudShowPing then
-            local currentPing = 0
-            pcall(function()
-                local net = Stats:FindFirstChild("Network")
-                local item = net and net:FindFirstChild("ServerStatsItem")
-                local p = item and item:FindFirstChild("Data Ping")
-                if p then currentPing = math.floor(p:GetValue()) end
-            end)
-            hudPingLabel.Text = "PING:      " .. tostring(currentPing) .. " ms"
-        end
-        if infoHudShowSpeed then
-            local myChar = player and player.Character
-            local myHrp = myChar and myChar:FindFirstChild("HumanoidRootPart")
-            if myHrp then
-                local vel = myHrp.AssemblyLinearVelocity
-                local horiz = Vector3.new(vel.X, 0, vel.Z).Magnitude
-                hudSpeedLabel.Text = "SPEED:     " .. tostring(math.floor(horiz))
-            else
-                hudSpeedLabel.Text = "SPEED:     0"
-            end
-        end
-        if infoHudShowFov and camera then
-            hudFovLabel.Text = "FOV:       " .. tostring(math.floor(camera.FieldOfView))
-        end
-    else
-        hudContainer.Visible = false
     end
 
     if fovFrame then
@@ -1669,7 +1445,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
 
     -- Render Danger Grenade Overlays
     if grenadeDangerEnabled then
-        local myChar = player and player.Character
+        local myChar = player.Character
         local localRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
         if localRoot then
             for object, data in pairs(dangerGrenadeObjects) do
@@ -1685,7 +1461,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
                             data.distanceLabel.Text = ""
                         end
 
-                        if data.radius and data.radius.Parent then
+                        if data.radius then
                             data.radius.Transparency = grenadeDangerShowRadius and 0.88 or 1
                             data.radius.CFrame = CFrame.new(data.root.Position) * CFrame.Angles(0, 0, math.rad(90))
                         end
@@ -1696,7 +1472,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
                         end
                     else
                         data.billboard.Enabled = false
-                        if data.radius and data.radius.Parent then
+                        if data.radius then
                             data.radius.Transparency = 1
                         end
                     end
@@ -1706,7 +1482,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     else
         for _, data in pairs(dangerGrenadeObjects) do
             data.billboard.Enabled = false
-            if data.radius and data.radius.Parent then
+            if data.radius then
                 data.radius.Transparency = 1
             end
         end
@@ -1778,17 +1554,15 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         Lighting.GlobalShadows = false
     elseif nightModeEnabled then
         local cfg = nightPresets[nightPreset] or nightPresets["Midnight"]
-        pcall(function()
-            Lighting.Brightness = nightBrightness or cfg.Brightness
-            Lighting.ClockTime = nightClockTime or cfg.ClockTime
-            Lighting.GlobalShadows = true
-            Lighting.OutdoorAmbient = nightOutdoorAmbient or cfg.OutdoorAmbient
-            Lighting.Ambient = cfg.Ambient
-        end)
+        Lighting.Brightness = nightBrightness or cfg.Brightness
+        Lighting.ClockTime = nightClockTime or cfg.ClockTime
+        Lighting.GlobalShadows = true
+        Lighting.OutdoorAmbient = nightOutdoorAmbient or cfg.OutdoorAmbient
+        Lighting.Ambient = cfg.Ambient
     end
 
     if removeFogEnabled then
-        pcall(function() Lighting.FogEnd = 100000 end)
+        Lighting.FogEnd = 100000
     end
     if antiFlashEnabled then
         pcall(function()
@@ -1805,7 +1579,7 @@ end))
 table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     if not antiAimEnabled then return end
     
-    local char = player and player.Character
+    local char = player.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
     local hum = char and char:FindFirstChildOfClass("Humanoid")
     
@@ -1831,14 +1605,11 @@ local function isPlayerGrounded(char, hrp)
 end
 
 -- ==========================================
--- MOBILE INPUT TOUCH HOOK (SINGLE REGISTRATION)
+-- MOBILE INPUT TOUCH HOOK
 -- ==========================================
-local jumpHookConnected = false
 local function hookMobileJumpButton()
-    if jumpHookConnected then return end
     task.spawn(function()
-        if not player then return end
-        local pGui = player:FindFirstChild("PlayerGui") or player:WaitForChild("PlayerGui", 5)
+        local pGui = player:WaitForChild("PlayerGui", 5)
         if not pGui then return end
         local touchGui = pGui:WaitForChild("TouchGui", 5)
         if not touchGui then return end
@@ -1847,7 +1618,6 @@ local function hookMobileJumpButton()
         local jumpBtn = controlFrame:WaitForChild("JumpButton", 5)
         if not jumpBtn then return end
 
-        jumpHookConnected = true
         jumpBtn.InputBegan:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
                 isMobileJumpHeld = true
@@ -1863,6 +1633,7 @@ local function hookMobileJumpButton()
 end
 
 hookMobileJumpButton()
+player.CharacterAdded:Connect(hookMobileJumpButton)
 
 UserInputService.JumpRequest:Connect(function()
     isMobileJumpHeld = true
@@ -1874,7 +1645,7 @@ UserInputService.InputBegan:Connect(function(input, processed)
     end
 
     if slideEnabled and (input.KeyCode == Enum.KeyCode.C or input.KeyCode == Enum.KeyCode.LeftControl) then
-        local char = player and player.Character
+        local char = player.Character
         local hrp = char and char:FindFirstChild("HumanoidRootPart")
         local hum = char and char:FindFirstChildOfClass("Humanoid")
         if hrp and hum and isEntityAlive(char, hum) and isPlayerGrounded(char, hrp) then
@@ -1892,7 +1663,7 @@ UserInputService.InputEnded:Connect(function(input, processed)
     end
     if input.KeyCode == Enum.KeyCode.C or input.KeyCode == Enum.KeyCode.LeftControl then
         isSliding = false
-        local char = player and player.Character
+        local char = player.Character
         local hum = char and char:FindFirstChildOfClass("Humanoid")
         if hum then
             hum.HipHeight = defaultHipHeight
@@ -1901,10 +1672,10 @@ UserInputService.InputEnded:Connect(function(input, processed)
 end)
 
 -- ==========================================
--- PHYSICS & KINEMATICS HEARTBEAT (BHOP, STRAFE, SLIDE)
+-- PHYSICS & KINEMATICS HEARTBEAT
 -- ==========================================
 table.insert(connections, RunService.Heartbeat:Connect(function(dt)
-    local char = player and player.Character
+    local char = player.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
     local hum = char and char:FindFirstChildOfClass("Humanoid")
     if not hrp or not hum or not isEntityAlive(char, hum) then return end
@@ -1914,7 +1685,6 @@ table.insert(connections, RunService.Heartbeat:Connect(function(dt)
         lastMoveDirection = currentMove
     end
 
-    -- Bhop Execution
     if bunnyHopEnabled then
         local grounded = isPlayerGrounded(char, hrp) or hum.FloorMaterial ~= Enum.Material.Air
         local shouldJump = bhopAutoJump or isMobileJumpHeld or hum.Jump
@@ -1937,29 +1707,6 @@ table.insert(connections, RunService.Heartbeat:Connect(function(dt)
         end
     end
 
-    -- Auto-Strafe Engine (Air Directional Assist)
-    if autoStrafeEnabled and not isPlayerGrounded(char, hrp) then
-        local state = hum:GetState()
-        if state == Enum.HumanoidStateType.Jumping or state == Enum.HumanoidStateType.Freefall then
-            if currentMove.Magnitude > 0 and camera then
-                local camLook = camera.CFrame.LookVector * Vector3.new(1, 0, 1)
-                local camRight = camera.CFrame.RightVector * Vector3.new(1, 0, 1)
-                
-                local fwd = camLook.Magnitude > 0 and camLook.Unit or Vector3.zero
-                local rgt = camRight.Magnitude > 0 and camRight.Unit or Vector3.zero
-
-                local fAmount = currentMove:Dot(fwd)
-                local rAmount = currentMove:Dot(rgt)
-                local finalDir = fwd * fAmount + rgt * rAmount
-
-                if finalDir.Magnitude > 0 then
-                    hum:Move(finalDir.Unit * strafeStrength, false)
-                end
-            end
-        end
-    end
-
-    -- Slide Physics Execution & Decay
     if slideEnabled and isSliding then
         local grounded = isPlayerGrounded(char, hrp)
         if grounded and currentSlideVel.Magnitude > slideMinSpeed then
@@ -1980,7 +1727,7 @@ table.insert(connections, RunService.Heartbeat:Connect(function(dt)
         hrp.AssemblyLinearVelocity = Vector3.new(targetVel.X, targetVel.Y, targetVel.Z)
     end
 
-    if flightEnabled and camera then
+    if flightEnabled then
         local camLook = camera.CFrame.LookVector
         hrp.AssemblyLinearVelocity = camLook * flightSpeed
     end
@@ -2464,25 +2211,6 @@ local function openInspectorFor(moduleName)
         addInspectorSlider(6, "Spin Speed", 10, 150, spinSpeed, false, function(v) 
             spinSpeed = v 
         end)
-    elseif moduleName == "Auto Strafe" then
-        insContent.CanvasSize = UDim2.new(0, 0, 0, 100)
-        addInspectorSlider(6, "Strafe Strength", 0.1, 2.0, strafeStrength, true, function(v) 
-            strafeStrength = v 
-        end)
-    elseif moduleName == "FOV Changer" then
-        insContent.CanvasSize = UDim2.new(0, 0, 0, 100)
-        addInspectorSlider(6, "Field Of View", 60, 140, customFovValue, false, function(v) 
-            customFovValue = v 
-            if customFovEnabled and camera then
-                pcall(function() camera.FieldOfView = v end)
-            end
-        end)
-    elseif moduleName == "Kroaton HUD" then
-        insContent.CanvasSize = UDim2.new(0, 0, 0, 180)
-        addInspectorToggle(6, "Show FPS", infoHudShowFps, function(v) infoHudShowFps = v end)
-        addInspectorToggle(34, "Show Ping", infoHudShowPing, function(v) infoHudShowPing = v end)
-        addInspectorToggle(62, "Show Speed", infoHudShowSpeed, function(v) infoHudShowSpeed = v end)
-        addInspectorToggle(90, "Show FOV", infoHudShowFov, function(v) infoHudShowFov = v end)
     elseif moduleName == "Slide" then
         insContent.CanvasSize = UDim2.new(0, 0, 0, 180)
         addInspectorSlider(6, "Speed Boost", 1.2, 3.0, slideSpeedBoost, true, function(v) slideSpeedBoost = v end)
@@ -2492,15 +2220,15 @@ local function openInspectorFor(moduleName)
         insContent.CanvasSize = UDim2.new(0, 0, 0, 240)
         addInspectorSlider(6, "Radius", 1.5, 8.0, jumpCircleRadius, true, function(v)
             jumpCircleRadius = v
-            if player and player.Character then initJumpCircleForCharacter(player.Character) end
+            if player.Character then initJumpCircleForCharacter(player.Character) end
         end)
         addInspectorSlider(38, "Segments", 12, 48, jumpCircleSegmentCount, false, function(v)
             jumpCircleSegmentCount = v
-            if player and player.Character then initJumpCircleForCharacter(player.Character) end
+            if player.Character then initJumpCircleForCharacter(player.Character) end
         end)
         addInspectorChoice(80, "Style", {"GradientWave", "ChromaPulse", "StaticNeon"}, jumpCircleStyle, function(v)
             jumpCircleStyle = v
-            if player and player.Character then initJumpCircleForCharacter(player.Character) end
+            if player.Character then initJumpCircleForCharacter(player.Character) end
         end)
     elseif moduleName == "Grenade Danger" then
         insContent.CanvasSize = UDim2.new(0, 0, 0, 200)
@@ -2539,11 +2267,11 @@ local function openInspectorFor(moduleName)
         end)
         addInspectorSlider(48, "Brightness", 0.0, 2.0, nightBrightness, true, function(v) 
             nightBrightness = v 
-            if nightModeEnabled then pcall(function() Lighting.Brightness = v end) end
+            if nightModeEnabled then Lighting.Brightness = v end
         end)
         addInspectorSlider(80, "Clock Time", 0.0, 24.0, nightClockTime, true, function(v) 
             nightClockTime = v 
-            if nightModeEnabled then pcall(function() Lighting.ClockTime = v end) end
+            if nightModeEnabled then Lighting.ClockTime = v end
         end)
     elseif moduleName == "RCS" then
         insContent.CanvasSize = UDim2.new(0, 0, 0, 240)
@@ -2624,8 +2352,6 @@ local function addCard(parent, name, defaultState, onToggle)
             end
         elseif name == "FullBright" and not state and not nightModeEnabled then
             restoreLightingState()
-        elseif name == "FOV Changer" and not state then
-            if camera then pcall(function() camera.FieldOfView = defaultCameraFOV end) end
         end
     end
 
@@ -2650,7 +2376,6 @@ local mHopSection = makeCategorySection(mPage, "Bhop Mechanics", 1)
 local mBoostSection = makeCategorySection(mPage, "Physics Modifications", 2)
 
 addCard(mHopSection, "Bhop Engine", bunnyHopEnabled, function(v) bunnyHopEnabled = v end)
-addCard(mHopSection, "Auto Strafe", autoStrafeEnabled, function(v) autoStrafeEnabled = v end)
 addCard(mBoostSection, "Slide", slideEnabled, function(v) slideEnabled = v end)
 addCard(mBoostSection, "Speed Boost", speedEnabled, function(v) speedEnabled = v end)
 addCard(mBoostSection, "Flight", flightEnabled, function(v) flightEnabled = v end)
@@ -2669,7 +2394,7 @@ addCard(eWorldSection, "Grenade Danger", grenadeDangerEnabled, function(v)
     grenadeDangerEnabled = v 
     for _, d in pairs(dangerGrenadeObjects) do
         d.billboard.Enabled = v
-        if d.radius and d.radius.Parent then
+        if d.radius then
             d.radius.Transparency = (v and grenadeDangerShowRadius) and 0.88 or 1
         end
     end
@@ -2677,7 +2402,7 @@ end)
 
 addCard(eWorldSection, "Jump Circle", jumpCircleEnabled, function(v) 
     jumpCircleEnabled = v 
-    if v and player and player.Character then
+    if v and player.Character then
         initJumpCircleForCharacter(player.Character)
     else
         clearActiveJumpCircle()
@@ -2689,16 +2414,9 @@ local envLightSection = makeCategorySection(envPage, "Atmosphere & World", 1)
 addCard(envLightSection, "Night Mode", nightModeEnabled, function(v) nightModeEnabled = v end)
 addCard(envLightSection, "FullBright", fullBrightEnabled, function(v) fullBrightEnabled = v end)
 addCard(envLightSection, "Anti-Flash", antiFlashEnabled, function(v) antiFlashEnabled = v end)
-addCard(envLightSection, "FOV Changer", customFovEnabled, function(v) 
-    customFovEnabled = v 
-    if not v and camera then
-        pcall(function() camera.FieldOfView = defaultCameraFOV end)
-    end
-end)
 
 -- MISC TAB
 local miscGeneralSection = makeCategorySection(micsPage, "Utilities", 1)
-addCard(miscGeneralSection, "Kroaton HUD", infoHudEnabled, function(v) infoHudEnabled = v end)
 addCard(miscGeneralSection, "Anti-AFK", true, function(v) end)
 
 -- SETTINGS TAB
