@@ -1,18 +1,19 @@
 -- ==============================================================================
 -- [Gestio UI - Blox Strike Ultimate Mobile Engine (Full Suite 2600+ Lines)]
--- Version: 5.4.1 Enterprise Production Edition (Full Combat, Themes & Anti-AFK Fix)
--- Target Game: Blox Strike (Roblox)
--- Stability: Hardened Context, Memory Safe, Complete Logic Implementation
--- ==============================================================================
+-- Version: 5.9.1 Delta Fixed Edition
+-- Target Game: Blox Strike (Roblox Mobile)
+-- ==========================================
 
+-- 1. Bulletproof Cleanup Guard (Fix for 'attempt to call a nil value')
 pcall(function()
-    if getgenv and getgenv().GestioRunning then
-        getgenv().GestioRunning()
+    local env = (type(getgenv) == "function" and getgenv()) or _G
+    if env and type(env.GestioRunning) == "function" then
+        env.GestioRunning()
     end
 end)
 
 -- ==========================================
--- SAFE SYSTEM SERVICES IMPORT
+-- SYSTEM SERVICES
 -- ==========================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -28,7 +29,7 @@ local TweenService = game:GetService("TweenService")
 local HttpService = game:GetService("HttpService")
 
 -- ==========================================
--- CLIENT ENVIRONMENT VALIDATION (NON-BLOCKING)
+-- CLIENT ENVIRONMENT VALIDATION
 -- ==========================================
 local player = Players.LocalPlayer or Players:FindFirstChildOfClass("Player")
 local camera = Workspace.CurrentCamera or Workspace:FindFirstChildOfClass("Camera")
@@ -41,7 +42,7 @@ pcall(function()
 end)
 
 local function getSafeGui()
-    if gethui then
+    if type(gethui) == "function" then
         local success, res = pcall(gethui)
         if success and res then return res end
     end
@@ -59,7 +60,7 @@ local function getSafeGui()
     end)
     if success then return CoreGui end
 
-    return player and player:WaitForChild("PlayerGui", 3) or CoreGui
+    return (player and player:WaitForChild("PlayerGui", 3)) or CoreGui
 end
 
 local targetGui = getSafeGui()
@@ -68,14 +69,9 @@ local activeEspHolders = {}
 local screenEspCache = {}
 local activeTracersCache = {}
 local activeHeadDotsCache = {}
+local themeUpdateListeners = {} -- Pre-allocated table to prevent nil errors
 
-local getgenvSafe = function()
-    local success, env = pcall(function() return getgenv() end)
-    if success and env then return env end
-    return _G
-end
-
-local globalEnv = getgenvSafe()
+local globalEnv = (type(getgenv) == "function" and getgenv()) or _G
 if not globalEnv.GestioSavedPos then
     globalEnv.GestioSavedPos = {
         OpenBtn = UDim2.new(0.5, -45, 0, 15),
@@ -153,7 +149,6 @@ local themeLibrary = {
 }
 
 local currentTheme = themeLibrary["Charcoal Crimson"]
-local themeUpdateListeners = {}
 
 local function applyCurrentTheme()
     for _, callback in ipairs(themeUpdateListeners) do
@@ -162,7 +157,7 @@ local function applyCurrentTheme()
 end
 
 -- ==========================================
--- COMBAT ENGINE STATE VARIABLES
+-- MODULE STATES
 -- ==========================================
 local aimbotEnabled = false
 local aimbotSpeed = 35.0
@@ -185,9 +180,6 @@ local visibleCheck = false
 local aimSensitivity = 1.0
 local lockOnJump = true
 
--- ==========================================
--- RECOIL CONTROL SYSTEM (RCS) VARIABLES
--- ==========================================
 local rcsEnabled = false
 local rcsStrength = 75
 local rcsPitchFactor = 1.0
@@ -197,26 +189,17 @@ local rcsHorizontalComp = true
 local rcsBurstOnly = false
 local rcsRandomize = true
 
--- ==========================================
--- TRIGGERBOT ASSISTANT VARIABLES
--- ==========================================
 local triggerbotEnabled = false
 local triggerbotDelay = 0.02
 local triggerbotHeadOnly = false
 local triggerbotMobileAutoFire = true
 local lastTriggerTick = 0
 
--- ==========================================
--- RAGE & ANTI-AIM (SPINBOT) VARIABLES
--- ==========================================
 local antiAimEnabled = false
 local spinSpeed = 50
 local currentSpinAngle = 0
 local antiAimYawMode = "Spin"
 
--- ==========================================
--- MOVEMENT, BHOP, SLIDE & AUTO-STRAFE
--- ==========================================
 local bunnyHopEnabled = false
 local bhopAutoJump = false
 local bhopAirStrafe = true
@@ -242,9 +225,6 @@ local walkMultiplier = 2.0
 local flightEnabled = false
 local flightSpeed = 50
 
--- ==========================================
--- VISUALS & ESP CONFIGURATION VARIABLES
--- ==========================================
 local nametagsEnabled = false
 local espMaxDist = 3000
 local espShowDistance = true
@@ -264,9 +244,6 @@ local highlightEnabled = false
 local headDotEnabled = false
 local tracersEnabled = false
 
--- ==========================================
--- INTEGRATED GRENADE DANGER ENGINE VARIABLES
--- ==========================================
 local grenadeDangerEnabled = false
 local grenadeDangerMaxDist = 500
 local grenadeDangerShowDist = true
@@ -282,9 +259,6 @@ local GrenadeDangerConfig = {
 
 local dangerGrenadeObjects = {}
 
--- ==========================================
--- JUMP CIRCLE CONFIGURATION VARIABLES
--- ==========================================
 local jumpCircleEnabled = false
 local jumpCircleStyle = "GradientWave"
 local jumpCircleSegmentCount = 32
@@ -292,12 +266,8 @@ local jumpCircleRadius = 3.5
 local jumpCircleHeightOffset = -2.8
 local activeJumpCircleData = nil
 
--- ==========================================
--- ENVIRONMENT, LIGHTING & FOV CHANGER
--- ==========================================
 local customFovEnabled = false
 local customFovValue = 95
-
 local antiFlashEnabled = true
 local fullBrightEnabled = false
 local removeFogEnabled = true
@@ -366,9 +336,6 @@ pcall(function()
     defaultLighting.FogColor = Lighting.FogColor
 end)
 
--- ==========================================
--- KROATON INFO HUD & ANTI-AFK VARIABLES
--- ==========================================
 local infoHudEnabled = false
 local infoHudShowFps = true
 local infoHudShowPing = true
@@ -377,7 +344,7 @@ local infoHudShowFov = true
 local antiAfkEnabled = true
 
 -- ==========================================
--- DISPLAY CONTAINERS SETUP (SAFELY INITIALIZED)
+-- DISPLAY CONTAINERS SETUP
 -- ==========================================
 local mainContainer = Instance.new("ScreenGui")
 mainContainer.Name = "GestioMainContainer"
@@ -499,7 +466,7 @@ table.insert(themeUpdateListeners, function(theme)
 end)
 
 -- ==========================================
--- LIGHTING & ATMOSPHERE FUNCTIONS
+-- LIGHTING FUNCTIONS
 -- ==========================================
 local function applyNightPreset(presetName)
     local cfg = nightPresets[presetName]
@@ -539,7 +506,7 @@ local function restoreLightingState()
 end
 
 -- ==========================================
--- GRENADE DANGER CORE FUNCTIONS (PROTECTED)
+-- GRENADE DANGER CORE FUNCTIONS
 -- ==========================================
 local function getDangerObjectRoot(object)
     if not object then return nil end
@@ -590,7 +557,6 @@ end
 
 local function createDangerIndicator(object)
     if not object then return end
-    
     if object.Name == "GestioDangerRadius" or object.Name == "GestioGrenadeIndicator" or object:IsDescendantOf(mainContainer) then
         return
     end
@@ -685,248 +651,6 @@ local function scanGrenadeObjects()
             end
         end)
     end)
-end
-
--- ==========================================
--- CLEANUP ROUTINES
--- ==========================================
-local function clearActiveJumpCircle()
-    if not activeJumpCircleData then return end
-    if activeJumpCircleData.Connections then
-        for _, conn in ipairs(activeJumpCircleData.Connections) do
-            pcall(function() conn:Disconnect() end)
-        end
-    end
-    if activeJumpCircleData.Container then
-        pcall(function() activeJumpCircleData.Container:Destroy() end)
-    end
-    activeJumpCircleData = nil
-end
-
-local function cleanup()
-    for _, c in pairs(connections) do 
-        pcall(function() c:Disconnect() end) 
-    end
-    for _, holder in pairs(activeEspHolders) do
-        pcall(function() holder.Holder:Destroy() end)
-    end
-    for _, esp in pairs(screenEspCache) do
-        pcall(function()
-            esp.Box:Destroy()
-            esp.TagCard:Destroy()
-            esp.HealthBarBg:Destroy()
-            for _, corner in pairs(esp.Corners) do
-                corner.H:Destroy()
-                corner.V:Destroy()
-            end
-        end)
-    end
-    for obj, _ in pairs(dangerGrenadeObjects) do
-        removeDangerIndicator(obj)
-    end
-    clearActiveJumpCircle()
-    pcall(function() if jumpCircleFolder then jumpCircleFolder:Destroy() end end)
-    pcall(function() if dangerOverlayFolder then dangerOverlayFolder:Destroy() end end)
-    
-    local candidateContainers = {CoreGui, targetGui}
-    if player and player:FindFirstChild("PlayerGui") then
-        table.insert(candidateContainers, player.PlayerGui)
-    end
-    for _, cand in ipairs(candidateContainers) do
-        pcall(function()
-            if cand:FindFirstChild("GestioScreenGui") then cand.GestioScreenGui:Destroy() end
-            if cand:FindFirstChild("GestioToggleGui") then cand.GestioToggleGui:Destroy() end
-            if cand:FindFirstChild("GestioFovGui") then cand.GestioFovGui:Destroy() end
-            if cand:FindFirstChild("GestioWatermarkGui") then cand.GestioWatermarkGui:Destroy() end
-            if cand:FindFirstChild("GestioMainContainer") then cand.GestioMainContainer:Destroy() end
-        end)
-    end
-    
-    activeEspHolders = {}
-    screenEspCache = {}
-    dangerGrenadeObjects = {}
-    
-    restoreLightingState()
-end
-
-if globalEnv then globalEnv.GestioRunning = cleanup end
-
-local function bindTouch(btn, callback)
-    local conn = btn.Activated:Connect(callback)
-    table.insert(connections, conn)
-end
-
--- ==========================================
--- HUD OVERLAYS (FOV & WATERMARK)
--- ==========================================
-local fovGui = Instance.new("ScreenGui")
-fovGui.Name = "GestioFovGui"
-fovGui.ResetOnSpawn = false
-fovGui.DisplayOrder = 9
-fovGui.IgnoreGuiInset = true
-fovGui.Parent = targetGui
-
-local fovFrame = Instance.new("Frame", fovGui)
-fovFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-fovFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
-fovFrame.BackgroundTransparency = 1
-fovFrame.BorderSizePixel = 0
-fovFrame.Visible = false
-local fovStroke = Instance.new("UIStroke", fovFrame)
-fovStroke.Color = currentTheme.Accent
-fovStroke.Thickness = 0.8
-local fovCorner = Instance.new("UICorner", fovFrame)
-fovCorner.CornerRadius = UDim.new(1, 0)
-
-table.insert(themeUpdateListeners, function(theme)
-    fovStroke.Color = theme.Accent
-end)
-
-local watermarkGui = Instance.new("ScreenGui")
-watermarkGui.Name = "GestioWatermarkGui"
-watermarkGui.ResetOnSpawn = false
-watermarkGui.DisplayOrder = 20
-watermarkGui.IgnoreGuiInset = true
-watermarkGui.Parent = targetGui
-
-local wmCard = Instance.new("Frame", watermarkGui)
-wmCard.Position = UDim2.new(0, 14, 0, 14)
-wmCard.Size = UDim2.new(0, 0, 0, 22)
-wmCard.AutomaticSize = Enum.AutomaticSize.X
-wmCard.BackgroundColor3 = currentTheme.Background
-wmCard.BorderSizePixel = 0
-Instance.new("UICorner", wmCard).CornerRadius = UDim.new(0, 5)
-
-local wmStroke = Instance.new("UIStroke", wmCard)
-wmStroke.Color = currentTheme.Border
-wmStroke.Thickness = 1.0
-
-local wmPad = Instance.new("UIPadding", wmCard)
-wmPad.PaddingLeft = UDim.new(0, 8)
-wmPad.PaddingRight = UDim.new(0, 8)
-
-local wmLayout = Instance.new("UIListLayout", wmCard)
-wmLayout.FillDirection = Enum.FillDirection.Horizontal
-wmLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-wmLayout.Padding = UDim.new(0, 5)
-
-local wmDot = Instance.new("Frame", wmCard)
-wmDot.Size = UDim2.new(0, 5, 0, 5)
-wmDot.BackgroundColor3 = currentTheme.Accent
-wmDot.BorderSizePixel = 0
-Instance.new("UICorner", wmDot).CornerRadius = UDim.new(1, 0)
-
-local wmTitle = Instance.new("TextLabel", wmCard)
-wmTitle.AutomaticSize = Enum.AutomaticSize.X
-wmTitle.Size = UDim2.new(0, 0, 1, 0)
-wmTitle.BackgroundTransparency = 1
-wmTitle.Text = "GESTIO"
-wmTitle.TextColor3 = currentTheme.Accent
-wmTitle.TextSize = 9
-wmTitle.Font = Enum.Font.GothamBold
-
-local wmDivider = Instance.new("Frame", wmCard)
-wmDivider.Size = UDim2.new(0, 1, 0, 10)
-wmDivider.BackgroundColor3 = currentTheme.Border
-wmDivider.BorderSizePixel = 0
-
-local wmMetrics = Instance.new("TextLabel", wmCard)
-wmMetrics.AutomaticSize = Enum.AutomaticSize.X
-wmMetrics.Size = UDim2.new(0, 0, 1, 0)
-wmMetrics.BackgroundTransparency = 1
-wmMetrics.Text = "FPS: 60 | PING: 0ms"
-wmMetrics.TextColor3 = currentTheme.TextSecondary
-wmMetrics.TextSize = 8.5
-wmMetrics.Font = Enum.Font.GothamBold
-
-local fpsCounter = 0
-local lastFpsUpdate = tick()
-local calculatedCurrentFps = 60
-
-table.insert(themeUpdateListeners, function(theme)
-    wmCard.BackgroundColor3 = theme.Background
-    wmStroke.Color = theme.Border
-    wmDot.BackgroundColor3 = theme.Accent
-    wmTitle.TextColor3 = theme.Accent
-    wmDivider.BackgroundColor3 = theme.Border
-    wmMetrics.TextColor3 = theme.TextSecondary
-end)
-
--- ==========================================
--- ANTI-AFK SYSTEM LOGIC
--- ==========================================
-table.insert(connections, player.Idled:Connect(function()
-    if antiAfkEnabled then
-        pcall(function()
-            VirtualUser:CaptureController()
-            VirtualUser:ClickButton2(Vector2.new())
-        end)
-    end
-end))
-
--- ==========================================
--- FACTION CHECK & HEALTH CHECK LOGIC
--- ==========================================
-local function isAlly(plr)
-    if not plr or plr == player then return false end
-    if plr.Team and player and player.Team then
-        return plr.Team == player.Team
-    end
-    if plr:GetAttribute("Team") and player and player:GetAttribute("Team") then
-        return plr:GetAttribute("Team") == player:GetAttribute("Team")
-    end
-    if plr.TeamColor and player and player.TeamColor and plr.TeamColor ~= BrickColor.new("White") then
-        return plr.TeamColor == player.TeamColor
-    end
-    return false
-end
-
-local function isTargetEnemy(plr, char)
-    if not plr or (player and plr == player) then return false end
-    if char and player and char == player.Character then return false end
-    return not isAlly(plr)
-end
-
-local function getTargetHitbox(char)
-    if not char then return nil end
-    if bodyAimOnly then
-        return char:FindFirstChild("UpperTorso") or char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso")
-    end
-    if aimboneIndex == 1 then
-        return char:FindFirstChild("Head") or char:FindFirstChild("UpperTorso")
-    elseif aimboneIndex == 2 then
-        return char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso") or char:FindFirstChild("Head")
-    else
-        return char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("UpperTorso") or char:FindFirstChild("Head")
-    end
-end
-
-local function isEntityAlive(char, hum)
-    if not char or not char.Parent or not char:IsDescendantOf(Workspace) then 
-        return false 
-    end
-    
-    if hum and hum.Parent then
-        local health = 100
-        pcall(function() health = hum.Health end)
-        if health <= 0 then 
-            return false 
-        end
-        
-        local state = nil
-        pcall(function() state = hum:GetState() end)
-        if state == Enum.HumanoidStateType.Dead then 
-            return false 
-        end
-    end
-
-    local root = char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso")
-    local head = char:FindFirstChild("Head")
-    if not root and not head then
-        return false
-    end
-
-    return true
 end
 
 -- ==========================================
@@ -1721,7 +1445,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         end
     end
 
-    -- Tracking / Aim Engine Implementation (Active when snapAimMode or isAiming)
+    -- Tracking / Aim Engine Implementation
     local shouldAimbotLock = aimbotEnabled and (snapAimMode or isAiming)
     if shouldAimbotLock then
         if not lockedTarget or not isEntityAlive(lockedTarget.Char, lockedTarget.Hum) then
