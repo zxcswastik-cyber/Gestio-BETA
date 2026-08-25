@@ -83,6 +83,7 @@ local themeLibrary = {
         GridSquare = Color3.fromRGB(30, 32, 36),
         Enemy_Accent = Color3.fromRGB(235, 75, 75),
         Enemy_Fill = Color3.fromRGB(220, 50, 50),
+        Enemy_Hidden = Color3.fromRGB(120, 125, 135), -- Серый цвет для противников за стеной
         NametagTextColor = Color3.fromRGB(255, 255, 255),
         HealthHigh = Color3.fromRGB(46, 204, 113),
         HealthMid = Color3.fromRGB(241, 196, 15),
@@ -104,6 +105,7 @@ local themeLibrary = {
         GridSquare = Color3.fromRGB(22, 22, 36),
         Enemy_Accent = Color3.fromRGB(255, 0, 128),
         Enemy_Fill = Color3.fromRGB(200, 0, 100),
+        Enemy_Hidden = Color3.fromRGB(120, 125, 135),
         NametagTextColor = Color3.fromRGB(255, 255, 255),
         HealthHigh = Color3.fromRGB(0, 255, 200),
         HealthMid = Color3.fromRGB(255, 220, 0),
@@ -125,6 +127,7 @@ local themeLibrary = {
         GridSquare = Color3.fromRGB(24, 34, 28),
         Enemy_Accent = Color3.fromRGB(235, 75, 75),
         Enemy_Fill = Color3.fromRGB(220, 50, 50),
+        Enemy_Hidden = Color3.fromRGB(120, 125, 135),
         NametagTextColor = Color3.fromRGB(255, 255, 255),
         HealthHigh = Color3.fromRGB(46, 204, 113),
         HealthMid = Color3.fromRGB(241, 196, 15),
@@ -580,7 +583,29 @@ local function isEntityAlive(char, hum)
 end
 
 -- ==========================================
--- JUMP CIRCLE RENDER ENGINE (FIXED)
+-- VISIBILITY CHECK SYSTEM (Raycast для стен)
+-- ==========================================
+local wallRayParams = RaycastParams.new()
+wallRayParams.FilterType = Enum.RaycastFilterType.Exclude
+wallRayParams.IgnoreWater = true
+
+local function isVisibleThroughWalls(targetPart, targetChar)
+    if not camera or not targetPart or not targetChar then return false end
+    local myChar = player.Character
+    wallRayParams.FilterDescendantsInstances = {myChar, camera}
+    local origin = camera.CFrame.Position
+    local dir = targetPart.Position - origin
+    local hit = Workspace:Raycast(origin, dir, wallRayParams)
+    if hit then
+        if hit.Instance:IsDescendantOf(targetChar) or hit.Instance == targetPart then
+            return true
+        end
+    end
+    return false
+end
+
+-- ==========================================
+-- JUMP CIRCLE RENDER ENGINE
 -- ==========================================
 local function buildJumpRing(segmentCount, radius, thickness)
     local container = Instance.new("Folder")
@@ -619,7 +644,6 @@ local function updateJumpRingLayout(segments, centerPosition, radius)
     for i, seg in ipairs(segments) do
         local angle = seg.Angle
         local nextAngle = angle + (math.pi * 2 / n)
-        -- Используем глобальные координаты с учетом центра позиции ног
         local p1 = centerPosition + Vector3.new(math.cos(angle) * radius, 0, math.sin(angle) * radius)
         local p2 = centerPosition + Vector3.new(math.cos(nextAngle) * radius, 0, math.sin(nextAngle) * radius)
         local mid = (p1 + p2) * 0.5
@@ -695,7 +719,6 @@ local function initJumpCircleForCharacter(char)
         end
 
         local elapsed = os.clock() - startClock
-        -- Корректировка высоты относительно корня персонажа
         local footPos = hrp.Position + Vector3.new(0, jumpCircleHeightOffset, 0)
         updateJumpRingLayout(segments, footPos, jumpCircleRadius)
 
@@ -1223,6 +1246,10 @@ local function renderTacticalOverlay()
             local dist = (rootPart.Position - camPos).Magnitude
 
             if dist <= espMaxDist then
+                -- Проверяем, виден ли противник в поле зрения (без преград)
+                local isVisible = isVisibleThroughWalls(head or rootPart, char)
+                local sideColor = isVisible and currentTheme.Enemy_Accent or currentTheme.Enemy_Hidden
+
                 local headOffset = head and Vector3.new(0, 0.6, 0) or Vector3.new(0, 2.0, 0)
                 local topWorld = (head and head.Position or rootPart.Position) + headOffset
                 local bottomWorld = rootPart.Position - Vector3.new(0, 3.0, 0)
@@ -1235,8 +1262,6 @@ local function renderTacticalOverlay()
                     local boxWidth = boxHeight * 0.65
                     local boxPosX = topScreen.X - (boxWidth * 0.5)
                     local boxPosY = topScreen.Y
-
-                    local sideColor = currentTheme.Enemy_Accent
 
                     if boxEspEnabled and not cornerBoxEnabled then
                         esp.BoxStroke.Color = sideColor
@@ -1254,42 +1279,39 @@ local function renderTacticalOverlay()
                         local lengthY = math.max(boxHeight * 0.25, 4)
                         local thick = boxThickness + 0.5
 
-                        esp.Corners[1].H.BackgroundColor3 = sideColor
+                        for _, corner in ipairs(esp.Corners) do
+                            corner.H.BackgroundColor3 = sideColor
+                            corner.V.BackgroundColor3 = sideColor
+                        end
+
                         esp.Corners[1].H.Size = UDim2.new(0, lengthX, 0, thick)
                         esp.Corners[1].H.Position = UDim2.new(0, boxPosX, 0, boxPosY)
                         esp.Corners[1].H.Visible = true
 
-                        esp.Corners[1].V.BackgroundColor3 = sideColor
                         esp.Corners[1].V.Size = UDim2.new(0, thick, 0, lengthY)
                         esp.Corners[1].V.Position = UDim2.new(0, boxPosX, 0, boxPosY)
                         esp.Corners[1].V.Visible = true
 
-                        esp.Corners[2].H.BackgroundColor3 = sideColor
                         esp.Corners[2].H.Size = UDim2.new(0, lengthX, 0, thick)
                         esp.Corners[2].H.Position = UDim2.new(0, boxPosX + boxWidth - lengthX, 0, boxPosY)
                         esp.Corners[2].H.Visible = true
 
-                        esp.Corners[2].V.BackgroundColor3 = sideColor
                         esp.Corners[2].V.Size = UDim2.new(0, thick, 0, lengthY)
                         esp.Corners[2].V.Position = UDim2.new(0, boxPosX + boxWidth - thick, 0, boxPosY)
                         esp.Corners[2].V.Visible = true
 
-                        esp.Corners[3].H.BackgroundColor3 = sideColor
                         esp.Corners[3].H.Size = UDim2.new(0, lengthX, 0, thick)
                         esp.Corners[3].H.Position = UDim2.new(0, boxPosX, 0, boxPosY + boxHeight - thick)
                         esp.Corners[3].H.Visible = true
 
-                        esp.Corners[3].V.BackgroundColor3 = sideColor
                         esp.Corners[3].V.Size = UDim2.new(0, thick, 0, lengthY)
                         esp.Corners[3].V.Position = UDim2.new(0, boxPosX, 0, boxPosY + boxHeight - lengthY)
                         esp.Corners[3].V.Visible = true
 
-                        esp.Corners[4].H.BackgroundColor3 = sideColor
                         esp.Corners[4].H.Size = UDim2.new(0, lengthX, 0, thick)
                         esp.Corners[4].H.Position = UDim2.new(0, boxPosX + boxWidth - lengthX, 0, boxPosY + boxHeight - thick)
                         esp.Corners[4].H.Visible = true
 
-                        esp.Corners[4].V.BackgroundColor3 = sideColor
                         esp.Corners[4].V.Size = UDim2.new(0, thick, 0, lengthY)
                         esp.Corners[4].V.Position = UDim2.new(0, boxPosX + boxWidth - thick, 0, boxPosY + boxHeight - lengthY)
                         esp.Corners[4].V.Visible = true
@@ -1301,6 +1323,7 @@ local function renderTacticalOverlay()
                         end
                     end
 
+                    -- [ИСПРАВЛЕНО]: Логика Health Bar теперь корректно работает
                     if (boxEspEnabled or cornerBoxEnabled) and healthBarEnabled and hum then
                         local maxHp = hum.MaxHealth > 0 and hum.MaxHealth or 100
                         local curHp = math.clamp(hum.Health, 0, maxHp)
@@ -1328,26 +1351,15 @@ local function renderTacticalOverlay()
                         esp.HealthBarBg.Visible = false
                     end
 
+                    -- [ИЗМЕНЕНО]: Намтеги сделаны короче и компактнее
                     if nametagsEnabled then
                         esp.TagCard.BackgroundTransparency = tagTransparency
                         esp.TagCardStroke.Color = currentTheme.Border
                         esp.TagLabel.TextSize = espTextSize
 
-                        local baseName = plr.DisplayName or plr.Name
-                        local infoText = baseName
-                        
-                        if espShowDistance then
-                            infoText = string.format("%s [%dm]", infoText, math.floor(dist))
-                        end
+                        local infoText = string.format("%d", math.floor(dist))
                         if espShowHealth and hum then
-                            local curHealth = math.floor(hum.Health)
-                            infoText = string.format("%s [%dHP]", infoText, curHealth > 0 and curHealth or 100)
-                        end
-                        if tagShowWeapon then
-                            local tool = char:FindFirstChildOfClass("Tool")
-                            if tool then
-                                infoText = string.format("%s {%s}", infoText, tool.Name)
-                            end
+                            infoText = string.format("%dHP | %dm", math.floor(hum.Health), math.floor(dist))
                         end
 
                         if esp.LastText ~= infoText then
@@ -1533,8 +1545,9 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         local dist = rootPart and (rootPart.Position - localPos).Magnitude or 9999
 
         if char and isEnemy and isAlive and (dist <= espMaxDist) then
-            local activeAccent = currentTheme.Enemy_Accent
-            local activeHighlight = currentTheme.Enemy_Fill
+            local isVisible = isVisibleThroughWalls(head or rootPart, char)
+            local activeAccent = isVisible and currentTheme.Enemy_Accent or currentTheme.Enemy_Hidden
+            local activeHighlight = isVisible and currentTheme.Enemy_Fill or currentTheme.Enemy_Hidden
 
             if data.Highlight.Adornee ~= char then
                 data.Highlight.Adornee = char
