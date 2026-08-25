@@ -1721,26 +1721,24 @@ local function restoreDefaultHipHeight()
 end
 
 local mobileSlideDragging = false
-local mobileSlideDragStart = nil
-local mobileSlideStartPos = nil
 local mobileSlideToggleActive = false
 
 local function updateMobileSlideIndicator()
     if not mobileSlideBtn then return end
-    local stroke = mobileSlideBtn:FindFirstChildOfClass("UIStroke")
 
+    local stroke = mobileSlideBtn:FindFirstChild("GestioSlideStroke")
     if mobileSlideToggleActive then
-        mobileSlideBtn.TextColor3 = currentTheme.TextPrimary
         mobileSlideBtn.BackgroundColor3 = currentTheme.Accent
         mobileSlideBtn.BackgroundTransparency = 0.08
+        mobileSlideBtn.TextColor3 = currentTheme.TextPrimary
         if stroke then
             stroke.Color = currentTheme.Accent
-            stroke.Thickness = 2.2
+            stroke.Thickness = 2
         end
     else
-        mobileSlideBtn.TextColor3 = currentTheme.Accent
         mobileSlideBtn.BackgroundColor3 = currentTheme.CardBg
         mobileSlideBtn.BackgroundTransparency = 0.3
+        mobileSlideBtn.TextColor3 = currentTheme.Accent
         if stroke then
             stroke.Color = currentTheme.Border
             stroke.Thickness = 1.2
@@ -1751,6 +1749,7 @@ end
 local function updateMobileSlideVisibility()
     if mobileSlideBtn then
         mobileSlideBtn.Visible = slideEnabled and UserInputService.TouchEnabled
+
         if not slideEnabled then
             mobileSlideToggleActive = false
             isSliding = false
@@ -1761,18 +1760,25 @@ local function updateMobileSlideVisibility()
 end
 
 local function triggerMobileSlideStart()
-    if not slideEnabled then return end
+    if not slideEnabled then return false end
 
     local char = player.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
     local hum = char and char:FindFirstChildOfClass("Humanoid")
 
-    if hrp and hum and isEntityAlive(char, hum) and isPlayerGrounded(char, hrp) then
-        local moveDir = hum.MoveDirection.Magnitude > 0.1 and hum.MoveDirection or hrp.CFrame.LookVector
-        currentSlideVel = moveDir * (16 * slideSpeedBoost)
-        isSliding = true
-        hum.HipHeight = defaultHipHeight * 0.4
+    if not (hrp and hum and isEntityAlive(char, hum) and isPlayerGrounded(char, hrp)) then
+        return false
     end
+
+    local moveDir = hum.MoveDirection
+    if moveDir.Magnitude <= 0.1 then
+        moveDir = hrp.CFrame.LookVector
+    end
+
+    currentSlideVel = moveDir * (16 * slideSpeedBoost)
+    isSliding = true
+    hum.HipHeight = defaultHipHeight * 0.4
+    return true
 end
 
 local function triggerMobileSlideEnd()
@@ -1781,21 +1787,23 @@ local function triggerMobileSlideEnd()
 
     local char = player.Character
     local hum = char and char:FindFirstChildOfClass("Humanoid")
-    if hum then hum.HipHeight = defaultHipHeight end
+    if hum then
+        hum.HipHeight = defaultHipHeight
+    end
 end
 
 local function toggleMobileSlide()
     if not slideEnabled then return end
 
-    mobileSlideToggleActive = not mobileSlideToggleActive
     if mobileSlideToggleActive then
-        triggerMobileSlideStart()
-        if not isSliding then
-            mobileSlideToggleActive = false
-        end
-    else
+        mobileSlideToggleActive = false
         triggerMobileSlideEnd()
+    else
+        if triggerMobileSlideStart() then
+            mobileSlideToggleActive = true
+        end
     end
+
     updateMobileSlideIndicator()
 end
 
@@ -1821,55 +1829,50 @@ local function createMobileSlideButton()
     mobileSlideBtn.AutoButtonColor = false
     mobileSlideBtn.Parent = mainContainer
 
-    Instance.new("UICorner", mobileSlideBtn).CornerRadius = UDim.new(1, 0)
-    local stroke = Instance.new("UIStroke", mobileSlideBtn)
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(1, 0)
+    corner.Parent = mobileSlideBtn
+
+    local stroke = Instance.new("UIStroke")
+    stroke.Name = "GestioSlideStroke"
     stroke.Color = currentTheme.Border
     stroke.Thickness = 1.2
+    stroke.Parent = mobileSlideBtn
 
-    -- Один тап включает/выключает Slide.
+    -- Tap toggles Slide. No global InputChanged/InputEnded hooks.
     local tapConn = mobileSlideBtn.Activated:Connect(function()
-        if not mobileSlideDragging then
-            toggleMobileSlide()
-        end
+        toggleMobileSlide()
     end)
     table.insert(connections, tapConn)
 
-    -- Перетаскивание кнопки пальцем.
-    local beganConn = mobileSlideBtn.InputBegan:Connect(function(input)
+    -- Safe drag using the button's own drag events.
+    local dragStart = nil
+    local buttonStart = nil
+    local dragConn = mobileSlideBtn.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.Touch then
+            dragStart = input.Position
+            buttonStart = mobileSlideBtn.Position
             mobileSlideDragging = false
-            mobileSlideDragStart = input.Position
-            mobileSlideStartPos = mobileSlideBtn.Position
         end
     end)
-    table.insert(connections, beganConn)
+    table.insert(connections, dragConn)
 
-    local changedConn = UserInputService.InputChanged:Connect(function(input)
-        if not mobileSlideDragStart or input.UserInputType ~= Enum.UserInputType.Touch then return end
+    local changedConn = mobileSlideBtn.InputChanged:Connect(function(input)
+        if input.UserInputType ~= Enum.UserInputType.Touch then return end
+        if not dragStart or not buttonStart then return end
 
-        local delta = input.Position - mobileSlideDragStart
-        if math.abs(delta.X) > 8 or math.abs(delta.Y) > 8 then
+        local delta = input.Position - dragStart
+        if math.abs(delta.X) > 10 or math.abs(delta.Y) > 10 then
             mobileSlideDragging = true
             mobileSlideBtn.Position = UDim2.new(
-                mobileSlideStartPos.X.Scale,
-                mobileSlideStartPos.X.Offset + delta.X,
-                mobileSlideStartPos.Y.Scale,
-                mobileSlideStartPos.Y.Offset + delta.Y
+                buttonStart.X.Scale,
+                buttonStart.X.Offset + delta.X,
+                buttonStart.Y.Scale,
+                buttonStart.Y.Offset + delta.Y
             )
         end
     end)
     table.insert(connections, changedConn)
-
-    local endedConn = UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.Touch then
-            mobileSlideDragStart = nil
-            mobileSlideStartPos = nil
-            task.delay(0.05, function()
-                mobileSlideDragging = false
-            end)
-        end
-    end)
-    table.insert(connections, endedConn)
 
     updateMobileSlideIndicator()
 end
@@ -2758,5 +2761,7 @@ local setsGeneralSection = makeCategorySection(setsPage, "Configuration", 1)
 addCard(setsGeneralSection, "Theme", true, function(v) end)
 
 openInspectorFor("Tracking")
+
+end
 
 buildGestioUI()
