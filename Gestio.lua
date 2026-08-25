@@ -1,19 +1,17 @@
 -- ==============================================================================
 -- [Gestio UI - Blox Strike Ultimate Mobile Engine (Full Suite 2600+ Lines)]
--- Version: 5.9.1 Delta Fixed Edition
--- Target Game: Blox Strike (Roblox Mobile)
--- ==========================================
+-- Version: 5.4.2 Enterprise Production Edition (Delta Safe Fix)
+-- Target Game: Blox Strike (Roblox)
+-- ==============================================================================
 
--- 1. Bulletproof Cleanup Guard (Fix for 'attempt to call a nil value')
 pcall(function()
-    local env = (type(getgenv) == "function" and getgenv()) or _G
-    if env and type(env.GestioRunning) == "function" then
-        env.GestioRunning()
+    if type(getgenv) == "function" and getgenv().GestioRunning and type(getgenv().GestioRunning) == "function" then
+        getgenv().GestioRunning()
     end
 end)
 
 -- ==========================================
--- SYSTEM SERVICES
+-- SAFE SYSTEM SERVICES IMPORT
 -- ==========================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -52,13 +50,8 @@ local function getSafeGui()
         if pGui then return pGui end
     end
 
-    local testGui = Instance.new("ScreenGui")
-    testGui.Name = "GestioPermCheck"
-    local success = pcall(function()
-        testGui.Parent = CoreGui
-        testGui:Destroy()
-    end)
-    if success then return CoreGui end
+    local success, res = pcall(function() return CoreGui end)
+    if success and res then return res end
 
     return (player and player:WaitForChild("PlayerGui", 3)) or CoreGui
 end
@@ -69,14 +62,18 @@ local activeEspHolders = {}
 local screenEspCache = {}
 local activeTracersCache = {}
 local activeHeadDotsCache = {}
-local themeUpdateListeners = {} -- Pre-allocated table to prevent nil errors
+local themeUpdateListeners = {}
 
-local globalEnv = (type(getgenv) == "function" and getgenv()) or _G
-if not globalEnv.GestioSavedPos then
-    globalEnv.GestioSavedPos = {
-        OpenBtn = UDim2.new(0.5, -45, 0, 15),
-        MainFrame = UDim2.new(0.5, 0, 0.5, 0)
-    }
+local defaultPos = {
+    OpenBtn = UDim2.new(0.5, -45, 0, 15),
+    MainFrame = UDim2.new(0.5, 0, 0.5, 0)
+}
+
+if type(getgenv) == "function" then
+    local env = getgenv()
+    if type(env) == "table" and not env.GestioSavedPos then
+        env.GestioSavedPos = defaultPos
+    end
 end
 
 -- ==========================================
@@ -157,7 +154,7 @@ local function applyCurrentTheme()
 end
 
 -- ==========================================
--- MODULE STATES
+-- COMBAT ENGINE STATE VARIABLES
 -- ==========================================
 local aimbotEnabled = false
 local aimbotSpeed = 35.0
@@ -180,6 +177,9 @@ local visibleCheck = false
 local aimSensitivity = 1.0
 local lockOnJump = true
 
+-- ==========================================
+-- RECOIL CONTROL SYSTEM (RCS) VARIABLES
+-- ==========================================
 local rcsEnabled = false
 local rcsStrength = 75
 local rcsPitchFactor = 1.0
@@ -189,17 +189,26 @@ local rcsHorizontalComp = true
 local rcsBurstOnly = false
 local rcsRandomize = true
 
+-- ==========================================
+-- TRIGGERBOT ASSISTANT VARIABLES
+-- ==========================================
 local triggerbotEnabled = false
 local triggerbotDelay = 0.02
 local triggerbotHeadOnly = false
 local triggerbotMobileAutoFire = true
 local lastTriggerTick = 0
 
+-- ==========================================
+-- RAGE & ANTI-AIM (SPINBOT) VARIABLES
+-- ==========================================
 local antiAimEnabled = false
 local spinSpeed = 50
 local currentSpinAngle = 0
 local antiAimYawMode = "Spin"
 
+-- ==========================================
+-- MOVEMENT, BHOP, SLIDE & AUTO-STRAFE
+-- ==========================================
 local bunnyHopEnabled = false
 local bhopAutoJump = false
 local bhopAirStrafe = true
@@ -225,6 +234,9 @@ local walkMultiplier = 2.0
 local flightEnabled = false
 local flightSpeed = 50
 
+-- ==========================================
+-- VISUALS & ESP CONFIGURATION VARIABLES
+-- ==========================================
 local nametagsEnabled = false
 local espMaxDist = 3000
 local espShowDistance = true
@@ -244,6 +256,9 @@ local highlightEnabled = false
 local headDotEnabled = false
 local tracersEnabled = false
 
+-- ==========================================
+-- INTEGRATED GRENADE DANGER ENGINE VARIABLES
+-- ==========================================
 local grenadeDangerEnabled = false
 local grenadeDangerMaxDist = 500
 local grenadeDangerShowDist = true
@@ -259,6 +274,9 @@ local GrenadeDangerConfig = {
 
 local dangerGrenadeObjects = {}
 
+-- ==========================================
+-- JUMP CIRCLE CONFIGURATION VARIABLES
+-- ==========================================
 local jumpCircleEnabled = false
 local jumpCircleStyle = "GradientWave"
 local jumpCircleSegmentCount = 32
@@ -266,8 +284,12 @@ local jumpCircleRadius = 3.5
 local jumpCircleHeightOffset = -2.8
 local activeJumpCircleData = nil
 
+-- ==========================================
+-- ENVIRONMENT, LIGHTING & FOV CHANGER
+-- ==========================================
 local customFovEnabled = false
 local customFovValue = 95
+
 local antiFlashEnabled = true
 local fullBrightEnabled = false
 local removeFogEnabled = true
@@ -336,6 +358,9 @@ pcall(function()
     defaultLighting.FogColor = Lighting.FogColor
 end)
 
+-- ==========================================
+-- KROATON INFO HUD & ANTI-AFK VARIABLES
+-- ==========================================
 local infoHudEnabled = false
 local infoHudShowFps = true
 local infoHudShowPing = true
@@ -344,7 +369,7 @@ local infoHudShowFov = true
 local antiAfkEnabled = true
 
 -- ==========================================
--- DISPLAY CONTAINERS SETUP
+-- DISPLAY CONTAINERS SETUP (SAFELY INITIALIZED)
 -- ==========================================
 local mainContainer = Instance.new("ScreenGui")
 mainContainer.Name = "GestioMainContainer"
@@ -1153,41 +1178,37 @@ local function renderTacticalOverlay()
                         esp.Corners[1].H.BackgroundColor3 = sideColor
                         esp.Corners[1].H.Size = UDim2.new(0, lengthX, 0, thick)
                         esp.Corners[1].H.Position = UDim2.new(0, boxPosX, 0, boxPosY)
-                        esp.Corners[1].H.Visible = true
-
                         esp.Corners[1].V.BackgroundColor3 = sideColor
                         esp.Corners[1].V.Size = UDim2.new(0, thick, 0, lengthY)
                         esp.Corners[1].V.Position = UDim2.new(0, boxPosX, 0, boxPosY)
+                        esp.Corners[1].H.Visible = true
                         esp.Corners[1].V.Visible = true
 
                         esp.Corners[2].H.BackgroundColor3 = sideColor
                         esp.Corners[2].H.Size = UDim2.new(0, lengthX, 0, thick)
                         esp.Corners[2].H.Position = UDim2.new(0, boxPosX + boxWidth - lengthX, 0, boxPosY)
-                        esp.Corners[2].H.Visible = true
-
                         esp.Corners[2].V.BackgroundColor3 = sideColor
                         esp.Corners[2].V.Size = UDim2.new(0, thick, 0, lengthY)
                         esp.Corners[2].V.Position = UDim2.new(0, boxPosX + boxWidth - thick, 0, boxPosY)
+                        esp.Corners[2].H.Visible = true
                         esp.Corners[2].V.Visible = true
 
                         esp.Corners[3].H.BackgroundColor3 = sideColor
                         esp.Corners[3].H.Size = UDim2.new(0, lengthX, 0, thick)
                         esp.Corners[3].H.Position = UDim2.new(0, boxPosX, 0, boxPosY + boxHeight - thick)
-                        esp.Corners[3].H.Visible = true
-
                         esp.Corners[3].V.BackgroundColor3 = sideColor
                         esp.Corners[3].V.Size = UDim2.new(0, thick, 0, lengthY)
                         esp.Corners[3].V.Position = UDim2.new(0, boxPosX, 0, boxPosY + boxHeight - lengthY)
+                        esp.Corners[3].H.Visible = true
                         esp.Corners[3].V.Visible = true
 
                         esp.Corners[4].H.BackgroundColor3 = sideColor
                         esp.Corners[4].H.Size = UDim2.new(0, lengthX, 0, thick)
                         esp.Corners[4].H.Position = UDim2.new(0, boxPosX + boxWidth - lengthX, 0, boxPosY + boxHeight - thick)
-                        esp.Corners[4].H.Visible = true
-
                         esp.Corners[4].V.BackgroundColor3 = sideColor
                         esp.Corners[4].V.Size = UDim2.new(0, thick, 0, lengthY)
                         esp.Corners[4].V.Position = UDim2.new(0, boxPosX + boxWidth - thick, 0, boxPosY + boxHeight - lengthY)
+                        esp.Corners[4].H.Visible = true
                         esp.Corners[4].V.Visible = true
                     else
                         esp.Box.Visible = false
@@ -1210,7 +1231,6 @@ local function renderTacticalOverlay()
                         esp.HealthBarBg.Size = UDim2.new(0, barWidth, 0, boxHeight)
                         esp.HealthBarBg.Position = UDim2.new(0, barX, 0, barY)
                         esp.HealthBarBg.Visible = true
-
                         esp.HealthBarFill.Size = UDim2.new(1, 0, hpPercent, 0)
                         
                         if hpPercent > 0.5 then
@@ -1377,12 +1397,10 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         lastFpsUpdate = nowTick
     end
 
-    -- FOV Changer Application
     if customFovEnabled and camera then
         camera.FieldOfView = customFovValue
     end
 
-    -- Kroaton Info HUD Real-time Update
     if infoHudEnabled then
         hudContainer.Visible = true
         hudFpsLabel.Visible = infoHudShowFps
@@ -1430,7 +1448,6 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         end
     end
 
-    -- Full RCS Engine Implementation (Pitch, Yaw & Randomization)
     if rcsEnabled and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then
         local rcsComp = (rcsStrength / 100) * 0.005
         local randPitch = rcsRandomize and (1 + (math.random(-5, 5) / 100)) or 1
@@ -1445,7 +1462,6 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         end
     end
 
-    -- Tracking / Aim Engine Implementation
     local shouldAimbotLock = aimbotEnabled and (snapAimMode or isAiming)
     if shouldAimbotLock then
         if not lockedTarget or not isEntityAlive(lockedTarget.Char, lockedTarget.Hum) then
@@ -1466,7 +1482,6 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     runMobileTriggerbot()
     renderTacticalOverlay()
 
-    -- Render Danger Grenade Overlays
     if grenadeDangerEnabled then
         local myChar = player and player.Character
         local localRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
@@ -1630,7 +1645,7 @@ local function isPlayerGrounded(char, hrp)
 end
 
 -- ==========================================
--- MOBILE INPUT TOUCH HOOK (SINGLE REGISTRATION)
+-- MOBILE INPUT TOUCH HOOK
 -- ==========================================
 local jumpHookConnected = false
 local function hookMobileJumpButton()
@@ -1705,7 +1720,7 @@ end)
 table.insert(connections, inpEndedConn)
 
 -- ==========================================
--- PHYSICS & KINEMATICS HEARTBEAT (BHOP, STRAFE, SLIDE)
+-- PHYSICS & KINEMATICS HEARTBEAT
 -- ==========================================
 table.insert(connections, RunService.Heartbeat:Connect(function(dt)
     local char = player and player.Character
@@ -1718,7 +1733,6 @@ table.insert(connections, RunService.Heartbeat:Connect(function(dt)
         lastMoveDirection = currentMove
     end
 
-    -- Bhop Execution
     if bunnyHopEnabled then
         local grounded = isPlayerGrounded(char, hrp) or hum.FloorMaterial ~= Enum.Material.Air
         local shouldJump = bhopAutoJump or isMobileJumpHeld or hum.Jump
@@ -1741,7 +1755,6 @@ table.insert(connections, RunService.Heartbeat:Connect(function(dt)
         end
     end
 
-    -- Auto-Strafe Engine (Air Directional Assist)
     if autoStrafeEnabled and not isPlayerGrounded(char, hrp) then
         local state = hum:GetState()
         if state == Enum.HumanoidStateType.Jumping or state == Enum.HumanoidStateType.Freefall then
@@ -1763,7 +1776,6 @@ table.insert(connections, RunService.Heartbeat:Connect(function(dt)
         end
     end
 
-    -- Slide Physics Execution & Decay
     if slideEnabled and isSliding then
         local grounded = isPlayerGrounded(char, hrp)
         if grounded and currentSlideVel.Magnitude > slideMinSpeed then
@@ -1802,7 +1814,7 @@ toggleGui.Parent = targetGui
 
 local openBtn = Instance.new("TextButton", toggleGui)
 openBtn.Size = UDim2.new(0, 85, 0, 30)
-openBtn.Position = globalEnv.GestioSavedPos.OpenBtn
+openBtn.Position = defaultPos.OpenBtn
 openBtn.BackgroundColor3 = currentTheme.Background
 openBtn.Text = "Gestio"
 openBtn.TextColor3 = currentTheme.Accent
@@ -1867,7 +1879,6 @@ local dragChangeConn = UserInputService.InputChanged:Connect(function(input)
         local delta = input.Position - btnInputStart
         local newPos = UDim2.new(btnStartPos.X.Scale, btnStartPos.X.Offset + delta.X, btnStartPos.Y.Scale, btnStartPos.Y.Offset + delta.Y)
         openBtn.Position = newPos
-        globalEnv.GestioSavedPos.OpenBtn = newPos
     end
 end)
 table.insert(connections, dragChangeConn)
@@ -2564,5 +2575,25 @@ addCard(miscGeneralSection, "Anti-AFK", antiAfkEnabled, function(v) antiAfkEnabl
 -- SETTINGS TAB
 local setsGeneralSection = makeCategorySection(setsPage, "Configuration", 1)
 addCard(setsGeneralSection, "Theme", true, function(v) openInspectorFor("Theme") end)
+
+-- ==========================================
+-- SAFE ANTI-AFK INITIALIZATION
+-- ==========================================
+if player then
+    local afkConn = player.Idled:Connect(function()
+        if antiAfkEnabled then
+            pcall(function()
+                VirtualUser:CaptureController()
+                VirtualUser:ClickButton2(Vector2.zero)
+            end)
+        end
+    end)
+    table.insert(connections, afkConn)
+end
+
+-- Export global runner to prevent multi-injection leaks
+if type(getgenv) == "function" then
+    getgenv().GestioRunning = cleanup
+end
 
 openInspectorFor("Tracking")
