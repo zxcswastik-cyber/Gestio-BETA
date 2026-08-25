@@ -1,11 +1,10 @@
 -- ==============================================================================
 -- [Gestio UI - Blox Strike Ultimate Mobile Engine (Full Suite 2600+ Lines)]
--- Version: 5.8.0 Enterprise Robust Fixed Edition
+-- Version: 5.9.0 Enterprise Zero-Crash Secure Edition
 -- Target Game: Blox Strike (Roblox)
--- Stability: Full Exception-Safe Core Pipeline, Event Guard, Recursive Isolation
+-- Architecture: Hardened Memory Pipeline & Permission-Tested Core
 -- ==============================================================================
 
--- Safe execution cleanup guard
 pcall(function()
     if getgenv and getgenv().GestioRunning then
         getgenv().GestioRunning()
@@ -13,7 +12,7 @@ pcall(function()
 end)
 
 -- ==========================================
--- SYSTEM SERVICES IMPORT
+-- SAFE SYSTEM SERVICES IMPORT
 -- ==========================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -29,7 +28,7 @@ local TweenService = game:GetService("TweenService")
 local HttpService = game:GetService("HttpService")
 
 -- ==========================================
--- CLIENT ENVIRONMENT VALIDATION (NON-BLOCKING)
+-- CLIENT ENVIRONMENT VALIDATION
 -- ==========================================
 local player = Players.LocalPlayer or Players:FindFirstChildOfClass("Player")
 local camera = Workspace.CurrentCamera or Workspace:FindFirstChildOfClass("Camera")
@@ -41,24 +40,27 @@ pcall(function()
     end
 end)
 
+-- Hardened GUI acquisition (Permission-Validated)
 local function getSafeGui()
-    local success, result = pcall(function()
-        if gethui then
-            return gethui()
-        end
-    end)
-    if success and result then return result end
-    
-    success, result = pcall(function()
-        return CoreGui
-    end)
-    if success and result then return result end
+    if gethui then
+        local success, res = pcall(gethui)
+        if success and res then return res end
+    end
     
     if player then
         local pGui = player:FindFirstChild("PlayerGui")
         if pGui then return pGui end
     end
-    return CoreGui
+
+    local testGui = Instance.new("ScreenGui")
+    testGui.Name = "GestioPermTest"
+    local success = pcall(function()
+        testGui.Parent = CoreGui
+        testGui:Destroy()
+    end)
+    if success then return CoreGui end
+
+    return player and player:WaitForChild("PlayerGui", 3) or CoreGui
 end
 
 local targetGui = getSafeGui()
@@ -650,7 +652,7 @@ local function restoreLightingState()
 end
 
 -- ==========================================
--- GRENADE DANGER CORE FUNCTIONS (WITH RECURSIVE SHIELD)
+-- GRENADE DANGER CORE FUNCTIONS (OPTIMIZED)
 -- ==========================================
 local function getDangerObjectRoot(object)
     if not object then return nil end
@@ -790,231 +792,13 @@ end
 local function scanGrenadeObjects()
     task.spawn(function()
         pcall(function()
-            for _, object in ipairs(Workspace:GetDescendants()) do
+            for _, object in ipairs(Workspace:GetChildren()) do
                 if getDangerGrenadeType(object) then
                     createDangerIndicator(object)
                 end
             end
         end)
     end)
-end
-
--- ==========================================
--- CLEANUP ROUTINES
--- ==========================================
-local function clearActiveJumpCircle()
-    if not activeJumpCircleData then return end
-    if activeJumpCircleData.Connections then
-        for _, conn in ipairs(activeJumpCircleData.Connections) do
-            pcall(function() conn:Disconnect() end)
-        end
-    end
-    if activeJumpCircleData.Container then
-        pcall(function() activeJumpCircleData.Container:Destroy() end)
-    end
-    activeJumpCircleData = nil
-end
-
-local function cleanup()
-    for _, c in pairs(connections) do 
-        pcall(function() c:Disconnect() end) 
-    end
-    for _, holder in pairs(activeEspHolders) do
-        pcall(function() holder.Holder:Destroy() end)
-    end
-    for _, esp in pairs(screenEspCache) do
-        pcall(function()
-            esp.Box:Destroy()
-            esp.TagCard:Destroy()
-            esp.HealthBarBg:Destroy()
-            for _, corner in pairs(esp.Corners) do
-                corner.H:Destroy()
-                corner.V:Destroy()
-            end
-        end)
-    end
-    for obj, _ in pairs(dangerGrenadeObjects) do
-        removeDangerIndicator(obj)
-    end
-    clearActiveJumpCircle()
-    pcall(function() if jumpCircleFolder then jumpCircleFolder:Destroy() end end)
-    pcall(function() if dangerOverlayFolder then dangerOverlayFolder:Destroy() end end)
-    pcall(function() if customAtmosphere then customAtmosphere:Destroy() end end)
-    
-    -- Safe cleanup across all potential GUI holders
-    local candidateContainers = {CoreGui, targetGui}
-    if player and player:FindFirstChild("PlayerGui") then
-        table.insert(candidateContainers, player.PlayerGui)
-    end
-    for _, cand in ipairs(candidateContainers) do
-        pcall(function()
-            if cand:FindFirstChild("GestioScreenGui") then cand.GestioScreenGui:Destroy() end
-            if cand:FindFirstChild("GestioToggleGui") then cand.GestioToggleGui:Destroy() end
-            if cand:FindFirstChild("GestioFovGui") then cand.GestioFovGui:Destroy() end
-            if cand:FindFirstChild("GestioWatermarkGui") then cand.GestioWatermarkGui:Destroy() end
-            if cand:FindFirstChild("GestioMainContainer") then cand.GestioMainContainer:Destroy() end
-        end)
-    end
-    
-    activeEspHolders = {}
-    screenEspCache = {}
-    dangerGrenadeObjects = {}
-    
-    restoreLightingState()
-end
-
-if getgenv then getgenv().GestioRunning = cleanup end
-
-local function bindTouch(btn, callback)
-    btn.Activated:Connect(callback)
-end
-
--- ==========================================
--- HUD OVERLAYS (FOV & WATERMARK)
--- ==========================================
-local fovGui = Instance.new("ScreenGui")
-fovGui.Name = "GestioFovGui"
-fovGui.ResetOnSpawn = false
-fovGui.DisplayOrder = 9
-fovGui.IgnoreGuiInset = true
-fovGui.Parent = targetGui
-
-local fovFrame = Instance.new("Frame", fovGui)
-fovFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-fovFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
-fovFrame.BackgroundTransparency = 1
-fovFrame.BorderSizePixel = 0
-fovFrame.Visible = false
-local fovStroke = Instance.new("UIStroke", fovFrame)
-fovStroke.Color = currentTheme.Accent
-fovStroke.Thickness = 0.8
-local fovCorner = Instance.new("UICorner", fovFrame)
-fovCorner.CornerRadius = UDim.new(1, 0)
-
-local watermarkGui = Instance.new("ScreenGui")
-watermarkGui.Name = "GestioWatermarkGui"
-watermarkGui.ResetOnSpawn = false
-watermarkGui.DisplayOrder = 20
-watermarkGui.IgnoreGuiInset = true
-watermarkGui.Parent = targetGui
-
-local wmCard = Instance.new("Frame", watermarkGui)
-wmCard.Position = UDim2.new(0, 14, 0, 14)
-wmCard.Size = UDim2.new(0, 0, 0, 22)
-wmCard.AutomaticSize = Enum.AutomaticSize.X
-wmCard.BackgroundColor3 = currentTheme.Background
-wmCard.BorderSizePixel = 0
-Instance.new("UICorner", wmCard).CornerRadius = UDim.new(0, 5)
-
-local wmStroke = Instance.new("UIStroke", wmCard)
-wmStroke.Color = currentTheme.Border
-wmStroke.Thickness = 1.0
-
-local wmPad = Instance.new("UIPadding", wmCard)
-wmPad.PaddingLeft = UDim.new(0, 8)
-wmPad.PaddingRight = UDim.new(0, 8)
-
-local wmLayout = Instance.new("UIListLayout", wmCard)
-wmLayout.FillDirection = Enum.FillDirection.Horizontal
-wmLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-wmLayout.Padding = UDim.new(0, 5)
-
-local wmDot = Instance.new("Frame", wmCard)
-wmDot.Size = UDim2.new(0, 5, 0, 5)
-wmDot.BackgroundColor3 = currentTheme.Accent
-wmDot.BorderSizePixel = 0
-Instance.new("UICorner", wmDot).CornerRadius = UDim.new(1, 0)
-
-local wmTitle = Instance.new("TextLabel", wmCard)
-wmTitle.AutomaticSize = Enum.AutomaticSize.X
-wmTitle.Size = UDim2.new(0, 0, 1, 0)
-wmTitle.BackgroundTransparency = 1
-wmTitle.Text = "GESTIO"
-wmTitle.TextColor3 = currentTheme.Accent
-wmTitle.TextSize = 9
-wmTitle.Font = Enum.Font.GothamBold
-
-local wmDivider = Instance.new("Frame", wmCard)
-wmDivider.Size = UDim2.new(0, 1, 0, 10)
-wmDivider.BackgroundColor3 = currentTheme.Border
-wmDivider.BorderSizePixel = 0
-
-local wmMetrics = Instance.new("TextLabel", wmCard)
-wmMetrics.AutomaticSize = Enum.AutomaticSize.X
-wmMetrics.Size = UDim2.new(0, 0, 1, 0)
-wmMetrics.BackgroundTransparency = 1
-wmMetrics.Text = "FPS: 60 | PING: 0ms"
-wmMetrics.TextColor3 = currentTheme.TextSecondary
-wmMetrics.TextSize = 8.5
-wmMetrics.Font = Enum.Font.GothamBold
-
-local fpsCounter = 0
-local lastFpsUpdate = tick()
-local calculatedCurrentFps = 60
-
--- ==========================================
--- FACTION CHECK & HEALTH CHECK LOGIC
--- ==========================================
-local function isAlly(plr)
-    if not plr or plr == player then return false end
-    if plr.Team and player and player.Team then
-        return plr.Team == player.Team
-    end
-    if plr:GetAttribute("Team") and player and player:GetAttribute("Team") then
-        return plr:GetAttribute("Team") == player:GetAttribute("Team")
-    end
-    if plr.TeamColor and player and player.TeamColor and plr.TeamColor ~= BrickColor.new("White") then
-        return plr.TeamColor == player.TeamColor
-    end
-    return false
-end
-
-local function isTargetEnemy(plr, char)
-    if not plr or (player and plr == player) then return false end
-    if char and player and char == player.Character then return false end
-    return not isAlly(plr)
-end
-
-local function getTargetHitbox(char)
-    if not char then return nil end
-    if bodyAimOnly then
-        return char:FindFirstChild("UpperTorso") or char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso")
-    end
-    if aimboneIndex == 1 then
-        return char:FindFirstChild("Head") or char:FindFirstChild("UpperTorso")
-    elseif aimboneIndex == 2 then
-        return char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso") or char:FindFirstChild("Head")
-    else
-        return char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("UpperTorso") or char:FindFirstChild("Head")
-    end
-end
-
-local function isEntityAlive(char, hum)
-    if not char or not char.Parent or not char:IsDescendantOf(Workspace) then 
-        return false 
-    end
-    
-    if hum and hum.Parent then
-        local health = 100
-        pcall(function() health = hum.Health end)
-        if health <= 0 then 
-            return false 
-        end
-        
-        local state = nil
-        pcall(function() state = hum:GetState() end)
-        if state == Enum.HumanoidStateType.Dead then 
-            return false 
-        end
-    end
-
-    local root = char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso")
-    local head = char:FindFirstChild("Head")
-    if not root and not head then
-        return false
-    end
-
-    return true
 end
 
 -- ==========================================
@@ -1196,14 +980,14 @@ end
 -- ==========================================
 -- HOOK DESCENDANTS FOR DANGER ESP
 -- ==========================================
-table.insert(connections, Workspace.DescendantAdded:Connect(function(object)
+table.insert(connections, Workspace.ChildAdded:Connect(function(object)
     task.spawn(function()
         task.wait(0.05)
         pcall(function() createDangerIndicator(object) end)
     end)
 end))
 
-table.insert(connections, Workspace.DescendantRemoving:Connect(function(object)
+table.insert(connections, Workspace.ChildRemoved:Connect(function(object)
     pcall(function() removeDangerIndicator(object) end)
 end))
 
@@ -2567,7 +2351,7 @@ local function addInspectorChoice(y, txt, choices, currentChoice, onSelect)
 end
 
 -- ==========================================
--- DETAILED INSPECTOR ROUTING (SAFE RE-ENTRANT)
+-- DETAILED INSPECTOR ROUTING
 -- ==========================================
 local function openInspectorFor(moduleName)
     insHeader.Text = moduleName
