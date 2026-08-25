@@ -1,6 +1,6 @@
 -- ==============================================================================
--- [Gestio UI - Blox Strike Ultimate Mobile Engine (Full Suite 2000+ Lines)]
--- Version: 4.5.2 Enterprise Full Source Edition
+-- [Gestio UI - Blox Strike Ultimate Mobile Engine (Categorized Sections Suite)]
+-- Version: 4.6.0 Enterprise Full Source Edition (Structured Sub-Categories)
 -- Target Game: Blox Strike (Roblox)
 -- ==============================================================================
 
@@ -17,6 +17,7 @@ local CoreGui = game:GetService("CoreGui")
 local Lighting = game:GetService("Lighting")
 local Workspace = game:GetService("Workspace")
 local VirtualUser = game:GetService("VirtualUser")
+local VirtualInputManager = game:GetService("VirtualInputManager")
 local Stats = game:GetService("Stats")
 local Debris = game:GetService("Debris")
 
@@ -152,11 +153,12 @@ local triggerbotMobileAutoFire = true
 local lastTriggerTick = 0
 
 local bunnyHopEnabled = false
-local bhopAutoJump = true
+local bhopAutoJump = false
 local bhopAirStrafe = true
 local bhopSpeedBoost = 1.35
 local bhopJumpPower = 52
 local isMobileJumpHeld = false
+local lastMoveDirection = Vector3.zero
 
 local speedEnabled = false
 local walkMultiplier = 2.0
@@ -252,8 +254,8 @@ local function cleanup()
 
     pcall(function() if targetGui:FindFirstChild("GestioScreenGui") then targetGui.GestioScreenGui:Destroy() end end)
     pcall(function() if targetGui:FindFirstChild("GestioToggleGui") then targetGui.GestioToggleGui:Destroy() end end)
-    pcall(function() if targetGui:FindFirstChild("GestioFovGui") then targetGui.FovGui:Destroy() end end)
-    pcall(function() if targetGui:FindFirstChild("GestioWatermarkGui") then targetGui.WatermarkGui:Destroy() end end)
+    pcall(function() if targetGui:FindFirstChild("GestioFovGui") then targetGui.GestioFovGui:Destroy() end end)
+    pcall(function() if targetGui:FindFirstChild("GestioWatermarkGui") then targetGui.GestioWatermarkGui:Destroy() end end)
     pcall(function() if targetGui:FindFirstChild("GestioMainContainer") then targetGui.GestioMainContainer:Destroy() end end)
 end
 
@@ -343,7 +345,7 @@ local fpsCounter = 0
 local lastFpsUpdate = tick()
 
 -- ==========================================
--- ADAPTED TEAM CHECK MODULE (FROM SOURCE)
+-- ADAPTED TEAM CHECK MODULE
 -- ==========================================
 local function isAlly(plr)
     if not plr or plr == player then return false end
@@ -912,6 +914,9 @@ local triggerRayParams = RaycastParams.new()
 triggerRayParams.FilterType = Enum.RaycastFilterType.Exclude
 triggerRayParams.IgnoreWater = true
 
+-- ==========================================
+-- FIXED TRIGGERBOT (NO CAMERA JITTER)
+-- ==========================================
 local function runMobileTriggerbot()
     if not triggerbotEnabled then return end
     local now = tick()
@@ -937,9 +942,15 @@ local function runMobileTriggerbot()
                 lastTriggerTick = now
                 if triggerbotMobileAutoFire then
                     pcall(function()
-                        VirtualUser:Button1Down(Vector2.new(0,0))
-                        task.wait(0.02)
-                        VirtualUser:Button1Up(Vector2.new(0,0))
+                        local myChar = player.Character
+                        local equippedTool = myChar and myChar:FindFirstChildOfClass("Tool")
+                        if equippedTool then
+                            equippedTool:Activate()
+                        elseif VirtualInputManager then
+                            VirtualInputManager:SendMouseButtonEvent(vp.X * 0.5, vp.Y * 0.5, 0, true, game, 0)
+                            task.wait(0.01)
+                            VirtualInputManager:SendMouseButtonEvent(vp.X * 0.5, vp.Y * 0.5, 0, false, game, 0)
+                        end
                     end)
                 end
             end
@@ -1410,14 +1421,49 @@ local function isPlayerGrounded(char, hrp)
     return hit ~= nil
 end
 
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+-- ==========================================
+-- MOBILE BHOP ENGINE (TOUCH-HOOK & JUMP BYPASS)
+-- ==========================================
+local function hookMobileJumpButton()
+    task.spawn(function()
+        local pGui = player:WaitForChild("PlayerGui", 5)
+        if not pGui then return end
+        local touchGui = pGui:WaitForChild("TouchGui", 5)
+        if not touchGui then return end
+        local controlFrame = touchGui:WaitForChild("TouchControlFrame", 5)
+        if not controlFrame then return end
+        local jumpBtn = controlFrame:WaitForChild("JumpButton", 5)
+        if not jumpBtn then return end
+
+        jumpBtn.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+                isMobileJumpHeld = true
+            end
+        end)
+
+        jumpBtn.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+                isMobileJumpHeld = false
+            end
+        end)
+    end)
+end
+
+hookMobileJumpButton()
+player.CharacterAdded:Connect(hookMobileJumpButton)
+
+UserInputService.JumpRequest:Connect(function()
+    isMobileJumpHeld = true
+end)
+
+UserInputService.InputBegan:Connect(function(input, processed)
+    if input.KeyCode == Enum.KeyCode.Space then
         isMobileJumpHeld = true
     end
 end)
 
-UserInputService.InputEnded:Connect(function(input, gameProcessed)
-    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+UserInputService.InputEnded:Connect(function(input, processed)
+    if input.KeyCode == Enum.KeyCode.Space then
         isMobileJumpHeld = false
     end
 end)
@@ -1435,10 +1481,10 @@ table.insert(connections, RunService.Heartbeat:Connect(function(dt)
 
     if bunnyHopEnabled then
         local grounded = isPlayerGrounded(char, hrp) or hum.FloorMaterial ~= Enum.Material.Air
-        local mobileJumpPressed = isMobileJumpHeld or hum.Jump
+        local shouldJump = bhopAutoJump or isMobileJumpHeld or hum.Jump
 
-        if grounded and (bhopAutoJump or mobileJumpPressed) then
-            hum.Jump = true
+        if grounded and shouldJump then
+            hum:ChangeState(Enum.HumanoidStateType.Jumping)
             hrp.AssemblyLinearVelocity = Vector3.new(
                 hrp.AssemblyLinearVelocity.X,
                 bhopJumpPower,
@@ -1612,32 +1658,82 @@ local setsBtn = createNavBtn(142, "SETTINGS")
 cBtn.BackgroundColor3 = currentTheme.CardBg
 cBtn.TextColor3 = currentTheme.Accent
 
-local function makeGridContainer()
+-- ==========================================
+-- DYNAMIC SCROLL CONTAINER & CATEGORY MAKER
+-- ==========================================
+local function makePageContainer()
     local c = Instance.new("ScrollingFrame", mainFrame)
     c.Size = UDim2.new(1, -82, 1, -12)
     c.Position = UDim2.new(0, 78, 0, 6)
     c.BackgroundTransparency = 1
     c.ScrollBarThickness = 2
-    c.CanvasSize = UDim2.new(0, 0, 0, 600)
+    c.CanvasSize = UDim2.new(0, 0, 0, 0)
+    c.AutomaticCanvasSize = Enum.AutomaticSize.Y
     c.Visible = false
     c.ZIndex = 6
 
-    local grid = Instance.new("UIGridLayout", c)
-    grid.CellSize = UDim2.new(0, 60, 0, 60)
-    grid.CellPadding = UDim2.new(0, 5, 0, 5)
+    local list = Instance.new("UIListLayout", c)
+    list.FillDirection = Enum.FillDirection.Vertical
+    list.SortOrder = Enum.SortOrder.LayoutOrder
+    list.Padding = UDim.new(0, 8)
 
     local pad = Instance.new("UIPadding", c)
-    pad.PaddingLeft = UDim.new(0, 3)
-    pad.PaddingTop = UDim.new(0, 3)
+    pad.PaddingLeft = UDim.new(0, 4)
+    pad.PaddingRight = UDim.new(0, 6)
+    pad.PaddingTop = UDim.new(0, 4)
+    pad.PaddingBottom = UDim.new(0, 6)
     return c
 end
 
-local cPage = makeGridContainer()
-local mPage = makeGridContainer()
-local ePage = makeGridContainer()
-local envPage = makeGridContainer()
-local micsPage = makeGridContainer()
-local setsPage = makeGridContainer()
+local function makeCategorySection(page, title, layoutOrder)
+    local sectionContainer = Instance.new("Frame", page)
+    sectionContainer.Size = UDim2.new(1, 0, 0, 0)
+    sectionContainer.AutomaticSize = Enum.AutomaticSize.Y
+    sectionContainer.BackgroundTransparency = 1
+    sectionContainer.LayoutOrder = layoutOrder or 1
+    sectionContainer.ZIndex = 6
+
+    local sectionList = Instance.new("UIListLayout", sectionContainer)
+    sectionList.FillDirection = Enum.FillDirection.Vertical
+    sectionList.SortOrder = Enum.SortOrder.LayoutOrder
+    sectionList.Padding = UDim.new(0, 4)
+
+    local headerFrame = Instance.new("Frame", sectionContainer)
+    headerFrame.Size = UDim2.new(1, 0, 0, 16)
+    headerFrame.BackgroundTransparency = 1
+    headerFrame.LayoutOrder = 1
+    headerFrame.ZIndex = 6
+
+    local headerLabel = Instance.new("TextLabel", headerFrame)
+    headerLabel.Size = UDim2.new(1, 0, 1, 0)
+    headerLabel.BackgroundTransparency = 1
+    headerLabel.Text = title:upper()
+    headerLabel.TextColor3 = currentTheme.Accent
+    headerLabel.TextSize = 8.5
+    headerLabel.Font = Enum.Font.GothamBold
+    headerLabel.TextXAlignment = Enum.TextXAlignment.Left
+    headerLabel.ZIndex = 7
+
+    local gridFrame = Instance.new("Frame", sectionContainer)
+    gridFrame.Size = UDim2.new(1, 0, 0, 0)
+    gridFrame.AutomaticSize = Enum.AutomaticSize.Y
+    gridFrame.BackgroundTransparency = 1
+    gridFrame.LayoutOrder = 2
+    gridFrame.ZIndex = 6
+
+    local grid = Instance.new("UIGridLayout", gridFrame)
+    grid.CellSize = UDim2.new(0, 58, 0, 58)
+    grid.CellPadding = UDim2.new(0, 5, 0, 5)
+
+    return gridFrame
+end
+
+local cPage = makePageContainer()
+local mPage = makePageContainer()
+local ePage = makePageContainer()
+local envPage = makePageContainer()
+local micsPage = makePageContainer()
+local setsPage = makePageContainer()
 cPage.Visible = true
 
 local function switch(tab)
@@ -1860,7 +1956,7 @@ local function openInspectorFor(moduleName)
         insContent.CanvasSize = UDim2.new(0, 0, 0, 200)
         addInspectorSlider(6, "Jump Power", 30, 100, bhopJumpPower, false, function(v) bhopJumpPower = v end)
         addInspectorSlider(38, "Speed Boost", 1.0, 3.0, bhopSpeedBoost, true, function(v) bhopSpeedBoost = v end)
-        addInspectorToggle(76, "Auto Jump", bhopAutoJump, function(v) bhopAutoJump = v end)
+        addInspectorToggle(76, "Auto Jump (Always)", bhopAutoJump, function(v) bhopAutoJump = v end)
         addInspectorToggle(102, "Air Strafe", bhopAirStrafe, function(v) bhopAirStrafe = v end)
     elseif moduleName == "Nametags" then
         insContent.CanvasSize = UDim2.new(0, 0, 0, 340)
@@ -1968,22 +2064,39 @@ local function addCard(parent, name, defaultState, onToggle)
     bindTouch(toggleBtn, executeToggle)
 end
 
-addCard(cPage, "Tracking", aimbotEnabled, function(v) aimbotEnabled = v end)
-addCard(cPage, "Anti-Aim", antiAimEnabled, function(v) antiAimEnabled = v end)
-addCard(cPage, "RCS", rcsEnabled, function(v) rcsEnabled = v end)
-addCard(cPage, "Trigger Assistant", triggerbotEnabled, function(v) triggerbotEnabled = v end)
+-- ==========================================
+-- CATEGORY SECTION SETUP & CARD REGISTRATION
+-- ==========================================
 
-addCard(mPage, "Bhop Engine", bunnyHopEnabled, function(v) bunnyHopEnabled = v end)
-addCard(mPage, "Speed Boost", speedEnabled, function(v) speedEnabled = v end)
-addCard(mPage, "Flight", flightEnabled, function(v) flightEnabled = v end)
+-- COMBAT TAB
+local cAimSection = makeCategorySection(cPage, "Aim & Ballistics", 1)
+local cRageSection = makeCategorySection(cPage, "HVH & Anti-Aim", 2)
 
-addCard(ePage, "Nametags", nametagsEnabled, function(v) nametagsEnabled = v end)
-addCard(ePage, "Highlight", highlightEnabled, function(v) highlightEnabled = v end)
-addCard(ePage, "Box Overlay", boxEspEnabled, function(v) boxEspEnabled = v end)
-addCard(ePage, "Head Dot", headDotEnabled, function(v) headDotEnabled = v end)
-addCard(ePage, "Snaplines", tracersEnabled, function(v) tracersEnabled = v end)
-addCard(ePage, "Grenade ESP", grenadeEspEnabled, function(v) grenadeEspEnabled = v end)
-addCard(ePage, "Jump Circle", jumpCircleEnabled, function(v) 
+addCard(cAimSection, "Tracking", aimbotEnabled, function(v) aimbotEnabled = v end)
+addCard(cAimSection, "RCS", rcsEnabled, function(v) rcsEnabled = v end)
+addCard(cAimSection, "Trigger Assistant", triggerbotEnabled, function(v) triggerbotEnabled = v end)
+addCard(cRageSection, "Anti-Aim", antiAimEnabled, function(v) antiAimEnabled = v end)
+
+-- MOVEMENT TAB
+local mHopSection = makeCategorySection(mPage, "Bhop Mechanics", 1)
+local mBoostSection = makeCategorySection(mPage, "Physics Modifications", 2)
+
+addCard(mHopSection, "Bhop Engine", bunnyHopEnabled, function(v) bunnyHopEnabled = v end)
+addCard(mBoostSection, "Speed Boost", speedEnabled, function(v) speedEnabled = v end)
+addCard(mBoostSection, "Flight", flightEnabled, function(v) flightEnabled = v end)
+
+-- ESP TAB
+local ePlayerSection = makeCategorySection(ePage, "Player Visuals", 1)
+local eWorldSection = makeCategorySection(ePage, "World & Projectiles", 2)
+
+addCard(ePlayerSection, "Nametags", nametagsEnabled, function(v) nametagsEnabled = v end)
+addCard(ePlayerSection, "Highlight", highlightEnabled, function(v) highlightEnabled = v end)
+addCard(ePlayerSection, "Box Overlay", boxEspEnabled, function(v) boxEspEnabled = v end)
+addCard(ePlayerSection, "Head Dot", headDotEnabled, function(v) headDotEnabled = v end)
+addCard(ePlayerSection, "Snaplines", tracersEnabled, function(v) tracersEnabled = v end)
+
+addCard(eWorldSection, "Grenade ESP", grenadeEspEnabled, function(v) grenadeEspEnabled = v end)
+addCard(eWorldSection, "Jump Circle", jumpCircleEnabled, function(v) 
     jumpCircleEnabled = v 
     if v and player.Character then
         initJumpCircleForCharacter(player.Character)
@@ -1992,11 +2105,18 @@ addCard(ePage, "Jump Circle", jumpCircleEnabled, function(v)
     end
 end)
 
-addCard(envPage, "Night Mode", nightModeEnabled, function(v) nightModeEnabled = v end)
-addCard(envPage, "FullBright", fullBrightEnabled, function(v) fullBrightEnabled = v end)
-addCard(envPage, "Anti-Flash", antiFlashEnabled, function(v) antiFlashEnabled = v end)
+-- ENVIRONMENT TAB
+local envLightSection = makeCategorySection(envPage, "Atmosphere & World", 1)
+addCard(envLightSection, "Night Mode", nightModeEnabled, function(v) nightModeEnabled = v end)
+addCard(envLightSection, "FullBright", fullBrightEnabled, function(v) fullBrightEnabled = v end)
+addCard(envLightSection, "Anti-Flash", antiFlashEnabled, function(v) antiFlashEnabled = v end)
 
-addCard(micsPage, "Anti-AFK", true, function(v) end)
-addCard(setsPage, "Theme", true, function(v) end)
+-- MISC TAB
+local miscGeneralSection = makeCategorySection(micsPage, "Utilities", 1)
+addCard(miscGeneralSection, "Anti-AFK", true, function(v) end)
+
+-- SETTINGS TAB
+local setsGeneralSection = makeCategorySection(setsPage, "Configuration", 1)
+addCard(setsGeneralSection, "Theme", true, function(v) end)
 
 openInspectorFor("Tracking")
