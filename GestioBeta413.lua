@@ -1720,19 +1720,54 @@ local function restoreDefaultHipHeight()
     end
 end
 
+local mobileSlideDragging = false
+local mobileSlideDragStart = nil
+local mobileSlideStartPos = nil
+local mobileSlideToggleActive = false
+
+local function updateMobileSlideIndicator()
+    if not mobileSlideBtn then return end
+    local stroke = mobileSlideBtn:FindFirstChildOfClass("UIStroke")
+
+    if mobileSlideToggleActive then
+        mobileSlideBtn.TextColor3 = currentTheme.TextPrimary
+        mobileSlideBtn.BackgroundColor3 = currentTheme.Accent
+        mobileSlideBtn.BackgroundTransparency = 0.08
+        if stroke then
+            stroke.Color = currentTheme.Accent
+            stroke.Thickness = 2.2
+        end
+    else
+        mobileSlideBtn.TextColor3 = currentTheme.Accent
+        mobileSlideBtn.BackgroundColor3 = currentTheme.CardBg
+        mobileSlideBtn.BackgroundTransparency = 0.3
+        if stroke then
+            stroke.Color = currentTheme.Border
+            stroke.Thickness = 1.2
+        end
+    end
+end
+
 local function updateMobileSlideVisibility()
     if mobileSlideBtn then
         mobileSlideBtn.Visible = slideEnabled and UserInputService.TouchEnabled
+        if not slideEnabled then
+            mobileSlideToggleActive = false
+            isSliding = false
+            currentSlideVel = Vector3.zero
+            updateMobileSlideIndicator()
+        end
     end
 end
 
 local function triggerMobileSlideStart()
-    if not slideEnabled or not UserInputService.TouchEnabled then return end
+    if not slideEnabled then return end
+
     local char = player.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
     local hum = char and char:FindFirstChildOfClass("Humanoid")
+
     if hrp and hum and isEntityAlive(char, hum) and isPlayerGrounded(char, hrp) then
-        if not defaultHipHeightCaptured then captureDefaultHipHeight(char) end
         local moveDir = hum.MoveDirection.Magnitude > 0.1 and hum.MoveDirection or hrp.CFrame.LookVector
         currentSlideVel = moveDir * (16 * slideSpeedBoost)
         isSliding = true
@@ -1741,25 +1776,31 @@ local function triggerMobileSlideStart()
 end
 
 local function triggerMobileSlideEnd()
-    mobileSlideInputActive = false
-    mobileSlideInput = nil
     isSliding = false
     currentSlideVel = Vector3.zero
-    restoreDefaultHipHeight()
+
+    local char = player.Character
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    if hum then hum.HipHeight = defaultHipHeight end
 end
 
-local function positionMobileSlideButton(jumpBtn)
-    if not mobileSlideBtn or not jumpBtn then return end
-    task.defer(function()
-        if not mobileSlideBtn or not mobileSlideBtn.Parent or not jumpBtn.Parent then return end
-        local x = math.max(8, jumpBtn.AbsolutePosition.X - mobileSlideBtn.AbsoluteSize.X - 12)
-        local y = jumpBtn.AbsolutePosition.Y
-        mobileSlideBtn.Position = UDim2.fromOffset(x, y)
-    end)
+local function toggleMobileSlide()
+    if not slideEnabled then return end
+
+    mobileSlideToggleActive = not mobileSlideToggleActive
+    if mobileSlideToggleActive then
+        triggerMobileSlideStart()
+        if not isSliding then
+            mobileSlideToggleActive = false
+        end
+    else
+        triggerMobileSlideEnd()
+    end
+    updateMobileSlideIndicator()
 end
 
 local function createMobileSlideButton()
-    if mobileSlideBtn and mobileSlideBtn.Parent then
+    if mobileSlideBtn then
         updateMobileSlideVisibility()
         return
     end
@@ -1776,6 +1817,8 @@ local function createMobileSlideButton()
     mobileSlideBtn.Font = Enum.Font.GothamBold
     mobileSlideBtn.Visible = slideEnabled and UserInputService.TouchEnabled
     mobileSlideBtn.ZIndex = 80
+    mobileSlideBtn.Active = true
+    mobileSlideBtn.AutoButtonColor = false
     mobileSlideBtn.Parent = mainContainer
 
     Instance.new("UICorner", mobileSlideBtn).CornerRadius = UDim.new(1, 0)
@@ -1783,25 +1826,52 @@ local function createMobileSlideButton()
     stroke.Color = currentTheme.Border
     stroke.Thickness = 1.2
 
-    local bConn1 = mobileSlideBtn.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-            if not mobileSlideInputActive then
-                mobileSlideInputActive = true
-                mobileSlideInput = input
-                triggerMobileSlideStart()
-            end
+    -- Один тап включает/выключает Slide.
+    local tapConn = mobileSlideBtn.Activated:Connect(function()
+        if not mobileSlideDragging then
+            toggleMobileSlide()
         end
     end)
-    table.insert(connections, bConn1)
+    table.insert(connections, tapConn)
 
-    local bConn2 = UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-            if mobileSlideInputActive and input == mobileSlideInput then
-                triggerMobileSlideEnd()
-            end
+    -- Перетаскивание кнопки пальцем.
+    local beganConn = mobileSlideBtn.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch then
+            mobileSlideDragging = false
+            mobileSlideDragStart = input.Position
+            mobileSlideStartPos = mobileSlideBtn.Position
         end
     end)
-    table.insert(connections, bConn2)
+    table.insert(connections, beganConn)
+
+    local changedConn = UserInputService.InputChanged:Connect(function(input)
+        if not mobileSlideDragStart or input.UserInputType ~= Enum.UserInputType.Touch then return end
+
+        local delta = input.Position - mobileSlideDragStart
+        if math.abs(delta.X) > 8 or math.abs(delta.Y) > 8 then
+            mobileSlideDragging = true
+            mobileSlideBtn.Position = UDim2.new(
+                mobileSlideStartPos.X.Scale,
+                mobileSlideStartPos.X.Offset + delta.X,
+                mobileSlideStartPos.Y.Scale,
+                mobileSlideStartPos.Y.Offset + delta.Y
+            )
+        end
+    end)
+    table.insert(connections, changedConn)
+
+    local endedConn = UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch then
+            mobileSlideDragStart = nil
+            mobileSlideStartPos = nil
+            task.delay(0.05, function()
+                mobileSlideDragging = false
+            end)
+        end
+    end)
+    table.insert(connections, endedConn)
+
+    updateMobileSlideIndicator()
 end
 
 local function hookMobileJumpButton()
@@ -1850,6 +1920,10 @@ createMobileSlideButton()
 hookMobileJumpButton()
 
 table.insert(connections, player.CharacterAdded:Connect(function(char)
+    mobileSlideToggleActive = false
+    mobileSlideDragging = false
+    isSliding = false
+    currentSlideVel = Vector3.zero
     isSliding = false
     mobileSlideInputActive = false
     mobileSlideInput = nil
