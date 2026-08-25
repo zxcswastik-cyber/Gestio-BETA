@@ -1,9 +1,11 @@
 -- ==============================================================================
 -- [Gestio UI - Blox Strike Ultimate Mobile Engine (Full Suite 2600+ Lines)]
--- Version: 5.7.0 Enterprise Fail-Safe Async Engine
+-- Version: 5.8.0 Enterprise Robust Fixed Edition
 -- Target Game: Blox Strike (Roblox)
+-- Stability: Full Exception-Safe Core Pipeline, Event Guard, Recursive Isolation
 -- ==============================================================================
 
+-- Safe execution cleanup guard
 pcall(function()
     if getgenv and getgenv().GestioRunning then
         getgenv().GestioRunning()
@@ -11,7 +13,7 @@ pcall(function()
 end)
 
 -- ==========================================
--- SAFE SYSTEM SERVICES IMPORT
+-- SYSTEM SERVICES IMPORT
 -- ==========================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -33,11 +35,11 @@ local player = Players.LocalPlayer or Players:FindFirstChildOfClass("Player")
 local camera = Workspace.CurrentCamera or Workspace:FindFirstChildOfClass("Camera")
 local defaultCameraFOV = 70
 
-if camera then
-    pcall(function()
+pcall(function()
+    if camera then
         defaultCameraFOV = camera.FieldOfView
-    end)
-end
+    end
+end)
 
 local function getSafeGui()
     local success, result = pcall(function()
@@ -500,7 +502,7 @@ local infoHudShowSpeed = true
 local infoHudShowFov = true
 
 -- ==========================================
--- DISPLAY CONTAINERS SETUP
+-- DISPLAY CONTAINERS SETUP (SAFELY INITIALIZED)
 -- ==========================================
 local mainContainer = Instance.new("ScreenGui")
 mainContainer.Name = "GestioMainContainer"
@@ -512,13 +514,34 @@ mainContainer.Parent = targetGui
 local overlayContainer = Instance.new("Folder", mainContainer)
 overlayContainer.Name = "Gestio_2DOverlay"
 
-local dangerOverlayFolder = Instance.new("Folder", Workspace)
-dangerOverlayFolder.Name = "Gestio_GrenadeDangerWorld"
+local dangerOverlayFolder = nil
+local jumpCircleFolder = nil
 
-local jumpCircleFolder = Instance.new("Folder", Workspace)
-jumpCircleFolder.Name = "Gestio_JumpCircleWorld"
+local function getOrCreateDangerFolder()
+    if dangerOverlayFolder and dangerOverlayFolder.Parent then return dangerOverlayFolder end
+    pcall(function()
+        dangerOverlayFolder = Workspace:FindFirstChild("Gestio_GrenadeDangerWorld")
+        if not dangerOverlayFolder then
+            dangerOverlayFolder = Instance.new("Folder")
+            dangerOverlayFolder.Name = "Gestio_GrenadeDangerWorld"
+            dangerOverlayFolder.Parent = Workspace
+        end
+    end)
+    return dangerOverlayFolder
+end
 
-local grenadePool = {}
+local function getOrCreateJumpFolder()
+    if jumpCircleFolder and jumpCircleFolder.Parent then return jumpCircleFolder end
+    pcall(function()
+        jumpCircleFolder = Workspace:FindFirstChild("Gestio_JumpCircleWorld")
+        if not jumpCircleFolder then
+            jumpCircleFolder = Instance.new("Folder")
+            jumpCircleFolder.Name = "Gestio_JumpCircleWorld"
+            jumpCircleFolder.Parent = Workspace
+        end
+    end)
+    return jumpCircleFolder
+end
 
 -- ==========================================
 -- KROATON HUD COMPONENT INSTANTIATION
@@ -627,7 +650,7 @@ local function restoreLightingState()
 end
 
 -- ==========================================
--- GRENADE DANGER CORE FUNCTIONS
+-- GRENADE DANGER CORE FUNCTIONS (WITH RECURSIVE SHIELD)
 -- ==========================================
 local function getDangerObjectRoot(object)
     if not object then return nil end
@@ -643,7 +666,8 @@ local function getDangerObjectRoot(object)
 end
 
 local function getDangerGrenadeType(object)
-    local name = object.Name:lower()
+    if not object or not object.Name then return nil end
+    local name = tostring(object.Name):lower()
     for grenadeName, settings in pairs(GrenadeDangerConfig) do
         if name:find(grenadeName:lower(), 1, true) then
             return settings
@@ -676,6 +700,13 @@ local function removeDangerIndicator(object)
 end
 
 local function createDangerIndicator(object)
+    if not object then return end
+    
+    -- Recursive Protection Guard: Ignore indicators created by ourselves
+    if object.Name == "GestioDangerRadius" or object.Name == "GestioGrenadeIndicator" or object:IsDescendantOf(mainContainer) then
+        return
+    end
+    
     local root = getDangerObjectRoot(object)
     if not root then return end
     local settings = getDangerGrenadeType(object)
@@ -731,6 +762,7 @@ local function createDangerIndicator(object)
 
     local radiusPart = nil
     if settings.Radius > 0 then
+        local parentFolder = getOrCreateDangerFolder()
         radiusPart = Instance.new("Part")
         radiusPart.Name = "GestioDangerRadius"
         radiusPart.Shape = Enum.PartType.Cylinder
@@ -743,7 +775,7 @@ local function createDangerIndicator(object)
         radiusPart.Transparency = (grenadeDangerEnabled and grenadeDangerShowRadius) and 0.88 or 1
         radiusPart.Color = settings.Color
         radiusPart.Size = Vector3.new(0.08, settings.Radius * 2, settings.Radius * 2)
-        radiusPart.Parent = dangerOverlayFolder
+        radiusPart.Parent = parentFolder
     end
 
     dangerGrenadeObjects[object] = {
@@ -805,20 +837,30 @@ local function cleanup()
         removeDangerIndicator(obj)
     end
     clearActiveJumpCircle()
-    pcall(function() jumpCircleFolder:Destroy() end)
-    pcall(function() dangerOverlayFolder:Destroy() end)
+    pcall(function() if jumpCircleFolder then jumpCircleFolder:Destroy() end end)
+    pcall(function() if dangerOverlayFolder then dangerOverlayFolder:Destroy() end end)
     pcall(function() if customAtmosphere then customAtmosphere:Destroy() end end)
+    
+    -- Safe cleanup across all potential GUI holders
+    local candidateContainers = {CoreGui, targetGui}
+    if player and player:FindFirstChild("PlayerGui") then
+        table.insert(candidateContainers, player.PlayerGui)
+    end
+    for _, cand in ipairs(candidateContainers) do
+        pcall(function()
+            if cand:FindFirstChild("GestioScreenGui") then cand.GestioScreenGui:Destroy() end
+            if cand:FindFirstChild("GestioToggleGui") then cand.GestioToggleGui:Destroy() end
+            if cand:FindFirstChild("GestioFovGui") then cand.GestioFovGui:Destroy() end
+            if cand:FindFirstChild("GestioWatermarkGui") then cand.GestioWatermarkGui:Destroy() end
+            if cand:FindFirstChild("GestioMainContainer") then cand.GestioMainContainer:Destroy() end
+        end)
+    end
+    
     activeEspHolders = {}
     screenEspCache = {}
     dangerGrenadeObjects = {}
     
     restoreLightingState()
-
-    pcall(function() if targetGui:FindFirstChild("GestioScreenGui") then targetGui.GestioScreenGui:Destroy() end end)
-    pcall(function() if targetGui:FindFirstChild("GestioToggleGui") then targetGui.GestioToggleGui:Destroy() end end)
-    pcall(function() if targetGui:FindFirstChild("GestioFovGui") then targetGui.FovGui:Destroy() end end)
-    pcall(function() if targetGui:FindFirstChild("GestioWatermarkGui") then targetGui.WatermarkGui:Destroy() end end)
-    pcall(function() if targetGui:FindFirstChild("GestioMainContainer") then targetGui.GestioMainContainer:Destroy() end end)
 end
 
 if getgenv then getgenv().GestioRunning = cleanup end
@@ -915,21 +957,21 @@ local calculatedCurrentFps = 60
 -- ==========================================
 local function isAlly(plr)
     if not plr or plr == player then return false end
-    if plr.Team and player.Team then
+    if plr.Team and player and player.Team then
         return plr.Team == player.Team
     end
-    if plr:GetAttribute("Team") and player:GetAttribute("Team") then
+    if plr:GetAttribute("Team") and player and player:GetAttribute("Team") then
         return plr:GetAttribute("Team") == player:GetAttribute("Team")
     end
-    if plr.TeamColor and player.TeamColor and plr.TeamColor ~= BrickColor.new("White") then
+    if plr.TeamColor and player and player.TeamColor and plr.TeamColor ~= BrickColor.new("White") then
         return plr.TeamColor == player.TeamColor
     end
     return false
 end
 
 local function isTargetEnemy(plr, char)
-    if not plr or plr == player then return false end
-    if char and char == player.Character then return false end
+    if not plr or (player and plr == player) then return false end
+    if char and player and char == player.Character then return false end
     return not isAlly(plr)
 end
 
@@ -1011,23 +1053,27 @@ local function buildJumpRing(segmentCount, radius, thickness)
 end
 
 local function updateJumpRingLayout(segments, centerPosition, radius)
+    if not segments then return end
     local n = #segments
     for i, seg in ipairs(segments) do
-        local angle = seg.Angle
-        local nextAngle = angle + (math.pi * 2 / n)
-        local p1 = centerPosition + Vector3.new(math.cos(angle) * radius, 0, math.sin(angle) * radius)
-        local p2 = centerPosition + Vector3.new(math.cos(nextAngle) * radius, 0, math.sin(nextAngle) * radius)
-        local mid = (p1 + p2) * 0.5
+        if seg.Part and seg.Part.Parent then
+            local angle = seg.Angle
+            local nextAngle = angle + (math.pi * 2 / n)
+            local p1 = centerPosition + Vector3.new(math.cos(angle) * radius, 0, math.sin(angle) * radius)
+            local p2 = centerPosition + Vector3.new(math.cos(nextAngle) * radius, 0, math.sin(nextAngle) * radius)
+            local mid = (p1 + p2) * 0.5
 
-        seg.Part.CFrame = CFrame.lookAt(mid, p2)
+            seg.Part.CFrame = CFrame.lookAt(mid, p2)
+        end
     end
 end
 
 local function spawnJumpRipple(position)
     if not jumpCircleEnabled then return end
     task.spawn(function()
+        local parentFolder = getOrCreateJumpFolder()
         local rippleFolder, segments = buildJumpRing(jumpCircleSegmentCount, jumpCircleRadius, 0.3)
-        rippleFolder.Parent = jumpCircleFolder
+        rippleFolder.Parent = parentFolder
 
         local startT = os.clock()
         local duration = 0.5
@@ -1050,8 +1096,10 @@ local function spawnJumpRipple(position)
             updateJumpRingLayout(segments, position, curR)
 
             for i, seg in ipairs(segments) do
-                seg.Part.Transparency = alpha
-                seg.Part.Color = col1:Lerp(col2, alpha)
+                if seg.Part and seg.Part.Parent then
+                    seg.Part.Transparency = alpha
+                    seg.Part.Color = col1:Lerp(col2, alpha)
+                end
             end
         end)
     end)
@@ -1065,8 +1113,9 @@ local function initJumpCircleForCharacter(char)
     local hum = char:WaitForChild("Humanoid", 4)
     if not hrp or not hum then return end
 
+    local parentFolder = getOrCreateJumpFolder()
     local container, segments = buildJumpRing(jumpCircleSegmentCount, jumpCircleRadius, 0.25)
-    container.Parent = jumpCircleFolder
+    container.Parent = parentFolder
 
     local circleData = {
         Container = container,
@@ -1080,7 +1129,10 @@ local function initJumpCircleForCharacter(char)
     local startClock = os.clock()
 
     local loopConn = RunService.RenderStepped:Connect(function(dt)
-        if not jumpCircleEnabled or not hrp.Parent or not hum.Parent or hum.Health <= 0 then
+        if not jumpCircleEnabled or not activeJumpCircleData or activeJumpCircleData ~= circleData then
+            return
+        end
+        if not hrp or not hrp.Parent or not hum or not hum.Parent or hum.Health <= 0 then
             clearActiveJumpCircle()
             return
         end
@@ -1095,22 +1147,28 @@ local function initJumpCircleForCharacter(char)
             local c1 = Color3.fromRGB(210, 45, 55)
             local c2 = Color3.fromRGB(0, 200, 255)
             for i, seg in ipairs(segments) do
-                local ratio = ((i / n) + spin) % 1
-                local wave = (math.sin(ratio * math.pi * 2) + 1) * 0.5
-                seg.Part.Color = c1:Lerp(c2, wave)
-                seg.Part.Transparency = 0.1 + (wave * 0.2)
+                if seg.Part and seg.Part.Parent then
+                    local ratio = ((i / n) + spin) % 1
+                    local wave = (math.sin(ratio * math.pi * 2) + 1) * 0.5
+                    seg.Part.Color = c1:Lerp(c2, wave)
+                    seg.Part.Transparency = 0.1 + (wave * 0.2)
+                end
             end
         elseif jumpCircleStyle == "ChromaPulse" then
             local hue = (elapsed * 0.4) % 1
             local col = Color3.fromHSV(hue, 0.9, 1)
             for _, seg in ipairs(segments) do
-                seg.Part.Color = col
-                seg.Part.Transparency = 0.15
+                if seg.Part and seg.Part.Parent then
+                    seg.Part.Color = col
+                    seg.Part.Transparency = 0.15
+                end
             end
         elseif jumpCircleStyle == "StaticNeon" then
             for _, seg in ipairs(segments) do
-                seg.Part.Color = currentTheme.Accent
-                seg.Part.Transparency = 0.1
+                if seg.Part and seg.Part.Parent then
+                    seg.Part.Color = currentTheme.Accent
+                    seg.Part.Transparency = 0.1
+                end
             end
         end
     end)
@@ -1761,7 +1819,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
                             data.distanceLabel.Text = ""
                         end
 
-                        if data.radius then
+                        if data.radius and data.radius.Parent then
                             data.radius.Transparency = grenadeDangerShowRadius and 0.88 or 1
                             data.radius.CFrame = CFrame.new(data.root.Position) * CFrame.Angles(0, 0, math.rad(90))
                         end
@@ -1772,7 +1830,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
                         end
                     else
                         data.billboard.Enabled = false
-                        if data.radius then
+                        if data.radius and data.radius.Parent then
                             data.radius.Transparency = 1
                         end
                     end
@@ -1782,7 +1840,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     else
         for _, data in pairs(dangerGrenadeObjects) do
             data.billboard.Enabled = false
-            if data.radius then
+            if data.radius and data.radius.Parent then
                 data.radius.Transparency = 1
             end
         end
@@ -1898,9 +1956,11 @@ local function isPlayerGrounded(char, hrp)
 end
 
 -- ==========================================
--- MOBILE INPUT TOUCH HOOK
+-- MOBILE INPUT TOUCH HOOK (SINGLE REGISTRATION)
 -- ==========================================
+local jumpHookConnected = false
 local function hookMobileJumpButton()
+    if jumpHookConnected then return end
     task.spawn(function()
         if not player then return end
         local pGui = player:FindFirstChild("PlayerGui") or player:WaitForChild("PlayerGui", 5)
@@ -1912,6 +1972,7 @@ local function hookMobileJumpButton()
         local jumpBtn = controlFrame:WaitForChild("JumpButton", 5)
         if not jumpBtn then return end
 
+        jumpHookConnected = true
         jumpBtn.InputBegan:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
                 isMobileJumpHeld = true
@@ -1927,9 +1988,6 @@ local function hookMobileJumpButton()
 end
 
 hookMobileJumpButton()
-if player then
-    player.CharacterAdded:Connect(hookMobileJumpButton)
-end
 
 UserInputService.JumpRequest:Connect(function()
     isMobileJumpHeld = true
@@ -2509,7 +2567,7 @@ local function addInspectorChoice(y, txt, choices, currentChoice, onSelect)
 end
 
 -- ==========================================
--- DETAILED INSPECTOR ROUTING
+-- DETAILED INSPECTOR ROUTING (SAFE RE-ENTRANT)
 -- ==========================================
 local function openInspectorFor(moduleName)
     insHeader.Text = moduleName
@@ -2549,13 +2607,21 @@ local function openInspectorFor(moduleName)
         addInspectorChoice(6, "Presets", {"Purple", "Day", "Sunset", "Night", "Crimson", "Cold", "Default"}, worldChangerPreset, function(selected)
             applyWorldMode(selected)
         end)
-        addInspectorSlider(48, "Brightness", 0.0, 5.0, Lighting.Brightness, true, function(v) 
+        
+        local curB, curC, curE = 2, 14, 0
+        pcall(function()
+            curB = Lighting.Brightness
+            curC = Lighting.ClockTime
+            curE = Lighting.ExposureCompensation
+        end)
+        
+        addInspectorSlider(48, "Brightness", 0.0, 5.0, curB, true, function(v) 
             if worldChangerEnabled then pcall(function() Lighting.Brightness = v end) end
         end)
-        addInspectorSlider(80, "Clock Time", 0.0, 24.0, Lighting.ClockTime, true, function(v) 
+        addInspectorSlider(80, "Clock Time", 0.0, 24.0, curC, true, function(v) 
             if worldChangerEnabled then pcall(function() Lighting.ClockTime = v end) end
         end)
-        addInspectorSlider(112, "Exposure", -2.0, 2.0, Lighting.ExposureCompensation, true, function(v) 
+        addInspectorSlider(112, "Exposure", -2.0, 2.0, curE, true, function(v) 
             if worldChangerEnabled then pcall(function() Lighting.ExposureCompensation = v end) end
         end)
     elseif moduleName == "Kroaton HUD" then
@@ -2737,7 +2803,7 @@ addCard(eWorldSection, "Grenade Danger", grenadeDangerEnabled, function(v)
     grenadeDangerEnabled = v 
     for _, d in pairs(dangerGrenadeObjects) do
         d.billboard.Enabled = v
-        if d.radius then
+        if d.radius and d.radius.Parent then
             d.radius.Transparency = (v and grenadeDangerShowRadius) and 0.88 or 1
         end
     end
