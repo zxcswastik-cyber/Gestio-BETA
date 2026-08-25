@@ -319,6 +319,13 @@ local nightPresets = {
         Ambient = Color3.fromRGB(15, 15, 25),
         FogColor = Color3.fromRGB(10, 10, 20)
     },
+    ["Nebula"] = {
+        ClockTime = 23.8,
+        Brightness = 0.3,
+        OutdoorAmbient = Color3.fromRGB(70, 25, 85),
+        Ambient = Color3.fromRGB(45, 15, 60),
+        FogColor = Color3.fromRGB(90, 30, 110)
+    },
     ["DeepBlood"] = {
         ClockTime = 0.0,
         Brightness = 0.35,
@@ -1922,7 +1929,7 @@ local function updateMobileSlideVisibility()
 end
 
 local function triggerMobileSlideStart()
-    if not slideEnabled then return false end
+    if not slideEnabled then return end
 
     local char = player.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
@@ -2255,7 +2262,7 @@ table.insert(connections, RunService.Heartbeat:Connect(function(dt)
 end))
 
 -- ==========================================
--- UI SCOPE FIX
+-- UI SCOPE FIX & DYNAMIC LAYOUT CALCULATION
 -- ==========================================
 local function buildGestioUI()
 
@@ -2422,27 +2429,30 @@ local function makePageContainer()
     c.BackgroundTransparency = 1
     c.ScrollBarThickness = 2
     c.CanvasSize = UDim2.new(0, 0, 0, 0)
-    c.AutomaticCanvasSize = Enum.AutomaticSize.Y
     c.Visible = false
     c.ZIndex = 6
 
     local list = Instance.new("UIListLayout", c)
     list.FillDirection = Enum.FillDirection.Vertical
     list.SortOrder = Enum.SortOrder.LayoutOrder
-    list.Padding = UDim.new(0, 8)
+    list.Padding = UDim.new(0, 10)
 
     local pad = Instance.new("UIPadding", c)
     pad.PaddingLeft = UDim.new(0, 4)
     pad.PaddingRight = UDim.new(0, 6)
     pad.PaddingTop = UDim.new(0, 4)
-    pad.PaddingBottom = UDim.new(0, 6)
+    pad.PaddingBottom = UDim.new(0, 10)
+
+    list:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        c.CanvasSize = UDim2.new(0, 0, 0, list.AbsoluteContentSize.Y + 20)
+    end)
+
     return c
 end
 
 local function makeCategorySection(page, title, layoutOrder)
     local sectionContainer = Instance.new("Frame", page)
-    sectionContainer.Size = UDim2.new(1, 0, 0, 0)
-    sectionContainer.AutomaticSize = Enum.AutomaticSize.Y
+    sectionContainer.Size = UDim2.new(1, 0, 0, 30)
     sectionContainer.BackgroundTransparency = 1
     sectionContainer.LayoutOrder = layoutOrder or 1
     sectionContainer.ZIndex = 6
@@ -2450,7 +2460,7 @@ local function makeCategorySection(page, title, layoutOrder)
     local sectionList = Instance.new("UIListLayout", sectionContainer)
     sectionList.FillDirection = Enum.FillDirection.Vertical
     sectionList.SortOrder = Enum.SortOrder.LayoutOrder
-    sectionList.Padding = UDim.new(0, 4)
+    sectionList.Padding = UDim.new(0, 6)
 
     local headerFrame = Instance.new("Frame", sectionContainer)
     headerFrame.Size = UDim2.new(1, 0, 0, 16)
@@ -2469,15 +2479,22 @@ local function makeCategorySection(page, title, layoutOrder)
     headerLabel.ZIndex = 7
 
     local gridFrame = Instance.new("Frame", sectionContainer)
-    gridFrame.Size = UDim2.new(1, 0, 0, 0)
-    gridFrame.AutomaticSize = Enum.AutomaticSize.Y
+    gridFrame.Size = UDim2.new(1, 0, 0, 60)
     gridFrame.BackgroundTransparency = 1
     gridFrame.LayoutOrder = 2
     gridFrame.ZIndex = 6
 
     local grid = Instance.new("UIGridLayout", gridFrame)
     grid.CellSize = UDim2.new(0, 58, 0, 58)
-    grid.CellPadding = UDim.new(0, 5, 0, 5)
+    grid.CellPadding = UDim2.new(0, 6, 0, 6)
+
+    grid:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        gridFrame.Size = UDim2.new(1, 0, 0, grid.AbsoluteContentSize.Y)
+    end)
+
+    sectionList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        sectionContainer.Size = UDim2.new(1, 0, 0, sectionList.AbsoluteContentSize.Y)
+    end)
 
     return gridFrame
 end
@@ -2827,7 +2844,7 @@ local function openInspectorFor(moduleName)
         addInspectorToggle(108, "Health Bar", healthBarEnabled, function(v) healthBarEnabled = v end)
     elseif moduleName == "Night Mode" then
         insContent.CanvasSize = UDim2.new(0, 0, 0, 260)
-        addInspectorChoice(6, "Presets", {"Midnight", "DeepBlood", "CyberPurple", "EmeraldNight", "PitchBlack"}, nightPreset, function(selected)
+        addInspectorChoice(6, "Presets", {"Midnight", "Nebula", "DeepBlood", "CyberPurple", "EmeraldNight", "PitchBlack"}, nightPreset, function(selected)
             applyNightPreset(selected)
         end)
         addInspectorSlider(48, "Brightness", 0.0, 2.0, nightBrightness, true, function(v) 
