@@ -1,5 +1,5 @@
 -- ==============================================================================
--- [Gestio UI - Blox Strike Ultimate Mobile Engine (Full Monolithic Build 2200+)]
+-- [Gestio UI - Blox Strike Ultimate Mobile Engine | Version 4.1.2]
 -- Architecture: Uncompressed Extended Pipeline
 -- Target Game: Blox Strike (Roblox)
 -- ==============================================================================
@@ -65,13 +65,22 @@ local activeEspHolders = {}
 local screenEspCache = {}
 local activeTracersCache = {}
 local activeHeadDotsCache = {}
+local mobileSlideInputActive = false
+local mobileSlideInput = nil
+local mobileJumpHookedButton = nil
+local mobileJumpConnections = {}
 
-if not getgenv().GestioSavedPos then
-    getgenv().GestioSavedPos = {
+local genv = (type(getgenv) == "function") and getgenv() or nil
+if genv and not genv.GestioSavedPos then
+    genv.GestioSavedPos = {
         OpenBtn = UDim2.new(0.5, -45, 0, 15),
         MainFrame = UDim2.new(0.5, 0, 0.5, 0)
     }
 end
+local savedPos = (genv and genv.GestioSavedPos) or {
+    OpenBtn = UDim2.new(0.5, -45, 0, 15),
+    MainFrame = UDim2.new(0.5, 0, 0.5, 0)
+}
 
 -- ==========================================
 -- EXTENDED THEME & PALETTE SYSTEM
@@ -218,6 +227,7 @@ local slideFriction = 0.94
 local slideMinSpeed = 16
 local currentSlideVel = Vector3.zero
 local defaultHipHeight = 2.0
+local defaultHipHeightCaptured = false
 
 local speedEnabled = false
 local walkMultiplier = 2.0
@@ -428,7 +438,15 @@ local function cleanup()
         pcall(function() mobileSlideBtn:Destroy() end)
         mobileSlideBtn = nil
     end
+    mobileSlideInputActive = false
+    mobileSlideInput = nil
     isSliding = false
+    currentSlideVel = Vector3.zero
+    for _, conn in ipairs(mobileJumpConnections) do
+        pcall(function() conn:Disconnect() end)
+    end
+    mobileJumpConnections = {}
+    mobileJumpHookedButton = nil
     activeEspHolders = {}
     screenEspCache = {}
     grenadePool = {}
@@ -442,7 +460,7 @@ local function cleanup()
     pcall(function() if targetGui:FindFirstChild("GestioMainContainer") then targetGui.GestioMainContainer:Destroy() end end)
 end
 
-if getgenv then getgenv().GestioRunning = cleanup end
+if genv then genv.GestioRunning = cleanup end
 
 local function bindTouch(btn, callback)
     btn.Activated:Connect(callback)
@@ -1485,7 +1503,8 @@ local function attachEspToPlayer(plr)
     end
 
     if plr.Character then setupCharacter(plr.Character) end
-    plr.CharacterAdded:Connect(setupCharacter)
+    local charConn = plr.CharacterAdded:Connect(setupCharacter)
+    table.insert(connections, charConn)
 end
 
 for _, v in pairs(Players:GetPlayers()) do attachEspToPlayer(v) end
@@ -1676,6 +1695,22 @@ end
 -- ==========================================
 -- MOBILE INPUT TOUCH HOOK & SLIDE BUTTON
 -- ==========================================
+local function captureDefaultHipHeight(char)
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    if hum and hum.Parent then
+        defaultHipHeight = hum.HipHeight
+        defaultHipHeightCaptured = true
+    end
+end
+
+local function restoreDefaultHipHeight()
+    local char = player.Character
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    if hum then
+        hum.HipHeight = defaultHipHeightCaptured and defaultHipHeight or hum.HipHeight
+    end
+end
+
 local function updateMobileSlideVisibility()
     if mobileSlideBtn then
         mobileSlideBtn.Visible = slideEnabled and UserInputService.TouchEnabled
@@ -1683,10 +1718,12 @@ local function updateMobileSlideVisibility()
 end
 
 local function triggerMobileSlideStart()
+    if not slideEnabled or not UserInputService.TouchEnabled then return end
     local char = player.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
     local hum = char and char:FindFirstChildOfClass("Humanoid")
     if hrp and hum and isEntityAlive(char, hum) and isPlayerGrounded(char, hrp) then
+        if not defaultHipHeightCaptured then captureDefaultHipHeight(char) end
         local moveDir = hum.MoveDirection.Magnitude > 0.1 and hum.MoveDirection or hrp.CFrame.LookVector
         currentSlideVel = moveDir * (16 * slideSpeedBoost)
         isSliding = true
@@ -1695,16 +1732,28 @@ local function triggerMobileSlideStart()
 end
 
 local function triggerMobileSlideEnd()
+    mobileSlideInputActive = false
+    mobileSlideInput = nil
     isSliding = false
-    local char = player.Character
-    local hum = char and char:FindFirstChildOfClass("Humanoid")
-    if hum then
-        hum.HipHeight = defaultHipHeight
-    end
+    currentSlideVel = Vector3.zero
+    restoreDefaultHipHeight()
+end
+
+local function positionMobileSlideButton(jumpBtn)
+    if not mobileSlideBtn or not jumpBtn then return end
+    task.defer(function()
+        if not mobileSlideBtn or not mobileSlideBtn.Parent or not jumpBtn.Parent then return end
+        local x = math.max(8, jumpBtn.AbsolutePosition.X - mobileSlideBtn.AbsoluteSize.X - 12)
+        local y = jumpBtn.AbsolutePosition.Y
+        mobileSlideBtn.Position = UDim2.fromOffset(x, y)
+    end)
 end
 
 local function createMobileSlideButton()
-    if mobileSlideBtn then return end
+    if mobileSlideBtn and mobileSlideBtn.Parent then
+        updateMobileSlideVisibility()
+        return
+    end
 
     mobileSlideBtn = Instance.new("TextButton")
     mobileSlideBtn.Name = "GestioMobileSlideBtn"
@@ -1727,14 +1776,20 @@ local function createMobileSlideButton()
 
     local bConn1 = mobileSlideBtn.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-            triggerMobileSlideStart()
+            if not mobileSlideInputActive then
+                mobileSlideInputActive = true
+                mobileSlideInput = input
+                triggerMobileSlideStart()
+            end
         end
     end)
     table.insert(connections, bConn1)
 
-    local bConn2 = mobileSlideBtn.InputEnded:Connect(function(input)
+    local bConn2 = UserInputService.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-            triggerMobileSlideEnd()
+            if mobileSlideInputActive and input == mobileSlideInput then
+                triggerMobileSlideEnd()
+            end
         end
     end)
     table.insert(connections, bConn2)
@@ -1751,11 +1806,23 @@ local function hookMobileJumpButton()
         local jumpBtn = controlFrame:WaitForChild("JumpButton", 5)
         if not jumpBtn then return end
 
+        if mobileJumpHookedButton == jumpBtn then
+            positionMobileSlideButton(jumpBtn)
+            return
+        end
+
+        for _, conn in ipairs(mobileJumpConnections) do
+            pcall(function() conn:Disconnect() end)
+        end
+        mobileJumpConnections = {}
+        mobileJumpHookedButton = jumpBtn
+
         local jConn1 = jumpBtn.InputBegan:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
                 isMobileJumpHeld = true
             end
         end)
+        table.insert(mobileJumpConnections, jConn1)
         table.insert(connections, jConn1)
 
         local jConn2 = jumpBtn.InputEnded:Connect(function(input)
@@ -1763,7 +1830,10 @@ local function hookMobileJumpButton()
                 isMobileJumpHeld = false
             end
         end)
+        table.insert(mobileJumpConnections, jConn2)
         table.insert(connections, jConn2)
+
+        positionMobileSlideButton(jumpBtn)
     end)
 end
 
@@ -1772,8 +1842,22 @@ hookMobileJumpButton()
 
 table.insert(connections, player.CharacterAdded:Connect(function(char)
     isSliding = false
+    mobileSlideInputActive = false
+    mobileSlideInput = nil
+    currentSlideVel = Vector3.zero
+    defaultHipHeightCaptured = false
+    local hum = char:WaitForChild("Humanoid", 5)
+    if hum then
+        defaultHipHeight = hum.HipHeight
+        defaultHipHeightCaptured = true
+        hum.HipHeight = defaultHipHeight
+    end
     hookMobileJumpButton()
 end))
+
+if player.Character then
+    captureDefaultHipHeight(player.Character)
+end
 
 local jumpReqConn = UserInputService.JumpRequest:Connect(function()
     isMobileJumpHeld = true
@@ -1790,6 +1874,7 @@ local inBeganConn = UserInputService.InputBegan:Connect(function(input, processe
         local hrp = char and char:FindFirstChild("HumanoidRootPart")
         local hum = char and char:FindFirstChildOfClass("Humanoid")
         if hrp and hum and isEntityAlive(char, hum) and isPlayerGrounded(char, hrp) then
+            if not defaultHipHeightCaptured then captureDefaultHipHeight(char) end
             local moveDir = hum.MoveDirection.Magnitude > 0.1 and hum.MoveDirection or hrp.CFrame.LookVector
             currentSlideVel = moveDir * (16 * slideSpeedBoost)
             isSliding = true
@@ -1805,11 +1890,8 @@ local inEndedConn = UserInputService.InputEnded:Connect(function(input, processe
     end
     if input.KeyCode == Enum.KeyCode.C or input.KeyCode == Enum.KeyCode.LeftControl then
         isSliding = false
-        local char = player.Character
-        local hum = char and char:FindFirstChildOfClass("Humanoid")
-        if hum then
-            hum.HipHeight = defaultHipHeight
-        end
+        currentSlideVel = Vector3.zero
+        restoreDefaultHipHeight()
     end
 end)
 table.insert(connections, inEndedConn)
@@ -1851,7 +1933,8 @@ table.insert(connections, RunService.Heartbeat:Connect(function(dt)
             )
         else
             isSliding = false
-            hum.HipHeight = defaultHipHeight
+            currentSlideVel = Vector3.zero
+            restoreDefaultHipHeight()
         end
     end
 
@@ -1909,7 +1992,7 @@ toggleGui.Parent = targetGui
 
 local openBtn = Instance.new("TextButton", toggleGui)
 openBtn.Size = UDim2.new(0, 85, 0, 30)
-openBtn.Position = getgenv().GestioSavedPos.OpenBtn
+openBtn.Position = savedPos.OpenBtn
 openBtn.BackgroundColor3 = currentTheme.Background
 openBtn.Text = "Gestio"
 openBtn.TextColor3 = currentTheme.Accent
@@ -1968,7 +2051,8 @@ local bInChanged = UserInputService.InputChanged:Connect(function(input)
         local delta = input.Position - btnInputStart
         local newPos = UDim2.new(btnStartPos.X.Scale, btnStartPos.X.Offset + delta.X, btnStartPos.Y.Scale, btnStartPos.Y.Offset + delta.Y)
         openBtn.Position = newPos
-        getgenv().GestioSavedPos.OpenBtn = newPos
+        savedPos.OpenBtn = newPos
+        if genv then genv.GestioSavedPos.OpenBtn = newPos end
     end
 end)
 table.insert(connections, bInChanged)
