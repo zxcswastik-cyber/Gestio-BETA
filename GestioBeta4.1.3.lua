@@ -1,5 +1,5 @@
 -- ==============================================================================
--- [Gestio UI - Blox Strike Ultimate Mobile Engine | Version 4.1.2]
+-- [Gestio UI - Blox Strike Ultimate Mobile Engine | Version 4.1.3]
 -- Architecture: Uncompressed Extended Pipeline
 -- Target Game: Blox Strike (Roblox)
 -- ==============================================================================
@@ -1981,6 +1981,11 @@ table.insert(connections, RunService.Heartbeat:Connect(function(dt)
 end))
 
 -- ==========================================
+-- UI SCOPE FIX (prevents the main chunk from exceeding Luau local-variable limit)
+-- ==========================================
+local function buildGestioUI()
+
+-- ==========================================
 -- FLOATING UI LAUNCHER
 -- ==========================================
 local toggleGui = Instance.new("ScreenGui")
@@ -2670,3 +2675,5 @@ local setsGeneralSection = makeCategorySection(setsPage, "Configuration", 1)
 addCard(setsGeneralSection, "Theme", true, function(v) end)
 
 openInspectorFor("Tracking")
+
+buildGestioUI()
