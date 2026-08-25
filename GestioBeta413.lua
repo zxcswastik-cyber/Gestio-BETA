@@ -15,6 +15,7 @@ end)
 -- ==========================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
 local Lighting = game:GetService("Lighting")
@@ -188,6 +189,20 @@ local predictionFactor = 0.135
 local visibleCheck = false
 local aimSensitivity = 1.0
 local lockOnJump = true
+
+-- ==========================================
+-- CRIMSON NEON HITMARKER
+-- ==========================================
+local hitmarkerEnabled = false
+local hitmarkerDuration = 0.28
+local hitmarkerSize = 13
+local hitmarkerThickness = 2
+local hitmarkerGlow = true
+local hitmarkerLastHealth = {}
+local hitmarkerBusy = false
+local thirdPersonEnabled = false
+local thirdPersonDistance = 12
+local thirdPersonHeight = 1.5
 
 -- ==========================================
 -- RECOIL CONTROL SYSTEM (RCS) VARIABLES
@@ -366,6 +381,104 @@ local grenadePool = {}
 local mobileSlideBtn = nil
 
 -- ==========================================
+-- CRIMSON NEON HITMARKER UI
+-- ==========================================
+local hitmarkerGui = Instance.new("ScreenGui")
+hitmarkerGui.Name = "GestioHitmarkerGui"
+hitmarkerGui.ResetOnSpawn = false
+hitmarkerGui.IgnoreGuiInset = true
+hitmarkerGui.DisplayOrder = 60
+hitmarkerGui.Parent = mainContainer
+
+local hitmarkerCenter = Instance.new("Frame")
+hitmarkerCenter.Name = "Center"
+hitmarkerCenter.AnchorPoint = Vector2.new(0.5, 0.5)
+hitmarkerCenter.Position = UDim2.new(0.5, 0, 0.5, 0)
+hitmarkerCenter.Size = UDim2.new(0, 0, 0, 0)
+hitmarkerCenter.BackgroundTransparency = 1
+hitmarkerCenter.Visible = false
+hitmarkerCenter.Parent = hitmarkerGui
+
+local hitmarkerLines = {}
+for i, rotation in ipairs({45, -45, 135, -135}) do
+    local line = Instance.new("Frame")
+    line.Name = "Line" .. i
+    line.AnchorPoint = Vector2.new(0.5, 0.5)
+    line.Size = UDim2.new(0, hitmarkerThickness, 0, hitmarkerSize)
+    line.BackgroundColor3 = currentTheme.Accent
+    line.BorderSizePixel = 0
+    line.BackgroundTransparency = 1
+    line.Rotation = rotation
+    line.Parent = hitmarkerCenter
+
+    local glow = Instance.new("UIStroke")
+    glow.Name = "NeonGlow"
+    glow.Color = currentTheme.Accent
+    glow.Thickness = hitmarkerGlow and 2.5 or 0
+    glow.Transparency = 1
+    glow.Parent = line
+
+    hitmarkerLines[i] = line
+end
+
+local function refreshHitmarkerTheme()
+    for _, line in ipairs(hitmarkerLines) do
+        line.BackgroundColor3 = currentTheme.Accent
+        local glow = line:FindFirstChild("NeonGlow")
+        if glow then
+            glow.Color = currentTheme.Accent
+            glow.Thickness = hitmarkerGlow and 2.5 or 0
+        end
+    end
+end
+
+local function showHitmarker()
+    if not hitmarkerEnabled or hitmarkerBusy then return end
+    hitmarkerBusy = true
+
+    hitmarkerCenter.Visible = true
+    for _, line in ipairs(hitmarkerLines) do
+        line.BackgroundTransparency = 0
+        local glow = line:FindFirstChild("NeonGlow")
+        if glow then glow.Transparency = 0.05 end
+    end
+
+    task.spawn(function()
+        local fadeInfo = TweenInfo.new(
+            hitmarkerDuration,
+            Enum.EasingStyle.Quad,
+            Enum.EasingDirection.Out
+        )
+
+        local tweens = {}
+        for _, line in ipairs(hitmarkerLines) do
+            local tween = TweenService:Create(line, fadeInfo, {
+                BackgroundTransparency = 1
+            })
+            table.insert(tweens, tween)
+
+            local glow = line:FindFirstChild("NeonGlow")
+            if glow then
+                TweenService:Create(glow, fadeInfo, {
+                    Transparency = 1
+                }):Play()
+            end
+
+            tween:Play()
+        end
+
+        task.wait(hitmarkerDuration)
+        hitmarkerCenter.Visible = false
+        hitmarkerBusy = false
+    end)
+end
+
+-- Expose a safe trigger for the weapon/hit logic if it becomes available.
+if genv then
+    genv.GestioShowHitmarker = showHitmarker
+end
+
+-- ==========================================
 -- LIGHTING & ATMOSPHERE FUNCTIONS
 -- ==========================================
 local function applyNightPreset(presetName)
@@ -417,6 +530,7 @@ local function clearActiveJumpCircle()
 end
 
 local function cleanup()
+    pcall(function() setThirdPersonEnabled(false) end)
     for _, c in pairs(connections) do 
         pcall(function() c:Disconnect() end) 
     end
@@ -443,6 +557,8 @@ local function cleanup()
     end
     clearActiveJumpCircle()
     pcall(function() jumpCircleFolder:Destroy() end)
+    pcall(function() hitmarkerGui:Destroy() end)
+    if genv then genv.GestioShowHitmarker = nil end
     if mobileSlideBtn then
         pcall(function() mobileSlideBtn:Destroy() end)
         mobileSlideBtn = nil
@@ -1923,7 +2039,13 @@ createMobileSlideButton()
 hookMobileJumpButton()
 
 table.insert(connections, player.CharacterAdded:Connect(function(char)
-    mobileSlideToggleActive = false
+    thirdPersonPreviousOffset = nil
+    task.defer(function()
+        if thirdPersonEnabled then
+            applyThirdPerson()
+        end
+    end)
+mobileSlideToggleActive = false
     mobileSlideDragging = false
     isSliding = false
     currentSlideVel = Vector3.zero
@@ -1981,6 +2103,69 @@ local inEndedConn = UserInputService.InputEnded:Connect(function(input, processe
     end
 end)
 table.insert(connections, inEndedConn)
+
+-- ==========================================
+-- HITMARKER TARGET HEALTH MONITOR
+-- ==========================================
+table.insert(connections, RunService.Heartbeat:Connect(function()
+    if not hitmarkerEnabled then return end
+
+    local target = lockedTarget
+    local char = target and target.Char
+    local hum = target and target.Hum
+
+    if not char or not hum or not isEntityAlive(char, hum) then
+        return
+    end
+
+    local currentHealth = hum.Health
+    local previousHealth = hitmarkerLastHealth[hum]
+
+    if previousHealth and currentHealth < previousHealth and (previousHealth - currentHealth) > 0.01 then
+        showHitmarker()
+    end
+
+    hitmarkerLastHealth[hum] = currentHealth
+end))
+
+-- ==========================================
+-- THIRD PERSON CAMERA (MOBILE FRIENDLY)
+-- ==========================================
+local thirdPersonPreviousOffset = nil
+
+local function applyThirdPerson()
+    local camera = Workspace.CurrentCamera
+    local char = player.Character
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    if not camera or not hum then return end
+
+    if thirdPersonEnabled then
+        if thirdPersonPreviousOffset == nil then
+            thirdPersonPreviousOffset = hum.CameraOffset
+        end
+        camera.CameraSubject = hum
+        camera.CameraType = Enum.CameraType.Custom
+        hum.CameraOffset = Vector3.new(0, thirdPersonHeight, thirdPersonDistance)
+    else
+        if thirdPersonPreviousOffset ~= nil then
+            hum.CameraOffset = thirdPersonPreviousOffset
+            thirdPersonPreviousOffset = nil
+        else
+            hum.CameraOffset = Vector3.zero
+        end
+    end
+end
+
+local function setThirdPersonEnabled(enabled)
+    thirdPersonEnabled = enabled
+    applyThirdPerson()
+end
+
+local function refreshThirdPerson()
+    if thirdPersonEnabled then
+        applyThirdPerson()
+    end
+end
 
 -- ==========================================
 -- UNIFIED PHYSICS & KINEMATICS HEARTBEAT
@@ -2553,6 +2738,40 @@ local function openInspectorFor(moduleName)
         addInspectorToggle(192, "Prediction", predictionEnabled, function(v) predictionEnabled = v end)
         addInspectorToggle(218, "Show FOV Circle", showFovCircle, function(v) showFovCircle = v end)
         addInspectorToggle(244, "Visibility Check", visibleCheck, function(v) visibleCheck = v end)
+    elseif moduleName == "Third Person" then
+        insContent.CanvasSize = UDim2.new(0, 0, 0, 115)
+        addInspectorSlider(6, "Distance", 5, 25, thirdPersonDistance, false, function(v)
+            thirdPersonDistance = v
+            refreshThirdPerson()
+        end)
+        addInspectorSlider(38, "Height", -1, 5, thirdPersonHeight, false, function(v)
+            thirdPersonHeight = v
+            refreshThirdPerson()
+        end)
+    elseif moduleName == "Hitmarker" then
+        insContent.CanvasSize = UDim2.new(0, 0, 0, 170)
+        addInspectorSlider(6, "Duration", 0.10, 0.60, hitmarkerDuration, true, function(v)
+            hitmarkerDuration = v
+        end)
+        addInspectorSlider(38, "Size", 8, 24, hitmarkerSize, false, function(v)
+            hitmarkerSize = v
+            for _, line in ipairs(hitmarkerLines) do
+                line.Size = UDim2.new(0, hitmarkerThickness, 0, hitmarkerSize)
+            end
+        end)
+        addInspectorSlider(70, "Thickness", 1, 4, hitmarkerThickness, false, function(v)
+            hitmarkerThickness = v
+            for _, line in ipairs(hitmarkerLines) do
+                line.Size = UDim2.new(0, hitmarkerThickness, 0, hitmarkerSize)
+            end
+        end)
+        addInspectorToggle(108, "Neon Glow", hitmarkerGlow, function(v)
+            hitmarkerGlow = v
+            for _, line in ipairs(hitmarkerLines) do
+                local glow = line:FindFirstChild("NeonGlow")
+                if glow then glow.Thickness = hitmarkerGlow and 2.5 or 0 end
+            end
+        end)
     elseif moduleName == "Anti-Aim" then
         insContent.CanvasSize = UDim2.new(0, 0, 0, 100)
         addInspectorSlider(6, "Spin Speed", 10, 150, spinSpeed, false, function(v) 
@@ -2735,6 +2954,13 @@ addCard(ePlayerSection, "Highlight", highlightEnabled, function(v) highlightEnab
 addCard(ePlayerSection, "Box Overlay", boxEspEnabled, function(v) boxEspEnabled = v end)
 addCard(ePlayerSection, "Head Dot", headDotEnabled, function(v) headDotEnabled = v end)
 addCard(ePlayerSection, "Snaplines", tracersEnabled, function(v) tracersEnabled = v end)
+addCard(ePlayerSection, "Hitmarker", hitmarkerEnabled, function(v)
+    hitmarkerEnabled = v
+    if not v then
+        hitmarkerCenter.Visible = false
+        hitmarkerBusy = false
+    end
+end)
 
 addCard(eWorldSection, "Grenade ESP", grenadeEspEnabled, function(v) grenadeEspEnabled = v end)
 addCard(eWorldSection, "Jump Circle", jumpCircleEnabled, function(v) 
@@ -2754,6 +2980,9 @@ addCard(envLightSection, "Anti-Flash", antiFlashEnabled, function(v) antiFlashEn
 
 -- MISC TAB
 local miscGeneralSection = makeCategorySection(micsPage, "Utilities", 1)
+addCard(miscGeneralSection, "Third Person", thirdPersonEnabled, function(v)
+    setThirdPersonEnabled(v)
+end)
 addCard(miscGeneralSection, "Anti-AFK", true, function(v) end)
 
 -- SETTINGS TAB
