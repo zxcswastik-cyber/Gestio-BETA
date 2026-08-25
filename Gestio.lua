@@ -1,6 +1,6 @@
 -- ==============================================================================
--- [Gestio UI - Blox Strike Ultimate Mobile Engine (Full Suite 2400+ Lines)]
--- Version: 5.6.0 Enterprise Injection-Safe Edition (Crash & Injection Fix)
+-- [Gestio UI - Blox Strike Ultimate Mobile Engine (Full Suite 2600+ Lines)]
+-- Version: 5.7.0 Enterprise Fail-Safe Async Engine
 -- Target Game: Blox Strike (Roblox)
 -- ==============================================================================
 
@@ -27,24 +27,17 @@ local TweenService = game:GetService("TweenService")
 local HttpService = game:GetService("HttpService")
 
 -- ==========================================
--- CLIENT ENVIRONMENT VALIDATION
+-- CLIENT ENVIRONMENT VALIDATION (NON-BLOCKING)
 -- ==========================================
-local player = Players.LocalPlayer
-while not player do
-    task.wait(0.1)
-    player = Players.LocalPlayer or Players:GetPlayers()[1]
-end
-
-local camera = Workspace.CurrentCamera
-while not camera do
-    task.wait(0.1)
-    camera = Workspace.CurrentCamera or Workspace:FindFirstChildOfClass("Camera")
-end
-
+local player = Players.LocalPlayer or Players:FindFirstChildOfClass("Player")
+local camera = Workspace.CurrentCamera or Workspace:FindFirstChildOfClass("Camera")
 local defaultCameraFOV = 70
-pcall(function()
-    defaultCameraFOV = camera.FieldOfView
-end)
+
+if camera then
+    pcall(function()
+        defaultCameraFOV = camera.FieldOfView
+    end)
+end
 
 local function getSafeGui()
     local success, result = pcall(function()
@@ -59,8 +52,11 @@ local function getSafeGui()
     end)
     if success and result then return result end
     
-    local pGui = player:FindFirstChild("PlayerGui") or player:WaitForChild("PlayerGui", 5)
-    return pGui or CoreGui
+    if player then
+        local pGui = player:FindFirstChild("PlayerGui")
+        if pGui then return pGui end
+    end
+    return CoreGui
 end
 
 local targetGui = getSafeGui()
@@ -331,8 +327,8 @@ local customAtmosphere = nil
 local function getOrCreateAtmosphere()
     if customAtmosphere and customAtmosphere.Parent then return customAtmosphere end
     pcall(function()
-        local existing = Lighting:FindFirstChild("GestioWorldAtmosphere") or Lighting:FindFirstChildOfClass("Atmosphere")
-        if existing and existing.Name == "GestioWorldAtmosphere" then
+        local existing = Lighting:FindFirstChild("GestioWorldAtmosphere")
+        if existing and existing:IsA("Atmosphere") then
             customAtmosphere = existing
         else
             customAtmosphere = Instance.new("Atmosphere")
@@ -626,7 +622,7 @@ local function restoreLightingState()
         end
     end)
     if camera then
-        camera.FieldOfView = defaultCameraFOV
+        pcall(function() camera.FieldOfView = defaultCameraFOV end)
     end
 end
 
@@ -1129,13 +1125,14 @@ local function initJumpCircleForCharacter(char)
     table.insert(circleData.Connections, stateConn)
 end
 
-table.insert(connections, player.CharacterAdded:Connect(initJumpCircleForCharacter))
-table.insert(connections, player.CharacterRemoving:Connect(clearActiveJumpCircle))
-
-if player.Character then
-    task.spawn(function()
-        initJumpCircleForCharacter(player.Character)
-    end)
+if player then
+    table.insert(connections, player.CharacterAdded:Connect(initJumpCircleForCharacter))
+    table.insert(connections, player.CharacterRemoving:Connect(clearActiveJumpCircle))
+    if player.Character then
+        task.spawn(function()
+            initJumpCircleForCharacter(player.Character)
+        end)
+    end
 end
 
 -- ==========================================
@@ -1163,7 +1160,7 @@ visRayParams.IgnoreWater = true
 
 local function isTargetVisible(originPos, targetPart, targetChar)
     if not visibleCheck then return true end
-    local myChar = player.Character
+    local myChar = player and player.Character
     visRayParams.FilterDescendantsInstances = {myChar, camera}
     local dir = targetPart.Position - originPos
     local hit = Workspace:Raycast(originPos, dir, visRayParams)
@@ -1231,13 +1228,14 @@ triggerRayParams.FilterType = Enum.RaycastFilterType.Exclude
 triggerRayParams.IgnoreWater = true
 
 local function runMobileTriggerbot()
-    if not triggerbotEnabled then return end
+    if not triggerbotEnabled or not camera then return end
     local now = tick()
     if (now - lastTriggerTick) < triggerbotDelay then return end
 
     local vp = camera.ViewportSize
     local ray = camera:ViewportPointToRay(vp.X * 0.5, vp.Y * 0.5)
-    triggerRayParams.FilterDescendantsInstances = {player.Character, camera}
+    local myChar = player and player.Character
+    triggerRayParams.FilterDescendantsInstances = {myChar, camera}
     
     local res = Workspace:Raycast(ray.Origin, ray.Direction * 1000, triggerRayParams)
     if res and res.Instance then
@@ -1255,7 +1253,6 @@ local function runMobileTriggerbot()
                 lastTriggerTick = now
                 if triggerbotMobileAutoFire then
                     pcall(function()
-                        local myChar = player.Character
                         local equippedTool = myChar and myChar:FindFirstChildOfClass("Tool")
                         if equippedTool then
                             equippedTool:Activate()
@@ -1393,6 +1390,7 @@ end))
 -- TACTICAL ESP SCREEN RENDER LOOP
 -- ==========================================
 local function renderTacticalOverlay()
+    if not camera then return end
     local camPos = camera.CFrame.Position
     local allPlayers = Players:GetPlayers()
 
@@ -1695,7 +1693,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
             hudPingLabel.Text = "PING:      " .. tostring(currentPing) .. " ms"
         end
         if infoHudShowSpeed then
-            local myChar = player.Character
+            local myChar = player and player.Character
             local myHrp = myChar and myChar:FindFirstChild("HumanoidRootPart")
             if myHrp then
                 local vel = myHrp.AssemblyLinearVelocity
@@ -1747,7 +1745,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
 
     -- Render Danger Grenade Overlays
     if grenadeDangerEnabled then
-        local myChar = player.Character
+        local myChar = player and player.Character
         local localRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
         if localRoot then
             for object, data in pairs(dangerGrenadeObjects) do
@@ -1874,7 +1872,7 @@ end))
 table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     if not antiAimEnabled then return end
     
-    local char = player.Character
+    local char = player and player.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
     local hum = char and char:FindFirstChildOfClass("Humanoid")
     
@@ -1904,7 +1902,8 @@ end
 -- ==========================================
 local function hookMobileJumpButton()
     task.spawn(function()
-        local pGui = player:WaitForChild("PlayerGui", 5)
+        if not player then return end
+        local pGui = player:FindFirstChild("PlayerGui") or player:WaitForChild("PlayerGui", 5)
         if not pGui then return end
         local touchGui = pGui:WaitForChild("TouchGui", 5)
         if not touchGui then return end
@@ -1928,7 +1927,9 @@ local function hookMobileJumpButton()
 end
 
 hookMobileJumpButton()
-player.CharacterAdded:Connect(hookMobileJumpButton)
+if player then
+    player.CharacterAdded:Connect(hookMobileJumpButton)
+end
 
 UserInputService.JumpRequest:Connect(function()
     isMobileJumpHeld = true
@@ -1940,7 +1941,7 @@ UserInputService.InputBegan:Connect(function(input, processed)
     end
 
     if slideEnabled and (input.KeyCode == Enum.KeyCode.C or input.KeyCode == Enum.KeyCode.LeftControl) then
-        local char = player.Character
+        local char = player and player.Character
         local hrp = char and char:FindFirstChild("HumanoidRootPart")
         local hum = char and char:FindFirstChildOfClass("Humanoid")
         if hrp and hum and isEntityAlive(char, hum) and isPlayerGrounded(char, hrp) then
@@ -1958,7 +1959,7 @@ UserInputService.InputEnded:Connect(function(input, processed)
     end
     if input.KeyCode == Enum.KeyCode.C or input.KeyCode == Enum.KeyCode.LeftControl then
         isSliding = false
-        local char = player.Character
+        local char = player and player.Character
         local hum = char and char:FindFirstChildOfClass("Humanoid")
         if hum then
             hum.HipHeight = defaultHipHeight
@@ -1970,7 +1971,7 @@ end)
 -- PHYSICS & KINEMATICS HEARTBEAT (BHOP, STRAFE, SLIDE)
 -- ==========================================
 table.insert(connections, RunService.Heartbeat:Connect(function(dt)
-    local char = player.Character
+    local char = player and player.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
     local hum = char and char:FindFirstChildOfClass("Humanoid")
     if not hrp or not hum or not isEntityAlive(char, hum) then return end
@@ -2046,7 +2047,7 @@ table.insert(connections, RunService.Heartbeat:Connect(function(dt)
         hrp.AssemblyLinearVelocity = Vector3.new(targetVel.X, targetVel.Y, targetVel.Z)
     end
 
-    if flightEnabled then
+    if flightEnabled and camera then
         local camLook = camera.CFrame.LookVector
         hrp.AssemblyLinearVelocity = camLook * flightSpeed
     end
@@ -2540,7 +2541,7 @@ local function openInspectorFor(moduleName)
         addInspectorSlider(6, "Field Of View", 60, 140, customFovValue, false, function(v) 
             customFovValue = v 
             if customFovEnabled and camera then
-                camera.FieldOfView = v
+                pcall(function() camera.FieldOfView = v end)
             end
         end)
     elseif moduleName == "World Changer" then
@@ -2549,13 +2550,13 @@ local function openInspectorFor(moduleName)
             applyWorldMode(selected)
         end)
         addInspectorSlider(48, "Brightness", 0.0, 5.0, Lighting.Brightness, true, function(v) 
-            if worldChangerEnabled then Lighting.Brightness = v end
+            if worldChangerEnabled then pcall(function() Lighting.Brightness = v end) end
         end)
         addInspectorSlider(80, "Clock Time", 0.0, 24.0, Lighting.ClockTime, true, function(v) 
-            if worldChangerEnabled then Lighting.ClockTime = v end
+            if worldChangerEnabled then pcall(function() Lighting.ClockTime = v end) end
         end)
         addInspectorSlider(112, "Exposure", -2.0, 2.0, Lighting.ExposureCompensation, true, function(v) 
-            if worldChangerEnabled then Lighting.ExposureCompensation = v end
+            if worldChangerEnabled then pcall(function() Lighting.ExposureCompensation = v end) end
         end)
     elseif moduleName == "Kroaton HUD" then
         insContent.CanvasSize = UDim2.new(0, 0, 0, 180)
@@ -2572,15 +2573,15 @@ local function openInspectorFor(moduleName)
         insContent.CanvasSize = UDim2.new(0, 0, 0, 240)
         addInspectorSlider(6, "Radius", 1.5, 8.0, jumpCircleRadius, true, function(v)
             jumpCircleRadius = v
-            if player.Character then initJumpCircleForCharacter(player.Character) end
+            if player and player.Character then initJumpCircleForCharacter(player.Character) end
         end)
         addInspectorSlider(38, "Segments", 12, 48, jumpCircleSegmentCount, false, function(v)
             jumpCircleSegmentCount = v
-            if player.Character then initJumpCircleForCharacter(player.Character) end
+            if player and player.Character then initJumpCircleForCharacter(player.Character) end
         end)
         addInspectorChoice(80, "Style", {"GradientWave", "ChromaPulse", "StaticNeon"}, jumpCircleStyle, function(v)
             jumpCircleStyle = v
-            if player.Character then initJumpCircleForCharacter(player.Character) end
+            if player and player.Character then initJumpCircleForCharacter(player.Character) end
         end)
     elseif moduleName == "Grenade Danger" then
         insContent.CanvasSize = UDim2.new(0, 0, 0, 200)
@@ -2692,7 +2693,7 @@ local function addCard(parent, name, defaultState, onToggle)
         elseif name == "FullBright" and not state and not worldChangerEnabled then
             restoreLightingState()
         elseif name == "FOV Changer" and not state then
-            if camera then camera.FieldOfView = defaultCameraFOV end
+            if camera then pcall(function() camera.FieldOfView = defaultCameraFOV end) end
         end
     end
 
@@ -2744,7 +2745,7 @@ end)
 
 addCard(eWorldSection, "Jump Circle", jumpCircleEnabled, function(v) 
     jumpCircleEnabled = v 
-    if v and player.Character then
+    if v and player and player.Character then
         initJumpCircleForCharacter(player.Character)
     else
         clearActiveJumpCircle()
@@ -2766,7 +2767,7 @@ addCard(envLightSection, "Anti-Flash", antiFlashEnabled, function(v) antiFlashEn
 addCard(envLightSection, "FOV Changer", customFovEnabled, function(v) 
     customFovEnabled = v 
     if not v and camera then
-        camera.FieldOfView = defaultCameraFOV
+        pcall(function() camera.FieldOfView = defaultCameraFOV end)
     end
 end)
 
