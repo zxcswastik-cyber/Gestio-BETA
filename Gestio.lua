@@ -1,4 +1,4 @@
--- [[ Gestio UI - Blox Strike Ultimate Mobile Engine (Full Suite + Multi-Map Wallbang ESP) ]]
+-- [Gestio UI - Blox Strike Ultimate Mobile Engine (Full Suite + Execution Fix)]
 pcall(function()
     if getgenv and getgenv().GestioRunning then
         getgenv().GestioRunning()
@@ -206,9 +206,7 @@ jumpCircleContainer.Name = "Gestio_JumpCircleOverlay"
 
 local grenadePool = {}
 
--- Comprehensive Universal & Map-Specific Penetration Database (Oasis, Dust2, Mirage, Inferno, Nuke, Overpass)
 local universalWallbangSpots = {
-    -- Oasis / Standard tactical penetrations
     Vector3.new(120, 15, -45),
     Vector3.new(135, 15, -60),
     Vector3.new(85, 12, -20),
@@ -217,7 +215,6 @@ local universalWallbangSpots = {
     Vector3.new(70, 14, -130),
     Vector3.new(160, 16, -30),
     Vector3.new(180, 20, -55),
-    -- Dust2 / Mirage / Classic spots
     Vector3.new(-150, 12, 240),
     Vector3.new(-125, 10, 190),
     Vector3.new(-90, 8, 150),
@@ -226,7 +223,6 @@ local universalWallbangSpots = {
     Vector3.new(65, 15, 115),
     Vector3.new(-30, 10, 50),
     Vector3.new(10, 12, 70),
-    -- Nuke / Overpass vertical penetrations
     Vector3.new(220, 25, -150),
     Vector3.new(245, 28, -175),
     Vector3.new(195, 22, -120),
@@ -1530,7 +1526,7 @@ table.insert(connections, RunService.Heartbeat:Connect(function(dt)
     local char = player.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
     local hum = char and char:FindFirstChildOfClass("Humanoid")
-    if not hrp || not hum or not isEntityAlive(char, hum) then return end
+    if not hrp or not hum or not isEntityAlive(char, hum) then return end
 
     local currentMove = hum.MoveDirection
     if currentMove.Magnitude > 0.05 then
@@ -1965,7 +1961,7 @@ local function openInspectorFor(moduleName)
         lbl.Size = UDim2.new(0.86, 0, 0, 40)
         lbl.Position = UDim2.new(0.07, 0, 0, 6)
         lbl.BackgroundTransparency = 1
-        lbl.Text = "Universal & Oasis wallbang indicators active."
+        lbl.Text = "Universal and Oasis wallbang indicators active."
         lbl.TextColor3 = currentTheme.TextSecondary
         lbl.TextSize = 8.5
         lbl.TextWrapped = true
