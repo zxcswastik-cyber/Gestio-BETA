@@ -1,7 +1,8 @@
 -- ==============================================================================
--- [Gestio UI - Blox Strike Ultimate Mobile Engine (Full Suite 2000+ Lines)]
--- Version: 4.9.0 Enterprise Full Source Edition (Visual Overhaul & Side Check Fix)
--- Target Game: Blox Strike (Roblox)
+-- [Gestio UI - Blox Strike Ultimate Mobile Engine (Full Source 2200+ Lines)]
+-- Engine: Gestio Tactical Framework v5.1.0 Enterprise Edition
+-- Target Platform: Roblox Mobile / Executor Protected Environment
+-- Architecture: Full Extended Monolithic Source (Zero-Truncation Pipeline)
 -- ==============================================================================
 
 pcall(function()
@@ -20,6 +21,7 @@ local VirtualUser = game:GetService("VirtualUser")
 local VirtualInputManager = game:GetService("VirtualInputManager")
 local Stats = game:GetService("Stats")
 local Debris = game:GetService("Debris")
+local TweenService = game:GetService("TweenService")
 
 local player = Players.LocalPlayer or Players:GetPlayers()[1]
 if not player then
@@ -28,6 +30,9 @@ end
 
 local camera = Workspace.CurrentCamera or Workspace:FindFirstChildOfClass("Camera")
 
+-- ==============================================================================
+-- EXPLOIT / EXECUTOR CONTEXT VALIDATION & SECURE GUI ACQUISITION
+-- ==============================================================================
 local function getSafeGui()
     local success, result = pcall(function()
         if gethui then
@@ -48,63 +53,82 @@ local targetGui = getSafeGui()
 local connections = {}
 local activeEspHolders = {}
 local screenEspCache = {}
+local activeTracersCache = {}
+local activeHeadDotsCache = {}
 
 if not getgenv().GestioSavedPos then
     getgenv().GestioSavedPos = {
-        OpenBtn = UDim2.new(0.5, -45, 0, 15)
+        OpenBtn = UDim2.new(0.5, -45, 0, 15),
+        MainFrame = UDim2.new(0.5, 0, 0.5, 0)
     }
 end
 
--- ==========================================
--- THEME CONFIGURATION & FACTION PALETTES
--- ==========================================
-local currentTheme = {
-    Name = "Charcoal Crimson",
-    Background = Color3.fromRGB(24, 25, 28),
-    Sidebar = Color3.fromRGB(30, 32, 36),
-    CardBg = Color3.fromRGB(35, 38, 43),
-    Accent = Color3.fromRGB(210, 45, 55),
-    TextPrimary = Color3.fromRGB(235, 238, 242),
-    TextSecondary = Color3.fromRGB(140, 145, 155),
-    Border = Color3.fromRGB(45, 48, 55),
-    
-    T_Accent = Color3.fromRGB(235, 75, 75),
-    T_Fill = Color3.fromRGB(220, 50, 50),
-    
-    CT_Accent = Color3.fromRGB(80, 155, 245),
-    CT_Fill = Color3.fromRGB(45, 120, 225),
-    
-    NametagTextColor = Color3.fromRGB(255, 255, 255),
-    
-    MolotovColor = Color3.fromRGB(255, 95, 35),
-    SmokeColor = Color3.fromRGB(180, 185, 195),
-    HEColor = Color3.fromRGB(255, 45, 55)
+-- ==============================================================================
+-- EXTENDED THEME SYSTEM & PALETTE DEFINITIONS
+-- ==============================================================================
+local themeLibrary = {
+    ["Charcoal Crimson"] = {
+        Name = "Charcoal Crimson",
+        Background = Color3.fromRGB(24, 25, 28),
+        Sidebar = Color3.fromRGB(30, 32, 36),
+        CardBg = Color3.fromRGB(35, 38, 43),
+        Accent = Color3.fromRGB(210, 45, 55),
+        AccentHover = Color3.fromRGB(230, 60, 70),
+        TextPrimary = Color3.fromRGB(235, 238, 242),
+        TextSecondary = Color3.fromRGB(140, 145, 155),
+        Border = Color3.fromRGB(45, 48, 55),
+        GridSquare = Color3.fromRGB(30, 32, 36),
+        Enemy_Accent = Color3.fromRGB(235, 75, 75),
+        Enemy_Fill = Color3.fromRGB(220, 50, 50),
+        NametagTextColor = Color3.fromRGB(255, 255, 255),
+        MolotovColor = Color3.fromRGB(255, 95, 35),
+        SmokeColor = Color3.fromRGB(180, 185, 195),
+        HEColor = Color3.fromRGB(255, 45, 55)
+    },
+    ["Cyberpunk Neon"] = {
+        Name = "Cyberpunk Neon",
+        Background = Color3.fromRGB(15, 15, 22),
+        Sidebar = Color3.fromRGB(20, 20, 32),
+        CardBg = Color3.fromRGB(28, 28, 45),
+        Accent = Color3.fromRGB(0, 230, 255),
+        AccentHover = Color3.fromRGB(40, 240, 255),
+        TextPrimary = Color3.fromRGB(240, 245, 255),
+        TextSecondary = Color3.fromRGB(130, 140, 175),
+        Border = Color3.fromRGB(45, 50, 75),
+        GridSquare = Color3.fromRGB(22, 22, 36),
+        Enemy_Accent = Color3.fromRGB(255, 0, 128),
+        Enemy_Fill = Color3.fromRGB(200, 0, 100),
+        NametagTextColor = Color3.fromRGB(255, 255, 255),
+        MolotovColor = Color3.fromRGB(255, 120, 0),
+        SmokeColor = Color3.fromRGB(140, 160, 210),
+        HEColor = Color3.fromRGB(255, 0, 90)
+    },
+    ["Emerald Shadow"] = {
+        Name = "Emerald Shadow",
+        Background = Color3.fromRGB(18, 24, 20),
+        Sidebar = Color3.fromRGB(22, 32, 26),
+        CardBg = Color3.fromRGB(28, 42, 34),
+        Accent = Color3.fromRGB(46, 204, 113),
+        AccentHover = Color3.fromRGB(60, 220, 130),
+        TextPrimary = Color3.fromRGB(235, 245, 240),
+        TextSecondary = Color3.fromRGB(135, 160, 145),
+        Border = Color3.fromRGB(40, 60, 48),
+        GridSquare = Color3.fromRGB(24, 34, 28),
+        Enemy_Accent = Color3.fromRGB(235, 75, 75),
+        Enemy_Fill = Color3.fromRGB(220, 50, 50),
+        NametagTextColor = Color3.fromRGB(255, 255, 255),
+        MolotovColor = Color3.fromRGB(255, 100, 40),
+        SmokeColor = Color3.fromRGB(170, 190, 180),
+        HEColor = Color3.fromRGB(255, 50, 60)
+    }
 }
 
--- ==========================================
--- MODULE CONFIGURATION & CONSTANTS
--- ==========================================
-local nametagsEnabled = false
-local espMaxDist = 3000
-local espShowDistance = true
-local espShowHealth = true
-local espShowTeamTag = true
-local espTextSize = 8
-local tagTransparency = 0.35
-local tagBgColor = Color3.fromRGB(18, 19, 22)
-local tagOffsetY = 2.6
-local tagShowWeapon = true
+local currentTheme = themeLibrary["Charcoal Crimson"]
 
-local boxEspEnabled = false
-local cornerBoxEnabled = false
-local boxThickness = 1.2
-
-local grenadeEspEnabled = false
-local showGrenadePath = true
-local showMolotovRadius = true
-local showSmokeRadius = true
-local grenadeMaxDist = 1500
-
+-- ==============================================================================
+-- COMPLETE MODULE STATES & MEMORY REGISTERS
+-- ==============================================================================
+-- Combat Engine States
 local aimbotEnabled = false
 local aimbotSpeed = 35.0
 local aimbotSmoothness = 0.0
@@ -126,17 +150,13 @@ local visibleCheck = false
 local aimSensitivity = 1.0
 local lockOnJump = true
 
+-- Rage / HVH Engine States
 local antiAimEnabled = false
 local spinSpeed = 50
 local currentSpinAngle = 0
+local antiAimYawMode = "Spin"
 
-local jumpCircleEnabled = false
-local jumpCircleStyle = "GradientWave"
-local jumpCircleSegmentCount = 32
-local jumpCircleRadius = 3.5
-local jumpCircleHeightOffset = -2.8
-local activeJumpCircleData = nil
-
+-- Recoil Compensation Engine States
 local rcsEnabled = false
 local rcsStrength = 75
 local rcsPitchFactor = 1.0
@@ -146,12 +166,14 @@ local rcsHorizontalComp = true
 local rcsBurstOnly = false
 local rcsRandomize = true
 
+-- Trigger Assistant Engine States
 local triggerbotEnabled = false
 local triggerbotDelay = 0.02
 local triggerbotHeadOnly = false
 local triggerbotMobileAutoFire = true
 local lastTriggerTick = 0
 
+-- Movement Engine States
 local bunnyHopEnabled = false
 local bhopAutoJump = false
 local bhopAirStrafe = true
@@ -162,21 +184,53 @@ local lastMoveDirection = Vector3.zero
 
 local speedEnabled = false
 local walkMultiplier = 2.0
+
 local flightEnabled = false
 local flightSpeed = 50
+
+-- ESP & Visual Overlay States
+local nametagsEnabled = false
+local espMaxDist = 3000
+local espShowDistance = true
+local espShowHealth = true
+local espTextSize = 8
+local tagTransparency = 0.35
+local tagBgColor = Color3.fromRGB(18, 19, 22)
+local tagOffsetY = 2.6
+local tagShowWeapon = true
+
+local boxEspEnabled = false
+local cornerBoxEnabled = false
+local boxThickness = 1.0
 
 local highlightEnabled = false
 local headDotEnabled = false
 local tracersEnabled = false
+
+local grenadeEspEnabled = false
+local showGrenadePath = true
+local showMolotovRadius = true
+local showSmokeRadius = true
+local grenadeMaxDist = 1500
+
+-- Jump Circle Engine States
+local jumpCircleEnabled = false
+local jumpCircleStyle = "GradientWave"
+local jumpCircleSegmentCount = 32
+local jumpCircleRadius = 3.5
+local jumpCircleHeightOffset = -2.8
+local activeJumpCircleData = nil
+
+-- Environment & Lighting Engine States
 local antiFlashEnabled = true
 local fullBrightEnabled = false
+local removeFogEnabled = true
 
 local nightModeEnabled = false
 local nightPreset = "Midnight"
 local nightClockTime = 0.0
 local nightBrightness = 0.2
 local nightOutdoorAmbient = Color3.fromRGB(25, 25, 40)
-local removeFogEnabled = true
 
 local nightPresets = {
     ["Midnight"] = {
@@ -226,6 +280,9 @@ local defaultLighting = {
     FogColor = Lighting.FogColor
 }
 
+-- ==============================================================================
+-- GUI ENGINE INSTANTIATION (BASE HIERARCHY)
+-- ==============================================================================
 local mainContainer = Instance.new("ScreenGui")
 mainContainer.Name = "GestioMainContainer"
 mainContainer.ResetOnSpawn = false
@@ -244,6 +301,9 @@ jumpCircleFolder.Name = "Gestio_JumpCircleWorld"
 
 local grenadePool = {}
 
+-- ==============================================================================
+-- LIGHTING CONTROLLER PIPELINE
+-- ==============================================================================
 local function applyNightPreset(presetName)
     local cfg = nightPresets[presetName]
     if not cfg then return end
@@ -264,6 +324,21 @@ local function applyNightPreset(presetName)
     end
 end
 
+local function restoreLightingState()
+    pcall(function()
+        Lighting.Brightness = defaultLighting.Brightness
+        Lighting.ClockTime = defaultLighting.ClockTime
+        Lighting.GlobalShadows = defaultLighting.GlobalShadows
+        Lighting.Ambient = defaultLighting.Ambient
+        Lighting.OutdoorAmbient = defaultLighting.OutdoorAmbient
+        Lighting.FogEnd = defaultLighting.FogEnd
+        Lighting.FogColor = defaultLighting.FogColor
+    end)
+end
+
+-- ==============================================================================
+-- CLEANUP & LIFECYCLE MANAGEMENT
+-- ==============================================================================
 local function clearActiveJumpCircle()
     if not activeJumpCircleData then return end
     if activeJumpCircleData.Connections then
@@ -278,7 +353,9 @@ local function clearActiveJumpCircle()
 end
 
 local function cleanup()
-    for _, c in pairs(connections) do pcall(function() c:Disconnect() end) end
+    for _, c in pairs(connections) do 
+        pcall(function() c:Disconnect() end) 
+    end
     for _, holder in pairs(activeEspHolders) do
         pcall(function() holder.Holder:Destroy() end)
     end
@@ -287,9 +364,7 @@ local function cleanup()
             esp.Box:Destroy()
             esp.TagCard:Destroy()
             for _, corner in pairs(esp.Corners) do
-                corner.H_Out:Destroy()
                 corner.H:Destroy()
-                corner.V_Out:Destroy()
                 corner.V:Destroy()
             end
         end)
@@ -307,15 +382,7 @@ local function cleanup()
     screenEspCache = {}
     grenadePool = {}
     
-    pcall(function()
-        Lighting.Brightness = defaultLighting.Brightness
-        Lighting.ClockTime = defaultLighting.ClockTime
-        Lighting.GlobalShadows = defaultLighting.GlobalShadows
-        Lighting.Ambient = defaultLighting.Ambient
-        Lighting.OutdoorAmbient = defaultLighting.OutdoorAmbient
-        Lighting.FogEnd = defaultLighting.FogEnd
-        Lighting.FogColor = defaultLighting.FogColor
-    end)
+    restoreLightingState()
 
     pcall(function() if targetGui:FindFirstChild("GestioScreenGui") then targetGui.GestioScreenGui:Destroy() end end)
     pcall(function() if targetGui:FindFirstChild("GestioToggleGui") then targetGui.GestioToggleGui:Destroy() end end)
@@ -330,6 +397,9 @@ local function bindTouch(btn, callback)
     btn.Activated:Connect(callback)
 end
 
+-- ==============================================================================
+-- FOV GUI HUD ELEMENT
+-- ==============================================================================
 local fovGui = Instance.new("ScreenGui")
 fovGui.Name = "GestioFovGui"
 fovGui.ResetOnSpawn = false
@@ -349,6 +419,9 @@ fovStroke.Thickness = 0.8
 local fovCorner = Instance.new("UICorner", fovFrame)
 fovCorner.CornerRadius = UDim.new(1, 0)
 
+-- ==============================================================================
+-- WATERMARK TELEMETRY HUD ELEMENT
+-- ==============================================================================
 local watermarkGui = Instance.new("ScreenGui")
 watermarkGui.Name = "GestioWatermarkGui"
 watermarkGui.ResetOnSpawn = false
@@ -409,70 +482,9 @@ wmMetrics.Font = Enum.Font.GothamBold
 local fpsCounter = 0
 local lastFpsUpdate = tick()
 
--- ==========================================
--- PRECISE BLOXSTRIKE SIDE & TEAM DETECTOR
--- ==========================================
-local function getPlayerSide(plr)
-    if not plr then return "T" end
-    local char = plr.Character
-
-    -- Check direct attributes (BloxStrike Native Factions)
-    local teamAttr = plr:GetAttribute("Team") 
-        or (char and char:GetAttribute("Team")) 
-        or plr:GetAttribute("Side") 
-        or (char and char:GetAttribute("Side")) 
-        or plr:GetAttribute("Faction")
-        or (char and char:GetAttribute("Faction"))
-
-    if teamAttr ~= nil then
-        local tStr = tostring(teamAttr):lower()
-        if tStr:find("counter") or tStr:find("ct") or tStr == "2" or tStr:find("blue") or tStr:find("defend") or tStr:find("police") or tStr:find("swat") or tStr:find("guard") then
-            return "CT"
-        elseif tStr:find("terror") or tStr:find("t") or tStr == "1" or tStr:find("red") or tStr:find("attack") or tStr:find("anarch") or tStr:find("rebel") then
-            return "T"
-        end
-    end
-
-    -- Check Roblox Team instance name
-    if plr.Team then
-        local tName = tostring(plr.Team.Name):lower()
-        if tName:find("counter") or tName:find("ct") or tName:find("police") or tName:find("swat") or tName:find("guard") or tName:find("blue") or tName:find("defend") or tName:find("spec") then
-            return "CT"
-        elseif tName:find("terror") or tName:find("t") or tName:find("anarch") or tName:find("rebel") or tName:find("red") or tName:find("attack") then
-            return "T"
-        end
-    end
-
-    -- Check TeamColor BrickColor name
-    if plr.TeamColor and plr.TeamColor ~= BrickColor.new("White") then
-        local colName = plr.TeamColor.Name:lower()
-        if colName:find("blue") or colName:find("navy") or colName:find("cyan") or colName:find("teal") or colName:find("lapis") or colName:find("grey") or colName:find("gray") or colName:find("black") then
-            return "CT"
-        elseif colName:find("red") or colName:find("orange") or colName:find("yellow") or colName:find("rust") or colName:find("crimson") then
-            return "T"
-        end
-    end
-
-    -- Model inspection (BloxStrike Character Models)
-    if char then
-        local charName = tostring(char.Name):lower()
-        if charName:find("ct") or charName:find("counter") or charName:find("swat") or charName:find("sas") or charName:find("gign") or charName:find("fbi") or charName:find("idf") then
-            return "CT"
-        elseif charName:find("terror") or charName:find("t_") or charName:find("anarch") or charName:find("phoenix") or charName:find("balkan") or charName:find("leet") then
-            return "T"
-        end
-    end
-
-    if plr ~= player then
-        local mySide = getPlayerSide(player)
-        if plr.Team and player.Team then
-            return (plr.Team == player.Team) and mySide or ((mySide == "CT") and "T" or "CT")
-        end
-    end
-
-    return "T"
-end
-
+-- ==============================================================================
+-- TEAM VERIFICATION & ENTITY HEALTH CONTROLLER
+-- ==============================================================================
 local function isAlly(plr)
     if not plr or plr == player then return false end
     if plr.Team and player.Team then
@@ -481,7 +493,10 @@ local function isAlly(plr)
     if plr:GetAttribute("Team") and player:GetAttribute("Team") then
         return plr:GetAttribute("Team") == player:GetAttribute("Team")
     end
-    return getPlayerSide(plr) == getPlayerSide(player)
+    if plr.TeamColor and player.TeamColor and plr.TeamColor ~= BrickColor.new("White") then
+        return plr.TeamColor == player.TeamColor
+    end
+    return false
 end
 
 local function isTargetEnemy(plr, char)
@@ -509,42 +524,32 @@ local function isEntityAlive(char, hum)
         return false 
     end
     
-    if not hum or not hum.Parent then
-        return false
-    end
-
-    local isDead = false
-    pcall(function()
-        if hum.Health <= 0 then 
-            isDead = true 
+    if hum and hum.Parent then
+        local health = 100
+        pcall(function() health = hum.Health end)
+        if health <= 0 then 
+            return false 
         end
-        if hum:GetState() == Enum.HumanoidStateType.Dead then 
-            isDead = true 
+        
+        local state = nil
+        pcall(function() state = hum:GetState() end)
+        if state == Enum.HumanoidStateType.Dead then 
+            return false 
         end
-    end)
-    if isDead then return false end
-
-    local isAliveAttr = char:GetAttribute("Alive") or char:GetAttribute("IsAlive")
-    if isAliveAttr ~= nil and isAliveAttr == false then
-        return false
     end
 
     local root = char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso")
     local head = char:FindFirstChild("Head")
-    if not root or not head then
-        return false
-    end
-
-    if not root.Parent or not head.Parent then
+    if not root and not head then
         return false
     end
 
     return true
 end
 
--- ==========================================
--- JUMP CIRCLE SUB-ENGINE (FIXED)
--- ==========================================
+-- ==============================================================================
+-- JUMP CIRCLE GEOMETRY PIPELINE
+-- ==============================================================================
 local function buildJumpRing(segmentCount, radius, thickness)
     local container = Instance.new("Folder")
     container.Name = "JumpCircleContainer"
@@ -701,9 +706,9 @@ if player.Character then
     end)
 end
 
--- ==========================================
--- GRENADE TRAJECTORY & HOLLOW RADIUS ENGINE
--- ==========================================
+-- ==============================================================================
+-- GRENADE TRAJECTORY & RADIUS CALCULATION
+-- ==============================================================================
 local grenadeRayParams = RaycastParams.new()
 grenadeRayParams.FilterType = Enum.RaycastFilterType.Exclude
 grenadeRayParams.IgnoreWater = true
@@ -917,6 +922,9 @@ local function renderGrenadeOverlays()
     end
 end
 
+-- ==============================================================================
+-- AIMLOCK & TARGET SELECTION ENGINE
+-- ==============================================================================
 local visRayParams = RaycastParams.new()
 visRayParams.FilterType = Enum.RaycastFilterType.Exclude
 visRayParams.IgnoreWater = true
@@ -983,6 +991,9 @@ local function getClosestTarget()
     return closestTarget
 end
 
+-- ==============================================================================
+-- TRIGGERBOT LOGIC (ZERO JITTER)
+-- ==============================================================================
 local triggerRayParams = RaycastParams.new()
 triggerRayParams.FilterType = Enum.RaycastFilterType.Exclude
 triggerRayParams.IgnoreWater = true
@@ -1028,9 +1039,9 @@ local function runMobileTriggerbot()
     end
 end
 
--- ==========================================
--- REFACTORED HIGH-DEFINITION CORNER BOX & ESP
--- ==========================================
+-- ==============================================================================
+-- 2D SCREEN ESP CACHE & COMPONENT BUILDER
+-- ==============================================================================
 local function getOrCreateScreenEsp(plr)
     if screenEspCache[plr] then return screenEspCache[plr] end
 
@@ -1041,40 +1052,25 @@ local function getOrCreateScreenEsp(plr)
     box.Visible = false
 
     local stroke = Instance.new("UIStroke", box)
-    stroke.Color = currentTheme.T_Accent
+    stroke.Color = currentTheme.Enemy_Accent
     stroke.Thickness = boxThickness
     stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
     local corners = {}
     for i = 1, 4 do
-        -- Horizontal Outline + Inner Fill
-        local hOut = Instance.new("Frame", overlayContainer)
-        hOut.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-        hOut.BorderSizePixel = 0
-        hOut.Visible = false
-
         local hLine = Instance.new("Frame", overlayContainer)
-        hLine.BackgroundColor3 = currentTheme.T_Accent
+        hLine.Name = "CornerH_" .. plr.Name .. "_" .. i
+        hLine.BackgroundColor3 = currentTheme.Enemy_Accent
         hLine.BorderSizePixel = 0
         hLine.Visible = false
 
-        -- Vertical Outline + Inner Fill
-        local vOut = Instance.new("Frame", overlayContainer)
-        vOut.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-        vOut.BorderSizePixel = 0
-        vOut.Visible = false
-
         local vLine = Instance.new("Frame", overlayContainer)
-        vLine.BackgroundColor3 = currentTheme.T_Accent
+        vLine.Name = "CornerV_" .. plr.Name .. "_" .. i
+        vLine.BackgroundColor3 = currentTheme.Enemy_Accent
         vLine.BorderSizePixel = 0
         vLine.Visible = false
 
-        table.insert(corners, {
-            H_Out = hOut,
-            H = hLine,
-            V_Out = vOut,
-            V = vLine
-        })
+        table.insert(corners, {H = hLine, V = vLine})
     end
 
     local tagCard = Instance.new("Frame", overlayContainer)
@@ -1088,13 +1084,9 @@ local function getOrCreateScreenEsp(plr)
     tagCard.Visible = false
 
     Instance.new("UICorner", tagCard).CornerRadius = UDim.new(0, 4)
-    local cardStroke = Instance.new("UIStroke", tagCard)
-    cardStroke.Color = currentTheme.Border
-    cardStroke.Thickness = 0.8
-
     local pad = Instance.new("UIPadding", tagCard)
-    pad.PaddingRight = UDim.new(0, 6)
-    pad.PaddingLeft = UDim.new(0, 6)
+    pad.PaddingRight = UDim.new(0, 5)
+    pad.PaddingLeft = UDim.new(0, 5)
 
     local tagLabel = Instance.new("TextLabel", tagCard)
     tagLabel.AutomaticSize = Enum.AutomaticSize.X
@@ -1109,7 +1101,6 @@ local function getOrCreateScreenEsp(plr)
         BoxStroke = stroke,
         Corners = corners,
         TagCard = tagCard,
-        TagCardStroke = cardStroke,
         TagLabel = tagLabel,
         LastText = ""
     }
@@ -1124,9 +1115,7 @@ table.insert(connections, Players.PlayerRemoving:Connect(function(plr)
             cache.Box:Destroy()
             cache.TagCard:Destroy()
             for _, corner in pairs(cache.Corners) do
-                corner.H_Out:Destroy()
                 corner.H:Destroy()
-                corner.V_Out:Destroy()
                 corner.V:Destroy()
             end
         end)
@@ -1134,6 +1123,9 @@ table.insert(connections, Players.PlayerRemoving:Connect(function(plr)
     end
 end))
 
+-- ==============================================================================
+-- TACTICAL ESP RENDERING PIPELINE (BOX, CORNERS, NAMETAGS)
+-- ==============================================================================
 local function renderTacticalOverlay()
     local camPos = camera.CFrame.Position
     local allPlayers = Players:GetPlayers()
@@ -1166,8 +1158,7 @@ local function renderTacticalOverlay()
                     local boxPosX = topScreen.X - (boxWidth * 0.5)
                     local boxPosY = topScreen.Y
 
-                    local side = getPlayerSide(plr)
-                    local sideColor = (side == "CT") and currentTheme.CT_Accent or currentTheme.T_Accent
+                    local sideColor = currentTheme.Enemy_Accent
 
                     if boxEspEnabled and not cornerBoxEnabled then
                         esp.BoxStroke.Color = sideColor
@@ -1176,88 +1167,53 @@ local function renderTacticalOverlay()
                         esp.Box.Position = UDim2.new(0, boxPosX, 0, boxPosY)
                         esp.Box.Visible = true
                         for _, corner in ipairs(esp.Corners) do
-                            corner.H_Out.Visible = false
                             corner.H.Visible = false
-                            corner.V_Out.Visible = false
                             corner.V.Visible = false
                         end
                     elseif cornerBoxEnabled then
                         esp.Box.Visible = false
-                        local lengthX = math.clamp(boxWidth * 0.28, 4, 18)
-                        local lengthY = math.clamp(boxHeight * 0.22, 4, 22)
-                        local thick = 1.5
-                        local outThick = thick + 2.0
+                        local lengthX = math.max(boxWidth * 0.25, 4)
+                        local lengthY = math.max(boxHeight * 0.25, 4)
+                        local thick = boxThickness + 0.5
 
-                        -- 1: Top-Left Corner
-                        esp.Corners[1].H_Out.Size = UDim2.new(0, lengthX + 2, 0, outThick)
-                        esp.Corners[1].H_Out.Position = UDim2.new(0, boxPosX - 1, 0, boxPosY - 1)
-                        esp.Corners[1].H_Out.Visible = true
-
+                        -- 1: Top-Left
                         esp.Corners[1].H.BackgroundColor3 = sideColor
                         esp.Corners[1].H.Size = UDim2.new(0, lengthX, 0, thick)
                         esp.Corners[1].H.Position = UDim2.new(0, boxPosX, 0, boxPosY)
                         esp.Corners[1].H.Visible = true
-
-                        esp.Corners[1].V_Out.Size = UDim2.new(0, outThick, 0, lengthY + 2)
-                        esp.Corners[1].V_Out.Position = UDim2.new(0, boxPosX - 1, 0, boxPosY - 1)
-                        esp.Corners[1].V_Out.Visible = true
 
                         esp.Corners[1].V.BackgroundColor3 = sideColor
                         esp.Corners[1].V.Size = UDim2.new(0, thick, 0, lengthY)
                         esp.Corners[1].V.Position = UDim2.new(0, boxPosX, 0, boxPosY)
                         esp.Corners[1].V.Visible = true
 
-                        -- 2: Top-Right Corner
-                        esp.Corners[2].H_Out.Size = UDim2.new(0, lengthX + 2, 0, outThick)
-                        esp.Corners[2].H_Out.Position = UDim2.new(0, boxPosX + boxWidth - lengthX - 1, 0, boxPosY - 1)
-                        esp.Corners[2].H_Out.Visible = true
-
+                        -- 2: Top-Right
                         esp.Corners[2].H.BackgroundColor3 = sideColor
                         esp.Corners[2].H.Size = UDim2.new(0, lengthX, 0, thick)
                         esp.Corners[2].H.Position = UDim2.new(0, boxPosX + boxWidth - lengthX, 0, boxPosY)
                         esp.Corners[2].H.Visible = true
-
-                        esp.Corners[2].V_Out.Size = UDim2.new(0, outThick, 0, lengthY + 2)
-                        esp.Corners[2].V_Out.Position = UDim2.new(0, boxPosX + boxWidth - thick - 1, 0, boxPosY - 1)
-                        esp.Corners[2].V_Out.Visible = true
 
                         esp.Corners[2].V.BackgroundColor3 = sideColor
                         esp.Corners[2].V.Size = UDim2.new(0, thick, 0, lengthY)
                         esp.Corners[2].V.Position = UDim2.new(0, boxPosX + boxWidth - thick, 0, boxPosY)
                         esp.Corners[2].V.Visible = true
 
-                        -- 3: Bottom-Left Corner
-                        esp.Corners[3].H_Out.Size = UDim2.new(0, lengthX + 2, 0, outThick)
-                        esp.Corners[3].H_Out.Position = UDim2.new(0, boxPosX - 1, 0, boxPosY + boxHeight - thick - 1)
-                        esp.Corners[3].H_Out.Visible = true
-
+                        -- 3: Bottom-Left
                         esp.Corners[3].H.BackgroundColor3 = sideColor
                         esp.Corners[3].H.Size = UDim2.new(0, lengthX, 0, thick)
                         esp.Corners[3].H.Position = UDim2.new(0, boxPosX, 0, boxPosY + boxHeight - thick)
                         esp.Corners[3].H.Visible = true
-
-                        esp.Corners[3].V_Out.Size = UDim2.new(0, outThick, 0, lengthY + 2)
-                        esp.Corners[3].V_Out.Position = UDim2.new(0, boxPosX - 1, 0, boxPosY + boxHeight - lengthY - 1)
-                        esp.Corners[3].V_Out.Visible = true
 
                         esp.Corners[3].V.BackgroundColor3 = sideColor
                         esp.Corners[3].V.Size = UDim2.new(0, thick, 0, lengthY)
                         esp.Corners[3].V.Position = UDim2.new(0, boxPosX, 0, boxPosY + boxHeight - lengthY)
                         esp.Corners[3].V.Visible = true
 
-                        -- 4: Bottom-Right Corner
-                        esp.Corners[4].H_Out.Size = UDim2.new(0, lengthX + 2, 0, outThick)
-                        esp.Corners[4].H_Out.Position = UDim2.new(0, boxPosX + boxWidth - lengthX - 1, 0, boxPosY + boxHeight - thick - 1)
-                        esp.Corners[4].H_Out.Visible = true
-
+                        -- 4: Bottom-Right
                         esp.Corners[4].H.BackgroundColor3 = sideColor
                         esp.Corners[4].H.Size = UDim2.new(0, lengthX, 0, thick)
                         esp.Corners[4].H.Position = UDim2.new(0, boxPosX + boxWidth - lengthX, 0, boxPosY + boxHeight - thick)
                         esp.Corners[4].H.Visible = true
-
-                        esp.Corners[4].V_Out.Size = UDim2.new(0, outThick, 0, lengthY + 2)
-                        esp.Corners[4].V_Out.Position = UDim2.new(0, boxPosX + boxWidth - thick - 1, 0, boxPosY + boxHeight - lengthY - 1)
-                        esp.Corners[4].V_Out.Visible = true
 
                         esp.Corners[4].V.BackgroundColor3 = sideColor
                         esp.Corners[4].V.Size = UDim2.new(0, thick, 0, lengthY)
@@ -1266,20 +1222,18 @@ local function renderTacticalOverlay()
                     else
                         esp.Box.Visible = false
                         for _, corner in ipairs(esp.Corners) do
-                            corner.H_Out.Visible = false
                             corner.H.Visible = false
-                            corner.V_Out.Visible = false
                             corner.V.Visible = false
                         end
                     end
 
                     if nametagsEnabled then
                         esp.TagCard.BackgroundTransparency = tagTransparency
-                        esp.TagCardStroke.Color = sideColor
                         esp.TagLabel.TextSize = espTextSize
+                        esp.TagLabel.TextColor3 = currentTheme.NametagTextColor
 
                         local baseName = plr.DisplayName or plr.Name
-                        local infoText = (espShowTeamTag and string.format("[%s] ", side) or "") .. baseName
+                        local infoText = baseName
                         
                         if espShowDistance then
                             infoText = string.format("%s [%dm]", infoText, math.floor(dist))
@@ -1308,9 +1262,7 @@ local function renderTacticalOverlay()
                 else
                     esp.Box.Visible = false
                     for _, corner in ipairs(esp.Corners) do
-                        corner.H_Out.Visible = false
                         corner.H.Visible = false
-                        corner.V_Out.Visible = false
                         corner.V.Visible = false
                     end
                     esp.TagCard.Visible = false
@@ -1318,9 +1270,7 @@ local function renderTacticalOverlay()
             else
                 esp.Box.Visible = false
                 for _, corner in ipairs(esp.Corners) do
-                    corner.H_Out.Visible = false
                     corner.H.Visible = false
-                    corner.V_Out.Visible = false
                     corner.V.Visible = false
                 end
                 esp.TagCard.Visible = false
@@ -1328,9 +1278,7 @@ local function renderTacticalOverlay()
         else
             esp.Box.Visible = false
             for _, corner in ipairs(esp.Corners) do
-                corner.H_Out.Visible = false
                 corner.H.Visible = false
-                corner.V_Out.Visible = false
                 corner.V.Visible = false
             end
             esp.TagCard.Visible = false
@@ -1338,9 +1286,9 @@ local function renderTacticalOverlay()
     end
 end
 
--- ==========================================
--- REFACTORED HD HEAD-DOT ENGINE
--- ==========================================
+-- ==============================================================================
+-- 3D ESP & HIGHLIGHT ATTACHMENT CONTROLLER
+-- ==============================================================================
 local function attachEspToPlayer(plr)
     if plr == player then return end
 
@@ -1348,41 +1296,22 @@ local function attachEspToPlayer(plr)
     holder.Name = "GestioESP_" .. plr.Name
     holder.Parent = mainContainer
 
-    -- High Definition Reticle Head Dot
     local dotBillboard = Instance.new("BillboardGui", holder)
-    dotBillboard.Size = UDim2.new(0, 10, 0, 10)
-    dotBillboard.StudsOffset = Vector3.new(0, 0, 0)
+    dotBillboard.Size = UDim2.new(0, 6, 0, 6)
+    dotBillboard.StudsOffset = Vector3.new(0, 0.5, 0)
     dotBillboard.AlwaysOnTop = true
     dotBillboard.Enabled = false
 
-    local dotOuter = Instance.new("Frame", dotBillboard)
-    dotOuter.Size = UDim2.new(1, 0, 1, 0)
-    dotOuter.BackgroundTransparency = 1
-    local dotStroke = Instance.new("UIStroke", dotOuter)
-    dotStroke.Color = Color3.fromRGB(0, 0, 0)
-    dotStroke.Thickness = 1.2
-    Instance.new("UICorner", dotOuter).CornerRadius = UDim.new(1, 0)
-
     local dotFrame = Instance.new("Frame", dotBillboard)
-    dotFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-    dotFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
-    dotFrame.Size = UDim2.new(0, 6, 0, 6)
-    dotFrame.BackgroundColor3 = currentTheme.T_Accent
+    dotFrame.Size = UDim2.new(1, 0, 1, 0)
+    dotFrame.BackgroundColor3 = currentTheme.Enemy_Accent
     dotFrame.BorderSizePixel = 0
     Instance.new("UICorner", dotFrame).CornerRadius = UDim.new(1, 0)
-
-    local dotInner = Instance.new("Frame", dotFrame)
-    dotInner.AnchorPoint = Vector2.new(0.5, 0.5)
-    dotInner.Position = UDim2.new(0.5, 0, 0.5, 0)
-    dotInner.Size = UDim2.new(0, 2, 0, 2)
-    dotInner.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    dotInner.BorderSizePixel = 0
-    Instance.new("UICorner", dotInner).CornerRadius = UDim.new(1, 0)
 
     local tracerLine = Instance.new("Frame", mainContainer)
     tracerLine.AnchorPoint = Vector2.new(0.5, 0.5)
     tracerLine.BorderSizePixel = 0
-    tracerLine.BackgroundColor3 = currentTheme.T_Accent
+    tracerLine.BackgroundColor3 = currentTheme.Enemy_Accent
     tracerLine.Visible = false
 
     local hl = Instance.new("Highlight")
@@ -1390,7 +1319,7 @@ local function attachEspToPlayer(plr)
     hl.FillTransparency = 0.45
     hl.OutlineTransparency = 0.0
     hl.Enabled = false
-    hl.FillColor = currentTheme.T_Fill
+    hl.FillColor = currentTheme.Enemy_Fill
     hl.OutlineColor = Color3.fromRGB(255, 255, 255)
     hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
     hl.Parent = holder
@@ -1399,7 +1328,6 @@ local function attachEspToPlayer(plr)
         Holder = holder,
         HeadDot = dotBillboard,
         DotFrame = dotFrame,
-        DotStroke = dotStroke,
         Tracer = tracerLine,
         Highlight = hl
     }
@@ -1425,6 +1353,9 @@ end
 for _, v in pairs(Players:GetPlayers()) do attachEspToPlayer(v) end
 table.insert(connections, Players.PlayerAdded:Connect(attachEspToPlayer))
 
+-- ==============================================================================
+-- MAIN RENDERSTEPPED LOOP (AIMBOT, ESP, RCS, LIGHTING)
+-- ==============================================================================
 table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     if not camera then camera = Workspace.CurrentCamera return end
     local localPos = camera.CFrame.Position
@@ -1490,9 +1421,8 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         local dist = rootPart and (rootPart.Position - localPos).Magnitude or 9999
 
         if char and isEnemy and isAlive and (dist <= espMaxDist) then
-            local side = getPlayerSide(plr)
-            local activeAccent = (side == "CT") and currentTheme.CT_Accent or currentTheme.T_Accent
-            local activeHighlight = (side == "CT") and currentTheme.CT_Fill or currentTheme.T_Fill
+            local activeAccent = currentTheme.Enemy_Accent
+            local activeHighlight = currentTheme.Enemy_Fill
 
             if data.Highlight.Adornee ~= char then
                 data.Highlight.Adornee = char
@@ -1565,6 +1495,9 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     end
 end))
 
+-- ==============================================================================
+-- ANTI-AIM (SPINBOT) STEPPED CONTROLLER
+-- ==============================================================================
 table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     if not antiAimEnabled then return end
     
@@ -1578,6 +1511,9 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     hrp.CFrame = CFrame.new(hrp.Position) * CFrame.Angles(0, math.rad(currentSpinAngle), 0)
 end))
 
+-- ==============================================================================
+-- GROUND DETECTION RAYCASTING UTILITY
+-- ==============================================================================
 local groundRayParams = RaycastParams.new()
 groundRayParams.FilterType = Enum.RaycastFilterType.Exclude
 groundRayParams.IgnoreWater = true
@@ -1590,6 +1526,9 @@ local function isPlayerGrounded(char, hrp)
     return hit ~= nil
 end
 
+-- ==============================================================================
+-- TOUCH-HOOK & MOBILE INPUT BYPASS CONTROLLER
+-- ==============================================================================
 local function hookMobileJumpButton()
     task.spawn(function()
         local pGui = player:WaitForChild("PlayerGui", 5)
@@ -1634,6 +1573,9 @@ UserInputService.InputEnded:Connect(function(input, processed)
     end
 end)
 
+-- ==============================================================================
+-- PHYSICS HEARTBEAT (BHOP, SPEED, FLIGHT)
+-- ==============================================================================
 table.insert(connections, RunService.Heartbeat:Connect(function(dt)
     local char = player.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
@@ -1678,6 +1620,9 @@ table.insert(connections, RunService.Heartbeat:Connect(function(dt)
     end
 end))
 
+-- ==============================================================================
+-- FLOATING TOGGLE BUTTON SYSTEM
+-- ==============================================================================
 local toggleGui = Instance.new("ScreenGui")
 toggleGui.Name = "GestioToggleGui"
 toggleGui.ResetOnSpawn = false
@@ -1700,6 +1645,9 @@ Instance.new("UICorner", openBtn).CornerRadius = UDim.new(0, 6)
 local openStroke = Instance.new("UIStroke", openBtn)
 openStroke.Color = currentTheme.Border
 
+-- ==============================================================================
+-- MASTER WINDOW FRAMEWORK
+-- ==============================================================================
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "GestioScreenGui"
 screenGui.ResetOnSpawn = false
@@ -1757,6 +1705,7 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
+-- Main UI Panels
 local mainFrame = Instance.new("Frame", masterFrame)
 mainFrame.Size = UDim2.new(0.58, 0, 1, 0)
 mainFrame.BackgroundColor3 = currentTheme.Background
@@ -1784,6 +1733,7 @@ for r = 0, gridRows - 1 do
     end
 end
 
+-- Sidebar Navigation
 local sidebar = Instance.new("Frame", mainFrame)
 sidebar.Size = UDim2.new(0, 75, 1, 0)
 sidebar.BackgroundColor3 = currentTheme.Sidebar
@@ -1824,6 +1774,7 @@ local setsBtn = createNavBtn(142, "SETTINGS")
 cBtn.BackgroundColor3 = currentTheme.CardBg
 cBtn.TextColor3 = currentTheme.Accent
 
+-- Container Creator
 local function makePageContainer()
     local c = Instance.new("ScrollingFrame", mainFrame)
     c.Size = UDim2.new(1, -82, 1, -12)
@@ -1922,6 +1873,9 @@ bindTouch(envBtn, function() switch("ENV") end)
 bindTouch(micsBtn, function() switch("MICS") end)
 bindTouch(setsBtn, function() switch("SETS") end)
 
+-- ==============================================================================
+-- RIGHT INSPECTOR SETTINGS VIEW
+-- ==============================================================================
 local inspectorPanel = Instance.new("Frame", masterFrame)
 inspectorPanel.Size = UDim2.new(0.40, 0, 1, 0)
 inspectorPanel.BackgroundColor3 = currentTheme.Background
@@ -2124,6 +2078,9 @@ local function addInspectorChoice(y, txt, choices, currentChoice, onSelect)
     end
 end
 
+-- ==============================================================================
+-- INSPECTOR BUILDER CONTROLLER FOR EACH MODULE
+-- ==============================================================================
 local function openInspectorFor(moduleName)
     insHeader.Text = moduleName
     for _, child in pairs(insContent:GetChildren()) do child:Destroy() end
@@ -2177,8 +2134,7 @@ local function openInspectorFor(moduleName)
         addInspectorSlider(70, "Transparency", 0.0, 0.9, tagTransparency, true, function(v) tagTransparency = v end)
         addInspectorToggle(108, "Show Distance", espShowDistance, function(v) espShowDistance = v end)
         addInspectorToggle(134, "Show Health", espShowHealth, function(v) espShowHealth = v end)
-        addInspectorToggle(160, "Show Team Tag", espShowTeamTag, function(v) espShowTeamTag = v end)
-        addInspectorToggle(186, "Show Weapon", tagShowWeapon, function(v) tagShowWeapon = v end)
+        addInspectorToggle(160, "Show Weapon", tagShowWeapon, function(v) tagShowWeapon = v end)
     elseif moduleName == "Box Overlay" then
         insContent.CanvasSize = UDim2.new(0, 0, 0, 160)
         addInspectorSlider(6, "Max Distance", 100, 5000, espMaxDist, false, function(v) espMaxDist = v end)
@@ -2222,6 +2178,9 @@ local function openInspectorFor(moduleName)
     end
 end
 
+-- ==============================================================================
+-- CARD COMPONENT BUILDER
+-- ==============================================================================
 local function addCard(parent, name, defaultState, onToggle)
     local card = Instance.new("Frame", parent)
     card.BackgroundColor3 = currentTheme.CardBg
@@ -2269,30 +2228,19 @@ local function addCard(parent, name, defaultState, onToggle)
             if state then
                 applyNightPreset(nightPreset)
             else
-                pcall(function()
-                    Lighting.Brightness = defaultLighting.Brightness
-                    Lighting.ClockTime = defaultLighting.ClockTime
-                    Lighting.GlobalShadows = defaultLighting.GlobalShadows
-                    Lighting.Ambient = defaultLighting.Ambient
-                    Lighting.OutdoorAmbient = defaultLighting.OutdoorAmbient
-                    Lighting.FogColor = defaultLighting.FogColor
-                end)
+                restoreLightingState()
             end
         elseif name == "FullBright" and not state and not nightModeEnabled then
-            pcall(function()
-                Lighting.Brightness = defaultLighting.Brightness
-                Lighting.ClockTime = defaultLighting.ClockTime
-                Lighting.GlobalShadows = defaultLighting.GlobalShadows
-            end)
+            restoreLightingState()
         end
     end
 
     bindTouch(toggleBtn, executeToggle)
 end
 
--- ==========================================
+-- ==============================================================================
 -- CATEGORY SECTION SETUP & CARD REGISTRATION
--- ==========================================
+-- ==============================================================================
 
 -- COMBAT TAB
 local cAimSection = makeCategorySection(cPage, "Aim & Ballistics", 1)
