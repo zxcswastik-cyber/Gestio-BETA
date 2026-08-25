@@ -29,9 +29,16 @@ local HttpService = game:GetService("HttpService")
 -- ==========================================
 -- CLIENT ENVIRONMENT VALIDATION
 -- ==========================================
-local player = Players.LocalPlayer or Players:GetPlayers()[1]
+local player = Players.LocalPlayer
 if not player then
-    player = Players.PlayerAdded:Wait()
+    local startWait = tick()
+    while not player and (tick() - startWait) < 5 do
+        player = Players.LocalPlayer
+        task.wait(0.1)
+    end
+    if not player then
+        player = Players:GetPlayers()[1]
+    end
 end
 
 local camera = Workspace.CurrentCamera or Workspace:FindFirstChildOfClass("Camera")
@@ -430,8 +437,8 @@ local function cleanup()
 
     pcall(function() if targetGui:FindFirstChild("GestioScreenGui") then targetGui.GestioScreenGui:Destroy() end end)
     pcall(function() if targetGui:FindFirstChild("GestioToggleGui") then targetGui.GestioToggleGui:Destroy() end end)
-    pcall(function() if targetGui:FindFirstChild("GestioFovGui") then targetGui.FovGui:Destroy() end end)
-    pcall(function() if targetGui:FindFirstChild("GestioWatermarkGui") then targetGui.WatermarkGui:Destroy() end end)
+    pcall(function() if targetGui:FindFirstChild("GestioFovGui") then targetGui.GestioFovGui:Destroy() end end)
+    pcall(function() if targetGui:FindFirstChild("GestioWatermarkGui") then targetGui.GestioWatermarkGui:Destroy() end end)
     pcall(function() if targetGui:FindFirstChild("GestioMainContainer") then targetGui.GestioMainContainer:Destroy() end end)
 end
 
@@ -1768,11 +1775,12 @@ table.insert(connections, player.CharacterAdded:Connect(function(char)
     hookMobileJumpButton()
 end))
 
-UserInputService.JumpRequest:Connect(function()
+local jumpReqConn = UserInputService.JumpRequest:Connect(function()
     isMobileJumpHeld = true
 end)
+table.insert(connections, jumpReqConn)
 
-UserInputService.InputBegan:Connect(function(input, processed)
+local inBeganConn = UserInputService.InputBegan:Connect(function(input, processed)
     if input.KeyCode == Enum.KeyCode.Space then
         isMobileJumpHeld = true
     end
@@ -1789,8 +1797,9 @@ UserInputService.InputBegan:Connect(function(input, processed)
         end
     end
 end)
+table.insert(connections, inBeganConn)
 
-UserInputService.InputEnded:Connect(function(input, processed)
+local inEndedConn = UserInputService.InputEnded:Connect(function(input, processed)
     if input.KeyCode == Enum.KeyCode.Space then
         isMobileJumpHeld = false
     end
@@ -1803,6 +1812,7 @@ UserInputService.InputEnded:Connect(function(input, processed)
         end
     end
 end)
+table.insert(connections, inEndedConn)
 
 -- ==========================================
 -- UNIFIED PHYSICS & KINEMATICS HEARTBEAT
@@ -1881,7 +1891,7 @@ table.insert(connections, RunService.Heartbeat:Connect(function(dt)
         )
     end
 
-    -- ЕДИНСТВЕННАЯ ТОЧКА ЗАПИСИ В КАРКАСЕ ФИЗИКИ
+    -- ЕДИНСТВЕННАЯ ТОЧКА ЗАПИСИ VELOCITY
     if finalVelocity then
         hrp.AssemblyLinearVelocity = finalVelocity
     end
@@ -1944,15 +1954,16 @@ local function toggleMenu()
 end
 
 local btnDrag, btnStartPos, btnInputStart = false, nil, nil
-openBtn.InputBegan:Connect(function(input)
+local bInBegan = openBtn.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         btnDrag = true
         btnStartPos = openBtn.Position
         btnInputStart = input.Position
     end
 end)
+table.insert(connections, bInBegan)
 
-UserInputService.InputChanged:Connect(function(input)
+local bInChanged = UserInputService.InputChanged:Connect(function(input)
     if btnDrag and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
         local delta = input.Position - btnInputStart
         local newPos = UDim2.new(btnStartPos.X.Scale, btnStartPos.X.Offset + delta.X, btnStartPos.Y.Scale, btnStartPos.Y.Offset + delta.Y)
@@ -1960,8 +1971,9 @@ UserInputService.InputChanged:Connect(function(input)
         getgenv().GestioSavedPos.OpenBtn = newPos
     end
 end)
+table.insert(connections, bInChanged)
 
-UserInputService.InputEnded:Connect(function(input)
+local bInEnded = UserInputService.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         if btnDrag then
             btnDrag = false
@@ -1971,6 +1983,7 @@ UserInputService.InputEnded:Connect(function(input)
         end
     end
 end)
+table.insert(connections, bInEnded)
 
 local mainFrame = Instance.new("Frame", masterFrame)
 mainFrame.Size = UDim2.new(0.58, 0, 1, 0)
@@ -2234,22 +2247,27 @@ local function addInspectorSlider(y, txt, min, max, cur, isFloat, onChange)
         onChange(val)
     end
 
-    track.InputBegan:Connect(function(input)
+    local trInBegan = track.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             drag = true 
             update(input)
         end
     end)
-    UserInputService.InputEnded:Connect(function(input)
+    table.insert(connections, trInBegan)
+
+    local trInEnded = UserInputService.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             drag = false
         end
     end)
-    UserInputService.InputChanged:Connect(function(input)
+    table.insert(connections, trInEnded)
+
+    local trInChanged = UserInputService.InputChanged:Connect(function(input)
         if drag and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
             update(input)
         end
     end)
+    table.insert(connections, trInChanged)
 end
 
 local function addInspectorToggle(y, txt, default, onToggle)
