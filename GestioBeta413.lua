@@ -2675,5 +2675,6 @@ local setsGeneralSection = makeCategorySection(setsPage, "Configuration", 1)
 addCard(setsGeneralSection, "Theme", true, function(v) end)
 
 openInspectorFor("Tracking")
+end
 
 buildGestioUI()
