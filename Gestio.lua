@@ -580,7 +580,7 @@ local function isEntityAlive(char, hum)
 end
 
 -- ==========================================
--- JUMP CIRCLE RENDER ENGINE
+-- JUMP CIRCLE RENDER ENGINE (FIXED)
 -- ==========================================
 local function buildJumpRing(segmentCount, radius, thickness)
     local container = Instance.new("Folder")
@@ -619,11 +619,14 @@ local function updateJumpRingLayout(segments, centerPosition, radius)
     for i, seg in ipairs(segments) do
         local angle = seg.Angle
         local nextAngle = angle + (math.pi * 2 / n)
+        -- Используем глобальные координаты с учетом центра позиции ног
         local p1 = centerPosition + Vector3.new(math.cos(angle) * radius, 0, math.sin(angle) * radius)
         local p2 = centerPosition + Vector3.new(math.cos(nextAngle) * radius, 0, math.sin(nextAngle) * radius)
         local mid = (p1 + p2) * 0.5
 
-        seg.Part.CFrame = CFrame.lookAt(mid, p2)
+        if seg.Part and seg.Part.Parent then
+            seg.Part.CFrame = CFrame.lookAt(mid, p2)
+        end
     end
 end
 
@@ -644,8 +647,8 @@ local function spawnJumpRipple(position)
             local elapsed = os.clock() - startT
             local alpha = elapsed / duration
             if alpha >= 1 or not jumpCircleEnabled then
-                rippleConn:Disconnect()
-                rippleFolder:Destroy()
+                if rippleConn then rippleConn:Disconnect() end
+                if rippleFolder then rippleFolder:Destroy() end
                 return
             end
 
@@ -654,8 +657,10 @@ local function spawnJumpRipple(position)
             updateJumpRingLayout(segments, position, curR)
 
             for i, seg in ipairs(segments) do
-                seg.Part.Transparency = alpha
-                seg.Part.Color = col1:Lerp(col2, alpha)
+                if seg.Part and seg.Part.Parent then
+                    seg.Part.Transparency = alpha
+                    seg.Part.Color = col1:Lerp(col2, alpha)
+                end
             end
         end)
     end)
@@ -684,12 +689,13 @@ local function initJumpCircleForCharacter(char)
     local startClock = os.clock()
 
     local loopConn = RunService.RenderStepped:Connect(function(dt)
-        if not jumpCircleEnabled or not hrp.Parent or not hum.Parent or hum.Health <= 0 then
+        if not jumpCircleEnabled or not hrp or not hrp.Parent or not hum or not hum.Parent or hum.Health <= 0 then
             clearActiveJumpCircle()
             return
         end
 
         local elapsed = os.clock() - startClock
+        -- Корректировка высоты относительно корня персонажа
         local footPos = hrp.Position + Vector3.new(0, jumpCircleHeightOffset, 0)
         updateJumpRingLayout(segments, footPos, jumpCircleRadius)
 
@@ -701,20 +707,26 @@ local function initJumpCircleForCharacter(char)
             for i, seg in ipairs(segments) do
                 local ratio = ((i / n) + spin) % 1
                 local wave = (math.sin(ratio * math.pi * 2) + 1) * 0.5
-                seg.Part.Color = c1:Lerp(c2, wave)
-                seg.Part.Transparency = 0.1 + (wave * 0.2)
+                if seg.Part and seg.Part.Parent then
+                    seg.Part.Color = c1:Lerp(c2, wave)
+                    seg.Part.Transparency = 0.1 + (wave * 0.2)
+                end
             end
         elseif jumpCircleStyle == "ChromaPulse" then
             local hue = (elapsed * 0.4) % 1
             local col = Color3.fromHSV(hue, 0.9, 1)
             for _, seg in ipairs(segments) do
-                seg.Part.Color = col
-                seg.Part.Transparency = 0.15
+                if seg.Part and seg.Part.Parent then
+                    seg.Part.Color = col
+                    seg.Part.Transparency = 0.15
+                end
             end
         elseif jumpCircleStyle == "StaticNeon" then
             for _, seg in ipairs(segments) do
-                seg.Part.Color = currentTheme.Accent
-                seg.Part.Transparency = 0.1
+                if seg.Part and seg.Part.Parent then
+                    seg.Part.Color = currentTheme.Accent
+                    seg.Part.Transparency = 0.1
+                end
             end
         end
     end)
@@ -1482,7 +1494,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         camera.CFrame = camera.CFrame * CFrame.Angles(rcsComp * rcsPitchFactor, 0, 0)
     end
 
-    -- [ИЗМЕНЕНО]: Мгновенный снап-аимбот за миллисекунды без плавности и задержек
+    -- Мгновенный снап-аимбот (за миллисекунды)
     if aimbotEnabled and isAiming then
         if not lockedTarget or not isEntityAlive(lockedTarget.Char, lockedTarget.Hum) then
             lockedTarget = getClosestTarget()
