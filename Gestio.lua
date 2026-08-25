@@ -1,6 +1,6 @@
 -- ==============================================================================
--- [Gestio UI - Blox Strike Ultimate Mobile Engine (Full Suite 2200+ Lines)]
--- Version: 5.2.0 Enterprise Full Source Edition (Slide Mechanics Engine Integrated)
+-- [Gestio UI - Blox Strike Ultimate Mobile Engine (Full Suite 2400+ Lines)]
+-- Version: 5.5.0 Enterprise Full Source Edition (World Changer Integrated)
 -- Target Game: Blox Strike (Roblox)
 -- ==============================================================================
 
@@ -10,6 +10,9 @@ pcall(function()
     end
 end)
 
+-- ==========================================
+-- SYSTEM SERVICES IMPORT
+-- ==========================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -21,17 +24,19 @@ local VirtualInputManager = game:GetService("VirtualInputManager")
 local Stats = game:GetService("Stats")
 local Debris = game:GetService("Debris")
 local TweenService = game:GetService("TweenService")
+local HttpService = game:GetService("HttpService")
 
+-- ==========================================
+-- CLIENT ENVIRONMENT VALIDATION
+-- ==========================================
 local player = Players.LocalPlayer or Players:GetPlayers()[1]
 if not player then
     player = Players.PlayerAdded:Wait()
 end
 
 local camera = Workspace.CurrentCamera or Workspace:FindFirstChildOfClass("Camera")
+local defaultCameraFOV = camera and camera.FieldOfView or 70
 
--- ==============================================================================
--- EXPLOIT / EXECUTOR CONTEXT VALIDATION & SECURE GUI ACQUISITION
--- ==============================================================================
 local function getSafeGui()
     local success, result = pcall(function()
         if gethui then
@@ -62,9 +67,9 @@ if not getgenv().GestioSavedPos then
     }
 end
 
--- ==============================================================================
--- EXTENDED THEME SYSTEM & PALETTE DEFINITIONS
--- ==============================================================================
+-- ==========================================
+-- EXTENDED THEME & PALETTE SYSTEM
+-- ==========================================
 local themeLibrary = {
     ["Charcoal Crimson"] = {
         Name = "Charcoal Crimson",
@@ -133,9 +138,9 @@ local themeLibrary = {
 
 local currentTheme = themeLibrary["Charcoal Crimson"]
 
--- ==============================================================================
--- COMPLETE MODULE STATES & MEMORY REGISTERS
--- ==============================================================================
+-- ==========================================
+-- COMBAT ENGINE STATE VARIABLES
+-- ==========================================
 local aimbotEnabled = false
 local aimbotSpeed = 35.0
 local aimbotSmoothness = 0.0
@@ -157,11 +162,9 @@ local visibleCheck = false
 local aimSensitivity = 1.0
 local lockOnJump = true
 
-local antiAimEnabled = false
-local spinSpeed = 50
-local currentSpinAngle = 0
-local antiAimYawMode = "Spin"
-
+-- ==========================================
+-- RECOIL CONTROL SYSTEM (RCS) VARIABLES
+-- ==========================================
 local rcsEnabled = false
 local rcsStrength = 75
 local rcsPitchFactor = 1.0
@@ -171,13 +174,26 @@ local rcsHorizontalComp = true
 local rcsBurstOnly = false
 local rcsRandomize = true
 
+-- ==========================================
+-- TRIGGERBOT ASSISTANT VARIABLES
+-- ==========================================
 local triggerbotEnabled = false
 local triggerbotDelay = 0.02
 local triggerbotHeadOnly = false
 local triggerbotMobileAutoFire = true
 local lastTriggerTick = 0
 
--- Movement & Slide States
+-- ==========================================
+-- RAGE & ANTI-AIM (SPINBOT) VARIABLES
+-- ==========================================
+local antiAimEnabled = false
+local spinSpeed = 50
+local currentSpinAngle = 0
+local antiAimYawMode = "Spin"
+
+-- ==========================================
+-- MOVEMENT, BHOP, SLIDE & AUTO-STRAFE
+-- ==========================================
 local bunnyHopEnabled = false
 local bhopAutoJump = false
 local bhopAirStrafe = true
@@ -185,6 +201,9 @@ local bhopSpeedBoost = 1.35
 local bhopJumpPower = 52
 local isMobileJumpHeld = false
 local lastMoveDirection = Vector3.zero
+
+local autoStrafeEnabled = false
+local strafeStrength = 1.0
 
 local slideEnabled = false
 local isSliding = false
@@ -196,10 +215,13 @@ local defaultHipHeight = 2.0
 
 local speedEnabled = false
 local walkMultiplier = 2.0
+
 local flightEnabled = false
 local flightSpeed = 50
 
--- Visual & ESP Flags
+-- ==========================================
+-- VISUALS & ESP CONFIGURATION VARIABLES
+-- ==========================================
 local nametagsEnabled = false
 local espMaxDist = 3000
 local espShowDistance = true
@@ -219,12 +241,27 @@ local highlightEnabled = false
 local headDotEnabled = false
 local tracersEnabled = false
 
-local grenadeEspEnabled = false
-local showGrenadePath = true
-local showMolotovRadius = true
-local showSmokeRadius = true
-local grenadeMaxDist = 1500
+-- ==========================================
+-- INTEGRATED GRENADE DANGER ENGINE VARIABLES
+-- ==========================================
+local grenadeDangerEnabled = false
+local grenadeDangerMaxDist = 500
+local grenadeDangerShowDist = true
+local grenadeDangerShowRadius = true
 
+local GrenadeDangerConfig = {
+    Molotov = { Label = "MOLOTOV", Radius = 8, Color = Color3.fromRGB(255, 70, 40), Danger = true },
+    Incendiary = { Label = "INCENDIARY", Radius = 8, Color = Color3.fromRGB(255, 90, 35), Danger = true },
+    HEGrenade = { Label = "HE", Radius = 6, Color = Color3.fromRGB(235, 60, 60), Danger = true },
+    Flash = { Label = "FLASH", Radius = 5, Color = Color3.fromRGB(255, 255, 180), Danger = true },
+    Smoke = { Label = "SMOKE", Radius = 6, Color = Color3.fromRGB(160, 160, 170), Danger = false }
+}
+
+local dangerGrenadeObjects = {}
+
+-- ==========================================
+-- JUMP CIRCLE CONFIGURATION VARIABLES
+-- ==========================================
 local jumpCircleEnabled = false
 local jumpCircleStyle = "GradientWave"
 local jumpCircleSegmentCount = 32
@@ -232,53 +269,16 @@ local jumpCircleRadius = 3.5
 local jumpCircleHeightOffset = -2.8
 local activeJumpCircleData = nil
 
+-- ==========================================
+-- WORLD CHANGER & LIGHTING PIPELINE
+-- ==========================================
+local worldChangerEnabled = false
+local worldChangerPreset = "Purple"
+local customFovEnabled = false
+local customFovValue = 95
 local antiFlashEnabled = true
 local fullBrightEnabled = false
 local removeFogEnabled = true
-
-local nightModeEnabled = false
-local nightPreset = "Midnight"
-local nightClockTime = 0.0
-local nightBrightness = 0.2
-local nightOutdoorAmbient = Color3.fromRGB(25, 25, 40)
-
-local nightPresets = {
-    ["Midnight"] = {
-        ClockTime = 0.0,
-        Brightness = 0.2,
-        OutdoorAmbient = Color3.fromRGB(25, 25, 40),
-        Ambient = Color3.fromRGB(15, 15, 25),
-        FogColor = Color3.fromRGB(10, 10, 20)
-    },
-    ["DeepBlood"] = {
-        ClockTime = 0.0,
-        Brightness = 0.35,
-        OutdoorAmbient = Color3.fromRGB(75, 10, 15),
-        Ambient = Color3.fromRGB(45, 5, 10),
-        FogColor = Color3.fromRGB(35, 5, 8)
-    },
-    ["CyberPurple"] = {
-        ClockTime = 23.5,
-        Brightness = 0.3,
-        OutdoorAmbient = Color3.fromRGB(65, 15, 95),
-        Ambient = Color3.fromRGB(40, 10, 60),
-        FogColor = Color3.fromRGB(30, 8, 45)
-    },
-    ["EmeraldNight"] = {
-        ClockTime = 1.0,
-        Brightness = 0.25,
-        OutdoorAmbient = Color3.fromRGB(10, 55, 30),
-        Ambient = Color3.fromRGB(5, 35, 20),
-        FogColor = Color3.fromRGB(5, 25, 15)
-    },
-    ["PitchBlack"] = {
-        ClockTime = 0.0,
-        Brightness = 0.0,
-        OutdoorAmbient = Color3.fromRGB(0, 0, 0),
-        Ambient = Color3.fromRGB(0, 0, 0),
-        FogColor = Color3.fromRGB(0, 0, 0)
-    }
-}
 
 local defaultLighting = {
     Brightness = Lighting.Brightness,
@@ -286,13 +286,190 @@ local defaultLighting = {
     GlobalShadows = Lighting.GlobalShadows,
     Ambient = Lighting.Ambient,
     OutdoorAmbient = Lighting.OutdoorAmbient,
+    ColorShift_Top = Lighting.ColorShift_Top,
+    ColorShift_Bottom = Lighting.ColorShift_Bottom,
+    FogStart = Lighting.FogStart,
     FogEnd = Lighting.FogEnd,
-    FogColor = Lighting.FogColor
+    FogColor = Lighting.FogColor,
+    ExposureCompensation = Lighting.ExposureCompensation
 }
 
--- ==============================================================================
--- GUI ENGINE INSTANTIATION (BASE HIERARCHY)
--- ==============================================================================
+local customAtmosphere = Lighting:FindFirstChild("GestioWorldAtmosphere")
+if not customAtmosphere then
+    customAtmosphere = Instance.new("Atmosphere")
+    customAtmosphere.Name = "GestioWorldAtmosphere"
+    customAtmosphere.Parent = Lighting
+end
+
+local defaultAtmosphere = {
+    Density = customAtmosphere.Density,
+    Offset = customAtmosphere.Offset,
+    Color = customAtmosphere.Color,
+    Decay = customAtmosphere.Decay,
+    Glare = customAtmosphere.Glare,
+    Haze = customAtmosphere.Haze
+}
+
+local worldModes = {
+    Default = {
+        Brightness = defaultLighting.Brightness,
+        ClockTime = defaultLighting.ClockTime,
+        Ambient = defaultLighting.Ambient,
+        OutdoorAmbient = defaultLighting.OutdoorAmbient,
+        ColorShift_Top = defaultLighting.ColorShift_Top,
+        ColorShift_Bottom = defaultLighting.ColorShift_Bottom,
+        Exposure = defaultLighting.ExposureCompensation,
+        Atmosphere = {
+            Density = defaultAtmosphere.Density,
+            Offset = defaultAtmosphere.Offset,
+            Color = defaultAtmosphere.Color,
+            Decay = defaultAtmosphere.Decay,
+            Glare = defaultAtmosphere.Glare,
+            Haze = defaultAtmosphere.Haze
+        }
+    },
+    Day = {
+        Brightness = 3.0,
+        ClockTime = 13.5,
+        Ambient = Color3.fromRGB(125, 125, 125),
+        OutdoorAmbient = Color3.fromRGB(175, 175, 175),
+        ColorShift_Top = Color3.fromRGB(0, 0, 0),
+        ColorShift_Bottom = Color3.fromRGB(0, 0, 0),
+        Exposure = 0.15,
+        Atmosphere = {
+            Density = 0.22,
+            Offset = 0.1,
+            Color = Color3.fromRGB(200, 220, 255),
+            Decay = Color3.fromRGB(150, 170, 200),
+            Glare = 0.1,
+            Haze = 0.2
+        }
+    },
+    Sunset = {
+        Brightness = 2.2,
+        ClockTime = 17.8,
+        Ambient = Color3.fromRGB(110, 80, 70),
+        OutdoorAmbient = Color3.fromRGB(150, 105, 80),
+        ColorShift_Top = Color3.fromRGB(255, 80, 30),
+        ColorShift_Bottom = Color3.fromRGB(90, 35, 20),
+        Exposure = 0.0,
+        Atmosphere = {
+            Density = 0.3,
+            Offset = 0.0,
+            Color = Color3.fromRGB(255, 170, 120),
+            Decay = Color3.fromRGB(180, 90, 50),
+            Glare = 0.25,
+            Haze = 0.35
+        }
+    },
+    Night = {
+        Brightness = 0.35,
+        ClockTime = 0.0,
+        Ambient = Color3.fromRGB(25, 25, 45),
+        OutdoorAmbient = Color3.fromRGB(35, 40, 70),
+        ColorShift_Top = Color3.fromRGB(15, 20, 60),
+        ColorShift_Bottom = Color3.fromRGB(5, 5, 20),
+        Exposure = -0.15,
+        Atmosphere = {
+            Density = 0.4,
+            Offset = 0.0,
+            Color = Color3.fromRGB(50, 65, 120),
+            Decay = Color3.fromRGB(20, 25, 70),
+            Glare = 0.0,
+            Haze = 0.5
+        }
+    },
+    Purple = {
+        Brightness = 1.5,
+        ClockTime = 1.5,
+        Ambient = Color3.fromRGB(70, 35, 90),
+        OutdoorAmbient = Color3.fromRGB(90, 45, 115),
+        ColorShift_Top = Color3.fromRGB(120, 30, 180),
+        ColorShift_Bottom = Color3.fromRGB(45, 10, 80),
+        Exposure = 0.1,
+        Atmosphere = {
+            Density = 0.32,
+            Offset = 0.0,
+            Color = Color3.fromRGB(170, 90, 255),
+            Decay = Color3.fromRGB(70, 25, 110),
+            Glare = 0.15,
+            Haze = 0.35
+        }
+    },
+    Crimson = {
+        Brightness = 1.2,
+        ClockTime = 18.5,
+        Ambient = Color3.fromRGB(75, 25, 25),
+        OutdoorAmbient = Color3.fromRGB(120, 35, 30),
+        ColorShift_Top = Color3.fromRGB(180, 25, 25),
+        ColorShift_Bottom = Color3.fromRGB(55, 5, 5),
+        Exposure = 0.0,
+        Atmosphere = {
+            Density = 0.3,
+            Offset = 0.0,
+            Color = Color3.fromRGB(255, 75, 65),
+            Decay = Color3.fromRGB(100, 15, 20),
+            Glare = 0.1,
+            Haze = 0.4
+        }
+    },
+    Cold = {
+        Brightness = 1.8,
+        ClockTime = 12.0,
+        Ambient = Color3.fromRGB(55, 75, 100),
+        OutdoorAmbient = Color3.fromRGB(80, 105, 135),
+        ColorShift_Top = Color3.fromRGB(30, 80, 140),
+        ColorShift_Bottom = Color3.fromRGB(15, 35, 70),
+        Exposure = 0.05,
+        Atmosphere = {
+            Density = 0.25,
+            Offset = 0.0,
+            Color = Color3.fromRGB(120, 180, 255),
+            Decay = Color3.fromRGB(60, 100, 160),
+            Glare = 0.05,
+            Haze = 0.25
+        }
+    }
+}
+
+local function applyWorldMode(modeName)
+    local mode = worldModes[modeName]
+    if not mode then return end
+    worldChangerPreset = modeName
+
+    if worldChangerEnabled then
+        Lighting.Brightness = mode.Brightness
+        Lighting.ClockTime = mode.ClockTime
+        Lighting.Ambient = mode.Ambient
+        Lighting.OutdoorAmbient = mode.OutdoorAmbient
+        Lighting.ColorShift_Top = mode.ColorShift_Top
+        Lighting.ColorShift_Bottom = mode.ColorShift_Bottom
+        Lighting.ExposureCompensation = mode.Exposure
+
+        if customAtmosphere then
+            local a = mode.Atmosphere
+            customAtmosphere.Density = a.Density
+            customAtmosphere.Offset = a.Offset
+            customAtmosphere.Color = a.Color
+            customAtmosphere.Decay = a.Decay
+            customAtmosphere.Glare = a.Glare
+            customAtmosphere.Haze = a.Haze
+        end
+    end
+end
+
+-- ==========================================
+-- KROATON INFO HUD VARIABLES
+-- ==========================================
+local infoHudEnabled = false
+local infoHudShowFps = true
+local infoHudShowPing = true
+local infoHudShowSpeed = true
+local infoHudShowFov = true
+
+-- ==========================================
+-- DISPLAY CONTAINERS SETUP
+-- ==========================================
 local mainContainer = Instance.new("ScreenGui")
 mainContainer.Name = "GestioMainContainer"
 mainContainer.ResetOnSpawn = false
@@ -303,37 +480,92 @@ mainContainer.Parent = targetGui
 local overlayContainer = Instance.new("Folder", mainContainer)
 overlayContainer.Name = "Gestio_2DOverlay"
 
-local grenadeContainer = Instance.new("Folder", mainContainer)
-grenadeContainer.Name = "Gestio_GrenadeOverlay"
+local dangerOverlayFolder = Instance.new("Folder", Workspace)
+dangerOverlayFolder.Name = "Gestio_GrenadeDangerWorld"
 
 local jumpCircleFolder = Instance.new("Folder", Workspace)
 jumpCircleFolder.Name = "Gestio_JumpCircleWorld"
 
 local grenadePool = {}
 
--- ==============================================================================
--- LIGHTING CONTROLLER PIPELINE
--- ==============================================================================
-local function applyNightPreset(presetName)
-    local cfg = nightPresets[presetName]
-    if not cfg then return end
-    nightPreset = presetName
-    nightClockTime = cfg.ClockTime
-    nightBrightness = cfg.Brightness
-    nightOutdoorAmbient = cfg.OutdoorAmbient
-    
-    if nightModeEnabled then
-        Lighting.ClockTime = cfg.ClockTime
-        Lighting.Brightness = cfg.Brightness
-        Lighting.OutdoorAmbient = cfg.OutdoorAmbient
-        Lighting.Ambient = cfg.Ambient
-        Lighting.GlobalShadows = true
-        if not removeFogEnabled then
-            Lighting.FogColor = cfg.FogColor
-        end
-    end
-end
+-- ==========================================
+-- KROATON HUD COMPONENT INSTANTIATION
+-- ==========================================
+local hudContainer = Instance.new("Frame", mainContainer)
+hudContainer.Name = "KroatonHUD_Frame"
+hudContainer.AnchorPoint = Vector2.new(1, 0)
+hudContainer.Position = UDim2.new(1, -14, 0, 45)
+hudContainer.Size = UDim2.new(0, 160, 0, 105)
+hudContainer.BackgroundColor3 = Color3.fromRGB(18, 19, 22)
+hudContainer.BackgroundTransparency = 0.15
+hudContainer.BorderSizePixel = 0
+hudContainer.Visible = false
+hudContainer.ZIndex = 50
 
+Instance.new("UICorner", hudContainer).CornerRadius = UDim.new(0, 7)
+local hudStroke = Instance.new("UIStroke", hudContainer)
+hudStroke.Color = currentTheme.Accent
+hudStroke.Thickness = 1
+hudStroke.Transparency = 0.2
+
+local hudTitle = Instance.new("TextLabel", hudContainer)
+hudTitle.Size = UDim2.new(1, -16, 0, 20)
+hudTitle.Position = UDim2.new(0, 8, 0, 5)
+hudTitle.BackgroundTransparency = 1
+hudTitle.Font = Enum.Font.GothamBold
+hudTitle.TextSize = 11
+hudTitle.TextColor3 = currentTheme.Accent
+hudTitle.TextXAlignment = Enum.TextXAlignment.Left
+hudTitle.Text = "KROATON HUD"
+hudTitle.ZIndex = 51
+
+local hudFpsLabel = Instance.new("TextLabel", hudContainer)
+hudFpsLabel.Size = UDim2.new(1, -16, 0, 16)
+hudFpsLabel.Position = UDim2.new(0, 8, 0, 26)
+hudFpsLabel.BackgroundTransparency = 1
+hudFpsLabel.Font = Enum.Font.Gotham
+hudFpsLabel.TextSize = 9.5
+hudFpsLabel.TextColor3 = Color3.fromRGB(225, 228, 232)
+hudFpsLabel.TextXAlignment = Enum.TextXAlignment.Left
+hudFpsLabel.Text = "FPS: 60"
+hudFpsLabel.ZIndex = 51
+
+local hudPingLabel = Instance.new("TextLabel", hudContainer)
+hudPingLabel.Size = UDim2.new(1, -16, 0, 16)
+hudPingLabel.Position = UDim2.new(0, 8, 0, 44)
+hudPingLabel.BackgroundTransparency = 1
+hudPingLabel.Font = Enum.Font.Gotham
+hudPingLabel.TextSize = 9.5
+hudPingLabel.TextColor3 = Color3.fromRGB(225, 228, 232)
+hudPingLabel.TextXAlignment = Enum.TextXAlignment.Left
+hudPingLabel.Text = "PING: 0 ms"
+hudPingLabel.ZIndex = 51
+
+local hudSpeedLabel = Instance.new("TextLabel", hudContainer)
+hudSpeedLabel.Size = UDim2.new(1, -16, 0, 16)
+hudSpeedLabel.Position = UDim2.new(0, 8, 0, 62)
+hudSpeedLabel.BackgroundTransparency = 1
+hudSpeedLabel.Font = Enum.Font.Gotham
+hudSpeedLabel.TextSize = 9.5
+hudSpeedLabel.TextColor3 = Color3.fromRGB(225, 228, 232)
+hudSpeedLabel.TextXAlignment = Enum.TextXAlignment.Left
+hudSpeedLabel.Text = "SPEED: 0"
+hudSpeedLabel.ZIndex = 51
+
+local hudFovLabel = Instance.new("TextLabel", hudContainer)
+hudFovLabel.Size = UDim2.new(1, -16, 0, 16)
+hudFovLabel.Position = UDim2.new(0, 8, 0, 80)
+hudFovLabel.BackgroundTransparency = 1
+hudFovLabel.Font = Enum.Font.Gotham
+hudFovLabel.TextSize = 9.5
+hudFovLabel.TextColor3 = Color3.fromRGB(225, 228, 232)
+hudFovLabel.TextXAlignment = Enum.TextXAlignment.Left
+hudFovLabel.Text = "FOV: 70"
+hudFovLabel.ZIndex = 51
+
+-- ==========================================
+-- RESTORATION & CLEANUP FUNCTIONS
+-- ==========================================
 local function restoreLightingState()
     pcall(function()
         Lighting.Brightness = defaultLighting.Brightness
@@ -341,14 +573,167 @@ local function restoreLightingState()
         Lighting.GlobalShadows = defaultLighting.GlobalShadows
         Lighting.Ambient = defaultLighting.Ambient
         Lighting.OutdoorAmbient = defaultLighting.OutdoorAmbient
+        Lighting.ColorShift_Top = defaultLighting.ColorShift_Top
+        Lighting.ColorShift_Bottom = defaultLighting.ColorShift_Bottom
+        Lighting.FogStart = defaultLighting.FogStart
         Lighting.FogEnd = defaultLighting.FogEnd
         Lighting.FogColor = defaultLighting.FogColor
+        Lighting.ExposureCompensation = defaultLighting.ExposureCompensation
+
+        if customAtmosphere then
+            customAtmosphere.Density = defaultAtmosphere.Density
+            customAtmosphere.Offset = defaultAtmosphere.Offset
+            customAtmosphere.Color = defaultAtmosphere.Color
+            customAtmosphere.Decay = defaultAtmosphere.Decay
+            customAtmosphere.Glare = defaultAtmosphere.Glare
+            customAtmosphere.Haze = defaultAtmosphere.Haze
+        end
     end)
+    if camera then
+        camera.FieldOfView = defaultCameraFOV
+    end
 end
 
--- ==============================================================================
--- CLEANUP & LIFECYCLE MANAGEMENT
--- ==============================================================================
+-- ==========================================
+-- GRENADE DANGER CORE FUNCTIONS
+-- ==========================================
+local function getDangerObjectRoot(object)
+    if not object then return nil end
+    if object:IsA("BasePart") then
+        return object
+    end
+    if object:IsA("Model") then
+        return object.PrimaryPart
+            or object:FindFirstChild("HumanoidRootPart")
+            or object:FindFirstChildWhichIsA("BasePart")
+    end
+    return nil
+end
+
+local function getDangerGrenadeType(object)
+    local name = object.Name:lower()
+    for grenadeName, settings in pairs(GrenadeDangerConfig) do
+        if name:find(grenadeName:lower(), 1, true) then
+            return settings
+        end
+    end
+    if name:find("grenade") or name:find("he") then
+        return GrenadeDangerConfig.HEGrenade
+    elseif name:find("molotov") or name:find("fire") then
+        return GrenadeDangerConfig.Molotov
+    elseif name:find("incendiary") then
+        return GrenadeDangerConfig.Incendiary
+    elseif name:find("smoke") then
+        return GrenadeDangerConfig.Smoke
+    elseif name:find("flash") then
+        return GrenadeDangerConfig.Flash
+    end
+    return nil
+end
+
+local function removeDangerIndicator(object)
+    local data = dangerGrenadeObjects[object]
+    if not data then return end
+    if data.billboard then
+        pcall(function() data.billboard:Destroy() end)
+    end
+    if data.radius then
+        pcall(function() data.radius:Destroy() end)
+    end
+    dangerGrenadeObjects[object] = nil
+end
+
+local function createDangerIndicator(object)
+    local root = getDangerObjectRoot(object)
+    if not root then return end
+    local settings = getDangerGrenadeType(object)
+    if not settings then return end
+    if dangerGrenadeObjects[object] then return end
+
+    local billboard = Instance.new("BillboardGui")
+    billboard.Name = "GestioGrenadeIndicator"
+    billboard.Adornee = root
+    billboard.Size = UDim2.fromOffset(135, 36)
+    billboard.StudsOffset = Vector3.new(0, 2.4, 0)
+    billboard.AlwaysOnTop = true
+    billboard.MaxDistance = grenadeDangerMaxDist
+    billboard.Enabled = grenadeDangerEnabled
+    billboard.Parent = root
+
+    local frame = Instance.new("Frame")
+    frame.BackgroundColor3 = Color3.fromRGB(18, 19, 22)
+    frame.BackgroundTransparency = 0.15
+    frame.BorderSizePixel = 0
+    frame.Size = UDim2.fromScale(1, 1)
+    frame.Parent = billboard
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 5)
+    corner.Parent = frame
+
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = settings.Color
+    stroke.Thickness = 1.2
+    stroke.Transparency = 0.1
+    stroke.Parent = frame
+
+    local label = Instance.new("TextLabel")
+    label.BackgroundTransparency = 1
+    label.Size = UDim2.new(1, -8, 0.55, 0)
+    label.Position = UDim2.fromOffset(4, 2)
+    label.Font = Enum.Font.GothamBold
+    label.TextSize = 10
+    label.TextColor3 = settings.Color
+    label.Text = settings.Label
+    label.Parent = frame
+
+    local distanceLabel = Instance.new("TextLabel")
+    distanceLabel.BackgroundTransparency = 1
+    distanceLabel.Size = UDim2.new(1, -8, 0.45, 0)
+    distanceLabel.Position = UDim2.new(0, 4, 0.52, 0)
+    distanceLabel.Font = Enum.Font.Gotham
+    distanceLabel.TextSize = 8.5
+    distanceLabel.TextColor3 = Color3.fromRGB(220, 220, 225)
+    distanceLabel.Text = "0m"
+    distanceLabel.Parent = frame
+
+    local radiusPart = nil
+    if settings.Radius > 0 then
+        radiusPart = Instance.new("Part")
+        radiusPart.Name = "GestioDangerRadius"
+        radiusPart.Shape = Enum.PartType.Cylinder
+        radiusPart.Anchored = true
+        radiusPart.CanCollide = false
+        radiusPart.CanTouch = false
+        radiusPart.CanQuery = false
+        radiusPart.CastShadow = false
+        radiusPart.Material = Enum.Material.Neon
+        radiusPart.Transparency = (grenadeDangerEnabled and grenadeDangerShowRadius) and 0.88 or 1
+        radiusPart.Color = settings.Color
+        radiusPart.Size = Vector3.new(0.08, settings.Radius * 2, settings.Radius * 2)
+        radiusPart.Parent = dangerOverlayFolder
+    end
+
+    dangerGrenadeObjects[object] = {
+        root = root,
+        settings = settings,
+        billboard = billboard,
+        distanceLabel = distanceLabel,
+        radius = radiusPart
+    }
+end
+
+local function scanGrenadeObjects()
+    for _, object in ipairs(Workspace:GetDescendants()) do
+        if getDangerGrenadeType(object) then
+            createDangerIndicator(object)
+        end
+    end
+end
+
+-- ==========================================
+-- CLEANUP ROUTINES
+-- ==========================================
 local function clearActiveJumpCircle()
     if not activeJumpCircleData then return end
     if activeJumpCircleData.Connections then
@@ -380,18 +765,16 @@ local function cleanup()
             end
         end)
     end
-    for _, gUi in pairs(grenadePool) do
-        pcall(function()
-            gUi.Tag:Destroy()
-            gUi.RadiusCircle:Destroy()
-            for _, l in ipairs(gUi.Lines) do l:Destroy() end
-        end)
+    for obj, _ in pairs(dangerGrenadeObjects) do
+        removeDangerIndicator(obj)
     end
     clearActiveJumpCircle()
     pcall(function() jumpCircleFolder:Destroy() end)
+    pcall(function() dangerOverlayFolder:Destroy() end)
+    pcall(function() if customAtmosphere then customAtmosphere:Destroy() end end)
     activeEspHolders = {}
     screenEspCache = {}
-    grenadePool = {}
+    dangerGrenadeObjects = {}
     
     restoreLightingState()
 
@@ -408,9 +791,9 @@ local function bindTouch(btn, callback)
     btn.Activated:Connect(callback)
 end
 
--- ==============================================================================
--- FOV GUI HUD ELEMENT
--- ==============================================================================
+-- ==========================================
+-- HUD OVERLAYS (FOV & WATERMARK)
+-- ==========================================
 local fovGui = Instance.new("ScreenGui")
 fovGui.Name = "GestioFovGui"
 fovGui.ResetOnSpawn = false
@@ -430,9 +813,6 @@ fovStroke.Thickness = 0.8
 local fovCorner = Instance.new("UICorner", fovFrame)
 fovCorner.CornerRadius = UDim.new(1, 0)
 
--- ==============================================================================
--- WATERMARK TELEMETRY HUD ELEMENT
--- ==============================================================================
 local watermarkGui = Instance.new("ScreenGui")
 watermarkGui.Name = "GestioWatermarkGui"
 watermarkGui.ResetOnSpawn = false
@@ -492,10 +872,11 @@ wmMetrics.Font = Enum.Font.GothamBold
 
 local fpsCounter = 0
 local lastFpsUpdate = tick()
+local calculatedCurrentFps = 60
 
--- ==============================================================================
--- TEAM VERIFICATION & ENTITY HEALTH CONTROLLER
--- ==============================================================================
+-- ==========================================
+-- FACTION CHECK & HEALTH CHECK LOGIC
+-- ==========================================
 local function isAlly(plr)
     if not plr or plr == player then return false end
     if plr.Team and player.Team then
@@ -558,9 +939,9 @@ local function isEntityAlive(char, hum)
     return true
 end
 
--- ==============================================================================
--- JUMP CIRCLE GEOMETRY PIPELINE
--- ==============================================================================
+-- ==========================================
+-- JUMP CIRCLE RENDER ENGINE
+-- ==========================================
 local function buildJumpRing(segmentCount, radius, thickness)
     local container = Instance.new("Folder")
     container.Name = "JumpCircleContainer"
@@ -717,225 +1098,23 @@ if player.Character then
     end)
 end
 
--- ==============================================================================
--- GRENADE TRAJECTORY & RADIUS CALCULATION
--- ==============================================================================
-local grenadeRayParams = RaycastParams.new()
-grenadeRayParams.FilterType = Enum.RaycastFilterType.Exclude
-grenadeRayParams.IgnoreWater = true
+-- ==========================================
+-- HOOK DESCENDANTS FOR DANGER ESP
+-- ==========================================
+table.insert(connections, Workspace.DescendantAdded:Connect(function(object)
+    task.wait()
+    createDangerIndicator(object)
+end))
 
-local function isEntityCharacter(inst)
-    for _, p in ipairs(Players:GetPlayers()) do
-        if p.Character and inst:IsDescendantOf(p.Character) then
-            return true
-        end
-    end
-    return false
-end
+table.insert(connections, Workspace.DescendantRemoving:Connect(function(object)
+    removeDangerIndicator(object)
+end))
 
-local function getOrCreateGrenadeUI(nadeInstance)
-    if grenadePool[nadeInstance] then return grenadePool[nadeInstance] end
+scanGrenadeObjects()
 
-    local tag = Instance.new("Frame", grenadeContainer)
-    tag.Size = UDim2.new(0, 0, 0, 14)
-    tag.AutomaticSize = Enum.AutomaticSize.X
-    tag.AnchorPoint = Vector2.new(0.5, 1)
-    tag.BackgroundColor3 = Color3.fromRGB(18, 19, 22)
-    tag.BackgroundTransparency = 0.35
-    tag.BorderSizePixel = 0
-    tag.Visible = false
-    Instance.new("UICorner", tag).CornerRadius = UDim.new(0, 3)
-
-    local pad = Instance.new("UIPadding", tag)
-    pad.PaddingLeft = UDim.new(0, 4)
-    pad.PaddingRight = UDim.new(0, 4)
-
-    local lbl = Instance.new("TextLabel", tag)
-    lbl.AutomaticSize = Enum.AutomaticSize.X
-    lbl.Size = UDim2.new(0, 0, 1, 0)
-    lbl.BackgroundTransparency = 1
-    lbl.TextSize = 7.5
-    lbl.Font = Enum.Font.GothamBold
-    lbl.TextColor3 = Color3.fromRGB(255, 255, 255)
-
-    local radiusCircle = Instance.new("Frame", grenadeContainer)
-    radiusCircle.AnchorPoint = Vector2.new(0.5, 0.5)
-    radiusCircle.BackgroundTransparency = 1
-    radiusCircle.BorderSizePixel = 0
-    radiusCircle.Visible = false
-    Instance.new("UICorner", radiusCircle).CornerRadius = UDim.new(1, 0)
-    local radStroke = Instance.new("UIStroke", radiusCircle)
-    radStroke.Thickness = 1.5
-
-    local data = {
-        Tag = tag,
-        Label = lbl,
-        RadiusCircle = radiusCircle,
-        RadiusStroke = radStroke,
-        Lines = {}
-    }
-
-    for j = 1, 8 do
-        local seg = Instance.new("Frame", grenadeContainer)
-        seg.BorderSizePixel = 0
-        seg.AnchorPoint = Vector2.new(0.5, 0.5)
-        seg.Visible = false
-        table.insert(data.Lines, seg)
-    end
-
-    grenadePool[nadeInstance] = data
-    return data
-end
-
-local function renderGrenadeOverlays()
-    if not grenadeEspEnabled then
-        for _, v in pairs(grenadePool) do
-            v.Tag.Visible = false
-            v.RadiusCircle.Visible = false
-            for _, l in ipairs(v.Lines) do l.Visible = false end
-        end
-        return
-    end
-
-    local camPos = camera.CFrame.Position
-    local activeGrenades = {}
-
-    for _, item in ipairs(Workspace:GetChildren()) do
-        if not isEntityCharacter(item) then
-            local nName = item.Name:lower()
-            local isNade = false
-            local nadeType = "NADE"
-            local nadeColor = currentTheme.HEColor
-            local effectRadiusStuds = 14
-
-            if nName:find("molotov") or nName:find("incendiary") or nName:find("fire") then
-                isNade = true
-                nadeType = "MOLOTOV"
-                nadeColor = currentTheme.MolotovColor
-                effectRadiusStuds = 17
-            elseif nName:find("smoke") then
-                isNade = true
-                nadeType = "SMOKE"
-                nadeColor = currentTheme.SmokeColor
-                effectRadiusStuds = 20
-            elseif nName:find("grenade") or nName:find("hegrenade") or nName:find("frag") then
-                isNade = true
-                nadeType = "HE"
-                nadeColor = currentTheme.HEColor
-                effectRadiusStuds = 15
-            elseif nName:find("flash") then
-                isNade = true
-                nadeType = "FLASH"
-                nadeColor = Color3.fromRGB(245, 235, 120)
-                effectRadiusStuds = 10
-            end
-
-            if isNade then
-                local part = item:IsA("BasePart") and item or item:FindFirstChildWhichIsA("BasePart")
-                if part and part.Parent and part:IsDescendantOf(Workspace) then
-                    local dist = (part.Position - camPos).Magnitude
-                    if dist <= grenadeMaxDist then
-                        activeGrenades[item] = true
-                        local ui = getOrCreateGrenadeUI(item)
-                        local scrPos, onScreen = camera:WorldToViewportPoint(part.Position)
-
-                        if onScreen and scrPos.Z > 0 then
-                            ui.Tag.Position = UDim2.new(0, scrPos.X, 0, scrPos.Y - 6)
-                            ui.Label.Text = string.format("%s [%dm]", nadeType, math.floor(dist))
-                            ui.Label.TextColor3 = nadeColor
-                            ui.Tag.Visible = true
-
-                            if showGrenadePath and part.AssemblyLinearVelocity and part.AssemblyLinearVelocity.Magnitude > 2 then
-                                local vel = part.AssemblyLinearVelocity
-                                local simPos = part.Position
-                                local stepTime = 0.08
-                                local grav = Vector3.new(0, -Workspace.Gravity, 0)
-                                
-                                grenadeRayParams.FilterDescendantsInstances = {player.Character, item, camera}
-
-                                for step = 1, #ui.Lines do
-                                    local nextPos = simPos + (vel * stepTime) + (0.5 * grav * stepTime * stepTime)
-                                    vel = vel + (grav * stepTime)
-
-                                    local castHit = Workspace:Raycast(simPos, nextPos - simPos, grenadeRayParams)
-                                    if castHit then nextPos = castHit.Position end
-
-                                    local p1, v1 = camera:WorldToViewportPoint(simPos)
-                                    local p2, v2 = camera:WorldToViewportPoint(nextPos)
-
-                                    if v1 and v2 and p1.Z > 0 and p2.Z > 0 then
-                                        local lFrame = ui.Lines[step]
-                                        local startV2 = Vector2.new(p1.X, p1.Y)
-                                        local endV2 = Vector2.new(p2.X, p2.Y)
-                                        local lDist = (endV2 - startV2).Magnitude
-                                        local center = (startV2 + endV2) * 0.5
-                                        local angle = math.deg(math.atan2(endV2.Y - startV2.Y, endV2.X - startV2.X))
-
-                                        lFrame.Size = UDim2.new(0, lDist, 0, 1.2)
-                                        lFrame.Position = UDim2.new(0, center.X, 0, center.Y)
-                                        lFrame.Rotation = angle
-                                        lFrame.BackgroundColor3 = nadeColor
-                                        lFrame.Visible = true
-                                    else
-                                        ui.Lines[step].Visible = false
-                                    end
-
-                                    if castHit then
-                                        for rem = step + 1, #ui.Lines do ui.Lines[rem].Visible = false end
-                                        break
-                                    end
-                                    simPos = nextPos
-                                end
-                            else
-                                for _, l in ipairs(ui.Lines) do l.Visible = false end
-                            end
-
-                            local shouldShowRadius = (nadeType == "MOLOTOV" and showMolotovRadius) or (nadeType == "SMOKE" and showSmokeRadius)
-                            if shouldShowRadius then
-                                grenadeRayParams.FilterDescendantsInstances = {player.Character, item, camera}
-                                local groundCast = Workspace:Raycast(part.Position, Vector3.new(0, -60, 0), grenadeRayParams)
-                                local groundPos = groundCast and groundCast.Position or part.Position
-                                
-                                local cCenter, cVisible = camera:WorldToViewportPoint(groundPos)
-                                local cEdge, _ = camera:WorldToViewportPoint(groundPos + (camera.CFrame.RightVector * effectRadiusStuds))
-
-                                if cVisible and cCenter.Z > 0 then
-                                    local rPix = (Vector2.new(cEdge.X, cEdge.Y) - Vector2.new(cCenter.X, cCenter.Y)).Magnitude
-                                    ui.RadiusCircle.Size = UDim2.new(0, rPix * 2, 0, rPix * 2)
-                                    ui.RadiusCircle.Position = UDim2.new(0, cCenter.X, 0, cCenter.Y)
-                                    ui.RadiusCircle.BackgroundTransparency = 1
-                                    ui.RadiusStroke.Color = nadeColor
-                                    ui.RadiusCircle.Visible = true
-                                else
-                                    ui.RadiusCircle.Visible = false
-                                end
-                            else
-                                ui.RadiusCircle.Visible = false
-                            end
-                        else
-                            ui.Tag.Visible = false
-                            ui.RadiusCircle.Visible = false
-                            for _, l in ipairs(ui.Lines) do l.Visible = false end
-                        end
-                    end
-                end
-            end
-        end
-    end
-
-    for inst, data in pairs(grenadePool) do
-        if not activeGrenades[inst] or not inst.Parent then
-            data.Tag:Destroy()
-            data.RadiusCircle:Destroy()
-            for _, l in ipairs(data.Lines) do l:Destroy() end
-            grenadePool[inst] = nil
-        end
-    end
-end
-
--- ==============================================================================
--- AIMLOCK & TARGET SELECTION ENGINE
--- ==============================================================================
+-- ==========================================
+-- TARGET SELECTION & AIMBOT MATHEMATICS
+-- ==========================================
 local visRayParams = RaycastParams.new()
 visRayParams.FilterType = Enum.RaycastFilterType.Exclude
 visRayParams.IgnoreWater = true
@@ -1002,9 +1181,9 @@ local function getClosestTarget()
     return closestTarget
 end
 
--- ==============================================================================
--- TRIGGERBOT LOGIC (ZERO JITTER)
--- ==============================================================================
+-- ==========================================
+-- TRIGGERBOT PROCESSING LOGIC
+-- ==========================================
 local triggerRayParams = RaycastParams.new()
 triggerRayParams.FilterType = Enum.RaycastFilterType.Exclude
 triggerRayParams.IgnoreWater = true
@@ -1050,9 +1229,9 @@ local function runMobileTriggerbot()
     end
 end
 
--- ==============================================================================
--- 2D SCREEN ESP CACHE & DYNAMIC HEALTHBAR BUILDER
--- ==============================================================================
+-- ==========================================
+-- 2D ESP COMPONENT CACHE FACTORY
+-- ==========================================
 local function getOrCreateScreenEsp(plr)
     if screenEspCache[plr] then return screenEspCache[plr] end
 
@@ -1168,9 +1347,9 @@ table.insert(connections, Players.PlayerRemoving:Connect(function(plr)
     end
 end))
 
--- ==============================================================================
--- TACTICAL ESP RENDERING PIPELINE (BOX, HEALTHBAR, CORNERS, NAMETAGS)
--- ==============================================================================
+-- ==========================================
+-- TACTICAL ESP SCREEN RENDER LOOP
+-- ==========================================
 local function renderTacticalOverlay()
     local camPos = camera.CFrame.Position
     local allPlayers = Players:GetPlayers()
@@ -1357,9 +1536,9 @@ local function renderTacticalOverlay()
     end
 end
 
--- ==============================================================================
--- 3D ESP & HIGHLIGHT ATTACHMENT CONTROLLER
--- ==============================================================================
+-- ==========================================
+-- 3D ESP ATTACHMENT PIPELINE
+-- ==========================================
 local function attachEspToPlayer(plr)
     if plr == player then return end
 
@@ -1424,9 +1603,9 @@ end
 for _, v in pairs(Players:GetPlayers()) do attachEspToPlayer(v) end
 table.insert(connections, Players.PlayerAdded:Connect(attachEspToPlayer))
 
--- ==============================================================================
--- MAIN RENDERSTEPPED LOOP (AIMBOT, ESP, RCS, LIGHTING)
--- ==============================================================================
+-- ==========================================
+-- MAIN ENGINE RENDER LOOP
+-- ==========================================
 table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     if not camera then camera = Workspace.CurrentCamera return end
     local localPos = camera.CFrame.Position
@@ -1434,7 +1613,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     fpsCounter = fpsCounter + 1
     local nowTick = tick()
     if nowTick - lastFpsUpdate >= 0.5 then
-        local currentFps = math.floor(fpsCounter / (nowTick - lastFpsUpdate))
+        calculatedCurrentFps = math.floor(fpsCounter / (nowTick - lastFpsUpdate))
         local pingVal = 0
         pcall(function()
             local serverStats = Stats:FindFirstChild("Network") and Stats.Network:FindFirstChild("ServerStatsItem")
@@ -1442,9 +1621,53 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
                 pingVal = math.floor(serverStats["Data Ping"]:GetValue())
             end
         end)
-        wmMetrics.Text = string.format("FPS: %d | PING: %dms", currentFps, pingVal)
+        wmMetrics.Text = string.format("FPS: %d | PING: %dms", calculatedCurrentFps, pingVal)
         fpsCounter = 0
         lastFpsUpdate = nowTick
+    end
+
+    -- FOV Changer Application
+    if customFovEnabled and camera then
+        camera.FieldOfView = customFovValue
+    end
+
+    -- Kroaton Info HUD Real-time Update
+    if infoHudEnabled then
+        hudContainer.Visible = true
+        hudFpsLabel.Visible = infoHudShowFps
+        hudPingLabel.Visible = infoHudShowPing
+        hudSpeedLabel.Visible = infoHudShowSpeed
+        hudFovLabel.Visible = infoHudShowFov
+
+        if infoHudShowFps then
+            hudFpsLabel.Text = "FPS:       " .. tostring(calculatedCurrentFps)
+        end
+        if infoHudShowPing then
+            local currentPing = 0
+            pcall(function()
+                local net = Stats:FindFirstChild("Network")
+                local item = net and net:FindFirstChild("ServerStatsItem")
+                local p = item and item:FindFirstChild("Data Ping")
+                if p then currentPing = math.floor(p:GetValue()) end
+            end)
+            hudPingLabel.Text = "PING:      " .. tostring(currentPing) .. " ms"
+        end
+        if infoHudShowSpeed then
+            local myChar = player.Character
+            local myHrp = myChar and myChar:FindFirstChild("HumanoidRootPart")
+            if myHrp then
+                local vel = myHrp.AssemblyLinearVelocity
+                local horiz = Vector3.new(vel.X, 0, vel.Z).Magnitude
+                hudSpeedLabel.Text = "SPEED:     " .. tostring(math.floor(horiz))
+            else
+                hudSpeedLabel.Text = "SPEED:     0"
+            end
+        end
+        if infoHudShowFov and camera then
+            hudFovLabel.Text = "FOV:       " .. tostring(math.floor(camera.FieldOfView))
+        end
+    else
+        hudContainer.Visible = false
     end
 
     if fovFrame then
@@ -1479,7 +1702,51 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
 
     runMobileTriggerbot()
     renderTacticalOverlay()
-    renderGrenadeOverlays()
+
+    -- Render Danger Grenade Overlays
+    if grenadeDangerEnabled then
+        local myChar = player.Character
+        local localRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
+        if localRoot then
+            for object, data in pairs(dangerGrenadeObjects) do
+                if not object.Parent or not data.root.Parent then
+                    removeDangerIndicator(object)
+                else
+                    local dist = (localRoot.Position - data.root.Position).Magnitude
+                    if dist <= grenadeDangerMaxDist then
+                        data.billboard.Enabled = true
+                        if grenadeDangerShowDist then
+                            data.distanceLabel.Text = string.format("%d studs", math.floor(dist))
+                        else
+                            data.distanceLabel.Text = ""
+                        end
+
+                        if data.radius then
+                            data.radius.Transparency = grenadeDangerShowRadius and 0.88 or 1
+                            data.radius.CFrame = CFrame.new(data.root.Position) * CFrame.Angles(0, 0, math.rad(90))
+                        end
+
+                        if data.settings.Danger then
+                            local alpha = math.clamp(1 - dist / 30, 0, 1)
+                            data.billboard.Size = UDim2.fromOffset(135 + alpha * 18, 36 + alpha * 5)
+                        end
+                    else
+                        data.billboard.Enabled = false
+                        if data.radius then
+                            data.radius.Transparency = 1
+                        end
+                    end
+                end
+            end
+        end
+    else
+        for _, data in pairs(dangerGrenadeObjects) do
+            data.billboard.Enabled = false
+            if data.radius then
+                data.radius.Transparency = 1
+            end
+        end
+    end
 
     for plr, data in pairs(activeEspHolders) do
         local char = plr.Character
@@ -1545,13 +1812,6 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         Lighting.Brightness = 3
         Lighting.ClockTime = 14
         Lighting.GlobalShadows = false
-    elseif nightModeEnabled then
-        local cfg = nightPresets[nightPreset] or nightPresets["Midnight"]
-        Lighting.Brightness = nightBrightness or cfg.Brightness
-        Lighting.ClockTime = nightClockTime or cfg.ClockTime
-        Lighting.GlobalShadows = true
-        Lighting.OutdoorAmbient = nightOutdoorAmbient or cfg.OutdoorAmbient
-        Lighting.Ambient = cfg.Ambient
     end
 
     if removeFogEnabled then
@@ -1566,9 +1826,9 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     end
 end))
 
--- ==============================================================================
--- ANTI-AIM (SPINBOT) STEPPED CONTROLLER
--- ==============================================================================
+-- ==========================================
+-- ANTI-AIM ROTATION LOOP
+-- ==========================================
 table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     if not antiAimEnabled then return end
     
@@ -1582,9 +1842,9 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     hrp.CFrame = CFrame.new(hrp.Position) * CFrame.Angles(0, math.rad(currentSpinAngle), 0)
 end))
 
--- ==============================================================================
--- GROUND DETECTION RAYCASTING UTILITY
--- ==============================================================================
+-- ==========================================
+-- RAYCAST GROUND CHECK
+-- ==========================================
 local groundRayParams = RaycastParams.new()
 groundRayParams.FilterType = Enum.RaycastFilterType.Exclude
 groundRayParams.IgnoreWater = true
@@ -1597,9 +1857,9 @@ local function isPlayerGrounded(char, hrp)
     return hit ~= nil
 end
 
--- ==============================================================================
--- TOUCH-HOOK & MOBILE INPUT BYPASS CONTROLLER
--- ==============================================================================
+-- ==========================================
+-- MOBILE INPUT TOUCH HOOK
+-- ==========================================
 local function hookMobileJumpButton()
     task.spawn(function()
         local pGui = player:WaitForChild("PlayerGui", 5)
@@ -1637,7 +1897,6 @@ UserInputService.InputBegan:Connect(function(input, processed)
         isMobileJumpHeld = true
     end
 
-    -- Trigger Slide upon pressing Left Control / C key while moving
     if slideEnabled and (input.KeyCode == Enum.KeyCode.C or input.KeyCode == Enum.KeyCode.LeftControl) then
         local char = player.Character
         local hrp = char and char:FindFirstChild("HumanoidRootPart")
@@ -1665,9 +1924,9 @@ UserInputService.InputEnded:Connect(function(input, processed)
     end
 end)
 
--- ==============================================================================
--- PHYSICS HEARTBEAT (BHOP, SLIDE, SPEED, FLIGHT)
--- ==============================================================================
+-- ==========================================
+-- PHYSICS & KINEMATICS HEARTBEAT (BHOP, STRAFE, SLIDE)
+-- ==========================================
 table.insert(connections, RunService.Heartbeat:Connect(function(dt)
     local char = player.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
@@ -1702,6 +1961,28 @@ table.insert(connections, RunService.Heartbeat:Connect(function(dt)
         end
     end
 
+    -- Auto-Strafe Engine (Air Directional Assist)
+    if autoStrafeEnabled and not isPlayerGrounded(char, hrp) then
+        local state = hum:GetState()
+        if state == Enum.HumanoidStateType.Jumping or state == Enum.HumanoidStateType.Freefall then
+            if currentMove.Magnitude > 0 and camera then
+                local camLook = camera.CFrame.LookVector * Vector3.new(1, 0, 1)
+                local camRight = camera.CFrame.RightVector * Vector3.new(1, 0, 1)
+                
+                local fwd = camLook.Magnitude > 0 and camLook.Unit or Vector3.zero
+                local rgt = camRight.Magnitude > 0 and camRight.Unit or Vector3.zero
+
+                local fAmount = currentMove:Dot(fwd)
+                local rAmount = currentMove:Dot(rgt)
+                local finalDir = fwd * fAmount + rgt * rAmount
+
+                if finalDir.Magnitude > 0 then
+                    hum:Move(finalDir.Unit * strafeStrength, false)
+                end
+            end
+        end
+    end
+
     -- Slide Physics Execution & Decay
     if slideEnabled and isSliding then
         local grounded = isPlayerGrounded(char, hrp)
@@ -1729,9 +2010,9 @@ table.insert(connections, RunService.Heartbeat:Connect(function(dt)
     end
 end))
 
--- ==============================================================================
--- FLOATING TOGGLE BUTTON SYSTEM
--- ==============================================================================
+-- ==========================================
+-- FLOATING UI LAUNCHER
+-- ==========================================
 local toggleGui = Instance.new("ScreenGui")
 toggleGui.Name = "GestioToggleGui"
 toggleGui.ResetOnSpawn = false
@@ -1754,9 +2035,9 @@ Instance.new("UICorner", openBtn).CornerRadius = UDim.new(0, 6)
 local openStroke = Instance.new("UIStroke", openBtn)
 openStroke.Color = currentTheme.Border
 
--- ==============================================================================
--- MASTER WINDOW FRAMEWORK
--- ==============================================================================
+-- ==========================================
+-- MASTER VIEWPORT WINDOW
+-- ==========================================
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "GestioScreenGui"
 screenGui.ResetOnSpawn = false
@@ -1814,7 +2095,6 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
--- Main UI Panels
 local mainFrame = Instance.new("Frame", masterFrame)
 mainFrame.Size = UDim2.new(0.58, 0, 1, 0)
 mainFrame.BackgroundColor3 = currentTheme.Background
@@ -1842,7 +2122,6 @@ for r = 0, gridRows - 1 do
     end
 end
 
--- Sidebar Navigation
 local sidebar = Instance.new("Frame", mainFrame)
 sidebar.Size = UDim2.new(0, 75, 1, 0)
 sidebar.BackgroundColor3 = currentTheme.Sidebar
@@ -1883,7 +2162,6 @@ local setsBtn = createNavBtn(142, "SETTINGS")
 cBtn.BackgroundColor3 = currentTheme.CardBg
 cBtn.TextColor3 = currentTheme.Accent
 
--- Container Creator
 local function makePageContainer()
     local c = Instance.new("ScrollingFrame", mainFrame)
     c.Size = UDim2.new(1, -82, 1, -12)
@@ -1982,9 +2260,9 @@ bindTouch(envBtn, function() switch("ENV") end)
 bindTouch(micsBtn, function() switch("MICS") end)
 bindTouch(setsBtn, function() switch("SETS") end)
 
--- ==============================================================================
--- RIGHT INSPECTOR SETTINGS VIEW
--- ==============================================================================
+-- ==========================================
+-- RIGHT INSPECTOR FRAMEWORK
+-- ==========================================
 local inspectorPanel = Instance.new("Frame", masterFrame)
 inspectorPanel.Size = UDim2.new(0.40, 0, 1, 0)
 inspectorPanel.BackgroundColor3 = currentTheme.Background
@@ -2164,11 +2442,11 @@ local function addInspectorChoice(y, txt, choices, currentChoice, onSelect)
 
     for _, choiceName in ipairs(choices) do
         local choiceBtn = Instance.new("TextButton", container)
-        choiceBtn.Size = UDim2.new(0, 48, 1, 0)
+        choiceBtn.Size = UDim2.new(0, 42, 1, 0)
         choiceBtn.BackgroundColor3 = (choiceName == currentChoice) and currentTheme.Accent or currentTheme.CardBg
         choiceBtn.Text = choiceName
         choiceBtn.TextColor3 = (choiceName == currentChoice) and Color3.fromRGB(255, 255, 255) or currentTheme.TextSecondary
-        choiceBtn.TextSize = 7.5
+        choiceBtn.TextSize = 7.0
         choiceBtn.Font = Enum.Font.GothamBold
         choiceBtn.ZIndex = 8
         Instance.new("UICorner", choiceBtn).CornerRadius = UDim.new(0, 4)
@@ -2187,9 +2465,9 @@ local function addInspectorChoice(y, txt, choices, currentChoice, onSelect)
     end
 end
 
--- ==============================================================================
--- INSPECTOR BUILDER CONTROLLER FOR EACH MODULE
--- ==============================================================================
+-- ==========================================
+-- DETAILED INSPECTOR ROUTING
+-- ==========================================
 local function openInspectorFor(moduleName)
     insHeader.Text = moduleName
     for _, child in pairs(insContent:GetChildren()) do child:Destroy() end
@@ -2210,6 +2488,39 @@ local function openInspectorFor(moduleName)
         addInspectorSlider(6, "Spin Speed", 10, 150, spinSpeed, false, function(v) 
             spinSpeed = v 
         end)
+    elseif moduleName == "Auto Strafe" then
+        insContent.CanvasSize = UDim2.new(0, 0, 0, 100)
+        addInspectorSlider(6, "Strafe Strength", 0.1, 2.0, strafeStrength, true, function(v) 
+            strafeStrength = v 
+        end)
+    elseif moduleName == "FOV Changer" then
+        insContent.CanvasSize = UDim2.new(0, 0, 0, 100)
+        addInspectorSlider(6, "Field Of View", 60, 140, customFovValue, false, function(v) 
+            customFovValue = v 
+            if customFovEnabled and camera then
+                camera.FieldOfView = v
+            end
+        end)
+    elseif moduleName == "World Changer" then
+        insContent.CanvasSize = UDim2.new(0, 0, 0, 260)
+        addInspectorChoice(6, "Presets", {"Purple", "Day", "Sunset", "Night", "Crimson", "Cold", "Default"}, worldChangerPreset, function(selected)
+            applyWorldMode(selected)
+        end)
+        addInspectorSlider(48, "Brightness", 0.0, 5.0, Lighting.Brightness, true, function(v) 
+            if worldChangerEnabled then Lighting.Brightness = v end
+        end)
+        addInspectorSlider(80, "Clock Time", 0.0, 24.0, Lighting.ClockTime, true, function(v) 
+            if worldChangerEnabled then Lighting.ClockTime = v end
+        end)
+        addInspectorSlider(112, "Exposure", -2.0, 2.0, Lighting.ExposureCompensation, true, function(v) 
+            if worldChangerEnabled then Lighting.ExposureCompensation = v end
+        end)
+    elseif moduleName == "Kroaton HUD" then
+        insContent.CanvasSize = UDim2.new(0, 0, 0, 180)
+        addInspectorToggle(6, "Show FPS", infoHudShowFps, function(v) infoHudShowFps = v end)
+        addInspectorToggle(34, "Show Ping", infoHudShowPing, function(v) infoHudShowPing = v end)
+        addInspectorToggle(62, "Show Speed", infoHudShowSpeed, function(v) infoHudShowSpeed = v end)
+        addInspectorToggle(90, "Show FOV", infoHudShowFov, function(v) infoHudShowFov = v end)
     elseif moduleName == "Slide" then
         insContent.CanvasSize = UDim2.new(0, 0, 0, 180)
         addInspectorSlider(6, "Speed Boost", 1.2, 3.0, slideSpeedBoost, true, function(v) slideSpeedBoost = v end)
@@ -2229,12 +2540,16 @@ local function openInspectorFor(moduleName)
             jumpCircleStyle = v
             if player.Character then initJumpCircleForCharacter(player.Character) end
         end)
-    elseif moduleName == "Grenade ESP" then
-        insContent.CanvasSize = UDim2.new(0, 0, 0, 220)
-        addInspectorSlider(6, "Max Distance", 200, 3000, grenadeMaxDist, false, function(v) grenadeMaxDist = v end)
-        addInspectorToggle(42, "Trajectory Path", showGrenadePath, function(v) showGrenadePath = v end)
-        addInspectorToggle(70, "Molotov Radius", showMolotovRadius, function(v) showMolotovRadius = v end)
-        addInspectorToggle(98, "Smoke Radius", showSmokeRadius, function(v) showSmokeRadius = v end)
+    elseif moduleName == "Grenade Danger" then
+        insContent.CanvasSize = UDim2.new(0, 0, 0, 200)
+        addInspectorSlider(6, "Max Distance", 100, 1500, grenadeDangerMaxDist, false, function(v) 
+            grenadeDangerMaxDist = v 
+            for _, d in pairs(dangerGrenadeObjects) do
+                if d.billboard then d.billboard.MaxDistance = v end
+            end
+        end)
+        addInspectorToggle(42, "Show Distance", grenadeDangerShowDist, function(v) grenadeDangerShowDist = v end)
+        addInspectorToggle(70, "Danger Radius", grenadeDangerShowRadius, function(v) grenadeDangerShowRadius = v end)
     elseif moduleName == "Bhop Engine" then
         insContent.CanvasSize = UDim2.new(0, 0, 0, 200)
         addInspectorSlider(6, "Jump Power", 30, 100, bhopJumpPower, false, function(v) bhopJumpPower = v end)
@@ -2255,19 +2570,6 @@ local function openInspectorFor(moduleName)
         addInspectorSlider(38, "Thickness", 1.0, 3.0, boxThickness, true, function(v) boxThickness = v end)
         addInspectorToggle(76, "Corner Box", cornerBoxEnabled, function(v) cornerBoxEnabled = v end)
         addInspectorToggle(108, "Health Bar", healthBarEnabled, function(v) healthBarEnabled = v end)
-    elseif moduleName == "Night Mode" then
-        insContent.CanvasSize = UDim2.new(0, 0, 0, 260)
-        addInspectorChoice(6, "Presets", {"Midnight", "DeepBlood", "CyberPurple", "EmeraldNight", "PitchBlack"}, nightPreset, function(selected)
-            applyNightPreset(selected)
-        end)
-        addInspectorSlider(48, "Brightness", 0.0, 2.0, nightBrightness, true, function(v) 
-            nightBrightness = v 
-            if nightModeEnabled then Lighting.Brightness = v end
-        end)
-        addInspectorSlider(80, "Clock Time", 0.0, 24.0, nightClockTime, true, function(v) 
-            nightClockTime = v 
-            if nightModeEnabled then Lighting.ClockTime = v end
-        end)
     elseif moduleName == "RCS" then
         insContent.CanvasSize = UDim2.new(0, 0, 0, 240)
         addInspectorSlider(6, "RCS Strength", 10, 100, rcsStrength, false, function(v) rcsStrength = v end)
@@ -2293,9 +2595,9 @@ local function openInspectorFor(moduleName)
     end
 end
 
--- ==============================================================================
--- CARD COMPONENT BUILDER
--- ==============================================================================
+-- ==========================================
+-- CARD GENERATOR COMPONENT
+-- ==========================================
 local function addCard(parent, name, defaultState, onToggle)
     local card = Instance.new("Frame", parent)
     card.BackgroundColor3 = currentTheme.CardBg
@@ -2339,23 +2641,25 @@ local function addCard(parent, name, defaultState, onToggle)
         circle.Position = state and UDim2.new(1, -10, 0.5, -4.5) or UDim2.new(0, 2, 0.5, -4.5)
         onToggle(state)
         
-        if name == "Night Mode" then
+        if name == "World Changer" then
             if state then
-                applyNightPreset(nightPreset)
+                applyWorldMode(worldChangerPreset)
             else
                 restoreLightingState()
             end
-        elseif name == "FullBright" and not state and not nightModeEnabled then
+        elseif name == "FullBright" and not state and not worldChangerEnabled then
             restoreLightingState()
+        elseif name == "FOV Changer" and not state then
+            if camera then camera.FieldOfView = defaultCameraFOV end
         end
     end
 
     bindTouch(toggleBtn, executeToggle)
 end
 
--- ==============================================================================
--- CATEGORY SECTION SETUP & CARD REGISTRATION
--- ==============================================================================
+-- ==========================================
+-- TAB SECTIONS & MODULE POPULATION
+-- ==========================================
 
 -- COMBAT TAB
 local cAimSection = makeCategorySection(cPage, "Aim & Ballistics", 1)
@@ -2371,6 +2675,7 @@ local mHopSection = makeCategorySection(mPage, "Bhop Mechanics", 1)
 local mBoostSection = makeCategorySection(mPage, "Physics Modifications", 2)
 
 addCard(mHopSection, "Bhop Engine", bunnyHopEnabled, function(v) bunnyHopEnabled = v end)
+addCard(mHopSection, "Auto Strafe", autoStrafeEnabled, function(v) autoStrafeEnabled = v end)
 addCard(mBoostSection, "Slide", slideEnabled, function(v) slideEnabled = v end)
 addCard(mBoostSection, "Speed Boost", speedEnabled, function(v) speedEnabled = v end)
 addCard(mBoostSection, "Flight", flightEnabled, function(v) flightEnabled = v end)
@@ -2385,7 +2690,16 @@ addCard(ePlayerSection, "Box Overlay", boxEspEnabled, function(v) boxEspEnabled 
 addCard(ePlayerSection, "Head Dot", headDotEnabled, function(v) headDotEnabled = v end)
 addCard(ePlayerSection, "Snaplines", tracersEnabled, function(v) tracersEnabled = v end)
 
-addCard(eWorldSection, "Grenade ESP", grenadeEspEnabled, function(v) grenadeEspEnabled = v end)
+addCard(eWorldSection, "Grenade Danger", grenadeDangerEnabled, function(v) 
+    grenadeDangerEnabled = v 
+    for _, d in pairs(dangerGrenadeObjects) do
+        d.billboard.Enabled = v
+        if d.radius then
+            d.radius.Transparency = (v and grenadeDangerShowRadius) and 0.88 or 1
+        end
+    end
+end)
+
 addCard(eWorldSection, "Jump Circle", jumpCircleEnabled, function(v) 
     jumpCircleEnabled = v 
     if v and player.Character then
@@ -2397,12 +2711,26 @@ end)
 
 -- ENVIRONMENT TAB
 local envLightSection = makeCategorySection(envPage, "Atmosphere & World", 1)
-addCard(envLightSection, "Night Mode", nightModeEnabled, function(v) nightModeEnabled = v end)
+addCard(envLightSection, "World Changer", worldChangerEnabled, function(v) 
+    worldChangerEnabled = v 
+    if v then
+        applyWorldMode(worldChangerPreset)
+    else
+        restoreLightingState()
+    end
+end)
 addCard(envLightSection, "FullBright", fullBrightEnabled, function(v) fullBrightEnabled = v end)
 addCard(envLightSection, "Anti-Flash", antiFlashEnabled, function(v) antiFlashEnabled = v end)
+addCard(envLightSection, "FOV Changer", customFovEnabled, function(v) 
+    customFovEnabled = v 
+    if not v and camera then
+        camera.FieldOfView = defaultCameraFOV
+    end
+end)
 
 -- MISC TAB
 local miscGeneralSection = makeCategorySection(micsPage, "Utilities", 1)
+addCard(miscGeneralSection, "Kroaton HUD", infoHudEnabled, function(v) infoHudEnabled = v end)
 addCard(miscGeneralSection, "Anti-AFK", true, function(v) end)
 
 -- SETTINGS TAB
