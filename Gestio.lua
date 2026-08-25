@@ -1,6 +1,6 @@
 -- ==============================================================================
--- [Gestio UI - Blox Strike Ultimate Mobile Engine (Categorized Sections Suite)]
--- Version: 4.6.0 Enterprise Full Source Edition (Structured Sub-Categories)
+-- [Gestio UI - Blox Strike Ultimate Mobile Engine (Full Suite 2000+ Lines)]
+-- Version: 4.9.0 Enterprise Full Source Edition (Visual Overhaul & Side Check Fix)
 -- Target Game: Blox Strike (Roblox)
 -- ==============================================================================
 
@@ -68,13 +68,13 @@ local currentTheme = {
     TextSecondary = Color3.fromRGB(140, 145, 155),
     Border = Color3.fromRGB(45, 48, 55),
     
-    T_Accent = Color3.fromRGB(210, 45, 55),
-    T_Fill = Color3.fromRGB(210, 45, 55),
+    T_Accent = Color3.fromRGB(235, 75, 75),
+    T_Fill = Color3.fromRGB(220, 50, 50),
     
-    CT_Accent = Color3.fromRGB(75, 80, 92),
-    CT_Fill = Color3.fromRGB(45, 48, 55),
+    CT_Accent = Color3.fromRGB(80, 155, 245),
+    CT_Fill = Color3.fromRGB(45, 120, 225),
     
-    NametagTextColor = Color3.fromRGB(255, 45, 55),
+    NametagTextColor = Color3.fromRGB(255, 255, 255),
     
     MolotovColor = Color3.fromRGB(255, 95, 35),
     SmokeColor = Color3.fromRGB(180, 185, 195),
@@ -97,7 +97,7 @@ local tagShowWeapon = true
 
 local boxEspEnabled = false
 local cornerBoxEnabled = false
-local boxThickness = 1.0
+local boxThickness = 1.2
 
 local grenadeEspEnabled = false
 local showGrenadePath = true
@@ -132,8 +132,8 @@ local currentSpinAngle = 0
 
 local jumpCircleEnabled = false
 local jumpCircleStyle = "GradientWave"
-local jumpCircleSegmentCount = 24
-local jumpCircleRadius = 3
+local jumpCircleSegmentCount = 32
+local jumpCircleRadius = 3.5
 local jumpCircleHeightOffset = -2.8
 local activeJumpCircleData = nil
 
@@ -170,11 +170,51 @@ local headDotEnabled = false
 local tracersEnabled = false
 local antiFlashEnabled = true
 local fullBrightEnabled = false
+
 local nightModeEnabled = false
+local nightPreset = "Midnight"
 local nightClockTime = 0.0
 local nightBrightness = 0.2
 local nightOutdoorAmbient = Color3.fromRGB(25, 25, 40)
 local removeFogEnabled = true
+
+local nightPresets = {
+    ["Midnight"] = {
+        ClockTime = 0.0,
+        Brightness = 0.2,
+        OutdoorAmbient = Color3.fromRGB(25, 25, 40),
+        Ambient = Color3.fromRGB(15, 15, 25),
+        FogColor = Color3.fromRGB(10, 10, 20)
+    },
+    ["DeepBlood"] = {
+        ClockTime = 0.0,
+        Brightness = 0.35,
+        OutdoorAmbient = Color3.fromRGB(75, 10, 15),
+        Ambient = Color3.fromRGB(45, 5, 10),
+        FogColor = Color3.fromRGB(35, 5, 8)
+    },
+    ["CyberPurple"] = {
+        ClockTime = 23.5,
+        Brightness = 0.3,
+        OutdoorAmbient = Color3.fromRGB(65, 15, 95),
+        Ambient = Color3.fromRGB(40, 10, 60),
+        FogColor = Color3.fromRGB(30, 8, 45)
+    },
+    ["EmeraldNight"] = {
+        ClockTime = 1.0,
+        Brightness = 0.25,
+        OutdoorAmbient = Color3.fromRGB(10, 55, 30),
+        Ambient = Color3.fromRGB(5, 35, 20),
+        FogColor = Color3.fromRGB(5, 25, 15)
+    },
+    ["PitchBlack"] = {
+        ClockTime = 0.0,
+        Brightness = 0.0,
+        OutdoorAmbient = Color3.fromRGB(0, 0, 0),
+        Ambient = Color3.fromRGB(0, 0, 0),
+        FogColor = Color3.fromRGB(0, 0, 0)
+    }
+}
 
 local defaultLighting = {
     Brightness = Lighting.Brightness,
@@ -199,15 +239,37 @@ overlayContainer.Name = "Gestio_2DOverlay"
 local grenadeContainer = Instance.new("Folder", mainContainer)
 grenadeContainer.Name = "Gestio_GrenadeOverlay"
 
-local jumpCircleContainer = Instance.new("Folder", mainContainer)
-jumpCircleContainer.Name = "Gestio_JumpCircleOverlay"
+local jumpCircleFolder = Instance.new("Folder", Workspace)
+jumpCircleFolder.Name = "Gestio_JumpCircleWorld"
 
 local grenadePool = {}
 
+local function applyNightPreset(presetName)
+    local cfg = nightPresets[presetName]
+    if not cfg then return end
+    nightPreset = presetName
+    nightClockTime = cfg.ClockTime
+    nightBrightness = cfg.Brightness
+    nightOutdoorAmbient = cfg.OutdoorAmbient
+    
+    if nightModeEnabled then
+        Lighting.ClockTime = cfg.ClockTime
+        Lighting.Brightness = cfg.Brightness
+        Lighting.OutdoorAmbient = cfg.OutdoorAmbient
+        Lighting.Ambient = cfg.Ambient
+        Lighting.GlobalShadows = true
+        if not removeFogEnabled then
+            Lighting.FogColor = cfg.FogColor
+        end
+    end
+end
+
 local function clearActiveJumpCircle()
     if not activeJumpCircleData then return end
-    for _, conn in ipairs(activeJumpCircleData.Connections) do
-        pcall(function() conn:Disconnect() end)
+    if activeJumpCircleData.Connections then
+        for _, conn in ipairs(activeJumpCircleData.Connections) do
+            pcall(function() conn:Disconnect() end)
+        end
     end
     if activeJumpCircleData.Container then
         pcall(function() activeJumpCircleData.Container:Destroy() end)
@@ -225,7 +287,9 @@ local function cleanup()
             esp.Box:Destroy()
             esp.TagCard:Destroy()
             for _, corner in pairs(esp.Corners) do
+                corner.H_Out:Destroy()
                 corner.H:Destroy()
+                corner.V_Out:Destroy()
                 corner.V:Destroy()
             end
         end)
@@ -238,6 +302,7 @@ local function cleanup()
         end)
     end
     clearActiveJumpCircle()
+    pcall(function() jumpCircleFolder:Destroy() end)
     activeEspHolders = {}
     screenEspCache = {}
     grenadePool = {}
@@ -254,8 +319,8 @@ local function cleanup()
 
     pcall(function() if targetGui:FindFirstChild("GestioScreenGui") then targetGui.GestioScreenGui:Destroy() end end)
     pcall(function() if targetGui:FindFirstChild("GestioToggleGui") then targetGui.GestioToggleGui:Destroy() end end)
-    pcall(function() if targetGui:FindFirstChild("GestioFovGui") then targetGui.GestioFovGui:Destroy() end end)
-    pcall(function() if targetGui:FindFirstChild("GestioWatermarkGui") then targetGui.GestioWatermarkGui:Destroy() end end)
+    pcall(function() if targetGui:FindFirstChild("GestioFovGui") then targetGui.FovGui:Destroy() end end)
+    pcall(function() if targetGui:FindFirstChild("GestioWatermarkGui") then targetGui.WatermarkGui:Destroy() end end)
     pcall(function() if targetGui:FindFirstChild("GestioMainContainer") then targetGui.GestioMainContainer:Destroy() end end)
 end
 
@@ -345,28 +410,30 @@ local fpsCounter = 0
 local lastFpsUpdate = tick()
 
 -- ==========================================
--- ADAPTED TEAM CHECK MODULE
+-- PRECISE BLOXSTRIKE SIDE & TEAM DETECTOR
 -- ==========================================
-local function isAlly(plr)
-    if not plr or plr == player then return false end
-    if plr.Team and player.Team then
-        return plr.Team == player.Team
-    end
-    if plr:GetAttribute("Team") and player:GetAttribute("Team") then
-        return plr:GetAttribute("Team") == player:GetAttribute("Team")
-    end
-    return false
-end
-
-local function isTargetEnemy(plr, char)
-    if not plr or plr == player then return false end
-    if char and char == player.Character then return false end
-    return not isAlly(plr)
-end
-
 local function getPlayerSide(plr)
     if not plr then return "T" end
+    local char = plr.Character
 
+    -- Check direct attributes (BloxStrike Native Factions)
+    local teamAttr = plr:GetAttribute("Team") 
+        or (char and char:GetAttribute("Team")) 
+        or plr:GetAttribute("Side") 
+        or (char and char:GetAttribute("Side")) 
+        or plr:GetAttribute("Faction")
+        or (char and char:GetAttribute("Faction"))
+
+    if teamAttr ~= nil then
+        local tStr = tostring(teamAttr):lower()
+        if tStr:find("counter") or tStr:find("ct") or tStr == "2" or tStr:find("blue") or tStr:find("defend") or tStr:find("police") or tStr:find("swat") or tStr:find("guard") then
+            return "CT"
+        elseif tStr:find("terror") or tStr:find("t") or tStr == "1" or tStr:find("red") or tStr:find("attack") or tStr:find("anarch") or tStr:find("rebel") then
+            return "T"
+        end
+    end
+
+    -- Check Roblox Team instance name
     if plr.Team then
         local tName = tostring(plr.Team.Name):lower()
         if tName:find("counter") or tName:find("ct") or tName:find("police") or tName:find("swat") or tName:find("guard") or tName:find("blue") or tName:find("defend") or tName:find("spec") then
@@ -376,7 +443,8 @@ local function getPlayerSide(plr)
         end
     end
 
-    if plr.TeamColor then
+    -- Check TeamColor BrickColor name
+    if plr.TeamColor and plr.TeamColor ~= BrickColor.new("White") then
         local colName = plr.TeamColor.Name:lower()
         if colName:find("blue") or colName:find("navy") or colName:find("cyan") or colName:find("teal") or colName:find("lapis") or colName:find("grey") or colName:find("gray") or colName:find("black") then
             return "CT"
@@ -385,7 +453,41 @@ local function getPlayerSide(plr)
         end
     end
 
+    -- Model inspection (BloxStrike Character Models)
+    if char then
+        local charName = tostring(char.Name):lower()
+        if charName:find("ct") or charName:find("counter") or charName:find("swat") or charName:find("sas") or charName:find("gign") or charName:find("fbi") or charName:find("idf") then
+            return "CT"
+        elseif charName:find("terror") or charName:find("t_") or charName:find("anarch") or charName:find("phoenix") or charName:find("balkan") or charName:find("leet") then
+            return "T"
+        end
+    end
+
+    if plr ~= player then
+        local mySide = getPlayerSide(player)
+        if plr.Team and player.Team then
+            return (plr.Team == player.Team) and mySide or ((mySide == "CT") and "T" or "CT")
+        end
+    end
+
     return "T"
+end
+
+local function isAlly(plr)
+    if not plr or plr == player then return false end
+    if plr.Team and player.Team then
+        return plr.Team == player.Team
+    end
+    if plr:GetAttribute("Team") and player:GetAttribute("Team") then
+        return plr:GetAttribute("Team") == player:GetAttribute("Team")
+    end
+    return getPlayerSide(plr) == getPlayerSide(player)
+end
+
+local function isTargetEnemy(plr, char)
+    if not plr or plr == player then return false end
+    if char and char == player.Character then return false end
+    return not isAlly(plr)
 end
 
 local function getTargetHitbox(char)
@@ -407,23 +509,33 @@ local function isEntityAlive(char, hum)
         return false 
     end
     
-    if hum and hum.Parent then
-        local health = 100
-        pcall(function() health = hum.Health end)
-        if health <= 0 then 
-            return false 
+    if not hum or not hum.Parent then
+        return false
+    end
+
+    local isDead = false
+    pcall(function()
+        if hum.Health <= 0 then 
+            isDead = true 
         end
-        
-        local state = nil
-        pcall(function() state = hum:GetState() end)
-        if state == Enum.HumanoidStateType.Dead then 
-            return false 
+        if hum:GetState() == Enum.HumanoidStateType.Dead then 
+            isDead = true 
         end
+    end)
+    if isDead then return false end
+
+    local isAliveAttr = char:GetAttribute("Alive") or char:GetAttribute("IsAlive")
+    if isAliveAttr ~= nil and isAliveAttr == false then
+        return false
     end
 
     local root = char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso")
     local head = char:FindFirstChild("Head")
-    if not root and not head then
+    if not root or not head then
+        return false
+    end
+
+    if not root.Parent or not head.Parent then
         return false
     end
 
@@ -431,192 +543,153 @@ local function isEntityAlive(char, hum)
 end
 
 -- ==========================================
--- JUMP CIRCLE SUB-ENGINE
+-- JUMP CIRCLE SUB-ENGINE (FIXED)
 -- ==========================================
-local function buildJumpRing(segmentCount, radius, segSize)
-    local container = Instance.new("Model")
-    container.Name = "JumpCircleRing"
+local function buildJumpRing(segmentCount, radius, thickness)
+    local container = Instance.new("Folder")
+    container.Name = "JumpCircleContainer"
 
     local segments = {}
-    for i = 1, segmentCount do
-        local angle = (i / segmentCount) * math.pi * 2
+    local angleStep = (math.pi * 2) / segmentCount
+    local chordLength = 2 * radius * math.sin(angleStep / 2) + 0.15
 
+    for i = 1, segmentCount do
+        local angle = (i - 1) * angleStep
         local part = Instance.new("Part")
         part.Name = "Seg_" .. i
-        part.Size = Vector3.new(segSize.X, segSize.Y, segSize.X)
+        part.Size = Vector3.new(thickness or 0.25, thickness or 0.25, chordLength)
         part.Anchored = true
         part.CanCollide = false
         part.CanQuery = false
         part.CanTouch = false
-        part.Massless = true
-        part.Material = Enum.Material.Neon
-        part.Shape = Enum.PartType.Cylinder
-        part.Color = Color3.new(1, 1, 1)
-        part.Transparency = 0
         part.CastShadow = false
+        part.Material = Enum.Material.Neon
+        part.Color = Color3.fromRGB(255, 255, 255)
+        part.Transparency = 0
         part.Parent = container
 
         segments[i] = {
             Part = part,
-            Angle = angle,
+            Angle = angle
         }
     end
 
     return container, segments
 end
 
-local function layoutJumpRing(segments, centerPosition, radius)
-    for _, seg in ipairs(segments) do
-        local offset = Vector3.new(math.cos(seg.Angle) * radius, 0, math.sin(seg.Angle) * radius)
-        local worldPos = centerPosition + offset
-        seg.Part.CFrame = CFrame.new(worldPos) * CFrame.Angles(0, 0, math.rad(90))
+local function updateJumpRingLayout(segments, centerPosition, radius)
+    local n = #segments
+    for i, seg in ipairs(segments) do
+        local angle = seg.Angle
+        local nextAngle = angle + (math.pi * 2 / n)
+        local p1 = centerPosition + Vector3.new(math.cos(angle) * radius, 0, math.sin(angle) * radius)
+        local p2 = centerPosition + Vector3.new(math.cos(nextAngle) * radius, 0, math.sin(nextAngle) * radius)
+        local mid = (p1 + p2) * 0.5
+
+        seg.Part.CFrame = CFrame.lookAt(mid, p2)
     end
 end
 
-local function playExpandPulse(position)
+local function spawnJumpRipple(position)
     if not jumpCircleEnabled then return end
-    local container, segments = buildJumpRing(jumpCircleSegmentCount, jumpCircleRadius, Vector2.new(0.5, 0.15))
-    container.Parent = jumpCircleContainer
+    task.spawn(function()
+        local rippleFolder, segments = buildJumpRing(jumpCircleSegmentCount, jumpCircleRadius, 0.3)
+        rippleFolder.Parent = jumpCircleFolder
 
-    for _, seg in ipairs(segments) do
-        seg.Part.Color = Color3.fromRGB(120, 200, 255)
-    end
+        local startT = os.clock()
+        local duration = 0.5
+        local maxR = jumpCircleRadius * 2.5
+        local col1 = Color3.fromRGB(0, 240, 255)
+        local col2 = Color3.fromRGB(255, 0, 128)
 
-    layoutJumpRing(segments, position, jumpCircleRadius)
+        local rippleConn
+        rippleConn = RunService.RenderStepped:Connect(function()
+            local elapsed = os.clock() - startT
+            local alpha = elapsed / duration
+            if alpha >= 1 or not jumpCircleEnabled then
+                rippleConn:Disconnect()
+                rippleFolder:Destroy()
+                return
+            end
 
-    local startTime = os.clock()
-    local duration = 0.45
-    local maxRadius = jumpCircleRadius * 2.6
+            local eased = 1 - (1 - alpha) * (1 - alpha)
+            local curR = jumpCircleRadius + (maxR - jumpCircleRadius) * eased
+            updateJumpRingLayout(segments, position, curR)
 
-    local conn
-    conn = RunService.Heartbeat:Connect(function()
-        local alpha = (os.clock() - startTime) / duration
-        if alpha >= 1 then
-            conn:Disconnect()
-            container:Destroy()
-            return
-        end
-        local eased = 1 - (1 - alpha) * (1 - alpha)
-        local currentRadius = jumpCircleRadius + (maxRadius - jumpCircleRadius) * eased
-        layoutJumpRing(segments, position, currentRadius)
-        for _, seg in ipairs(segments) do
-            seg.Part.Transparency = alpha
-        end
+            for i, seg in ipairs(segments) do
+                seg.Part.Transparency = alpha
+                seg.Part.Color = col1:Lerp(col2, alpha)
+            end
+        end)
     end)
-    Debris:AddItem(container, duration + 1)
 end
 
-local function buildNeonRing(segments)
-    for _, seg in ipairs(segments) do
-        seg.Part.Color = Color3.fromRGB(0, 255, 200)
-        seg.Part.Transparency = 0.2
-
-        local attachment = Instance.new("Attachment")
-        attachment.Parent = seg.Part
-
-        local emitter = Instance.new("ParticleEmitter")
-        emitter.Texture = "rbxasset://textures/particles/sparkles_main.dds"
-        emitter.Color = ColorSequence.new(Color3.fromRGB(0, 255, 200))
-        emitter.Lifetime = NumberRange.new(0.25, 0.5)
-        emitter.Speed = NumberRange.new(3, 7)
-        emitter.Rate = 0
-        emitter.Rotation = NumberRange.new(0, 360)
-        emitter.Size = NumberSequence.new(0.15)
-        emitter.Transparency = NumberSequence.new({
-            NumberSequenceKeypoint.new(0, 0),
-            NumberSequenceKeypoint.new(1, 1),
-        })
-        emitter.Parent = attachment
-        seg.Emitter = emitter
-    end
-end
-
-local function burstNeonSparks(data)
-    for _, seg in ipairs(data.Segments) do
-        if seg.Emitter then
-            seg.Emitter:Emit(math.ceil(jumpCircleSegmentCount / #data.Segments))
-        end
-    end
-end
-
-local function initJumpCircleForCharacter(character)
+local function initJumpCircleForCharacter(char)
     clearActiveJumpCircle()
-    if not jumpCircleEnabled then return end
+    if not jumpCircleEnabled or not char then return end
 
-    local hrp = character:WaitForChild("HumanoidRootPart", 5)
-    local humanoid = character:WaitForChild("Humanoid", 5)
-    if not hrp or not humanoid then return end
+    local hrp = char:WaitForChild("HumanoidRootPart", 4)
+    local hum = char:WaitForChild("Humanoid", 4)
+    if not hrp or not hum then return end
 
-    local container, segments = buildJumpRing(jumpCircleSegmentCount, jumpCircleRadius, Vector2.new(0.5, 0.15))
-    container.Parent = jumpCircleContainer
+    local container, segments = buildJumpRing(jumpCircleSegmentCount, jumpCircleRadius, 0.25)
+    container.Parent = jumpCircleFolder
 
-    if jumpCircleStyle == "NeonParticleRing" then
-        buildNeonRing(segments)
-    end
-
-    local data = {
+    local circleData = {
         Container = container,
         Segments = segments,
         HRP = hrp,
-        Humanoid = humanoid,
-        Connections = {},
+        Humanoid = hum,
+        Connections = {}
     }
-    activeJumpCircleData = data
+    activeJumpCircleData = circleData
 
-    local startTime = os.clock()
+    local startClock = os.clock()
 
-    local heartbeatConn = RunService.RenderStepped:Connect(function(dt)
-        if not hrp.Parent or not jumpCircleEnabled then 
-            container.Parent = nil
-            return 
-        else
-            container.Parent = jumpCircleContainer
+    local loopConn = RunService.RenderStepped:Connect(function(dt)
+        if not jumpCircleEnabled or not hrp.Parent or not hum.Parent or hum.Health <= 0 then
+            clearActiveJumpCircle()
+            return
         end
-        local elapsed = os.clock() - startTime
 
-        local footPosition = hrp.Position + Vector3.new(0, jumpCircleHeightOffset, 0)
-        layoutJumpRing(segments, footPosition, jumpCircleRadius)
+        local elapsed = os.clock() - startClock
+        local footPos = hrp.Position + Vector3.new(0, jumpCircleHeightOffset, 0)
+        updateJumpRingLayout(segments, footPos, jumpCircleRadius)
 
         if jumpCircleStyle == "GradientWave" then
             local n = #segments
-            local spinOffset = math.rad(elapsed * 90)
-            local col1 = Color3.fromRGB(160, 60, 230)
-            local col2 = Color3.fromRGB(60, 220, 220)
+            local spin = (elapsed * 3) % (math.pi * 2)
+            local c1 = Color3.fromRGB(210, 45, 55)
+            local c2 = Color3.fromRGB(0, 200, 255)
             for i, seg in ipairs(segments) do
-                local t = ((i - 1) / n + spinOffset / (math.pi * 2)) % 1
-                seg.Part.Color = col1:Lerp(col2, (math.sin(t * math.pi * 2) + 1) / 2)
-                seg.Part.Transparency = 0
+                local ratio = ((i / n) + spin) % 1
+                local wave = (math.sin(ratio * math.pi * 2) + 1) * 0.5
+                seg.Part.Color = c1:Lerp(c2, wave)
+                seg.Part.Transparency = 0.1 + (wave * 0.2)
             end
         elseif jumpCircleStyle == "ChromaPulse" then
-            local velocity = hrp.AssemblyLinearVelocity
-            local horizontalSpeed = Vector3.new(velocity.X, 0, velocity.Z).Magnitude
-            local speedAlpha = math.clamp((horizontalSpeed - 4) / (40 - 4), 0, 1)
-            local pulseFreq = 2 + speedAlpha * 10
-            local brightness = 0.4 + speedAlpha * 0.6
-            local pulse = (math.sin(elapsed * pulseFreq) + 1) / 2
-            local hue = (0.55 + speedAlpha * 0.3) % 1
-            local color = Color3.fromHSV(hue, 1, brightness * (0.6 + 0.4 * pulse))
-
+            local hue = (elapsed * 0.4) % 1
+            local col = Color3.fromHSV(hue, 0.9, 1)
             for _, seg in ipairs(segments) do
-                seg.Part.Color = color
-                seg.Part.Transparency = 0.15 + (1 - pulse) * 0.25
+                seg.Part.Color = col
+                seg.Part.Transparency = 0.15
+            end
+        elseif jumpCircleStyle == "StaticNeon" then
+            for _, seg in ipairs(segments) do
+                seg.Part.Color = currentTheme.Accent
+                seg.Part.Transparency = 0.1
             end
         end
     end)
-    table.insert(data.Connections, heartbeatConn)
+    table.insert(circleData.Connections, loopConn)
 
-    local stateConn = humanoid.StateChanged:Connect(function(_, newState)
-        if not jumpCircleEnabled then return end
-        if newState ~= Enum.HumanoidStateType.Jumping then return end
-
-        local footPosition = hrp.Position + Vector3.new(0, jumpCircleHeightOffset, 0)
-        if jumpCircleStyle == "FadeExpand" then
-            playExpandPulse(footPosition)
-        elseif jumpCircleStyle == "NeonParticleRing" then
-            burstNeonSparks(data)
+    local stateConn = hum.StateChanged:Connect(function(_, newState)
+        if newState == Enum.HumanoidStateType.Jumping then
+            local footPos = hrp.Position + Vector3.new(0, jumpCircleHeightOffset, 0)
+            spawnJumpRipple(footPos)
         end
     end)
-    table.insert(data.Connections, stateConn)
+    table.insert(circleData.Connections, stateConn)
 end
 
 table.insert(connections, player.CharacterAdded:Connect(initJumpCircleForCharacter))
@@ -914,9 +987,6 @@ local triggerRayParams = RaycastParams.new()
 triggerRayParams.FilterType = Enum.RaycastFilterType.Exclude
 triggerRayParams.IgnoreWater = true
 
--- ==========================================
--- FIXED TRIGGERBOT (NO CAMERA JITTER)
--- ==========================================
 local function runMobileTriggerbot()
     if not triggerbotEnabled then return end
     local now = tick()
@@ -958,6 +1028,9 @@ local function runMobileTriggerbot()
     end
 end
 
+-- ==========================================
+-- REFACTORED HIGH-DEFINITION CORNER BOX & ESP
+-- ==========================================
 local function getOrCreateScreenEsp(plr)
     if screenEspCache[plr] then return screenEspCache[plr] end
 
@@ -974,19 +1047,34 @@ local function getOrCreateScreenEsp(plr)
 
     local corners = {}
     for i = 1, 4 do
+        -- Horizontal Outline + Inner Fill
+        local hOut = Instance.new("Frame", overlayContainer)
+        hOut.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+        hOut.BorderSizePixel = 0
+        hOut.Visible = false
+
         local hLine = Instance.new("Frame", overlayContainer)
-        hLine.Name = "CornerH_" .. plr.Name .. "_" .. i
         hLine.BackgroundColor3 = currentTheme.T_Accent
         hLine.BorderSizePixel = 0
         hLine.Visible = false
 
+        -- Vertical Outline + Inner Fill
+        local vOut = Instance.new("Frame", overlayContainer)
+        vOut.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+        vOut.BorderSizePixel = 0
+        vOut.Visible = false
+
         local vLine = Instance.new("Frame", overlayContainer)
-        vLine.Name = "CornerV_" .. plr.Name .. "_" .. i
         vLine.BackgroundColor3 = currentTheme.T_Accent
         vLine.BorderSizePixel = 0
         vLine.Visible = false
 
-        table.insert(corners, {H = hLine, V = vLine})
+        table.insert(corners, {
+            H_Out = hOut,
+            H = hLine,
+            V_Out = vOut,
+            V = vLine
+        })
     end
 
     local tagCard = Instance.new("Frame", overlayContainer)
@@ -1000,9 +1088,13 @@ local function getOrCreateScreenEsp(plr)
     tagCard.Visible = false
 
     Instance.new("UICorner", tagCard).CornerRadius = UDim.new(0, 4)
+    local cardStroke = Instance.new("UIStroke", tagCard)
+    cardStroke.Color = currentTheme.Border
+    cardStroke.Thickness = 0.8
+
     local pad = Instance.new("UIPadding", tagCard)
-    pad.PaddingRight = UDim.new(0, 5)
-    pad.PaddingLeft = UDim.new(0, 5)
+    pad.PaddingRight = UDim.new(0, 6)
+    pad.PaddingLeft = UDim.new(0, 6)
 
     local tagLabel = Instance.new("TextLabel", tagCard)
     tagLabel.AutomaticSize = Enum.AutomaticSize.X
@@ -1017,6 +1109,7 @@ local function getOrCreateScreenEsp(plr)
         BoxStroke = stroke,
         Corners = corners,
         TagCard = tagCard,
+        TagCardStroke = cardStroke,
         TagLabel = tagLabel,
         LastText = ""
     }
@@ -1031,7 +1124,9 @@ table.insert(connections, Players.PlayerRemoving:Connect(function(plr)
             cache.Box:Destroy()
             cache.TagCard:Destroy()
             for _, corner in pairs(cache.Corners) do
+                corner.H_Out:Destroy()
                 corner.H:Destroy()
+                corner.V_Out:Destroy()
                 corner.V:Destroy()
             end
         end)
@@ -1072,7 +1167,7 @@ local function renderTacticalOverlay()
                     local boxPosY = topScreen.Y
 
                     local side = getPlayerSide(plr)
-                    local sideColor = (side == "T") and currentTheme.T_Accent or currentTheme.CT_Accent
+                    local sideColor = (side == "CT") and currentTheme.CT_Accent or currentTheme.T_Accent
 
                     if boxEspEnabled and not cornerBoxEnabled then
                         esp.BoxStroke.Color = sideColor
@@ -1081,53 +1176,88 @@ local function renderTacticalOverlay()
                         esp.Box.Position = UDim2.new(0, boxPosX, 0, boxPosY)
                         esp.Box.Visible = true
                         for _, corner in ipairs(esp.Corners) do
+                            corner.H_Out.Visible = false
                             corner.H.Visible = false
+                            corner.V_Out.Visible = false
                             corner.V.Visible = false
                         end
                     elseif cornerBoxEnabled then
                         esp.Box.Visible = false
-                        local lengthX = math.max(boxWidth * 0.25, 4)
-                        local lengthY = math.max(boxHeight * 0.25, 4)
-                        local thick = boxThickness + 0.5
+                        local lengthX = math.clamp(boxWidth * 0.28, 4, 18)
+                        local lengthY = math.clamp(boxHeight * 0.22, 4, 22)
+                        local thick = 1.5
+                        local outThick = thick + 2.0
 
-                        -- 1: Top-Left
+                        -- 1: Top-Left Corner
+                        esp.Corners[1].H_Out.Size = UDim2.new(0, lengthX + 2, 0, outThick)
+                        esp.Corners[1].H_Out.Position = UDim2.new(0, boxPosX - 1, 0, boxPosY - 1)
+                        esp.Corners[1].H_Out.Visible = true
+
                         esp.Corners[1].H.BackgroundColor3 = sideColor
                         esp.Corners[1].H.Size = UDim2.new(0, lengthX, 0, thick)
                         esp.Corners[1].H.Position = UDim2.new(0, boxPosX, 0, boxPosY)
                         esp.Corners[1].H.Visible = true
+
+                        esp.Corners[1].V_Out.Size = UDim2.new(0, outThick, 0, lengthY + 2)
+                        esp.Corners[1].V_Out.Position = UDim2.new(0, boxPosX - 1, 0, boxPosY - 1)
+                        esp.Corners[1].V_Out.Visible = true
 
                         esp.Corners[1].V.BackgroundColor3 = sideColor
                         esp.Corners[1].V.Size = UDim2.new(0, thick, 0, lengthY)
                         esp.Corners[1].V.Position = UDim2.new(0, boxPosX, 0, boxPosY)
                         esp.Corners[1].V.Visible = true
 
-                        -- 2: Top-Right
+                        -- 2: Top-Right Corner
+                        esp.Corners[2].H_Out.Size = UDim2.new(0, lengthX + 2, 0, outThick)
+                        esp.Corners[2].H_Out.Position = UDim2.new(0, boxPosX + boxWidth - lengthX - 1, 0, boxPosY - 1)
+                        esp.Corners[2].H_Out.Visible = true
+
                         esp.Corners[2].H.BackgroundColor3 = sideColor
                         esp.Corners[2].H.Size = UDim2.new(0, lengthX, 0, thick)
                         esp.Corners[2].H.Position = UDim2.new(0, boxPosX + boxWidth - lengthX, 0, boxPosY)
                         esp.Corners[2].H.Visible = true
+
+                        esp.Corners[2].V_Out.Size = UDim2.new(0, outThick, 0, lengthY + 2)
+                        esp.Corners[2].V_Out.Position = UDim2.new(0, boxPosX + boxWidth - thick - 1, 0, boxPosY - 1)
+                        esp.Corners[2].V_Out.Visible = true
 
                         esp.Corners[2].V.BackgroundColor3 = sideColor
                         esp.Corners[2].V.Size = UDim2.new(0, thick, 0, lengthY)
                         esp.Corners[2].V.Position = UDim2.new(0, boxPosX + boxWidth - thick, 0, boxPosY)
                         esp.Corners[2].V.Visible = true
 
-                        -- 3: Bottom-Left
+                        -- 3: Bottom-Left Corner
+                        esp.Corners[3].H_Out.Size = UDim2.new(0, lengthX + 2, 0, outThick)
+                        esp.Corners[3].H_Out.Position = UDim2.new(0, boxPosX - 1, 0, boxPosY + boxHeight - thick - 1)
+                        esp.Corners[3].H_Out.Visible = true
+
                         esp.Corners[3].H.BackgroundColor3 = sideColor
                         esp.Corners[3].H.Size = UDim2.new(0, lengthX, 0, thick)
                         esp.Corners[3].H.Position = UDim2.new(0, boxPosX, 0, boxPosY + boxHeight - thick)
                         esp.Corners[3].H.Visible = true
+
+                        esp.Corners[3].V_Out.Size = UDim2.new(0, outThick, 0, lengthY + 2)
+                        esp.Corners[3].V_Out.Position = UDim2.new(0, boxPosX - 1, 0, boxPosY + boxHeight - lengthY - 1)
+                        esp.Corners[3].V_Out.Visible = true
 
                         esp.Corners[3].V.BackgroundColor3 = sideColor
                         esp.Corners[3].V.Size = UDim2.new(0, thick, 0, lengthY)
                         esp.Corners[3].V.Position = UDim2.new(0, boxPosX, 0, boxPosY + boxHeight - lengthY)
                         esp.Corners[3].V.Visible = true
 
-                        -- 4: Bottom-Right
+                        -- 4: Bottom-Right Corner
+                        esp.Corners[4].H_Out.Size = UDim2.new(0, lengthX + 2, 0, outThick)
+                        esp.Corners[4].H_Out.Position = UDim2.new(0, boxPosX + boxWidth - lengthX - 1, 0, boxPosY + boxHeight - thick - 1)
+                        esp.Corners[4].H_Out.Visible = true
+
                         esp.Corners[4].H.BackgroundColor3 = sideColor
                         esp.Corners[4].H.Size = UDim2.new(0, lengthX, 0, thick)
                         esp.Corners[4].H.Position = UDim2.new(0, boxPosX + boxWidth - lengthX, 0, boxPosY + boxHeight - thick)
                         esp.Corners[4].H.Visible = true
+
+                        esp.Corners[4].V_Out.Size = UDim2.new(0, outThick, 0, lengthY + 2)
+                        esp.Corners[4].V_Out.Position = UDim2.new(0, boxPosX + boxWidth - thick - 1, 0, boxPosY + boxHeight - lengthY - 1)
+                        esp.Corners[4].V_Out.Visible = true
 
                         esp.Corners[4].V.BackgroundColor3 = sideColor
                         esp.Corners[4].V.Size = UDim2.new(0, thick, 0, lengthY)
@@ -1136,15 +1266,17 @@ local function renderTacticalOverlay()
                     else
                         esp.Box.Visible = false
                         for _, corner in ipairs(esp.Corners) do
+                            corner.H_Out.Visible = false
                             corner.H.Visible = false
+                            corner.V_Out.Visible = false
                             corner.V.Visible = false
                         end
                     end
 
                     if nametagsEnabled then
                         esp.TagCard.BackgroundTransparency = tagTransparency
+                        esp.TagCardStroke.Color = sideColor
                         esp.TagLabel.TextSize = espTextSize
-                        esp.TagLabel.TextColor3 = currentTheme.NametagTextColor
 
                         local baseName = plr.DisplayName or plr.Name
                         local infoText = (espShowTeamTag and string.format("[%s] ", side) or "") .. baseName
@@ -1176,7 +1308,9 @@ local function renderTacticalOverlay()
                 else
                     esp.Box.Visible = false
                     for _, corner in ipairs(esp.Corners) do
+                        corner.H_Out.Visible = false
                         corner.H.Visible = false
+                        corner.V_Out.Visible = false
                         corner.V.Visible = false
                     end
                     esp.TagCard.Visible = false
@@ -1184,7 +1318,9 @@ local function renderTacticalOverlay()
             else
                 esp.Box.Visible = false
                 for _, corner in ipairs(esp.Corners) do
+                    corner.H_Out.Visible = false
                     corner.H.Visible = false
+                    corner.V_Out.Visible = false
                     corner.V.Visible = false
                 end
                 esp.TagCard.Visible = false
@@ -1192,7 +1328,9 @@ local function renderTacticalOverlay()
         else
             esp.Box.Visible = false
             for _, corner in ipairs(esp.Corners) do
+                corner.H_Out.Visible = false
                 corner.H.Visible = false
+                corner.V_Out.Visible = false
                 corner.V.Visible = false
             end
             esp.TagCard.Visible = false
@@ -1200,6 +1338,9 @@ local function renderTacticalOverlay()
     end
 end
 
+-- ==========================================
+-- REFACTORED HD HEAD-DOT ENGINE
+-- ==========================================
 local function attachEspToPlayer(plr)
     if plr == player then return end
 
@@ -1207,17 +1348,36 @@ local function attachEspToPlayer(plr)
     holder.Name = "GestioESP_" .. plr.Name
     holder.Parent = mainContainer
 
+    -- High Definition Reticle Head Dot
     local dotBillboard = Instance.new("BillboardGui", holder)
-    dotBillboard.Size = UDim2.new(0, 6, 0, 6)
-    dotBillboard.StudsOffset = Vector3.new(0, 0.5, 0)
+    dotBillboard.Size = UDim2.new(0, 10, 0, 10)
+    dotBillboard.StudsOffset = Vector3.new(0, 0, 0)
     dotBillboard.AlwaysOnTop = true
     dotBillboard.Enabled = false
 
+    local dotOuter = Instance.new("Frame", dotBillboard)
+    dotOuter.Size = UDim2.new(1, 0, 1, 0)
+    dotOuter.BackgroundTransparency = 1
+    local dotStroke = Instance.new("UIStroke", dotOuter)
+    dotStroke.Color = Color3.fromRGB(0, 0, 0)
+    dotStroke.Thickness = 1.2
+    Instance.new("UICorner", dotOuter).CornerRadius = UDim.new(1, 0)
+
     local dotFrame = Instance.new("Frame", dotBillboard)
-    dotFrame.Size = UDim2.new(1, 0, 1, 0)
+    dotFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+    dotFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+    dotFrame.Size = UDim2.new(0, 6, 0, 6)
     dotFrame.BackgroundColor3 = currentTheme.T_Accent
     dotFrame.BorderSizePixel = 0
     Instance.new("UICorner", dotFrame).CornerRadius = UDim.new(1, 0)
+
+    local dotInner = Instance.new("Frame", dotFrame)
+    dotInner.AnchorPoint = Vector2.new(0.5, 0.5)
+    dotInner.Position = UDim2.new(0.5, 0, 0.5, 0)
+    dotInner.Size = UDim2.new(0, 2, 0, 2)
+    dotInner.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    dotInner.BorderSizePixel = 0
+    Instance.new("UICorner", dotInner).CornerRadius = UDim.new(1, 0)
 
     local tracerLine = Instance.new("Frame", mainContainer)
     tracerLine.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -1239,6 +1399,7 @@ local function attachEspToPlayer(plr)
         Holder = holder,
         HeadDot = dotBillboard,
         DotFrame = dotFrame,
+        DotStroke = dotStroke,
         Tracer = tracerLine,
         Highlight = hl
     }
@@ -1330,8 +1491,8 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
 
         if char and isEnemy and isAlive and (dist <= espMaxDist) then
             local side = getPlayerSide(plr)
-            local activeAccent = (side == "T") and currentTheme.T_Accent or currentTheme.CT_Accent
-            local activeHighlight = (side == "T") and currentTheme.T_Fill or currentTheme.CT_Fill
+            local activeAccent = (side == "CT") and currentTheme.CT_Accent or currentTheme.T_Accent
+            local activeHighlight = (side == "CT") and currentTheme.CT_Fill or currentTheme.T_Fill
 
             if data.Highlight.Adornee ~= char then
                 data.Highlight.Adornee = char
@@ -1370,6 +1531,12 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
             data.HeadDot.Enabled = false
             data.Highlight.Enabled = false
             data.Tracer.Visible = false
+            if data.Highlight.Adornee then
+                data.Highlight.Adornee = nil
+            end
+            if data.HeadDot.Adornee then
+                data.HeadDot.Adornee = nil
+            end
         end
     end
 
@@ -1378,10 +1545,12 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         Lighting.ClockTime = 14
         Lighting.GlobalShadows = false
     elseif nightModeEnabled then
-        Lighting.Brightness = nightBrightness
-        Lighting.ClockTime = nightClockTime
+        local cfg = nightPresets[nightPreset] or nightPresets["Midnight"]
+        Lighting.Brightness = nightBrightness or cfg.Brightness
+        Lighting.ClockTime = nightClockTime or cfg.ClockTime
         Lighting.GlobalShadows = true
-        Lighting.OutdoorAmbient = nightOutdoorAmbient
+        Lighting.OutdoorAmbient = nightOutdoorAmbient or cfg.OutdoorAmbient
+        Lighting.Ambient = cfg.Ambient
     end
 
     if removeFogEnabled then
@@ -1421,9 +1590,6 @@ local function isPlayerGrounded(char, hrp)
     return hit ~= nil
 end
 
--- ==========================================
--- MOBILE BHOP ENGINE (TOUCH-HOOK & JUMP BYPASS)
--- ==========================================
 local function hookMobileJumpButton()
     task.spawn(function()
         local pGui = player:WaitForChild("PlayerGui", 5)
@@ -1658,9 +1824,6 @@ local setsBtn = createNavBtn(142, "SETTINGS")
 cBtn.BackgroundColor3 = currentTheme.CardBg
 cBtn.TextColor3 = currentTheme.Accent
 
--- ==========================================
--- DYNAMIC SCROLL CONTAINER & CATEGORY MAKER
--- ==========================================
 local function makePageContainer()
     local c = Instance.new("ScrollingFrame", mainFrame)
     c.Size = UDim2.new(1, -82, 1, -12)
@@ -1914,6 +2077,53 @@ local function addInspectorToggle(y, txt, default, onToggle)
     bindTouch(btn, executeToggle)
 end
 
+local function addInspectorChoice(y, txt, choices, currentChoice, onSelect)
+    local lbl = Instance.new("TextLabel", insContent)
+    lbl.Size = UDim2.new(0.86, 0, 0, 12)
+    lbl.Position = UDim2.new(0.07, 0, 0, y)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = txt .. ":"
+    lbl.TextColor3 = currentTheme.TextSecondary
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.TextSize = 8.5
+    lbl.Font = Enum.Font.GothamBold
+    lbl.ZIndex = 7
+
+    local container = Instance.new("Frame", insContent)
+    container.Size = UDim2.new(0.86, 0, 0, 22)
+    container.Position = UDim2.new(0.07, 0, 0, y + 14)
+    container.BackgroundTransparency = 1
+    container.ZIndex = 7
+
+    local layout = Instance.new("UIListLayout", container)
+    layout.FillDirection = Enum.FillDirection.Horizontal
+    layout.Padding = UDim.new(0, 4)
+
+    for _, choiceName in ipairs(choices) do
+        local choiceBtn = Instance.new("TextButton", container)
+        choiceBtn.Size = UDim2.new(0, 48, 1, 0)
+        choiceBtn.BackgroundColor3 = (choiceName == currentChoice) and currentTheme.Accent or currentTheme.CardBg
+        choiceBtn.Text = choiceName
+        choiceBtn.TextColor3 = (choiceName == currentChoice) and Color3.fromRGB(255, 255, 255) or currentTheme.TextSecondary
+        choiceBtn.TextSize = 7.5
+        choiceBtn.Font = Enum.Font.GothamBold
+        choiceBtn.ZIndex = 8
+        Instance.new("UICorner", choiceBtn).CornerRadius = UDim.new(0, 4)
+
+        bindTouch(choiceBtn, function()
+            for _, child in ipairs(container:GetChildren()) do
+                if child:IsA("TextButton") then
+                    child.BackgroundColor3 = currentTheme.CardBg
+                    child.TextColor3 = currentTheme.TextSecondary
+                end
+            end
+            choiceBtn.BackgroundColor3 = currentTheme.Accent
+            choiceBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            onSelect(choiceName)
+        end)
+    end
+end
+
 local function openInspectorFor(moduleName)
     insHeader.Text = moduleName
     for _, child in pairs(insContent:GetChildren()) do child:Destroy() end
@@ -1935,15 +2145,17 @@ local function openInspectorFor(moduleName)
             spinSpeed = v 
         end)
     elseif moduleName == "Jump Circle" then
-        insContent.CanvasSize = UDim2.new(0, 0, 0, 180)
-        addInspectorSlider(6, "Radius", 1, 10, jumpCircleRadius, false, function(v)
+        insContent.CanvasSize = UDim2.new(0, 0, 0, 240)
+        addInspectorSlider(6, "Radius", 1.5, 8.0, jumpCircleRadius, true, function(v)
             jumpCircleRadius = v
+            if player.Character then initJumpCircleForCharacter(player.Character) end
         end)
-        addInspectorSlider(38, "Segments", 8, 48, jumpCircleSegmentCount, false, function(v)
+        addInspectorSlider(38, "Segments", 12, 48, jumpCircleSegmentCount, false, function(v)
             jumpCircleSegmentCount = v
+            if player.Character then initJumpCircleForCharacter(player.Character) end
         end)
-        addInspectorToggle(80, "Style Wave", jumpCircleStyle == "GradientWave", function(v)
-            jumpCircleStyle = v and "GradientWave" or "FadeExpand"
+        addInspectorChoice(80, "Style", {"GradientWave", "ChromaPulse", "StaticNeon"}, jumpCircleStyle, function(v)
+            jumpCircleStyle = v
             if player.Character then initJumpCircleForCharacter(player.Character) end
         end)
     elseif moduleName == "Grenade ESP" then
@@ -1973,9 +2185,18 @@ local function openInspectorFor(moduleName)
         addInspectorSlider(38, "Thickness", 1.0, 3.0, boxThickness, true, function(v) boxThickness = v end)
         addInspectorToggle(76, "Corner Box", cornerBoxEnabled, function(v) cornerBoxEnabled = v end)
     elseif moduleName == "Night Mode" then
-        insContent.CanvasSize = UDim2.new(0, 0, 0, 160)
-        addInspectorSlider(6, "Clock Time", 0, 24, nightClockTime, false, function(v) nightClockTime = v end)
-        addInspectorSlider(38, "Brightness", 0.0, 2.0, nightBrightness, true, function(v) nightBrightness = v end)
+        insContent.CanvasSize = UDim2.new(0, 0, 0, 260)
+        addInspectorChoice(6, "Presets", {"Midnight", "DeepBlood", "CyberPurple", "EmeraldNight", "PitchBlack"}, nightPreset, function(selected)
+            applyNightPreset(selected)
+        end)
+        addInspectorSlider(48, "Brightness", 0.0, 2.0, nightBrightness, true, function(v) 
+            nightBrightness = v 
+            if nightModeEnabled then Lighting.Brightness = v end
+        end)
+        addInspectorSlider(80, "Clock Time", 0.0, 24.0, nightClockTime, true, function(v) 
+            nightClockTime = v 
+            if nightModeEnabled then Lighting.ClockTime = v end
+        end)
     elseif moduleName == "RCS" then
         insContent.CanvasSize = UDim2.new(0, 0, 0, 240)
         addInspectorSlider(6, "RCS Strength", 10, 100, rcsStrength, false, function(v) rcsStrength = v end)
@@ -2044,14 +2265,19 @@ local function addCard(parent, name, defaultState, onToggle)
         circle.Position = state and UDim2.new(1, -10, 0.5, -4.5) or UDim2.new(0, 2, 0.5, -4.5)
         onToggle(state)
         
-        if name == "Night Mode" and not state and not fullBrightEnabled then
-            pcall(function()
-                Lighting.Brightness = defaultLighting.Brightness
-                Lighting.ClockTime = defaultLighting.ClockTime
-                Lighting.GlobalShadows = defaultLighting.GlobalShadows
-                Lighting.Ambient = defaultLighting.Ambient
-                Lighting.OutdoorAmbient = defaultLighting.OutdoorAmbient
-            end)
+        if name == "Night Mode" then
+            if state then
+                applyNightPreset(nightPreset)
+            else
+                pcall(function()
+                    Lighting.Brightness = defaultLighting.Brightness
+                    Lighting.ClockTime = defaultLighting.ClockTime
+                    Lighting.GlobalShadows = defaultLighting.GlobalShadows
+                    Lighting.Ambient = defaultLighting.Ambient
+                    Lighting.OutdoorAmbient = defaultLighting.OutdoorAmbient
+                    Lighting.FogColor = defaultLighting.FogColor
+                end)
+            end
         elseif name == "FullBright" and not state and not nightModeEnabled then
             pcall(function()
                 Lighting.Brightness = defaultLighting.Brightness
