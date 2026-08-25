@@ -1,6 +1,6 @@
 -- ==============================================================================
 -- [Gestio UI - Blox Strike Ultimate Mobile Engine (Full Suite 2400+ Lines)]
--- Version: 5.5.0 Enterprise Full Source Edition (World Changer Integrated)
+-- Version: 5.6.0 Enterprise Injection-Safe Edition (Crash & Injection Fix)
 -- Target Game: Blox Strike (Roblox)
 -- ==============================================================================
 
@@ -11,7 +11,7 @@ pcall(function()
 end)
 
 -- ==========================================
--- SYSTEM SERVICES IMPORT
+-- SAFE SYSTEM SERVICES IMPORT
 -- ==========================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -29,13 +29,22 @@ local HttpService = game:GetService("HttpService")
 -- ==========================================
 -- CLIENT ENVIRONMENT VALIDATION
 -- ==========================================
-local player = Players.LocalPlayer or Players:GetPlayers()[1]
-if not player then
-    player = Players.PlayerAdded:Wait()
+local player = Players.LocalPlayer
+while not player do
+    task.wait(0.1)
+    player = Players.LocalPlayer or Players:GetPlayers()[1]
 end
 
-local camera = Workspace.CurrentCamera or Workspace:FindFirstChildOfClass("Camera")
-local defaultCameraFOV = camera and camera.FieldOfView or 70
+local camera = Workspace.CurrentCamera
+while not camera do
+    task.wait(0.1)
+    camera = Workspace.CurrentCamera or Workspace:FindFirstChildOfClass("Camera")
+end
+
+local defaultCameraFOV = 70
+pcall(function()
+    defaultCameraFOV = camera.FieldOfView
+end)
 
 local function getSafeGui()
     local success, result = pcall(function()
@@ -50,7 +59,8 @@ local function getSafeGui()
     end)
     if success and result then return result end
     
-    return player:WaitForChild("PlayerGui", 2) or player.PlayerGui
+    local pGui = player:FindFirstChild("PlayerGui") or player:WaitForChild("PlayerGui", 5)
+    return pGui or CoreGui
 end
 
 local targetGui = getSafeGui()
@@ -281,34 +291,57 @@ local fullBrightEnabled = false
 local removeFogEnabled = true
 
 local defaultLighting = {
-    Brightness = Lighting.Brightness,
-    ClockTime = Lighting.ClockTime,
-    GlobalShadows = Lighting.GlobalShadows,
-    Ambient = Lighting.Ambient,
-    OutdoorAmbient = Lighting.OutdoorAmbient,
-    ColorShift_Top = Lighting.ColorShift_Top,
-    ColorShift_Bottom = Lighting.ColorShift_Bottom,
-    FogStart = Lighting.FogStart,
-    FogEnd = Lighting.FogEnd,
-    FogColor = Lighting.FogColor,
-    ExposureCompensation = Lighting.ExposureCompensation
+    Brightness = 2,
+    ClockTime = 14,
+    GlobalShadows = true,
+    Ambient = Color3.fromRGB(128, 128, 128),
+    OutdoorAmbient = Color3.fromRGB(128, 128, 128),
+    ColorShift_Top = Color3.fromRGB(0, 0, 0),
+    ColorShift_Bottom = Color3.fromRGB(0, 0, 0),
+    FogStart = 0,
+    FogEnd = 100000,
+    FogColor = Color3.fromRGB(192, 192, 192),
+    ExposureCompensation = 0
 }
 
-local customAtmosphere = Lighting:FindFirstChild("GestioWorldAtmosphere")
-if not customAtmosphere then
-    customAtmosphere = Instance.new("Atmosphere")
-    customAtmosphere.Name = "GestioWorldAtmosphere"
-    customAtmosphere.Parent = Lighting
-end
+pcall(function()
+    defaultLighting.Brightness = Lighting.Brightness
+    defaultLighting.ClockTime = Lighting.ClockTime
+    defaultLighting.GlobalShadows = Lighting.GlobalShadows
+    defaultLighting.Ambient = Lighting.Ambient
+    defaultLighting.OutdoorAmbient = Lighting.OutdoorAmbient
+    defaultLighting.ColorShift_Top = Lighting.ColorShift_Top
+    defaultLighting.ColorShift_Bottom = Lighting.ColorShift_Bottom
+    defaultLighting.FogStart = Lighting.FogStart
+    defaultLighting.FogEnd = Lighting.FogEnd
+    defaultLighting.FogColor = Lighting.FogColor
+    defaultLighting.ExposureCompensation = Lighting.ExposureCompensation
+end)
 
 local defaultAtmosphere = {
-    Density = customAtmosphere.Density,
-    Offset = customAtmosphere.Offset,
-    Color = customAtmosphere.Color,
-    Decay = customAtmosphere.Decay,
-    Glare = customAtmosphere.Glare,
-    Haze = customAtmosphere.Haze
+    Density = 0.3,
+    Offset = 0.25,
+    Color = Color3.fromRGB(199, 199, 199),
+    Decay = Color3.fromRGB(106, 112, 125),
+    Glare = 0,
+    Haze = 0
 }
+
+local customAtmosphere = nil
+local function getOrCreateAtmosphere()
+    if customAtmosphere and customAtmosphere.Parent then return customAtmosphere end
+    pcall(function()
+        local existing = Lighting:FindFirstChild("GestioWorldAtmosphere") or Lighting:FindFirstChildOfClass("Atmosphere")
+        if existing and existing.Name == "GestioWorldAtmosphere" then
+            customAtmosphere = existing
+        else
+            customAtmosphere = Instance.new("Atmosphere")
+            customAtmosphere.Name = "GestioWorldAtmosphere"
+            customAtmosphere.Parent = Lighting
+        end
+    end)
+    return customAtmosphere
+end
 
 local worldModes = {
     Default = {
@@ -438,23 +471,26 @@ local function applyWorldMode(modeName)
     worldChangerPreset = modeName
 
     if worldChangerEnabled then
-        Lighting.Brightness = mode.Brightness
-        Lighting.ClockTime = mode.ClockTime
-        Lighting.Ambient = mode.Ambient
-        Lighting.OutdoorAmbient = mode.OutdoorAmbient
-        Lighting.ColorShift_Top = mode.ColorShift_Top
-        Lighting.ColorShift_Bottom = mode.ColorShift_Bottom
-        Lighting.ExposureCompensation = mode.Exposure
+        pcall(function()
+            Lighting.Brightness = mode.Brightness
+            Lighting.ClockTime = mode.ClockTime
+            Lighting.Ambient = mode.Ambient
+            Lighting.OutdoorAmbient = mode.OutdoorAmbient
+            Lighting.ColorShift_Top = mode.ColorShift_Top
+            Lighting.ColorShift_Bottom = mode.ColorShift_Bottom
+            Lighting.ExposureCompensation = mode.Exposure
 
-        if customAtmosphere then
-            local a = mode.Atmosphere
-            customAtmosphere.Density = a.Density
-            customAtmosphere.Offset = a.Offset
-            customAtmosphere.Color = a.Color
-            customAtmosphere.Decay = a.Decay
-            customAtmosphere.Glare = a.Glare
-            customAtmosphere.Haze = a.Haze
-        end
+            local atmo = getOrCreateAtmosphere()
+            if atmo then
+                local a = mode.Atmosphere
+                atmo.Density = a.Density
+                atmo.Offset = a.Offset
+                atmo.Color = a.Color
+                atmo.Decay = a.Decay
+                atmo.Glare = a.Glare
+                atmo.Haze = a.Haze
+            end
+        end)
     end
 end
 
@@ -580,7 +616,7 @@ local function restoreLightingState()
         Lighting.FogColor = defaultLighting.FogColor
         Lighting.ExposureCompensation = defaultLighting.ExposureCompensation
 
-        if customAtmosphere then
+        if customAtmosphere and customAtmosphere.Parent then
             customAtmosphere.Density = defaultAtmosphere.Density
             customAtmosphere.Offset = defaultAtmosphere.Offset
             customAtmosphere.Color = defaultAtmosphere.Color
@@ -724,11 +760,15 @@ local function createDangerIndicator(object)
 end
 
 local function scanGrenadeObjects()
-    for _, object in ipairs(Workspace:GetDescendants()) do
-        if getDangerGrenadeType(object) then
-            createDangerIndicator(object)
-        end
-    end
+    task.spawn(function()
+        pcall(function()
+            for _, object in ipairs(Workspace:GetDescendants()) do
+                if getDangerGrenadeType(object) then
+                    createDangerIndicator(object)
+                end
+            end
+        end)
+    end)
 end
 
 -- ==========================================
@@ -1102,12 +1142,14 @@ end
 -- HOOK DESCENDANTS FOR DANGER ESP
 -- ==========================================
 table.insert(connections, Workspace.DescendantAdded:Connect(function(object)
-    task.wait()
-    createDangerIndicator(object)
+    task.spawn(function()
+        task.wait(0.05)
+        pcall(function() createDangerIndicator(object) end)
+    end)
 end))
 
 table.insert(connections, Workspace.DescendantRemoving:Connect(function(object)
-    removeDangerIndicator(object)
+    pcall(function() removeDangerIndicator(object) end)
 end))
 
 scanGrenadeObjects()
