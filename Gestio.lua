@@ -1,4 +1,4 @@
--- [Gestio UI - Blox Strike Ultimate Mobile Engine (Full Suite + Anti-Aim + JumpCircle)]
+-- [Gestio UI - Blox Strike Ultimate Mobile Engine (Full Suite + Anti-Aim & JumpCircle Fix)]
 pcall(function()
     if getgenv and getgenv().GestioRunning then
         getgenv().GestioRunning()
@@ -123,12 +123,12 @@ local aimSensitivity = 1.0
 local lockOnJump = true
 
 local antiAimEnabled = false
-local antiAimMode = "Spinbot"
-local spinSpeed = 35
+local spinSpeed = 50
+local currentSpinAngle = 0
 
--- JumpCircle Configuration
+-- JumpCircle Configuration Fix
 local jumpCircleEnabled = false
-local jumpCircleStyle = "GradientWave" -- "GradientWave" | "FadeExpand" | "ChromaPulse" | "NeonParticleRing"
+local jumpCircleStyle = "GradientWave"
 local jumpCircleSegmentCount = 24
 local jumpCircleRadius = 3
 local jumpCircleHeightOffset = -0.05
@@ -203,10 +203,10 @@ local grenadePool = {}
 local function clearActiveJumpCircle()
     if not activeJumpCircleData then return end
     for _, conn in ipairs(activeJumpCircleData.Connections) do
-        conn:Disconnect()
+        pcall(function() conn:Disconnect() end)
     end
     if activeJumpCircleData.Container then
-        activeJumpCircleData.Container:Destroy()
+        pcall(function() activeJumpCircleData.Container:Destroy() end)
     end
     activeJumpCircleData = nil
 end
@@ -247,7 +247,7 @@ local function cleanup()
     pcall(function() if targetGui:FindFirstChild("GestioScreenGui") then targetGui.GestioScreenGui:Destroy() end end)
     pcall(function() if targetGui:FindFirstChild("GestioToggleGui") then targetGui.GestioToggleGui:Destroy() end end)
     pcall(function() if targetGui:FindFirstChild("GestioFovGui") then targetGui.GestioFovGui:Destroy() end end)
-    pcall(function() if targetGui:FindFirstChild("GestioWatermarkGui") then targetGui.GestioWatermarkGui:Destroy() end end)
+    pcall(function() if targetGui:FindFirstChild("GestioWatermarkGui") then targetGui.WatermarkGui:Destroy() end end)
     pcall(function() if targetGui:FindFirstChild("GestioMainContainer") then targetGui.GestioMainContainer:Destroy() end end)
 end
 
@@ -441,7 +441,7 @@ local function isEntityAlive(char, hum)
 end
 
 -- ==========================================
--- JUMP CIRCLE SUB-ENGINE
+-- JUMP CIRCLE SUB-ENGINE (FIXED)
 -- ==========================================
 local function buildJumpRing(segmentCount, radius, segSize)
     local container = Instance.new("Model")
@@ -577,7 +577,12 @@ local function initJumpCircleForCharacter(character)
     local startTime = os.clock()
 
     local heartbeatConn = RunService.Heartbeat:Connect(function(dt)
-        if not hrp.Parent or not jumpCircleEnabled then return end
+        if not hrp.Parent or not jumpCircleEnabled then 
+            container.Parent = nil
+            return 
+        else
+            container.Parent = jumpCircleContainer
+        end
         local elapsed = os.clock() - startTime
 
         local centerCFrame = CFrame.new(hrp.Position + Vector3.new(0, jumpCircleHeightOffset - hrp.Size.Y / 2, 0))
@@ -591,6 +596,7 @@ local function initJumpCircleForCharacter(character)
             for i, seg in ipairs(segments) do
                 local t = ((i - 1) / n + spinOffset / (math.pi * 2)) % 1
                 seg.Part.Color = col1:Lerp(col2, (math.sin(t * math.pi * 2) + 1) / 2)
+                seg.Part.Transparency = 0
             end
         elseif jumpCircleStyle == "ChromaPulse" then
             local velocity = hrp.AssemblyLinearVelocity
@@ -625,6 +631,12 @@ end
 
 table.insert(connections, player.CharacterAdded:Connect(initJumpCircleForCharacter))
 table.insert(connections, player.CharacterRemoving:Connect(clearActiveJumpCircle))
+
+if player.Character then
+    task.spawn(function()
+        initJumpCircleForCharacter(player.Character)
+    end)
+end
 
 -- ==========================================
 -- GRENADE TRAJECTORY & HOLLOW RADIUS ENGINE
@@ -1294,7 +1306,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     end
 end))
 
-table.insert(connections, RunService.Heartbeat:Connect(function(dt)
+table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     if not antiAimEnabled then return end
     
     local char = player.Character
@@ -1303,26 +1315,8 @@ table.insert(connections, RunService.Heartbeat:Connect(function(dt)
     
     if not hrp or not hum or hum.Health <= 0 then return end
     
-    local currentCamCFrame = camera.CFrame
-    
-    if antiAimMode == "Spinbot" then
-        local currentAngle = math.atan2(hrp.CFrame.LookVector.Z, hrp.CFrame.LookVector.X)
-        local newAngle = currentAngle + math.rad(spinSpeed)
-        hrp.CFrame = CFrame.new(hrp.Position) * CFrame.Angles(0, newAngle, 0)
-        
-    elseif antiAimMode == "Jitter" then
-        local randomOffset = math.random(-90, 90)
-        local camLook = currentCamCFrame.LookVector
-        local baseAngle = math.atan2(camLook.Z, camLook.X)
-        hrp.CFrame = CFrame.new(hrp.Position) * CFrame.Angles(0, baseAngle + math.rad(randomOffset), 0)
-        
-    elseif antiAimMode == "Backwards" then
-        local camLook = currentCamCFrame.LookVector
-        local backAngle = math.atan2(-camLook.Z, -camLook.X)
-        hrp.CFrame = CFrame.new(hrp.Position) * CFrame.Angles(0, backAngle, 0)
-    end
-    
-    camera.CFrame = currentCamCFrame
+    currentSpinAngle = (currentSpinAngle + (spinSpeed * dt * 60)) % 360
+    hrp.CFrame = CFrame.new(hrp.Position) * CFrame.Angles(0, math.rad(currentSpinAngle), 0)
 end))
 
 local groundRayParams = RaycastParams.new()
@@ -1720,12 +1714,9 @@ local function openInspectorFor(moduleName)
         addInspectorToggle(218, "Show FOV Circle", showFovCircle, function(v) showFovCircle = v end)
         addInspectorToggle(244, "Visibility Check", visibleCheck, function(v) visibleCheck = v end)
     elseif moduleName == "Anti-Aim" then
-        insContent.CanvasSize = UDim2.new(0, 0, 0, 180)
-        addInspectorSlider(6, "Spin Speed", 10, 90, spinSpeed, false, function(v) 
+        insContent.CanvasSize = UDim2.new(0, 0, 0, 100)
+        addInspectorSlider(6, "Spin Speed", 10, 150, spinSpeed, false, function(v) 
             spinSpeed = v 
-        end)
-        addInspectorToggle(48, "Jitter Mode", antiAimMode == "Jitter", function(v)
-            antiAimMode = v and "Jitter" or "Spinbot"
         end)
     elseif moduleName == "Jump Circle" then
         insContent.CanvasSize = UDim2.new(0, 0, 0, 180)
