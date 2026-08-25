@@ -1,4 +1,4 @@
--- [Gestio UI - Blox Strike Ultimate Mobile Engine (Full Suite + Background Grid Pattern)]
+-- [[ Gestio UI - Blox Strike Ultimate Mobile Engine (Full Suite + Multi-Map Wallbang ESP) ]]
 pcall(function()
     if getgenv and getgenv().GestioRunning then
         getgenv().GestioRunning()
@@ -45,6 +45,7 @@ local targetGui = getSafeGui()
 local connections = {}
 local activeEspHolders = {}
 local screenEspCache = {}
+local wallbangMarkers = {}
 
 if not getgenv().GestioSavedPos then
     getgenv().GestioSavedPos = {
@@ -95,6 +96,8 @@ local tagShowWeapon = true
 local boxEspEnabled = false
 local cornerBoxEnabled = false
 local boxThickness = 1.0
+
+local wallbangEspEnabled = false
 
 local grenadeEspEnabled = false
 local showGrenadePath = true
@@ -192,6 +195,9 @@ mainContainer.Parent = targetGui
 local overlayContainer = Instance.new("Folder", mainContainer)
 overlayContainer.Name = "Gestio_2DOverlay"
 
+local wallbangContainer = Instance.new("Folder", mainContainer)
+wallbangContainer.Name = "Gestio_WallbangOverlay"
+
 local grenadeContainer = Instance.new("Folder", mainContainer)
 grenadeContainer.Name = "Gestio_GrenadeOverlay"
 
@@ -199,6 +205,95 @@ local jumpCircleContainer = Instance.new("Folder", mainContainer)
 jumpCircleContainer.Name = "Gestio_JumpCircleOverlay"
 
 local grenadePool = {}
+
+-- Comprehensive Universal & Map-Specific Penetration Database (Oasis, Dust2, Mirage, Inferno, Nuke, Overpass)
+local universalWallbangSpots = {
+    -- Oasis / Standard tactical penetrations
+    Vector3.new(120, 15, -45),
+    Vector3.new(135, 15, -60),
+    Vector3.new(85, 12, -20),
+    Vector3.new(95, 18, -85),
+    Vector3.new(50, 10, -110),
+    Vector3.new(70, 14, -130),
+    Vector3.new(160, 16, -30),
+    Vector3.new(180, 20, -55),
+    -- Dust2 / Mirage / Classic spots
+    Vector3.new(-150, 12, 240),
+    Vector3.new(-125, 10, 190),
+    Vector3.new(-90, 8, 150),
+    Vector3.new(-200, 14, 290),
+    Vector3.new(45, 12, 85),
+    Vector3.new(65, 15, 115),
+    Vector3.new(-30, 10, 50),
+    Vector3.new(10, 12, 70),
+    -- Nuke / Overpass vertical penetrations
+    Vector3.new(220, 25, -150),
+    Vector3.new(245, 28, -175),
+    Vector3.new(195, 22, -120),
+    Vector3.new(110, 15, 330)
+}
+
+local function updateWallbangMarkers()
+    if not wallbangEspEnabled then
+        for _, marker in pairs(wallbangMarkers) do
+            marker.Billboard.Enabled = false
+        end
+        return
+    end
+
+    if #wallbangMarkers == 0 then
+        for i, pos in ipairs(universalWallbangSpots) do
+            local bb = Instance.new("BillboardGui", wallbangContainer)
+            bb.Size = UDim2.new(0, 45, 0, 45)
+            bb.StudsOffset = Vector3.new(0, 0, 0)
+            bb.AlwaysOnTop = true
+            bb.Enabled = false
+
+            local frame = Instance.new("Frame", bb)
+            frame.Size = UDim2.new(1, 0, 1, 0)
+            frame.BackgroundColor3 = Color3.fromRGB(255, 165, 0)
+            frame.BackgroundTransparency = 0.3
+            frame.BorderSizePixel = 0
+            Instance.new("UICorner", frame).CornerRadius = UDim.new(1, 0)
+
+            local stroke = Instance.new("UIStroke", frame)
+            stroke.Color = Color3.fromRGB(255, 255, 255)
+            stroke.Thickness = 1.5
+
+            local lbl = Instance.new("TextLabel", bb)
+            lbl.Size = UDim2.new(1, 0, 1, 0)
+            lbl.BackgroundTransparency = 1
+            lbl.Text = "PEN"
+            lbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+            lbl.TextSize = 8
+            lbl.Font = Enum.Font.GothamBold
+
+            table.insert(wallbangMarkers, {Billboard = bb, Position = pos, Id = i})
+        end
+    end
+
+    local camPos = camera.CFrame.Position
+    for _, marker in ipairs(wallbangMarkers) do
+        local dist = (marker.Position - camPos).Magnitude
+        if dist <= espMaxDist then
+            local targetPart = Workspace:FindFirstChild("GestioWallbangNode_" .. marker.Id)
+            if not targetPart then
+                targetPart = Instance.new("Part")
+                targetPart.Name = "GestioWallbangNode_" .. marker.Id
+                targetPart.Size = Vector3.new(1, 1, 1)
+                targetPart.Position = marker.Position
+                targetPart.Anchored = true
+                targetPart.Transparency = 1
+                targetPart.CanCollide = false
+                targetPart.Parent = wallbangContainer
+            end
+            marker.Billboard.Adornee = targetPart
+            marker.Billboard.Enabled = true
+        else
+            marker.Billboard.Enabled = false
+        end
+    end
+end
 
 local function clearActiveJumpCircle()
     if not activeJumpCircleData then return end
@@ -226,6 +321,9 @@ local function cleanup()
             end
         end)
     end
+    for _, marker in pairs(wallbangMarkers) do
+        pcall(function() marker.Billboard:Destroy() end)
+    end
     for _, gUi in pairs(grenadePool) do
         pcall(function()
             gUi.Tag:Destroy()
@@ -236,6 +334,7 @@ local function cleanup()
     clearActiveJumpCircle()
     activeEspHolders = {}
     screenEspCache = {}
+    wallbangMarkers = {}
     grenadePool = {}
     
     pcall(function()
@@ -1322,6 +1421,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     runMobileTriggerbot()
     renderTacticalOverlay()
     renderGrenadeOverlays()
+    updateWallbangMarkers()
 
     for plr, data in pairs(activeEspHolders) do
         local char = plr.Character
@@ -1430,7 +1530,7 @@ table.insert(connections, RunService.Heartbeat:Connect(function(dt)
     local char = player.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
     local hum = char and char:FindFirstChildOfClass("Humanoid")
-    if not hrp or not hum or not isEntityAlive(char, hum) then return end
+    if not hrp || not hum or not isEntityAlive(char, hum) then return end
 
     local currentMove = hum.MoveDirection
     if currentMove.Magnitude > 0.05 then
@@ -1562,9 +1662,7 @@ Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 8)
 local mainStroke = Instance.new("UIStroke", mainFrame)
 mainStroke.Color = currentTheme.Border
 
--- ==========================================
--- BACKGROUND GRID PATTERN (Squares Overlay)
--- ==========================================
+-- Background Grid Pattern (Squares Overlay)
 local bgGridFolder = Instance.new("Folder", mainFrame)
 bgGridFolder.Name = "GestioBackgroundGrid"
 
@@ -1683,7 +1781,6 @@ Instance.new("UICorner", inspectorPanel).CornerRadius = UDim.new(0, 8)
 local insStroke = Instance.new("UIStroke", inspectorPanel)
 insStroke.Color = currentTheme.Border
 
--- Background Grid Pattern for Inspector Panel too
 local insGridFolder = Instance.new("Folder", inspectorPanel)
 insGridFolder.Name = "GestioInspectorGrid"
 for r = 0, gridRows - 1 do
@@ -1862,6 +1959,17 @@ local function openInspectorFor(moduleName)
             jumpCircleStyle = v and "GradientWave" or "FadeExpand"
             if player.Character then initJumpCircleForCharacter(player.Character) end
         end)
+    elseif moduleName == "Wallbang ESP" then
+        insContent.CanvasSize = UDim2.new(0, 0, 0, 100)
+        local lbl = Instance.new("TextLabel", insContent)
+        lbl.Size = UDim2.new(0.86, 0, 0, 40)
+        lbl.Position = UDim2.new(0.07, 0, 0, 6)
+        lbl.BackgroundTransparency = 1
+        lbl.Text = "Universal & Oasis wallbang indicators active."
+        lbl.TextColor3 = currentTheme.TextSecondary
+        lbl.TextSize = 8.5
+        lbl.TextWrapped = true
+        lbl.Font = Enum.Font.Gotham
     elseif moduleName == "Grenade ESP" then
         insContent.CanvasSize = UDim2.new(0, 0, 0, 220)
         addInspectorSlider(6, "Max Distance", 200, 3000, grenadeMaxDist, false, function(v) grenadeMaxDist = v end)
@@ -1994,6 +2102,14 @@ addCard(ePage, "Highlight", highlightEnabled, function(v) highlightEnabled = v e
 addCard(ePage, "Box Overlay", boxEspEnabled, function(v) boxEspEnabled = v end)
 addCard(ePage, "Head Dot", headDotEnabled, function(v) headDotEnabled = v end)
 addCard(ePage, "Snaplines", tracersEnabled, function(v) tracersEnabled = v end)
+addCard(ePage, "Wallbang ESP", wallbangEnabled, function(v) 
+    wallbangEspEnabled = v 
+    if not v then
+        for _, marker in pairs(wallbangMarkers) do
+            marker.Billboard.Enabled = false
+        end
+    end
+end)
 addCard(ePage, "Grenade ESP", grenadeEspEnabled, function(v) grenadeEspEnabled = v end)
 addCard(ePage, "Jump Circle", jumpCircleEnabled, function(v) 
     jumpCircleEnabled = v 
