@@ -19,12 +19,11 @@ local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
 local Lighting = game:GetService("Lighting")
 local Workspace = game:GetService("Workspace")
-local VirtualUser = game:GetService("VirtualUser")
-local VirtualInputManager = game:GetService("VirtualInputManager")
 local Stats = game:GetService("Stats")
-local Debris = game:GetService("Debris")
-local TweenService = game:GetService("TweenService")
-local HttpService = game:GetService("HttpService")
+local VirtualInputManager = nil
+pcall(function()
+    VirtualInputManager = game:GetService("VirtualInputManager")
+end)
 
 -- ==========================================
 -- CLIENT ENVIRONMENT VALIDATION
@@ -56,10 +55,20 @@ local function getSafeGui()
     end)
     if success and result then return result end
     
-    return player:WaitForChild("PlayerGui", 2) or player.PlayerGui
+    if player then
+        return player:WaitForChild("PlayerGui", 5) or player:FindFirstChildOfClass("PlayerGui")
+    end
+    return nil
 end
 
 local targetGui = getSafeGui()
+if not targetGui and player then
+    pcall(function() targetGui = player:WaitForChild("PlayerGui", 5) end)
+end
+if not targetGui then
+    warn("[Gestio] GUI initialization failed: no valid GUI parent")
+    return
+end
 local connections = {}
 local activeEspHolders = {}
 local screenEspCache = {}
@@ -1126,9 +1135,9 @@ local function runMobileTriggerbot()
                         if equippedTool then
                             equippedTool:Activate()
                         elseif VirtualInputManager then
-                            VirtualInputManager:SendMouseButtonEvent(vp.X * 0.5, vp.Y * 0.5, 0, true, game, 0)
+                            pcall(function() VirtualInputManager:SendMouseButtonEvent(vp.X * 0.5, vp.Y * 0.5, 0, true, game, 0) end)
                             task.wait(0.01)
-                            VirtualInputManager:SendMouseButtonEvent(vp.X * 0.5, vp.Y * 0.5, 0, false, game, 0)
+                            pcall(function() VirtualInputManager:SendMouseButtonEvent(vp.X * 0.5, vp.Y * 0.5, 0, false, game, 0) end)
                         end
                     end)
                 end
@@ -2675,6 +2684,5 @@ local setsGeneralSection = makeCategorySection(setsPage, "Configuration", 1)
 addCard(setsGeneralSection, "Theme", true, function(v) end)
 
 openInspectorFor("Tracking")
-end
 
 buildGestioUI()
