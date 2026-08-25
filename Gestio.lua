@@ -1,4 +1,4 @@
--- [Gestio UI - Blox Strike Ultimate Mobile Engine (Execution Fix & Injection Patch)]
+-- [Gestio UI - Blox Strike Ultimate Mobile Engine (Full Suite 2000+ Lines Version)]
 pcall(function()
     if getgenv and getgenv().GestioRunning then
         getgenv().GestioRunning()
@@ -22,17 +22,20 @@ end
 
 local camera = Workspace.CurrentCamera or Workspace:FindFirstChildOfClass("Camera")
 
--- Исправленная безопасная функция получения UI контейнера для дельта инжектора
 local function getSafeGui()
-    local gui = nil
-    pcall(function()
-        if CoreGui and not RunService:IsStudio() then
-            gui = CoreGui
+    local success, result = pcall(function()
+        if gethui then
+            return gethui()
         end
     end)
-    if gui then return gui end
+    if success and result then return result end
     
-    return player:FindFirstChildOfClass("PlayerGui") or player.PlayerGui
+    success, result = pcall(function()
+        return CoreGui
+    end)
+    if success and result then return result end
+    
+    return player:WaitForChild("PlayerGui", 2) or player.PlayerGui
 end
 
 local targetGui = getSafeGui()
