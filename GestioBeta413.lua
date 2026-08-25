@@ -204,6 +204,11 @@ local thirdPersonEnabled = false
 local thirdPersonDistance = 12
 local thirdPersonHeight = 1.5
 
+local debugModeEnabled = false
+local debugLog = {}
+local debugMaxEntries = 120
+local debugGui = nil
+
 -- ==========================================
 -- RECOIL CONTROL SYSTEM (RCS) VARIABLES
 -- ==========================================
@@ -529,7 +534,103 @@ local function clearActiveJumpCircle()
     activeJumpCircleData = nil
 end
 
+-- ==========================================
+-- GESTIO DEBUG MODE
+-- ==========================================
+local function debugPush(tag, message)
+    if not debugModeEnabled then return end
+    local entry = string.format("[%s] %s | %s", os.date("%H:%M:%S"), tostring(tag), tostring(message))
+    table.insert(debugLog, entry)
+    while #debugLog > debugMaxEntries do table.remove(debugLog, 1) end
+    print("[GESTIO DEBUG] " .. entry)
+end
+
+local function debugState()
+    local char = player.Character
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    local camera = Workspace.CurrentCamera
+
+    return table.concat({
+        "=== GESTIO 413 DEBUG ===",
+        "Mobile: " .. tostring(UserInputService.TouchEnabled),
+        "Character: " .. tostring(char ~= nil),
+        "Humanoid: " .. tostring(hum ~= nil),
+        "Alive: " .. tostring(char and hum and isEntityAlive(char, hum) or false),
+        "MoveDirection: " .. tostring(hum and hum.MoveDirection or Vector3.zero),
+        "Velocity: " .. tostring(hrp and hrp.AssemblyLinearVelocity or Vector3.zero),
+        "CameraType: " .. tostring(camera and camera.CameraType),
+        "CameraSubject: " .. tostring(camera and camera.CameraSubject),
+        "CameraOffset: " .. tostring(hum and hum.CameraOffset or Vector3.zero),
+        "ThirdPerson: " .. tostring(thirdPersonEnabled),
+        "ThirdDistance: " .. tostring(thirdPersonDistance),
+        "ThirdHeight: " .. tostring(thirdPersonHeight),
+        "Slide: " .. tostring(slideEnabled),
+        "Sliding: " .. tostring(isSliding),
+        "Flight: " .. tostring(flightEnabled),
+        "Speed: " .. tostring(speedEnabled),
+        "Bhop: " .. tostring(bhopEnabled),
+        "Hitmarker: " .. tostring(hitmarkerEnabled),
+        "========================"
+    }, "\n")
+end
+
+local function debugCopy()
+    local report = debugState()
+    if setclipboard then
+        pcall(setclipboard, report)
+    end
+    print(report)
+    debugPush("COPY", "Debug report generated")
+    return report
+end
+
+local function createDebugGui()
+    if debugGui or not mainContainer then return end
+
+    debugGui = Instance.new("TextButton")
+    debugGui.Name = "GestioDebugButton"
+    debugGui.Size = UDim2.new(0, 58, 0, 38)
+    debugGui.Position = UDim2.new(1, -70, 0, 12)
+    debugGui.BackgroundColor3 = currentTheme.CardBg
+    debugGui.BackgroundTransparency = 0.15
+    debugGui.Text = "DEBUG"
+    debugGui.TextSize = 10
+    debugGui.Font = Enum.Font.GothamBold
+    debugGui.TextColor3 = currentTheme.Accent
+    debugGui.ZIndex = 100
+    debugGui.Visible = false
+    debugGui.Parent = mainContainer
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = debugGui
+
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = currentTheme.Border
+    stroke.Thickness = 1
+    stroke.Parent = debugGui
+
+    table.insert(connections, debugGui.Activated:Connect(function()
+        debugCopy()
+    end))
+end
+
+createDebugGui()
+
+table.insert(connections, ScriptContext.Error:Connect(function(message, trace, scriptInstance)
+    if debugModeEnabled then
+        debugPush("ERROR", tostring(message) .. " | Script=" .. tostring(scriptInstance) .. " | " .. tostring(trace))
+    end
+end))
+
 local function cleanup()
+    debugModeEnabled = false
+    debugLog = {}
+    pcall(function()
+        if debugGui then debugGui:Destroy() end
+        debugGui = nil
+    end)
     pcall(function() setThirdPersonEnabled(false) end)
     for _, c in pairs(connections) do 
         pcall(function() c:Disconnect() end) 
@@ -2039,6 +2140,7 @@ createMobileSlideButton()
 hookMobileJumpButton()
 
 table.insert(connections, player.CharacterAdded:Connect(function(char)
+    if debugModeEnabled then debugPush("RESPAWN", "CharacterAdded") end
     thirdPersonPreviousOffset = nil
     task.defer(function()
         if thirdPersonEnabled then
@@ -2980,6 +3082,14 @@ addCard(envLightSection, "Anti-Flash", antiFlashEnabled, function(v) antiFlashEn
 
 -- MISC TAB
 local miscGeneralSection = makeCategorySection(micsPage, "Utilities", 1)
+addCard(miscGeneralSection, "Debug Mode", debugModeEnabled, function(v)
+    debugModeEnabled = v
+    if debugGui then
+        debugGui.Visible = v
+        debugGui.Text = v and "COPY" or "DEBUG"
+    end
+    if v then debugPush("START", "Debug Mode enabled") end
+end)
 addCard(miscGeneralSection, "Third Person", thirdPersonEnabled, function(v)
     setThirdPersonEnabled(v)
 end)
