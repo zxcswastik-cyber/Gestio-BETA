@@ -1482,17 +1482,25 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         camera.CFrame = camera.CFrame * CFrame.Angles(rcsComp * rcsPitchFactor, 0, 0)
     end
 
+    -- [ИЗМЕНЕНО]: Мгновенный снап-аимбот за миллисекунды без плавности и задержек
     if aimbotEnabled and isAiming then
         if not lockedTarget or not isEntityAlive(lockedTarget.Char, lockedTarget.Hum) then
             lockedTarget = getClosestTarget()
-        end
-        if lockedTarget and lockedTarget.Position then
-            local targetLook = CFrame.lookAt(camera.CFrame.Position, lockedTarget.Position)
-            if snapAimMode or aimbotSmoothness <= 0.01 then
-                camera.CFrame = targetLook
-            else
-                camera.CFrame = camera.CFrame:Lerp(targetLook, math.clamp((1 - aimbotSmoothness) * (aimbotSpeed / 10) * (dt * 60) * aimSensitivity, 0.1, 1))
+        else
+            local scrPos, onScreen = camera:WorldToViewportPoint(lockedTarget.Position)
+            local vp = camera.ViewportSize
+            local screenDist = (Vector2.new(scrPos.X, scrPos.Y) - Vector2.new(vp.X * 0.5, vp.Y * 0.5)).Magnitude
+            if not onScreen or screenDist > aimFov then
+                lockedTarget = getClosestTarget()
             end
+        end
+
+        if lockedTarget and lockedTarget.Position then
+            local aimPos = lockedTarget.Position
+            if predictionEnabled and lockedTarget.Part and lockedTarget.Part.AssemblyLinearVelocity then
+                aimPos = aimPos + (lockedTarget.Part.AssemblyLinearVelocity * predictionFactor)
+            end
+            camera.CFrame = CFrame.lookAt(camera.CFrame.Position, aimPos)
         end
     else
         lockedTarget = nil
@@ -1727,7 +1735,7 @@ table.insert(connections, RunService.Heartbeat:Connect(function(dt)
             currentSlideVel = currentSlideVel * slideFriction
             hrp.AssemblyLinearVelocity = Vector3.new(
                 currentSlideVel.X,
-                hrp.AssemblyLinearVelocity.Y,
+                currentSlideVel.Y,
                 currentSlideVel.Z
             )
         else
