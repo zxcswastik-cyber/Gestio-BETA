@@ -1,8 +1,7 @@
 -- ==============================================================================
--- [Gestio UI - Blox Strike Ultimate Mobile Engine (Full Source 2200+ Lines)]
--- Engine: Gestio Tactical Framework v5.1.0 Enterprise Edition
--- Target Platform: Roblox Mobile / Executor Protected Environment
--- Architecture: Full Extended Monolithic Source (Zero-Truncation Pipeline)
+-- [Gestio UI - Blox Strike Ultimate Mobile Engine (Full Suite 2200+ Lines)]
+-- Version: 5.2.0 Enterprise Full Source Edition (Slide Mechanics Engine Integrated)
+-- Target Game: Blox Strike (Roblox)
 -- ==============================================================================
 
 pcall(function()
@@ -81,6 +80,9 @@ local themeLibrary = {
         Enemy_Accent = Color3.fromRGB(235, 75, 75),
         Enemy_Fill = Color3.fromRGB(220, 50, 50),
         NametagTextColor = Color3.fromRGB(255, 255, 255),
+        HealthHigh = Color3.fromRGB(46, 204, 113),
+        HealthMid = Color3.fromRGB(241, 196, 15),
+        HealthLow = Color3.fromRGB(231, 76, 60),
         MolotovColor = Color3.fromRGB(255, 95, 35),
         SmokeColor = Color3.fromRGB(180, 185, 195),
         HEColor = Color3.fromRGB(255, 45, 55)
@@ -99,6 +101,9 @@ local themeLibrary = {
         Enemy_Accent = Color3.fromRGB(255, 0, 128),
         Enemy_Fill = Color3.fromRGB(200, 0, 100),
         NametagTextColor = Color3.fromRGB(255, 255, 255),
+        HealthHigh = Color3.fromRGB(0, 255, 200),
+        HealthMid = Color3.fromRGB(255, 220, 0),
+        HealthLow = Color3.fromRGB(255, 0, 90),
         MolotovColor = Color3.fromRGB(255, 120, 0),
         SmokeColor = Color3.fromRGB(140, 160, 210),
         HEColor = Color3.fromRGB(255, 0, 90)
@@ -117,6 +122,9 @@ local themeLibrary = {
         Enemy_Accent = Color3.fromRGB(235, 75, 75),
         Enemy_Fill = Color3.fromRGB(220, 50, 50),
         NametagTextColor = Color3.fromRGB(255, 255, 255),
+        HealthHigh = Color3.fromRGB(46, 204, 113),
+        HealthMid = Color3.fromRGB(241, 196, 15),
+        HealthLow = Color3.fromRGB(231, 76, 60),
         MolotovColor = Color3.fromRGB(255, 100, 40),
         SmokeColor = Color3.fromRGB(170, 190, 180),
         HEColor = Color3.fromRGB(255, 50, 60)
@@ -128,7 +136,6 @@ local currentTheme = themeLibrary["Charcoal Crimson"]
 -- ==============================================================================
 -- COMPLETE MODULE STATES & MEMORY REGISTERS
 -- ==============================================================================
--- Combat Engine States
 local aimbotEnabled = false
 local aimbotSpeed = 35.0
 local aimbotSmoothness = 0.0
@@ -150,13 +157,11 @@ local visibleCheck = false
 local aimSensitivity = 1.0
 local lockOnJump = true
 
--- Rage / HVH Engine States
 local antiAimEnabled = false
 local spinSpeed = 50
 local currentSpinAngle = 0
 local antiAimYawMode = "Spin"
 
--- Recoil Compensation Engine States
 local rcsEnabled = false
 local rcsStrength = 75
 local rcsPitchFactor = 1.0
@@ -166,14 +171,13 @@ local rcsHorizontalComp = true
 local rcsBurstOnly = false
 local rcsRandomize = true
 
--- Trigger Assistant Engine States
 local triggerbotEnabled = false
 local triggerbotDelay = 0.02
 local triggerbotHeadOnly = false
 local triggerbotMobileAutoFire = true
 local lastTriggerTick = 0
 
--- Movement Engine States
+-- Movement & Slide States
 local bunnyHopEnabled = false
 local bhopAutoJump = false
 local bhopAirStrafe = true
@@ -182,26 +186,34 @@ local bhopJumpPower = 52
 local isMobileJumpHeld = false
 local lastMoveDirection = Vector3.zero
 
+local slideEnabled = false
+local isSliding = false
+local slideSpeedBoost = 1.8
+local slideFriction = 0.94
+local slideMinSpeed = 16
+local currentSlideVel = Vector3.zero
+local defaultHipHeight = 2.0
+
 local speedEnabled = false
 local walkMultiplier = 2.0
-
 local flightEnabled = false
 local flightSpeed = 50
 
--- ESP & Visual Overlay States
+-- Visual & ESP Flags
 local nametagsEnabled = false
 local espMaxDist = 3000
 local espShowDistance = true
 local espShowHealth = true
-local espTextSize = 8
-local tagTransparency = 0.35
-local tagBgColor = Color3.fromRGB(18, 19, 22)
+local espTextSize = 8.5
+local tagTransparency = 0.25
+local tagBgColor = Color3.fromRGB(16, 17, 20)
 local tagOffsetY = 2.6
 local tagShowWeapon = true
 
 local boxEspEnabled = false
 local cornerBoxEnabled = false
 local boxThickness = 1.0
+local healthBarEnabled = true
 
 local highlightEnabled = false
 local headDotEnabled = false
@@ -213,7 +225,6 @@ local showMolotovRadius = true
 local showSmokeRadius = true
 local grenadeMaxDist = 1500
 
--- Jump Circle Engine States
 local jumpCircleEnabled = false
 local jumpCircleStyle = "GradientWave"
 local jumpCircleSegmentCount = 32
@@ -221,7 +232,6 @@ local jumpCircleRadius = 3.5
 local jumpCircleHeightOffset = -2.8
 local activeJumpCircleData = nil
 
--- Environment & Lighting Engine States
 local antiFlashEnabled = true
 local fullBrightEnabled = false
 local removeFogEnabled = true
@@ -363,6 +373,7 @@ local function cleanup()
         pcall(function()
             esp.Box:Destroy()
             esp.TagCard:Destroy()
+            esp.HealthBarBg:Destroy()
             for _, corner in pairs(esp.Corners) do
                 corner.H:Destroy()
                 corner.V:Destroy()
@@ -1040,7 +1051,7 @@ local function runMobileTriggerbot()
 end
 
 -- ==============================================================================
--- 2D SCREEN ESP CACHE & COMPONENT BUILDER
+-- 2D SCREEN ESP CACHE & DYNAMIC HEALTHBAR BUILDER
 -- ==============================================================================
 local function getOrCreateScreenEsp(plr)
     if screenEspCache[plr] then return screenEspCache[plr] end
@@ -1055,6 +1066,32 @@ local function getOrCreateScreenEsp(plr)
     stroke.Color = currentTheme.Enemy_Accent
     stroke.Thickness = boxThickness
     stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+
+    local healthBarBg = Instance.new("Frame", overlayContainer)
+    healthBarBg.Name = "HealthBg_" .. plr.Name
+    healthBarBg.BackgroundColor3 = Color3.fromRGB(15, 15, 18)
+    healthBarBg.BorderSizePixel = 0
+    healthBarBg.Visible = false
+    Instance.new("UICorner", healthBarBg).CornerRadius = UDim.new(0, 2)
+    local hbStroke = Instance.new("UIStroke", healthBarBg)
+    hbStroke.Color = Color3.fromRGB(35, 38, 45)
+    hbStroke.Thickness = 0.8
+
+    local healthBarFill = Instance.new("Frame", healthBarBg)
+    healthBarFill.Name = "Fill"
+    healthBarFill.AnchorPoint = Vector2.new(0, 1)
+    healthBarFill.Position = UDim2.new(0, 0, 1, 0)
+    healthBarFill.Size = UDim2.new(1, 0, 1, 0)
+    healthBarFill.BackgroundColor3 = currentTheme.HealthHigh
+    healthBarFill.BorderSizePixel = 0
+    Instance.new("UICorner", healthBarFill).CornerRadius = UDim.new(0, 2)
+
+    local healthGradient = Instance.new("UIGradient", healthBarFill)
+    healthGradient.Rotation = 90
+    healthGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(180, 180, 180))
+    })
 
     local corners = {}
     for i = 1, 4 do
@@ -1084,9 +1121,13 @@ local function getOrCreateScreenEsp(plr)
     tagCard.Visible = false
 
     Instance.new("UICorner", tagCard).CornerRadius = UDim.new(0, 4)
+    local cardStroke = Instance.new("UIStroke", tagCard)
+    cardStroke.Color = currentTheme.Border
+    cardStroke.Thickness = 0.8
+
     local pad = Instance.new("UIPadding", tagCard)
-    pad.PaddingRight = UDim.new(0, 5)
-    pad.PaddingLeft = UDim.new(0, 5)
+    pad.PaddingRight = UDim.new(0, 6)
+    pad.PaddingLeft = UDim.new(0, 6)
 
     local tagLabel = Instance.new("TextLabel", tagCard)
     tagLabel.AutomaticSize = Enum.AutomaticSize.X
@@ -1099,8 +1140,11 @@ local function getOrCreateScreenEsp(plr)
     local data = {
         Box = box,
         BoxStroke = stroke,
+        HealthBarBg = healthBarBg,
+        HealthBarFill = healthBarFill,
         Corners = corners,
         TagCard = tagCard,
+        TagCardStroke = cardStroke,
         TagLabel = tagLabel,
         LastText = ""
     }
@@ -1113,6 +1157,7 @@ table.insert(connections, Players.PlayerRemoving:Connect(function(plr)
     if cache then
         pcall(function()
             cache.Box:Destroy()
+            cache.HealthBarBg:Destroy()
             cache.TagCard:Destroy()
             for _, corner in pairs(cache.Corners) do
                 corner.H:Destroy()
@@ -1124,7 +1169,7 @@ table.insert(connections, Players.PlayerRemoving:Connect(function(plr)
 end))
 
 -- ==============================================================================
--- TACTICAL ESP RENDERING PIPELINE (BOX, CORNERS, NAMETAGS)
+-- TACTICAL ESP RENDERING PIPELINE (BOX, HEALTHBAR, CORNERS, NAMETAGS)
 -- ==============================================================================
 local function renderTacticalOverlay()
     local camPos = camera.CFrame.Position
@@ -1176,7 +1221,6 @@ local function renderTacticalOverlay()
                         local lengthY = math.max(boxHeight * 0.25, 4)
                         local thick = boxThickness + 0.5
 
-                        -- 1: Top-Left
                         esp.Corners[1].H.BackgroundColor3 = sideColor
                         esp.Corners[1].H.Size = UDim2.new(0, lengthX, 0, thick)
                         esp.Corners[1].H.Position = UDim2.new(0, boxPosX, 0, boxPosY)
@@ -1187,7 +1231,6 @@ local function renderTacticalOverlay()
                         esp.Corners[1].V.Position = UDim2.new(0, boxPosX, 0, boxPosY)
                         esp.Corners[1].V.Visible = true
 
-                        -- 2: Top-Right
                         esp.Corners[2].H.BackgroundColor3 = sideColor
                         esp.Corners[2].H.Size = UDim2.new(0, lengthX, 0, thick)
                         esp.Corners[2].H.Position = UDim2.new(0, boxPosX + boxWidth - lengthX, 0, boxPosY)
@@ -1198,7 +1241,6 @@ local function renderTacticalOverlay()
                         esp.Corners[2].V.Position = UDim2.new(0, boxPosX + boxWidth - thick, 0, boxPosY)
                         esp.Corners[2].V.Visible = true
 
-                        -- 3: Bottom-Left
                         esp.Corners[3].H.BackgroundColor3 = sideColor
                         esp.Corners[3].H.Size = UDim2.new(0, lengthX, 0, thick)
                         esp.Corners[3].H.Position = UDim2.new(0, boxPosX, 0, boxPosY + boxHeight - thick)
@@ -1209,7 +1251,6 @@ local function renderTacticalOverlay()
                         esp.Corners[3].V.Position = UDim2.new(0, boxPosX, 0, boxPosY + boxHeight - lengthY)
                         esp.Corners[3].V.Visible = true
 
-                        -- 4: Bottom-Right
                         esp.Corners[4].H.BackgroundColor3 = sideColor
                         esp.Corners[4].H.Size = UDim2.new(0, lengthX, 0, thick)
                         esp.Corners[4].H.Position = UDim2.new(0, boxPosX + boxWidth - lengthX, 0, boxPosY + boxHeight - thick)
@@ -1227,10 +1268,37 @@ local function renderTacticalOverlay()
                         end
                     end
 
+                    if (boxEspEnabled or cornerBoxEnabled) and healthBarEnabled and hum then
+                        local maxHp = hum.MaxHealth > 0 and hum.MaxHealth or 100
+                        local curHp = math.clamp(hum.Health, 0, maxHp)
+                        local hpPercent = math.clamp(curHp / maxHp, 0, 1)
+
+                        local barWidth = 3
+                        local barGap = 4
+                        local barX = boxPosX - barWidth - barGap
+                        local barY = boxPosY
+
+                        esp.HealthBarBg.Size = UDim2.new(0, barWidth, 0, boxHeight)
+                        esp.HealthBarBg.Position = UDim2.new(0, barX, 0, barY)
+                        esp.HealthBarBg.Visible = true
+
+                        esp.HealthBarFill.Size = UDim2.new(1, 0, hpPercent, 0)
+                        
+                        if hpPercent > 0.5 then
+                            local t = (hpPercent - 0.5) * 2
+                            esp.HealthBarFill.BackgroundColor3 = currentTheme.HealthMid:Lerp(currentTheme.HealthHigh, t)
+                        else
+                            local t = hpPercent * 2
+                            esp.HealthBarFill.BackgroundColor3 = currentTheme.HealthLow:Lerp(currentTheme.HealthMid, t)
+                        end
+                    else
+                        esp.HealthBarBg.Visible = false
+                    end
+
                     if nametagsEnabled then
                         esp.TagCard.BackgroundTransparency = tagTransparency
+                        esp.TagCardStroke.Color = currentTheme.Border
                         esp.TagLabel.TextSize = espTextSize
-                        esp.TagLabel.TextColor3 = currentTheme.NametagTextColor
 
                         local baseName = plr.DisplayName or plr.Name
                         local infoText = baseName
@@ -1261,6 +1329,7 @@ local function renderTacticalOverlay()
                     end
                 else
                     esp.Box.Visible = false
+                    esp.HealthBarBg.Visible = false
                     for _, corner in ipairs(esp.Corners) do
                         corner.H.Visible = false
                         corner.V.Visible = false
@@ -1269,6 +1338,7 @@ local function renderTacticalOverlay()
                 end
             else
                 esp.Box.Visible = false
+                esp.HealthBarBg.Visible = false
                 for _, corner in ipairs(esp.Corners) do
                     corner.H.Visible = false
                     corner.V.Visible = false
@@ -1277,6 +1347,7 @@ local function renderTacticalOverlay()
             end
         else
             esp.Box.Visible = false
+            esp.HealthBarBg.Visible = false
             for _, corner in ipairs(esp.Corners) do
                 corner.H.Visible = false
                 corner.V.Visible = false
@@ -1565,16 +1636,37 @@ UserInputService.InputBegan:Connect(function(input, processed)
     if input.KeyCode == Enum.KeyCode.Space then
         isMobileJumpHeld = true
     end
+
+    -- Trigger Slide upon pressing Left Control / C key while moving
+    if slideEnabled and (input.KeyCode == Enum.KeyCode.C or input.KeyCode == Enum.KeyCode.LeftControl) then
+        local char = player.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        if hrp and hum and isEntityAlive(char, hum) and isPlayerGrounded(char, hrp) then
+            local moveDir = hum.MoveDirection.Magnitude > 0.1 and hum.MoveDirection or hrp.CFrame.LookVector
+            currentSlideVel = moveDir * (16 * slideSpeedBoost)
+            isSliding = true
+            hum.HipHeight = defaultHipHeight * 0.4
+        end
+    end
 end)
 
 UserInputService.InputEnded:Connect(function(input, processed)
     if input.KeyCode == Enum.KeyCode.Space then
         isMobileJumpHeld = false
     end
+    if input.KeyCode == Enum.KeyCode.C or input.KeyCode == Enum.KeyCode.LeftControl then
+        isSliding = false
+        local char = player.Character
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        if hum then
+            hum.HipHeight = defaultHipHeight
+        end
+    end
 end)
 
 -- ==============================================================================
--- PHYSICS HEARTBEAT (BHOP, SPEED, FLIGHT)
+-- PHYSICS HEARTBEAT (BHOP, SLIDE, SPEED, FLIGHT)
 -- ==============================================================================
 table.insert(connections, RunService.Heartbeat:Connect(function(dt)
     local char = player.Character
@@ -1587,6 +1679,7 @@ table.insert(connections, RunService.Heartbeat:Connect(function(dt)
         lastMoveDirection = currentMove
     end
 
+    -- Bhop Execution
     if bunnyHopEnabled then
         local grounded = isPlayerGrounded(char, hrp) or hum.FloorMaterial ~= Enum.Material.Air
         local shouldJump = bhopAutoJump or isMobileJumpHeld or hum.Jump
@@ -1609,7 +1702,23 @@ table.insert(connections, RunService.Heartbeat:Connect(function(dt)
         end
     end
 
-    if speedEnabled and hum.MoveDirection.Magnitude > 0 then
+    -- Slide Physics Execution & Decay
+    if slideEnabled and isSliding then
+        local grounded = isPlayerGrounded(char, hrp)
+        if grounded and currentSlideVel.Magnitude > slideMinSpeed then
+            currentSlideVel = currentSlideVel * slideFriction
+            hrp.AssemblyLinearVelocity = Vector3.new(
+                currentSlideVel.X,
+                hrp.AssemblyLinearVelocity.Y,
+                currentSlideVel.Z
+            )
+        else
+            isSliding = false
+            hum.HipHeight = defaultHipHeight
+        end
+    end
+
+    if speedEnabled and hum.MoveDirection.Magnitude > 0 and not isSliding then
         local targetVel = hum.MoveDirection * (16 * walkMultiplier)
         hrp.AssemblyLinearVelocity = Vector3.new(targetVel.X, targetVel.Y, targetVel.Z)
     end
@@ -2101,6 +2210,11 @@ local function openInspectorFor(moduleName)
         addInspectorSlider(6, "Spin Speed", 10, 150, spinSpeed, false, function(v) 
             spinSpeed = v 
         end)
+    elseif moduleName == "Slide" then
+        insContent.CanvasSize = UDim2.new(0, 0, 0, 180)
+        addInspectorSlider(6, "Speed Boost", 1.2, 3.0, slideSpeedBoost, true, function(v) slideSpeedBoost = v end)
+        addInspectorSlider(38, "Friction", 0.85, 0.99, slideFriction, true, function(v) slideFriction = v end)
+        addInspectorSlider(70, "Min Speed Threshold", 8, 24, slideMinSpeed, false, function(v) slideMinSpeed = v end)
     elseif moduleName == "Jump Circle" then
         insContent.CanvasSize = UDim2.new(0, 0, 0, 240)
         addInspectorSlider(6, "Radius", 1.5, 8.0, jumpCircleRadius, true, function(v)
@@ -2136,10 +2250,11 @@ local function openInspectorFor(moduleName)
         addInspectorToggle(134, "Show Health", espShowHealth, function(v) espShowHealth = v end)
         addInspectorToggle(160, "Show Weapon", tagShowWeapon, function(v) tagShowWeapon = v end)
     elseif moduleName == "Box Overlay" then
-        insContent.CanvasSize = UDim2.new(0, 0, 0, 160)
+        insContent.CanvasSize = UDim2.new(0, 0, 0, 200)
         addInspectorSlider(6, "Max Distance", 100, 5000, espMaxDist, false, function(v) espMaxDist = v end)
         addInspectorSlider(38, "Thickness", 1.0, 3.0, boxThickness, true, function(v) boxThickness = v end)
         addInspectorToggle(76, "Corner Box", cornerBoxEnabled, function(v) cornerBoxEnabled = v end)
+        addInspectorToggle(108, "Health Bar", healthBarEnabled, function(v) healthBarEnabled = v end)
     elseif moduleName == "Night Mode" then
         insContent.CanvasSize = UDim2.new(0, 0, 0, 260)
         addInspectorChoice(6, "Presets", {"Midnight", "DeepBlood", "CyberPurple", "EmeraldNight", "PitchBlack"}, nightPreset, function(selected)
@@ -2256,6 +2371,7 @@ local mHopSection = makeCategorySection(mPage, "Bhop Mechanics", 1)
 local mBoostSection = makeCategorySection(mPage, "Physics Modifications", 2)
 
 addCard(mHopSection, "Bhop Engine", bunnyHopEnabled, function(v) bunnyHopEnabled = v end)
+addCard(mBoostSection, "Slide", slideEnabled, function(v) slideEnabled = v end)
 addCard(mBoostSection, "Speed Boost", speedEnabled, function(v) speedEnabled = v end)
 addCard(mBoostSection, "Flight", flightEnabled, function(v) flightEnabled = v end)
 
