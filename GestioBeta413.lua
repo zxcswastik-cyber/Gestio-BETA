@@ -1800,7 +1800,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         camera.CFrame = camera.CFrame * CFrame.Angles(rcsComp * rcsPitchFactor, 0, 0)
     end
 
-    if aimbotEnabled and isAiming then
+    if aimbotEnabled then
         if not lockedTarget or not isEntityAlive(lockedTarget.Char, lockedTarget.Hum) then
             lockedTarget = getClosestTarget()
         else
