@@ -414,15 +414,19 @@ local nightPresets = {
     }
 }
 
-local defaultLighting = {
-    Brightness = Lighting.Brightness,
-    ClockTime = Lighting.ClockTime,
-    GlobalShadows = Lighting.GlobalShadows,
-    Ambient = Lighting.Ambient,
-    OutdoorAmbient = Lighting.OutdoorAmbient,
-    FogEnd = Lighting.FogEnd,
-    FogColor = Lighting.FogColor
-}
+local defaultLighting = nil
+
+local function captureLightingState()
+    defaultLighting = {
+        Brightness = Lighting.Brightness,
+        ClockTime = Lighting.ClockTime,
+        GlobalShadows = Lighting.GlobalShadows,
+        Ambient = Lighting.Ambient,
+        OutdoorAmbient = Lighting.OutdoorAmbient,
+        FogEnd = Lighting.FogEnd,
+        FogColor = Lighting.FogColor
+    }
+end
 
 -- ==========================================
 -- DISPLAY CONTAINERS SETUP
@@ -501,7 +505,7 @@ end
 local function showHitmarker()
     if not hitmarkerEnabled then return end
 
-    hitmarkerSerial += 1
+    hitmarkerSerial = hitmarkerSerial + 1
     local serial = hitmarkerSerial
     hitmarkerCenter.Visible = true
 
@@ -636,7 +640,7 @@ local function cleanup()
         end
     end
     savedAutoRotate = nil
-    hitmarkerSerial += 1
+    hitmarkerSerial = hitmarkerSerial + 1
     hitmarkerLastHealth = {}
 
     for _, c in pairs(connections) do 
@@ -688,7 +692,10 @@ local function cleanup()
     screenEspCache = {}
     grenadePool = {}
     
-    restoreLightingState()
+    if defaultLighting then
+        restoreLightingState()
+        defaultLighting = nil
+    end
 
     pcall(function() if targetGui:FindFirstChild("GestioScreenGui") then targetGui.GestioScreenGui:Destroy() end end)
     pcall(function() if targetGui:FindFirstChild("GestioToggleGui") then targetGui.GestioToggleGui:Destroy() end end)
@@ -1810,7 +1817,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
             if predictionEnabled and lockedTarget.Part and lockedTarget.Part.Parent then
                 aimPos = lockedTarget.Part.Position
                 if lockedTarget.Part.AssemblyLinearVelocity then
-                    aimPos += lockedTarget.Part.AssemblyLinearVelocity * predictionFactor
+                    aimPos = aimPos + lockedTarget.Part.AssemblyLinearVelocity * predictionFactor
                 end
             end
 
@@ -1829,7 +1836,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     end
 
     if butterflyKnifeEnabled then
-        skinScanAccumulator += dt
+        skinScanAccumulator = skinScanAccumulator + dt
         if skinScanAccumulator >= 0.50 then
             skinScanAccumulator = 0
             scanAndMorphKnives(Workspace)
@@ -3080,20 +3087,7 @@ local function openInspectorFor(moduleName)
     elseif moduleName == "World Changer" then
         insContent.CanvasSize = UDim2.new(0, 0, 0, 330)
         addInspectorChoice(6, "World Preset", {"Midnight", "Nebula", "DeepBlood", "CyberPurple", "EmeraldNight", "PitchBlack"}, nightPreset, function(selected)
-            local cfg = nightPresets[selected]
-            if not cfg then
-                return
-            end
-
-            -- Keep the selected preset in sync with the inspector.
-            nightPreset = selected
-            nightClockTime = cfg.ClockTime
-            nightBrightness = cfg.Brightness
-            nightOutdoorAmbient = cfg.OutdoorAmbient
-
-            if nightModeEnabled then
-                applyNightPreset(selected)
-            end
+            applyNightPreset(selected)
         end)
         addInspectorSlider(48, "Brightness", 0.0, 2.0, nightBrightness, true, function(v) 
             nightBrightness = v 
@@ -3175,13 +3169,7 @@ local function addCard(parent, name, defaultState, onToggle)
         circle.Position = state and UDim2.new(1, -10, 0.5, -4.5) or UDim2.new(0, 2, 0.5, -4.5)
         onToggle(state)
         
-        if name == "World Changer" then
-            if state then
-                applyNightPreset(nightPreset)
-            else
-                restoreLightingState()
-            end
-        elseif name == "FullBright" and not state and not nightModeEnabled then
+        if name == "FullBright" and not state and not nightModeEnabled then
             restoreLightingState()
         end
     end
@@ -3255,11 +3243,15 @@ end)
 -- WORLD CHANGER / ENVIRONMENT TAB
 local envLightSection = makeCategorySection(envPage, "Atmosphere & World", 1, 4)
 addCard(envLightSection, "World Changer", nightModeEnabled, function(v)
-    nightModeEnabled = v
     if v then
+        captureLightingState()
+        nightModeEnabled = true
         applyNightPreset(nightPreset)
-    elseif not fullBrightEnabled then
-        restoreLightingState()
+    else
+        nightModeEnabled = false
+        if not fullBrightEnabled then
+            restoreLightingState()
+        end
     end
 end)
 addCard(envLightSection, "FullBright", fullBrightEnabled, function(v)
@@ -3271,7 +3263,7 @@ end)
 addCard(envLightSection, "Anti-Flash", antiFlashEnabled, function(v) antiFlashEnabled = v end)
 addCard(envLightSection, "No Fog", removeFogEnabled, function(v)
     removeFogEnabled = v
-    if not v then
+    if not v and defaultLighting then
         Lighting.FogEnd = defaultLighting.FogEnd
     end
 end)
