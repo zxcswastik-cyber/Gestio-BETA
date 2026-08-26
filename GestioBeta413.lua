@@ -1,6 +1,6 @@
 -- ==============================================================================
--- [Gestio UI - Blox Strike Ultimate Mobile Engine | Version 4.3.3]
--- Architecture: Modular Extended Pipeline | Boot-Safe
+-- [Gestio UI - Blox Strike Ultimate Mobile Engine | Version 4.2.0]
+-- Architecture: Uncompressed Extended Pipeline
 -- Target Game: Blox Strike (Roblox)
 -- ==============================================================================
 
@@ -22,6 +22,7 @@ local Lighting = game:GetService("Lighting")
 local Workspace = game:GetService("Workspace")
 local Stats = game:GetService("Stats")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Debris = game:GetService("Debris")
 local VirtualInputManager = nil
 pcall(function()
     VirtualInputManager = game:GetService("VirtualInputManager")
@@ -211,6 +212,16 @@ local thirdPersonDistance = 12
 local thirdPersonHeight = 1.5
 local thirdPersonPreviousOffset = nil
 
+-- NEW COMBAT / VISUAL FEATURES
+local hitLogsEnabled = false
+local hitDamageEnabled = false
+local targetHudEnabled = false
+local soulAnimationEnabled = false
+local fadeChamsEnabled = false
+local bulletTracersGlow = true
+local hitboxGradientEnabled = true
+local animationDirection = "Right" -- "Right" / "Left"
+
 -- ==========================================
 -- SKINS & WEAPON MODS ENGINE
 -- ==========================================
@@ -346,16 +357,6 @@ local showMolotovRadius = true
 local showSmokeRadius = true
 local grenadeMaxDist = 1500
 
-
-local fadeChamsEnabled = false
-local fadeChamsDistance = 120
-local fadeChamsMinTransparency = 0.15
-local fadeChamsMaxTransparency = 0.85
-
-local bulletGlowEnabled = false
-local bulletGlowLifetime = 0.45
-local bulletGlowWidth = 0.12
-local animatedDirection = "Right"
 -- ==========================================
 -- JUMP CIRCLE CONFIGURATION VARIABLES
 -- ==========================================
@@ -365,34 +366,6 @@ local jumpCircleSegmentCount = 32
 local jumpCircleRadius = 3.5
 local jumpCircleHeightOffset = -2.8
 local activeJumpCircleData = nil
-
--- ==========================================
--- WORLD VISUAL CONFIGURATION
--- ==========================================
-local worldParticlesEnabled = false
-local worldParticleMode = "Snow"
-local worldParticleRate = 35
-local worldParticleLifetime = 4.0
-local worldParticleArea = 70
-
-local bloomEnabled = false
-local bloomIntensity = 0.35
-local bloomSize = 24
-local bloomThreshold = 0.8
-
-local vignetteEnabled = false
-local vignetteStrength = 0.35
-
-local colorGradingEnabled = false
-local colorGradingContrast = 0.08
-local colorGradingSaturation = 0.05
-local colorGradingTint = Color3.fromRGB(255, 255, 255)
-
-local worldParticleFolder = nil
-local worldParticleEmitter = nil
-local bloomEffect = nil
-local colorCorrectionEffect = nil
-local vignetteGui = nil
 
 -- ==========================================
 -- ENVIRONMENT & LIGHTING VARIABLES
@@ -481,8 +454,175 @@ grenadeContainer.Name = "Gestio_GrenadeOverlay"
 local jumpCircleFolder = Instance.new("Folder", Workspace)
 jumpCircleFolder.Name = "Gestio_JumpCircleWorld"
 
+local soulFolder = Instance.new("Folder", Workspace)
+soulFolder.Name = "Gestio_SoulWorld"
+
 local grenadePool = {}
 local mobileSlideBtn = nil
+
+-- ==========================================
+-- HIT LOGS & TARGET HUD & DAMAGE OVERLAYS
+-- ==========================================
+local hudContainer = Instance.new("ScreenGui")
+hudContainer.Name = "GestioHudContainer"
+hudContainer.ResetOnSpawn = false
+hudContainer.DisplayOrder = 55
+hudContainer.IgnoreGuiInset = true
+hudContainer.Parent = targetGui
+
+local hitLogList = Instance.new("Frame", hudContainer)
+hitLogList.Name = "HitLogs"
+hitLogList.Position = UDim2.new(0, 20, 0.35, 0)
+hitLogList.Size = UDim2.new(0, 260, 0, 200)
+hitLogList.BackgroundTransparency = 1
+
+local hitLogLayout = Instance.new("UIListLayout", hitLogList)
+hitLogLayout.SortOrder = Enum.SortOrder.LayoutOrder
+hitLogLayout.VerticalAlignment = Enum.VerticalAlignment.Top
+hitLogLayout.Padding = UDim.new(0, 4)
+
+local function pushHitLog(targetName, damage, hitbox)
+    if not hitLogsEnabled then return end
+    local row = Instance.new("Frame", hitLogList)
+    row.Size = UDim2.new(1, 0, 0, 20)
+    row.BackgroundColor3 = currentTheme.Background
+    row.BackgroundTransparency = 0.2
+    Instance.new("UICorner", row).CornerRadius = UDim.new(0, 4)
+    local stroke = Instance.new("UIStroke", row)
+    stroke.Color = currentTheme.Border
+    stroke.Thickness = 1
+
+    local lbl = Instance.new("TextLabel", row)
+    lbl.Size = UDim2.new(1, -10, 1, 0)
+    lbl.Position = UDim2.new(0, 5, 0, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.Font = Enum.Font.GothamBold
+    lbl.TextSize = 8.5
+    lbl.TextColor3 = currentTheme.TextPrimary
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.Text = string.format("[HIT] Hit %s in %s for %d DMG", targetName, hitbox or "Body", math.floor(damage))
+
+    task.delay(3.5, function()
+        TweenService:Create(row, TweenInfo.new(0.5), {BackgroundTransparency = 1}):Play()
+        TweenService:Create(lbl, TweenInfo.new(0.5), {TextTransparency = 1}):Play()
+        task.wait(0.5)
+        row:Destroy()
+    end)
+end
+
+local targetHudFrame = Instance.new("Frame", hudContainer)
+targetHudFrame.Name = "TargetHud"
+targetHudFrame.Size = UDim2.new(0, 200, 0, 50)
+targetHudFrame.Position = UDim2.new(0.5, -100, 0.72, 0)
+targetHudFrame.BackgroundColor3 = currentTheme.Background
+targetHudFrame.BorderSizePixel = 0
+targetHudFrame.Visible = false
+Instance.new("UICorner", targetHudFrame).CornerRadius = UDim.new(0, 6)
+local thStroke = Instance.new("UIStroke", targetHudFrame)
+thStroke.Color = currentTheme.Border
+thStroke.Thickness = 1
+
+local thAvatar = Instance.new("ImageLabel", targetHudFrame)
+thAvatar.Size = UDim2.new(0, 36, 0, 36)
+thAvatar.Position = UDim2.new(0, 7, 0, 7)
+thAvatar.BackgroundColor3 = currentTheme.Sidebar
+Instance.new("UICorner", thAvatar).CornerRadius = UDim.new(0, 4)
+
+local thName = Instance.new("TextLabel", targetHudFrame)
+thName.Size = UDim2.new(0, 140, 0, 14)
+thName.Position = UDim2.new(0, 50, 0, 8)
+thName.BackgroundTransparency = 1
+thName.Font = Enum.Font.GothamBold
+thName.TextSize = 9
+thName.TextColor3 = currentTheme.TextPrimary
+thName.TextXAlignment = Enum.TextXAlignment.Left
+
+local thBarBg = Instance.new("Frame", targetHudFrame)
+thBarBg.Size = UDim2.new(0, 140, 0, 8)
+thBarBg.Position = UDim2.new(0, 50, 0, 28)
+thBarBg.BackgroundColor3 = currentTheme.CardBg
+Instance.new("UICorner", thBarBg).CornerRadius = UDim.new(1, 0)
+
+local thBarFill = Instance.new("Frame", thBarBg)
+thBarFill.Size = UDim2.new(1, 0, 1, 0)
+thBarFill.BackgroundColor3 = currentTheme.Accent
+Instance.new("UICorner", thBarFill).CornerRadius = UDim.new(1, 0)
+
+local function spawnHitDamageIndicator(position, damage)
+    if not hitDamageEnabled then return end
+    task.spawn(function()
+        local bb = Instance.new("BillboardGui", mainContainer)
+        bb.Size = UDim2.new(0, 50, 0, 25)
+        bb.AlwaysOnTop = true
+        bb.StudsOffset = Vector3.new(0, 1.5, 0)
+        
+        local p = Instance.new("Part", Workspace)
+        p.Position = position
+        p.Transparency = 1
+        p.Anchored = true
+        p.CanCollide = false
+        bb.Adornee = p
+
+        local lbl = Instance.new("TextLabel", bb)
+        lbl.Size = UDim2.new(1, 0, 1, 0)
+        lbl.BackgroundTransparency = 1
+        lbl.Text = "-" .. tostring(math.floor(damage))
+        lbl.TextColor3 = currentTheme.Enemy_Accent
+        lbl.Font = Enum.Font.GothamBlack
+        lbl.TextSize = 12
+        local stroke = Instance.new("UIStroke", lbl)
+        stroke.Thickness = 1
+        stroke.Color = Color3.fromRGB(0,0,0)
+
+        local t = 0.6
+        local dir = animationDirection == "Left" and -1.5 or 1.5
+        local targetPos = position + Vector3.new(dir, 2, 0)
+        TweenService:Create(p, TweenInfo.new(t, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = targetPos}):Play()
+        TweenService:Create(lbl, TweenInfo.new(t, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {TextTransparency = 1}):Play()
+        task.wait(t)
+        bb:Destroy()
+        p:Destroy()
+    end)
+end
+
+local function spawnSoulAnimation(origin)
+    if not soulAnimationEnabled then return end
+    task.spawn(function()
+        local soul = Instance.new("Part")
+        soul.Shape = Enum.PartType.Ball
+        soul.Size = Vector3.new(1.2, 1.2, 1.2)
+        soul.Position = origin
+        soul.Anchored = true
+        soul.CanCollide = false
+        soul.Material = Enum.Material.Neon
+        soul.Color = currentTheme.Accent
+        soul.Transparency = 0.2
+        soul.Parent = soulFolder
+
+        local att = Instance.new("Attachment", soul)
+        local pe = Instance.new("ParticleEmitter", att)
+        pe.Rate = 40
+        pe.Lifetime = NumberRange.new(0.3, 0.6)
+        pe.Speed = NumberRange.new(2, 5)
+        pe.Size = NumberSequence.new({NumberSequenceKeypoint.new(0, 0.8), NumberSequenceKeypoint.new(1, 0)})
+        pe.Color = ColorSequence.new(currentTheme.Accent, Color3.fromRGB(255, 255, 255))
+        pe.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0, 0.2), NumberSequenceKeypoint.new(1, 1)})
+
+        local dir = animationDirection == "Left" and -3 or 3
+        local dest = origin + Vector3.new(dir, 7, (math.random() - 0.5) * 2)
+
+        local tw = TweenService:Create(soul, TweenInfo.new(0.9, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
+            Position = dest,
+            Transparency = 1,
+            Size = Vector3.new(0.1, 0.1, 0.1)
+        })
+        tw:Play()
+        task.wait(0.9)
+        pe.Enabled = false
+        task.wait(0.5)
+        soul:Destroy()
+    end)
+end
 
 -- ==========================================
 -- CRIMSON NEON HITMARKER UI
@@ -650,170 +790,6 @@ local function restoreLightingState()
 end
 
 -- ==========================================
--- WORLD VISUAL EFFECTS
--- ==========================================
-local function destroyWorldVisualEffects()
-    pcall(function()
-    if worldParticleEmitter then
-        worldParticleEmitter:Destroy()
-        worldParticleEmitter = nil
-    end
-    if worldParticleFolder then
-        worldParticleFolder:Destroy()
-        worldParticleFolder = nil
-    end
-    if bloomEffect then
-        bloomEffect:Destroy()
-        bloomEffect = nil
-    end
-    if colorCorrectionEffect then
-        colorCorrectionEffect:Destroy()
-        colorCorrectionEffect = nil
-    end
-    if vignetteGui then
-        vignetteGui:Destroy()
-        vignetteGui = nil
-    end
-    end)
-end
-
-local function ensureWorldVisualEffects()
-    pcall(function()
-    if bloomEnabled and not bloomEffect then
-        bloomEffect = Instance.new("BloomEffect")
-        bloomEffect.Name = "GestioBloom"
-        bloomEffect.Intensity = bloomIntensity
-        bloomEffect.Size = bloomSize
-        bloomEffect.Threshold = bloomThreshold
-        bloomEffect.Parent = Lighting
-    end
-
-    if bloomEffect then
-        bloomEffect.Enabled = bloomEnabled
-        bloomEffect.Intensity = bloomIntensity
-        bloomEffect.Size = bloomSize
-        bloomEffect.Threshold = bloomThreshold
-    end
-
-    if colorGradingEnabled and not colorCorrectionEffect then
-        colorCorrectionEffect = Instance.new("ColorCorrectionEffect")
-        colorCorrectionEffect.Name = "GestioColorGrading"
-        colorCorrectionEffect.Parent = Lighting
-    end
-
-    if colorCorrectionEffect then
-        colorCorrectionEffect.Enabled = colorGradingEnabled
-        colorCorrectionEffect.Contrast = colorGradingContrast
-        colorCorrectionEffect.Saturation = colorGradingSaturation
-        colorCorrectionEffect.TintColor = colorGradingTint
-    end
-
-    if vignetteEnabled and not vignetteGui then
-        vignetteGui = Instance.new("ScreenGui")
-        vignetteGui.Name = "GestioVignette"
-        vignetteGui.IgnoreGuiInset = true
-        vignetteGui.ResetOnSpawn = false
-        vignetteGui.DisplayOrder = 8
-        vignetteGui.Parent = targetGui
-
-        local frame = Instance.new("Frame")
-        frame.Name = "Vignette"
-        frame.Size = UDim2.fromScale(1,1)
-        frame.BackgroundTransparency = 1
-        frame.Parent = vignetteGui
-
-        local gradient = Instance.new("UIGradient")
-        gradient.Transparency = NumberSequence.new({
-            NumberSequenceKeypoint.new(0, 0.05),
-            NumberSequenceKeypoint.new(0.5, 1),
-            NumberSequenceKeypoint.new(1, 0.05)
-        })
-        gradient.Rotation = 90
-        gradient.Parent = frame
-    end
-
-    if vignetteGui then
-        vignetteGui.Enabled = vignetteEnabled
-        local frame = vignetteGui:FindFirstChild("Vignette")
-        if frame then
-            frame.BackgroundColor3 = Color3.new(0,0,0)
-            frame.BackgroundTransparency = math.clamp(1 - vignetteStrength, 0, 1)
-        end
-    end
-    end)
-end
-
-local function setWorldParticleMode(mode)
-    pcall(function()
-    worldParticleMode = mode
-    if worldParticleEmitter then
-        worldParticleEmitter:Destroy()
-        worldParticleEmitter = nil
-    end
-    if worldParticleFolder then
-        worldParticleFolder:Destroy()
-        worldParticleFolder = nil
-    end
-    if not worldParticlesEnabled then return end
-
-    worldParticleFolder = Instance.new("Folder")
-    worldParticleFolder.Name = "GestioWorldParticles"
-    worldParticleFolder.Parent = Workspace
-
-    local holder = Instance.new("Part")
-    holder.Name = "ParticleHolder"
-    holder.Anchored = true
-    holder.CanCollide = false
-    holder.CanQuery = false
-    holder.CanTouch = false
-    holder.Transparency = 1
-    holder.Size = Vector3.new(worldParticleArea, 1, worldParticleArea)
-    holder.CFrame = CFrame.new(camera.CFrame.Position + Vector3.new(0, 35, 0))
-    holder.Parent = worldParticleFolder
-
-    local emitter = Instance.new("ParticleEmitter")
-    emitter.Name = "WorldParticleEmitter"
-    emitter.Rate = worldParticleRate
-    emitter.Lifetime = NumberRange.new(worldParticleLifetime * 0.75, worldParticleLifetime)
-    emitter.Speed = NumberRange.new(8, 14)
-    emitter.SpreadAngle = Vector2.new(8,8)
-    emitter.Acceleration = Vector3.new(0,-8,0)
-    emitter.Parent = holder
-
-    if mode == "Snow" then
-        emitter.Texture = "rbxasset://textures/particles/sparkles_main.dds"
-        emitter.Size = NumberSequence.new(0.12)
-        emitter.Transparency = NumberSequence.new(0.25)
-        emitter.Rotation = NumberRange.new(0,360)
-    elseif mode == "Rain" then
-        emitter.Texture = "rbxasset://textures/particles/sparkles_main.dds"
-        emitter.Size = NumberSequence.new(0.05)
-        emitter.Speed = NumberRange.new(45,60)
-        emitter.Acceleration = Vector3.new(0,-35,0)
-        emitter.Transparency = NumberSequence.new(0.15)
-    else
-        emitter.Texture = "rbxasset://textures/particles/sparkles_main.dds"
-        emitter.Size = NumberSequence.new(0.18)
-        emitter.Speed = NumberRange.new(3,8)
-        emitter.Transparency = NumberSequence.new(0.2)
-    end
-
-    worldParticleEmitter = emitter
-    end)
-end
-
-local function refreshWorldVisuals()
-    if worldParticlesEnabled then
-        setWorldParticleMode(worldParticleMode)
-    else
-        if worldParticleEmitter then worldParticleEmitter:Destroy(); worldParticleEmitter = nil end
-        if worldParticleFolder then worldParticleFolder:Destroy(); worldParticleFolder = nil end
-    end
-    ensureWorldVisualEffects()
-end
-
-
--- ==========================================
 -- CLEANUP ROUTINES
 -- ==========================================
 local function clearActiveJumpCircle()
@@ -830,7 +806,6 @@ local function clearActiveJumpCircle()
 end
 
 local function cleanup()
-    pcall(function() destroyWorldVisualEffects() end)
     pcall(function() setThirdPersonEnabled(false) end)
     if player.Character then
         local hum = player.Character:FindFirstChildOfClass("Humanoid")
@@ -872,7 +847,9 @@ local function cleanup()
     end
     clearActiveJumpCircle()
     pcall(function() jumpCircleFolder:Destroy() end)
+    pcall(function() soulFolder:Destroy() end)
     pcall(function() hitmarkerGui:Destroy() end)
+    pcall(function() hudContainer:Destroy() end)
     if genv then genv.GestioShowHitmarker = nil end
     if mobileSlideBtn then
         pcall(function() mobileSlideBtn:Destroy() end)
@@ -1596,6 +1573,13 @@ local function getOrCreateScreenEsp(plr)
     stroke.Thickness = boxThickness
     stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
+    local boxGrad = Instance.new("UIGradient", box)
+    boxGrad.Rotation = 90
+    boxGrad.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, currentTheme.Accent),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))
+    })
+
     local healthBarBg = Instance.new("Frame", overlayContainer)
     healthBarBg.Name = "HealthBg_" .. plr.Name
     healthBarBg.BackgroundColor3 = Color3.fromRGB(15, 15, 18)
@@ -1669,6 +1653,7 @@ local function getOrCreateScreenEsp(plr)
     local data = {
         Box = box,
         BoxStroke = stroke,
+        BoxGradient = boxGrad,
         HealthBarBg = healthBarBg,
         HealthBarFill = healthBarFill,
         Corners = corners,
@@ -1744,6 +1729,9 @@ local function renderTacticalOverlay()
                     if boxEspEnabled and not cornerBoxEnabled then
                         esp.BoxStroke.Color = sideColor
                         esp.BoxStroke.Thickness = boxThickness
+                        if esp.BoxGradient then
+                            esp.BoxGradient.Enabled = hitboxGradientEnabled
+                        end
                         esp.Box.Size = UDim2.new(0, boxWidth, 0, boxHeight)
                         esp.Box.Position = UDim2.new(0, boxPosX, 0, boxPosY)
                         esp.Box.Visible = true
@@ -1918,6 +1906,11 @@ local function attachEspToPlayer(plr)
     tracerLine.BackgroundColor3 = currentTheme.Enemy_Accent
     tracerLine.Visible = false
 
+    local tracerGlow = Instance.new("UIStroke", tracerLine)
+    tracerGlow.Color = currentTheme.Enemy_Accent
+    tracerGlow.Thickness = bulletTracersGlow and 2 or 0
+    tracerGlow.Transparency = 0.3
+
     local hl = Instance.new("Highlight")
     hl.Name = "GestioHighlight_" .. plr.Name
     hl.FillTransparency = 0.45
@@ -1933,6 +1926,7 @@ local function attachEspToPlayer(plr)
         HeadDot = dotBillboard,
         DotFrame = dotFrame,
         Tracer = tracerLine,
+        TracerGlow = tracerGlow,
         Highlight = hl
     }
     activeEspHolders[plr] = espData
@@ -2031,6 +2025,20 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         lockedTarget = nil
     end
 
+    -- TARGET HUD UPDATE
+    if targetHudEnabled and lockedTarget and lockedTarget.Hum and lockedTarget.Player then
+        targetHudFrame.Visible = true
+        thName.Text = lockedTarget.Player.DisplayName
+        local maxH = lockedTarget.Hum.MaxHealth > 0 and lockedTarget.Hum.MaxHealth or 100
+        local pct = math.clamp(lockedTarget.Hum.Health / maxH, 0, 1)
+        thBarFill.Size = UDim2.new(pct, 0, 1, 0)
+        pcall(function()
+            thAvatar.Image = Players:GetUserThumbnailAsync(lockedTarget.Player.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size48x48)
+        end)
+    else
+        targetHudFrame.Visible = false
+    end
+
     if butterflyKnifeEnabled then
         skinScanAccumulator += dt
         if skinScanAccumulator >= 0.50 then
@@ -2069,7 +2077,19 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
                 data.HeadDot.Adornee = head
             end
 
+            -- CHAMS GLOW & FADE CHAMS ENHANCEMENTS
+            if fadeChamsEnabled then
+                local distAlpha = math.clamp(dist / espMaxDist, 0, 1)
+                data.Highlight.FillTransparency = 0.2 + (distAlpha * 0.75)
+                data.Highlight.OutlineTransparency = 0.1 + (distAlpha * 0.85)
+            else
+                local pulse = (math.sin(tick() * 4) + 1) * 0.5
+                data.Highlight.FillTransparency = 0.35 + (pulse * 0.2)
+                data.Highlight.OutlineTransparency = 0.0
+            end
+
             data.Highlight.FillColor = activeHighlight
+            data.Highlight.OutlineColor = isVisible and currentTheme.Accent or Color3.fromRGB(255,255,255)
             data.Highlight.Enabled = highlightEnabled
 
             data.DotFrame.BackgroundColor3 = activeAccent
@@ -2089,6 +2109,10 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
                     data.Tracer.Position = UDim2.new(0, center.X, 0, center.Y)
                     data.Tracer.Rotation = angle
                     data.Tracer.Visible = true
+                    if data.TracerGlow then
+                        data.TracerGlow.Thickness = bulletTracersGlow and 2.5 or 0
+                        data.TracerGlow.Color = activeAccent
+                    end
                 else
                     data.Tracer.Visible = false
                 end
@@ -2494,11 +2518,6 @@ table.insert(connections, inEndedConn)
 -- HITMARKER TARGET HEALTH MONITOR (ALL ENEMIES)
 -- ==========================================
 table.insert(connections, RunService.Heartbeat:Connect(function()
-    if not hitmarkerEnabled then
-        hitmarkerLastHealth = {}
-        return
-    end
-
     for _, targetPlr in ipairs(Players:GetPlayers()) do
         if targetPlr ~= player then
             local char = targetPlr.Character
@@ -2509,7 +2528,19 @@ table.insert(connections, RunService.Heartbeat:Connect(function()
                 local previousHealth = hitmarkerLastHealth[hum]
 
                 if previousHealth and currentHealth < previousHealth and (previousHealth - currentHealth) > 0.01 then
-                    showHitmarker()
+                    local dmg = previousHealth - currentHealth
+                    if hitmarkerEnabled then
+                        showHitmarker()
+                    end
+                    if hitDamageEnabled and char:FindFirstChild("Head") then
+                        spawnHitDamageIndicator(char.Head.Position, dmg)
+                    end
+                    if hitLogsEnabled then
+                        pushHitLog(targetPlr.DisplayName, dmg, "Torso")
+                    end
+                    if currentHealth <= 0 and soulAnimationEnabled and char:FindFirstChild("HumanoidRootPart") then
+                        spawnSoulAnimation(char.HumanoidRootPart.Position)
+                    end
                 end
 
                 hitmarkerLastHealth[hum] = currentHealth
@@ -3170,7 +3201,6 @@ local function addInspectorChoice(y, txt, choices, currentChoice, onSelect)
 end
 
 -- ==========================================
-
 -- DETAILED INSPECTOR ROUTING
 -- ==========================================
 local function openInspectorFor(moduleName)
@@ -3276,59 +3306,33 @@ local function openInspectorFor(moduleName)
         addInspectorToggle(134, "Show Health", espShowHealth, function(v) espShowHealth = v end)
         addInspectorToggle(160, "Show Weapon", tagShowWeapon, function(v) tagShowWeapon = v end)
     elseif moduleName == "Box Overlay" then
-        insContent.CanvasSize = UDim2.new(0, 0, 0, 200)
+        insContent.CanvasSize = UDim2.new(0, 0, 0, 240)
         addInspectorSlider(6, "Max Distance", 100, 5000, espMaxDist, false, function(v) espMaxDist = v end)
         addInspectorSlider(38, "Thickness", 1.0, 3.0, boxThickness, true, function(v) boxThickness = v end)
         addInspectorToggle(76, "Corner Box", cornerBoxEnabled, function(v) cornerBoxEnabled = v end)
         addInspectorToggle(108, "Health Bar", healthBarEnabled, function(v) healthBarEnabled = v end)
+        addInspectorToggle(136, "Gradient Hitbox", hitboxGradientEnabled, function(v) hitboxGradientEnabled = v end)
+    elseif moduleName == "Highlight" then
+        insContent.CanvasSize = UDim2.new(0, 0, 0, 120)
+        addInspectorToggle(6, "Fade Chams", fadeChamsEnabled, function(v) fadeChamsEnabled = v end)
+    elseif moduleName == "Snaplines" then
+        insContent.CanvasSize = UDim2.new(0, 0, 0, 120)
+        addInspectorToggle(6, "Tracer Glow", bulletTracersGlow, function(v) bulletTracersGlow = v end)
+    elseif moduleName == "Soul Animation" then
+        insContent.CanvasSize = UDim2.new(0, 0, 0, 120)
+        addInspectorChoice(6, "Direction", {"Right", "Left"}, animationDirection, function(v) animationDirection = v end)
     elseif moduleName == "World Changer" then
-        insContent.CanvasSize = UDim2.new(0, 0, 0, 390)
-        addInspectorChoice(6, "Preset", {"Midnight", "Nebula", "DeepBlood", "CyberPurple", "EmeraldNight", "PitchBlack"}, nightPreset, function(selected)
-            nightPreset = selected
+        insContent.CanvasSize = UDim2.new(0, 0, 0, 330)
+        addInspectorChoice(6, "World Preset", {"Midnight", "Nebula", "DeepBlood", "CyberPurple", "EmeraldNight", "PitchBlack"}, nightPreset, function(selected)
             applyNightPreset(selected)
         end)
-        addInspectorSlider(42, "Brightness", 0.0, 2.0, nightBrightness, true, function(v)
-            nightBrightness = v
+        addInspectorSlider(48, "Brightness", 0.0, 2.0, nightBrightness, true, function(v) 
+            nightBrightness = v 
             if nightModeEnabled then Lighting.Brightness = v end
         end)
-        addInspectorSlider(74, "Clock Time", 0.0, 24.0, nightClockTime, true, function(v)
-            nightClockTime = v
+        addInspectorSlider(80, "Clock Time", 0.0, 24.0, nightClockTime, true, function(v) 
+            nightClockTime = v 
             if nightModeEnabled then Lighting.ClockTime = v end
-        end)
-        addInspectorToggle(108, "World Particles", worldParticlesEnabled, function(v)
-            worldParticlesEnabled = v
-            refreshWorldVisuals()
-        end)
-        addInspectorChoice(136, "Particles", {"Soul", "Snow", "Rain"}, worldParticleMode, function(v)
-            setWorldParticleMode(v)
-        end)
-        addInspectorToggle(172, "Bloom", bloomEnabled, function(v)
-            bloomEnabled = v
-            refreshWorldVisuals()
-        end)
-        addInspectorSlider(200, "Bloom Intensity", 0, 2, bloomIntensity, true, function(v)
-            bloomIntensity = v
-            ensureWorldVisualEffects()
-        end)
-        addInspectorToggle(234, "Vignette", vignetteEnabled, function(v)
-            vignetteEnabled = v
-            refreshWorldVisuals()
-        end)
-        addInspectorSlider(262, "Vignette Strength", 0, 1, vignetteStrength, true, function(v)
-            vignetteStrength = v
-            ensureWorldVisualEffects()
-        end)
-        addInspectorToggle(296, "Color Grading", colorGradingEnabled, function(v)
-            colorGradingEnabled = v
-            refreshWorldVisuals()
-        end)
-        addInspectorSlider(324, "Contrast", -1, 1, colorGradingContrast, true, function(v)
-            colorGradingContrast = v
-            ensureWorldVisualEffects()
-        end)
-        addInspectorSlider(356, "Saturation", -1, 1, colorGradingSaturation, true, function(v)
-            colorGradingSaturation = v
-            ensureWorldVisualEffects()
         end)
     elseif moduleName == "RCS" then
         insContent.CanvasSize = UDim2.new(0, 0, 0, 240)
@@ -3421,12 +3425,13 @@ end
 -- ==========================================
 
 -- COMBAT TAB
-local cAimSection = makeCategorySection(cPage, "Aim & Ballistics", 1, 3)
+local cAimSection = makeCategorySection(cPage, "Aim & Ballistics", 1, 4)
 local cRageSection = makeCategorySection(cPage, "HVH & Anti-Aim", 2, 1)
 
 addCard(cAimSection, "Tracking", aimbotEnabled, function(v) aimbotEnabled = v end)
 addCard(cAimSection, "RCS", rcsEnabled, function(v) rcsEnabled = v end)
 addCard(cAimSection, "Trigger Assistant", triggerbotEnabled, function(v) triggerbotEnabled = v end)
+addCard(cAimSection, "Target HUD", targetHudEnabled, function(v) targetHudEnabled = v end)
 addCard(cRageSection, "Anti-Aim", antiAimEnabled, function(v) antiAimEnabled = v end)
 
 -- MOVEMENT TAB
@@ -3442,7 +3447,7 @@ addCard(mBoostSection, "Speed Boost", speedEnabled, function(v) speedEnabled = v
 addCard(mBoostSection, "Flight", flightEnabled, function(v) flightEnabled = v end)
 
 -- ESP TAB
-local ePlayerSection = makeCategorySection(ePage, "Player Visuals", 1, 6)
+local ePlayerSection = makeCategorySection(ePage, "Player Visuals", 1, 9)
 local eWorldSection = makeCategorySection(ePage, "World & Projectiles", 2, 2)
 
 addCard(ePlayerSection, "Nametags", nametagsEnabled, function(v) nametagsEnabled = v end)
@@ -3457,6 +3462,9 @@ addCard(ePlayerSection, "Hitmarker", hitmarkerEnabled, function(v)
         hitmarkerBusy = false
     end
 end)
+addCard(ePlayerSection, "Soul Animation", soulAnimationEnabled, function(v) soulAnimationEnabled = v end)
+addCard(ePlayerSection, "Hit Logs", hitLogsEnabled, function(v) hitLogsEnabled = v end)
+addCard(ePlayerSection, "Hit Damage", hitDamageEnabled, function(v) hitDamageEnabled = v end)
 
 addCard(eWorldSection, "Grenade ESP", grenadeEspEnabled, function(v) grenadeEspEnabled = v end)
 addCard(eWorldSection, "Jump Circle", jumpCircleEnabled, function(v) 
