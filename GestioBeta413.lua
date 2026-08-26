@@ -184,7 +184,6 @@ local snapAimMode = true
 local isAiming = false
 local lockedTarget = nil
 local aimboneIndex = 1
-local headAimOffsetY = -0.35
 local targetSwitchDelay = 0.05
 local shotDelay = 0.0
 local hitChance = 85
@@ -415,19 +414,29 @@ local nightPresets = {
     }
 }
 
-local defaultLighting = nil
+-- World Changer keeps a fresh snapshot for each activation.
+-- This avoids restoring stale lighting from a previous map/round.
+local worldLightingSnapshot = nil
 
-local function captureLightingState()
-    defaultLighting = {
-        Brightness = Lighting.Brightness,
-        ClockTime = Lighting.ClockTime,
-        GlobalShadows = Lighting.GlobalShadows,
-        Ambient = Lighting.Ambient,
-        OutdoorAmbient = Lighting.OutdoorAmbient,
-        FogEnd = Lighting.FogEnd,
-        FogColor = Lighting.FogColor
-    }
+local function captureWorldLighting()
+    local snapshot = {}
+    for _, property in ipairs({
+        "Brightness",
+        "ClockTime",
+        "GlobalShadows",
+        "Ambient",
+        "OutdoorAmbient",
+        "FogEnd",
+        "FogColor"
+    }) do
+        pcall(function()
+            snapshot[property] = Lighting[property]
+        end)
+    end
+    worldLightingSnapshot = snapshot
+    return snapshot
 end
+
 
 -- ==========================================
 -- DISPLAY CONTAINERS SETUP
@@ -506,7 +515,7 @@ end
 local function showHitmarker()
     if not hitmarkerEnabled then return end
 
-    hitmarkerSerial = hitmarkerSerial + 1
+    hitmarkerSerial += 1
     local serial = hitmarkerSerial
     hitmarkerCenter.Visible = true
 
@@ -583,37 +592,61 @@ end
 
 -- ==========================================
 -- LIGHTING & ATMOSPHERE FUNCTIONS
+-- World Changer lifecycle: capture -> apply -> restore per activation
 -- ==========================================
 local function applyNightPreset(presetName)
     local cfg = nightPresets[presetName]
-    if not cfg then return end
+    if not cfg then
+        return false
+    end
+
+    -- Selecting a preset must work even when World Changer is currently off.
     nightPreset = presetName
     nightClockTime = cfg.ClockTime
     nightBrightness = cfg.Brightness
     nightOutdoorAmbient = cfg.OutdoorAmbient
-    
-    if nightModeEnabled then
+
+    if not nightModeEnabled then
+        return true
+    end
+
+    pcall(function()
         Lighting.ClockTime = cfg.ClockTime
         Lighting.Brightness = cfg.Brightness
         Lighting.OutdoorAmbient = cfg.OutdoorAmbient
         Lighting.Ambient = cfg.Ambient
         Lighting.GlobalShadows = true
-        if not removeFogEnabled then
-            Lighting.FogColor = cfg.FogColor
-        end
-    end
+        Lighting.FogColor = cfg.FogColor
+    end)
+
+    return true
 end
 
 local function restoreLightingState()
+    local snapshot = worldLightingSnapshot
+    if not snapshot then
+        return
+    end
+
     pcall(function()
-        Lighting.Brightness = defaultLighting.Brightness
-        Lighting.ClockTime = defaultLighting.ClockTime
-        Lighting.GlobalShadows = defaultLighting.GlobalShadows
-        Lighting.Ambient = defaultLighting.Ambient
-        Lighting.OutdoorAmbient = defaultLighting.OutdoorAmbient
-        Lighting.FogEnd = defaultLighting.FogEnd
-        Lighting.FogColor = defaultLighting.FogColor
+        for property, value in pairs(snapshot) do
+            Lighting[property] = value
+        end
     end)
+
+    -- Never reuse an old map/round snapshot.
+    worldLightingSnapshot = nil
+end
+
+local function beginWorldChanger()
+    captureWorldLighting()
+    nightModeEnabled = true
+    applyNightPreset(nightPreset)
+end
+
+local function endWorldChanger()
+    nightModeEnabled = false
+    restoreLightingState()
 end
 
 -- ==========================================
@@ -641,7 +674,7 @@ local function cleanup()
         end
     end
     savedAutoRotate = nil
-    hitmarkerSerial = hitmarkerSerial + 1
+    hitmarkerSerial += 1
     hitmarkerLastHealth = {}
 
     for _, c in pairs(connections) do 
@@ -693,9 +726,11 @@ local function cleanup()
     screenEspCache = {}
     grenadePool = {}
     
-    if defaultLighting then
+    if nightModeEnabled then
+        nightModeEnabled = false
         restoreLightingState()
-        defaultLighting = nil
+    else
+        worldLightingSnapshot = nil
     end
 
     pcall(function() if targetGui:FindFirstChild("GestioScreenGui") then targetGui.GestioScreenGui:Destroy() end end)
@@ -828,14 +863,6 @@ local function getTargetHitbox(char)
     else
         return char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("UpperTorso") or char:FindFirstChild("Head")
     end
-end
-
-local function getTargetAimPosition(part)
-    if not part then return nil end
-    if aimboneIndex == 1 and part.Name == "Head" then
-        return part.Position + Vector3.new(0, headAimOffsetY, 0)
-    end
-    return part.Position
 end
 
 local function isEntityAlive(char, hum)
@@ -1313,7 +1340,7 @@ local function getClosestTarget()
             if isEntityAlive(char, hum) then
                 local targetPart = getTargetHitbox(char)
                 if targetPart then
-                    local calcPos = getTargetAimPosition(targetPart)
+                    local calcPos = targetPart.Position
                     local screenCalcPos = calcPos
                     if predictionEnabled and targetPart.AssemblyLinearVelocity then
                         screenCalcPos = calcPos + (targetPart.AssemblyLinearVelocity * predictionFactor)
@@ -1515,31 +1542,6 @@ table.insert(connections, Players.PlayerRemoving:Connect(function(plr)
         screenEspCache[plr] = nil
     end
 end))
-
--- Instantly hide every ESP layer for a player when their character dies.
-local function hidePlayerEsp(plr)
-    local screen = screenEspCache[plr]
-    if screen then
-        pcall(function() screen.Box.Visible = false end)
-        pcall(function() screen.HealthBarBg.Visible = false end)
-        pcall(function() screen.TagCard.Visible = false end)
-        pcall(function()
-            for _, corner in ipairs(screen.Corners) do
-                corner.H.Visible = false
-                corner.V.Visible = false
-            end
-        end)
-    end
-
-    local data = activeEspHolders[plr]
-    if data then
-        pcall(function() data.HeadDot.Enabled = false end)
-        pcall(function() data.Highlight.Enabled = false end)
-        pcall(function() data.Tracer.Visible = false end)
-        pcall(function() data.Highlight.Adornee = nil end)
-        pcall(function() data.HeadDot.Adornee = nil end)
-    end
-end
 
 -- ==========================================
 -- TACTICAL ESP SCREEN RENDER LOOP
@@ -1777,38 +1779,20 @@ local function attachEspToPlayer(plr)
 
     local function setupCharacter(char)
         if not char then return end
-
-        -- Hide the previous character's ESP immediately when a new character
-        -- starts spawning.
-        hidePlayerEsp(plr)
-
         task.spawn(function()
             local head = char:WaitForChild("Head", 3)
-            if head and dotBillboard and char == plr.Character then
+            if head and dotBillboard then
                 dotBillboard.Adornee = head
             end
-            if hl and char == plr.Character then
+            if hl then
                 hl.Adornee = char
             end
         end)
-
-        local hum = char:FindFirstChildOfClass("Humanoid") or char:WaitForChild("Humanoid", 3)
-        if hum then
-            local diedConn = hum.Died:Connect(function()
-                hidePlayerEsp(plr)
-            end)
-            table.insert(connections, diedConn)
-        end
     end
 
     if plr.Character then setupCharacter(plr.Character) end
     local charConn = plr.CharacterAdded:Connect(setupCharacter)
     table.insert(connections, charConn)
-
-    local removingConn = plr.CharacterRemoving:Connect(function(char)
-        hidePlayerEsp(plr)
-    end)
-    table.insert(connections, removingConn)
 end
 
 for _, v in pairs(Players:GetPlayers()) do attachEspToPlayer(v) end
@@ -1852,7 +1836,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         camera.CFrame = camera.CFrame * CFrame.Angles(rcsComp * rcsPitchFactor, 0, 0)
     end
 
-    if aimbotEnabled then
+    if aimbotEnabled and isAiming then
         if not lockedTarget or not isEntityAlive(lockedTarget.Char, lockedTarget.Hum) then
             lockedTarget = getClosestTarget()
         else
@@ -1867,9 +1851,9 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         if lockedTarget and lockedTarget.Position then
             local aimPos = lockedTarget.AimPosition or lockedTarget.Position
             if predictionEnabled and lockedTarget.Part and lockedTarget.Part.Parent then
-                aimPos = getTargetAimPosition(lockedTarget.Part)
+                aimPos = lockedTarget.Part.Position
                 if lockedTarget.Part.AssemblyLinearVelocity then
-                    aimPos = aimPos + lockedTarget.Part.AssemblyLinearVelocity * predictionFactor
+                    aimPos += lockedTarget.Part.AssemblyLinearVelocity * predictionFactor
                 end
             end
 
@@ -1888,7 +1872,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     end
 
     if butterflyKnifeEnabled then
-        skinScanAccumulator = skinScanAccumulator + dt
+        skinScanAccumulator += dt
         if skinScanAccumulator >= 0.50 then
             skinScanAccumulator = 0
             scanAndMorphKnives(Workspace)
@@ -1979,8 +1963,8 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
 
     if removeFogEnabled then
         Lighting.FogEnd = 100000
-    else
-        Lighting.FogEnd = defaultLighting.FogEnd
+    elseif worldLightingSnapshot and worldLightingSnapshot.FogEnd ~= nil then
+        Lighting.FogEnd = worldLightingSnapshot.FogEnd
     end
     if antiFlashEnabled then
         pcall(function()
@@ -3038,17 +3022,7 @@ local function openInspectorFor(moduleName)
         addInspectorSlider(38, "Speed", 1.0, 50.0, aimbotSpeed, true, function(v) aimbotSpeed = v end)
         addInspectorSlider(70, "Smoothness", 0.0, 0.95, aimbotSmoothness, true, function(v) aimbotSmoothness = v end)
         addInspectorSlider(102, "Prediction Factor", 0.05, 0.3, predictionFactor, true, function(v) predictionFactor = v end)
-        addInspectorChoice(136, "Aim Part", {"Head", "Chest", "Pelvis"}, aimboneIndex == 1 and "Head" or (aimboneIndex == 2 and "Chest" or "Pelvis"), function(v)
-            if v == "Head" then
-                aimboneIndex = 1
-            elseif v == "Chest" then
-                aimboneIndex = 2
-            else
-                aimboneIndex = 3
-            end
-            lockedTarget = nil
-        end)
-        addInspectorToggle(174, "Body Priority", bodyAimOnly, function(v) bodyAimOnly = v end)
+        addInspectorToggle(140, "Body Priority", bodyAimOnly, function(v) bodyAimOnly = v end)
         addInspectorToggle(166, "Snap Lock Mode", snapAimMode, function(v) snapAimMode = v end)
         addInspectorToggle(192, "Prediction", predictionEnabled, function(v) predictionEnabled = v end)
         addInspectorToggle(218, "Show FOV Circle", showFovCircle, function(v) showFovCircle = v end)
@@ -3231,7 +3205,13 @@ local function addCard(parent, name, defaultState, onToggle)
         circle.Position = state and UDim2.new(1, -10, 0.5, -4.5) or UDim2.new(0, 2, 0.5, -4.5)
         onToggle(state)
         
-        if name == "FullBright" and not state and not nightModeEnabled then
+        if name == "World Changer" then
+            if state then
+                beginWorldChanger()
+            else
+                endWorldChanger()
+            end
+        elseif name == "FullBright" and not state and not nightModeEnabled then
             restoreLightingState()
         end
     end
@@ -3306,26 +3286,28 @@ end)
 local envLightSection = makeCategorySection(envPage, "Atmosphere & World", 1, 4)
 addCard(envLightSection, "World Changer", nightModeEnabled, function(v)
     if v then
-        captureLightingState()
-        nightModeEnabled = true
-        applyNightPreset(nightPreset)
+        beginWorldChanger()
+    elseif not fullBrightEnabled then
+        endWorldChanger()
     else
         nightModeEnabled = false
-        if not fullBrightEnabled then
-            restoreLightingState()
-        end
+        worldLightingSnapshot = nil
     end
 end)
 addCard(envLightSection, "FullBright", fullBrightEnabled, function(v)
     fullBrightEnabled = v
-    if not v and not nightModeEnabled then
-        restoreLightingState()
+    if not v then
+        if nightModeEnabled then
+            applyNightPreset(nightPreset)
+        else
+            restoreLightingState()
+        end
     end
 end)
 addCard(envLightSection, "Anti-Flash", antiFlashEnabled, function(v) antiFlashEnabled = v end)
 addCard(envLightSection, "No Fog", removeFogEnabled, function(v)
     removeFogEnabled = v
-    if not v and defaultLighting then
+    if not v then
         Lighting.FogEnd = defaultLighting.FogEnd
     end
 end)
