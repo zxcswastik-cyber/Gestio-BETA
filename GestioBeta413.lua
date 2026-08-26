@@ -1,3 +1,7 @@
+-- Gestio 4.2.0 injection hardening wrapper
+-- Keeps the original payload intact while preventing a pre-UI runtime error
+-- from silently aborting the whole injected chunk.
+local __gestioMain = function()
 -- ==============================================================================
 -- [Gestio UI - Blox Strike Ultimate Mobile Engine | Version 4.1.3]
 -- Architecture: Uncompressed Extended Pipeline
@@ -50,28 +54,31 @@ if not camera then
 end
 
 local function getSafeGui()
-    -- Prefer PlayerGui because it is the most reliable render target for
-    -- injected LocalScripts. Only use gethui/CoreGui when PlayerGui is unavailable.
+    -- Executor UI parent priority: gethui -> PlayerGui -> CoreGui.
+    -- Some injected environments expose PlayerGui but reject injected ScreenGui
+    -- parenting there; gethui is designed specifically for this case.
     local ok, result = pcall(function()
-        return player:WaitForChild("PlayerGui", 10)
-    end)
-    if ok and result and typeof(result) == "Instance" then
-        return result
-    end
-
-    ok, result = pcall(function()
         if type(gethui) == "function" then
             return gethui()
         end
     end)
-    if ok and result and typeof(result) == "Instance" then
+    if ok and result then
         return result
+    end
+
+    if player then
+        ok, result = pcall(function()
+            return player:WaitForChild("PlayerGui", 10)
+        end)
+        if ok and result then
+            return result
+        end
     end
 
     ok, result = pcall(function()
         return CoreGui
     end)
-    if ok and result and typeof(result) == "Instance" then
+    if ok and result then
         return result
     end
 
@@ -82,8 +89,40 @@ local targetGui = getSafeGui()
 if not targetGui and player then
     pcall(function() targetGui = player:WaitForChild("PlayerGui", 5) end)
 end
-if not targetGui then
-    warn("[Gestio] GUI initialization failed: no valid GUI parent")
+
+-- Some executors expose gethui(), but return an object that rejects ScreenGui
+-- parenting. Validate the parent before the rest of the script creates UI.
+local function isValidGuiParent(candidate)
+    if not candidate then return false end
+    local ok, testGui = pcall(function()
+        local g = Instance.new("ScreenGui")
+        g.Name = "__GestioParentProbe"
+        g.ResetOnSpawn = false
+        g.Parent = candidate
+        return g
+    end)
+    if not ok or not testGui then return false end
+    local parentOk, stillParented = pcall(function() return testGui.Parent == candidate end)
+    pcall(function() testGui:Destroy() end)
+    return parentOk and stillParented == true
+end
+
+if not isValidGuiParent(targetGui) and player then
+    local ok, pg = pcall(function() return player:WaitForChild("PlayerGui", 5) end)
+    if ok and isValidGuiParent(pg) then
+        targetGui = pg
+    end
+end
+
+if not isValidGuiParent(targetGui) then
+    local ok, cg = pcall(function() return CoreGui end)
+    if ok and isValidGuiParent(cg) then
+        targetGui = cg
+    end
+end
+
+if not targetGui or not isValidGuiParent(targetGui) then
+    warn("[Gestio] GUI initialization failed: no writable GUI parent")
     return
 end
 local connections = {}
@@ -3329,45 +3368,5 @@ addCard(sKnifeSection, "Butterfly Knife", butterflyKnifeEnabled, function(v)
 end)
 
 -- WORLD CHANGER / ENVIRONMENT TAB
-local envLightSection = makeCategorySection(envPage, "Atmosphere & World", 1, 4)
-addCard(envLightSection, "World Changer", nightModeEnabled, function(v)
-    if v then
-        captureLightingState()
-        nightModeEnabled = true
-        applyNightPreset(nightPreset)
-    else
-        nightModeEnabled = false
-        if not fullBrightEnabled then
-            restoreLightingState()
-        end
-    end
-end)
-addCard(envLightSection, "FullBright", fullBrightEnabled, function(v)
-    fullBrightEnabled = v
-    if not v and not nightModeEnabled then
-        restoreLightingState()
-    end
-end)
-addCard(envLightSection, "Anti-Flash", antiFlashEnabled, function(v) antiFlashEnabled = v end)
-addCard(envLightSection, "No Fog", removeFogEnabled, function(v)
-    removeFogEnabled = v
-    if not v and defaultLighting then
-        if defaultLighting and lightingSnapshotActive then
-        Lighting.FogEnd = defaultLighting.FogEnd
-    end
-    end
-end)
-
--- MISC TAB
-local miscGeneralSection = makeCategorySection(micsPage, "Utilities", 1, 2)
-addCard(miscGeneralSection, "Third Person", thirdPersonEnabled, function(v)
-    setThirdPersonEnabled(v)
-end)
-addCard(miscGeneralSection, "Anti-AFK", antiAfkEnabled, function(v)
-    setAntiAfkEnabled(v)
-end)
-
--- SETTINGS TAB
-local setsGeneralSection = makeCategorySection(setsPage, "Configuration", 1, 1)
-addCard
+local envLight
 Показана только часть файла из-за его большого размера
