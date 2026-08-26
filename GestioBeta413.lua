@@ -414,29 +414,15 @@ local nightPresets = {
     }
 }
 
--- World Changer keeps a fresh snapshot for each activation.
--- This avoids restoring stale lighting from a previous map/round.
-local worldLightingSnapshot = nil
-
-local function captureWorldLighting()
-    local snapshot = {}
-    for _, property in ipairs({
-        "Brightness",
-        "ClockTime",
-        "GlobalShadows",
-        "Ambient",
-        "OutdoorAmbient",
-        "FogEnd",
-        "FogColor"
-    }) do
-        pcall(function()
-            snapshot[property] = Lighting[property]
-        end)
-    end
-    worldLightingSnapshot = snapshot
-    return snapshot
-end
-
+local defaultLighting = {
+    Brightness = Lighting.Brightness,
+    ClockTime = Lighting.ClockTime,
+    GlobalShadows = Lighting.GlobalShadows,
+    Ambient = Lighting.Ambient,
+    OutdoorAmbient = Lighting.OutdoorAmbient,
+    FogEnd = Lighting.FogEnd,
+    FogColor = Lighting.FogColor
+}
 
 -- ==========================================
 -- DISPLAY CONTAINERS SETUP
@@ -592,66 +578,37 @@ end
 
 -- ==========================================
 -- LIGHTING & ATMOSPHERE FUNCTIONS
--- World Changer lifecycle: capture -> apply -> restore per activation
 -- ==========================================
 local function applyNightPreset(presetName)
     local cfg = nightPresets[presetName]
-    if not cfg then
-        return false
-    end
-
-    -- Selecting a preset must work even when World Changer is currently off.
+    if not cfg then return end
     nightPreset = presetName
     nightClockTime = cfg.ClockTime
     nightBrightness = cfg.Brightness
     nightOutdoorAmbient = cfg.OutdoorAmbient
-
-    if not nightModeEnabled then
-        return true
-    end
-
-    pcall(function()
+    
+    if nightModeEnabled then
         Lighting.ClockTime = cfg.ClockTime
         Lighting.Brightness = cfg.Brightness
         Lighting.OutdoorAmbient = cfg.OutdoorAmbient
         Lighting.Ambient = cfg.Ambient
         Lighting.GlobalShadows = true
-        Lighting.FogColor = cfg.FogColor
-    end)
-
-    return true
+        if not removeFogEnabled then
+            Lighting.FogColor = cfg.FogColor
+        end
+    end
 end
 
 local function restoreLightingState()
-    local snapshot = worldLightingSnapshot
-    if not snapshot then
-        return
-    end
-
     pcall(function()
-        for property, value in pairs(snapshot) do
-            Lighting[property] = value
-        end
+        Lighting.Brightness = defaultLighting.Brightness
+        Lighting.ClockTime = defaultLighting.ClockTime
+        Lighting.GlobalShadows = defaultLighting.GlobalShadows
+        Lighting.Ambient = defaultLighting.Ambient
+        Lighting.OutdoorAmbient = defaultLighting.OutdoorAmbient
+        Lighting.FogEnd = defaultLighting.FogEnd
+        Lighting.FogColor = defaultLighting.FogColor
     end)
-
-    -- Never reuse an old map/round snapshot.
-    worldLightingSnapshot = nil
-end
-
-local function beginWorldChanger()
-    if nightModeEnabled then
-        applyNightPreset(nightPreset)
-        return
-    end
-
-    captureWorldLighting()
-    nightModeEnabled = true
-    applyNightPreset(nightPreset)
-end
-
-local function endWorldChanger()
-    nightModeEnabled = false
-    restoreLightingState()
 end
 
 -- ==========================================
@@ -731,12 +688,7 @@ local function cleanup()
     screenEspCache = {}
     grenadePool = {}
     
-    if nightModeEnabled then
-        nightModeEnabled = false
-        restoreLightingState()
-    else
-        worldLightingSnapshot = nil
-    end
+    restoreLightingState()
 
     pcall(function() if targetGui:FindFirstChild("GestioScreenGui") then targetGui.GestioScreenGui:Destroy() end end)
     pcall(function() if targetGui:FindFirstChild("GestioToggleGui") then targetGui.GestioToggleGui:Destroy() end end)
@@ -1968,8 +1920,8 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
 
     if removeFogEnabled then
         Lighting.FogEnd = 100000
-    elseif worldLightingSnapshot and worldLightingSnapshot.FogEnd ~= nil then
-        Lighting.FogEnd = worldLightingSnapshot.FogEnd
+    else
+        Lighting.FogEnd = defaultLighting.FogEnd
     end
     if antiFlashEnabled then
         pcall(function()
@@ -3128,7 +3080,20 @@ local function openInspectorFor(moduleName)
     elseif moduleName == "World Changer" then
         insContent.CanvasSize = UDim2.new(0, 0, 0, 330)
         addInspectorChoice(6, "World Preset", {"Midnight", "Nebula", "DeepBlood", "CyberPurple", "EmeraldNight", "PitchBlack"}, nightPreset, function(selected)
-            applyNightPreset(selected)
+            local cfg = nightPresets[selected]
+            if not cfg then
+                return
+            end
+
+            -- Keep the selected preset in sync with the inspector.
+            nightPreset = selected
+            nightClockTime = cfg.ClockTime
+            nightBrightness = cfg.Brightness
+            nightOutdoorAmbient = cfg.OutdoorAmbient
+
+            if nightModeEnabled then
+                applyNightPreset(selected)
+            end
         end)
         addInspectorSlider(48, "Brightness", 0.0, 2.0, nightBrightness, true, function(v) 
             nightBrightness = v 
@@ -3209,6 +3174,16 @@ local function addCard(parent, name, defaultState, onToggle)
         toggleBtn.BackgroundColor3 = state and currentTheme.Accent or Color3.fromRGB(50, 53, 60)
         circle.Position = state and UDim2.new(1, -10, 0.5, -4.5) or UDim2.new(0, 2, 0.5, -4.5)
         onToggle(state)
+        
+        if name == "World Changer" then
+            if state then
+                applyNightPreset(nightPreset)
+            else
+                restoreLightingState()
+            end
+        elseif name == "FullBright" and not state and not nightModeEnabled then
+            restoreLightingState()
+        end
     end
 
     bindTouch(toggleBtn, executeToggle)
@@ -3280,31 +3255,24 @@ end)
 -- WORLD CHANGER / ENVIRONMENT TAB
 local envLightSection = makeCategorySection(envPage, "Atmosphere & World", 1, 4)
 addCard(envLightSection, "World Changer", nightModeEnabled, function(v)
+    nightModeEnabled = v
     if v then
-        beginWorldChanger()
-    else
-        endWorldChanger()
+        applyNightPreset(nightPreset)
+    elseif not fullBrightEnabled then
+        restoreLightingState()
     end
 end)
 addCard(envLightSection, "FullBright", fullBrightEnabled, function(v)
     fullBrightEnabled = v
-    if not v then
-        if nightModeEnabled then
-            applyNightPreset(nightPreset)
-        else
-            restoreLightingState()
-        end
+    if not v and not nightModeEnabled then
+        restoreLightingState()
     end
 end)
 addCard(envLightSection, "Anti-Flash", antiFlashEnabled, function(v) antiFlashEnabled = v end)
 addCard(envLightSection, "No Fog", removeFogEnabled, function(v)
     removeFogEnabled = v
     if not v then
-        if worldLightingSnapshot and worldLightingSnapshot.FogEnd ~= nil then
-            Lighting.FogEnd = worldLightingSnapshot.FogEnd
-        end
-    else
-        Lighting.FogEnd = 100000
+        Lighting.FogEnd = defaultLighting.FogEnd
     end
 end)
 
