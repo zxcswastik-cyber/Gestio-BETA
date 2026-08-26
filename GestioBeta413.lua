@@ -1,7 +1,3 @@
--- Gestio 4.2.0 injection hardening wrapper
--- Keeps the original payload intact while preventing a pre-UI runtime error
--- from silently aborting the whole injected chunk.
-local __gestioMain = function()
 -- ==============================================================================
 -- [Gestio UI - Blox Strike Ultimate Mobile Engine | Version 4.1.3]
 -- Architecture: Uncompressed Extended Pipeline
@@ -36,52 +32,34 @@ end)
 -- ==========================================
 local player = Players.LocalPlayer
 if not player then
-    local startWait = os.clock()
-    while not player and (os.clock() - startWait) < 10 do
+    local startWait = tick()
+    while not player and (tick() - startWait) < 5 do
         player = Players.LocalPlayer
-        if not player then task.wait(0.1) end
+        task.wait(0.1)
+    end
+    if not player then
+        player = Players:GetPlayers()[1]
     end
 end
 
-if not player then
-    warn("[Gestio] Injection aborted: LocalPlayer is unavailable.")
-    return
-end
-
-local camera = Workspace.CurrentCamera
-if not camera then
-    camera = Workspace:WaitForChild("Camera", 10)
-end
+local camera = Workspace.CurrentCamera or Workspace:FindFirstChildOfClass("Camera")
 
 local function getSafeGui()
-    -- Executor UI parent priority: gethui -> PlayerGui -> CoreGui.
-    -- Some injected environments expose PlayerGui but reject injected ScreenGui
-    -- parenting there; gethui is designed specifically for this case.
-    local ok, result = pcall(function()
-        if type(gethui) == "function" then
+    local success, result = pcall(function()
+        if gethui then
             return gethui()
         end
     end)
-    if ok and result then
-        return result
-    end
-
-    if player then
-        ok, result = pcall(function()
-            return player:WaitForChild("PlayerGui", 10)
-        end)
-        if ok and result then
-            return result
-        end
-    end
-
-    ok, result = pcall(function()
+    if success and result then return result end
+    
+    success, result = pcall(function()
         return CoreGui
     end)
-    if ok and result then
-        return result
+    if success and result then return result end
+    
+    if player then
+        return player:WaitForChild("PlayerGui", 5) or player:FindFirstChildOfClass("PlayerGui")
     end
-
     return nil
 end
 
@@ -89,40 +67,8 @@ local targetGui = getSafeGui()
 if not targetGui and player then
     pcall(function() targetGui = player:WaitForChild("PlayerGui", 5) end)
 end
-
--- Some executors expose gethui(), but return an object that rejects ScreenGui
--- parenting. Validate the parent before the rest of the script creates UI.
-local function isValidGuiParent(candidate)
-    if not candidate then return false end
-    local ok, testGui = pcall(function()
-        local g = Instance.new("ScreenGui")
-        g.Name = "__GestioParentProbe"
-        g.ResetOnSpawn = false
-        g.Parent = candidate
-        return g
-    end)
-    if not ok or not testGui then return false end
-    local parentOk, stillParented = pcall(function() return testGui.Parent == candidate end)
-    pcall(function() testGui:Destroy() end)
-    return parentOk and stillParented == true
-end
-
-if not isValidGuiParent(targetGui) and player then
-    local ok, pg = pcall(function() return player:WaitForChild("PlayerGui", 5) end)
-    if ok and isValidGuiParent(pg) then
-        targetGui = pg
-    end
-end
-
-if not isValidGuiParent(targetGui) then
-    local ok, cg = pcall(function() return CoreGui end)
-    if ok and isValidGuiParent(cg) then
-        targetGui = cg
-    end
-end
-
-if not targetGui or not isValidGuiParent(targetGui) then
-    warn("[Gestio] GUI initialization failed: no writable GUI parent")
+if not targetGui then
+    warn("[Gestio] GUI initialization failed: no valid GUI parent")
     return
 end
 local connections = {}
@@ -235,6 +181,7 @@ local aimbotSmoothness = 0.0
 local aimFov = 160
 local showFovCircle = true
 local snapAimMode = true
+local isAiming = false
 local lockedTarget = nil
 local aimboneIndex = 1
 local headAimOffsetY = -0.35
@@ -469,7 +416,6 @@ local nightPresets = {
 }
 
 local defaultLighting = nil
-local lightingSnapshotActive = false
 
 local function captureLightingState()
     defaultLighting = {
@@ -481,7 +427,6 @@ local function captureLightingState()
         FogEnd = Lighting.FogEnd,
         FogColor = Lighting.FogColor
     }
-    lightingSnapshotActive = true
 end
 
 -- ==========================================
@@ -660,10 +605,6 @@ local function applyNightPreset(presetName)
 end
 
 local function restoreLightingState()
-    if not defaultLighting or not lightingSnapshotActive then
-        return false
-    end
-
     pcall(function()
         Lighting.Brightness = defaultLighting.Brightness
         Lighting.ClockTime = defaultLighting.ClockTime
@@ -673,10 +614,6 @@ local function restoreLightingState()
         Lighting.FogEnd = defaultLighting.FogEnd
         Lighting.FogColor = defaultLighting.FogColor
     end)
-
-    defaultLighting = nil
-    lightingSnapshotActive = false
-    return true
 end
 
 -- ==========================================
@@ -2043,9 +1980,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     if removeFogEnabled then
         Lighting.FogEnd = 100000
     else
-        if defaultLighting and lightingSnapshotActive then
         Lighting.FogEnd = defaultLighting.FogEnd
-    end
     end
     if antiFlashEnabled then
         pcall(function()
@@ -3113,11 +3048,11 @@ local function openInspectorFor(moduleName)
             end
             lockedTarget = nil
         end)
-        addInspectorToggle(190, "Body Priority", bodyAimOnly, function(v) bodyAimOnly = v end)
-        addInspectorToggle(216, "Snap Lock Mode", snapAimMode, function(v) snapAimMode = v end)
-        addInspectorToggle(242, "Prediction", predictionEnabled, function(v) predictionEnabled = v end)
-        addInspectorToggle(268, "Show FOV Circle", showFovCircle, function(v) showFovCircle = v end)
-        addInspectorToggle(294, "Visibility Check", visibleCheck, function(v) visibleCheck = v end)
+        addInspectorToggle(174, "Body Priority", bodyAimOnly, function(v) bodyAimOnly = v end)
+        addInspectorToggle(166, "Snap Lock Mode", snapAimMode, function(v) snapAimMode = v end)
+        addInspectorToggle(192, "Prediction", predictionEnabled, function(v) predictionEnabled = v end)
+        addInspectorToggle(218, "Show FOV Circle", showFovCircle, function(v) showFovCircle = v end)
+        addInspectorToggle(244, "Visibility Check", visibleCheck, function(v) visibleCheck = v end)
     elseif moduleName == "Butterfly Knife" then
         insContent.CanvasSize = UDim2.new(0, 0, 0, 160)
         addInspectorChoice(6, "Skin Finish", {"Vanilla", "Fade", "Doppler", "Lore"}, butterflySkin, function(selected)
@@ -3368,5 +3303,48 @@ addCard(sKnifeSection, "Butterfly Knife", butterflyKnifeEnabled, function(v)
 end)
 
 -- WORLD CHANGER / ENVIRONMENT TAB
-local envLight
-Показана только часть файла из-за его большого размера
+local envLightSection = makeCategorySection(envPage, "Atmosphere & World", 1, 4)
+addCard(envLightSection, "World Changer", nightModeEnabled, function(v)
+    if v then
+        captureLightingState()
+        nightModeEnabled = true
+        applyNightPreset(nightPreset)
+    else
+        nightModeEnabled = false
+        if not fullBrightEnabled then
+            restoreLightingState()
+        end
+    end
+end)
+addCard(envLightSection, "FullBright", fullBrightEnabled, function(v)
+    fullBrightEnabled = v
+    if not v and not nightModeEnabled then
+        restoreLightingState()
+    end
+end)
+addCard(envLightSection, "Anti-Flash", antiFlashEnabled, function(v) antiFlashEnabled = v end)
+addCard(envLightSection, "No Fog", removeFogEnabled, function(v)
+    removeFogEnabled = v
+    if not v and defaultLighting then
+        Lighting.FogEnd = defaultLighting.FogEnd
+    end
+end)
+
+-- MISC TAB
+local miscGeneralSection = makeCategorySection(micsPage, "Utilities", 1, 2)
+addCard(miscGeneralSection, "Third Person", thirdPersonEnabled, function(v)
+    setThirdPersonEnabled(v)
+end)
+addCard(miscGeneralSection, "Anti-AFK", antiAfkEnabled, function(v)
+    setAntiAfkEnabled(v)
+end)
+
+-- SETTINGS TAB
+local setsGeneralSection = makeCategorySection(setsPage, "Configuration", 1, 1)
+addCard(setsGeneralSection, "Theme", true, function(v) end)
+
+openInspectorFor("Tracking")
+
+end
+
+buildGestioUI()
