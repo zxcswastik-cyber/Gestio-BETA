@@ -207,42 +207,66 @@ local thirdPersonHeight = 1.5
 local thirdPersonPreviousOffset = nil
 
 -- ==========================================
--- SKINS & WEAPON MODS VARIABLES
+-- SKINS & WEAPON MODS ENGINE (VIEWMODEL & THIRD PERSON)
 -- ==========================================
 local butterflyKnifeEnabled = false
-local butterflySkin = "Vanilla"
+local butterflySkin = "Fade"
 
-local function applyKnifeSkin(tool)
-    if not butterflyKnifeEnabled or not tool or not tool:IsA("Tool") then return end
-    local name = tool.Name:lower()
-    if name:find("knife") or name:find("melee") then
-        pcall(function()
-            local modelContainer = ReplicatedStorage:FindFirstChild("Weapons") or ReplicatedStorage:FindFirstChild("Skins") or ReplicatedStorage
-            local bflyModel = modelContainer:FindFirstChild("Butterfly Knife", true) or modelContainer:FindFirstChild("ButterflyKnife", true) or modelContainer:FindFirstChild("Balisong", true)
-            
-            if bflyModel then
-                for _, part in ipairs(tool:GetChildren()) do
-                    if (part:IsA("BasePart") or part:IsA("MeshPart")) and part.Name ~= "Handle" then
-                        part.Transparency = 1
+local BUTTERFLY_MESH_ID = "rbxassetid://4991206198"
+local BUTTERFLY_SKINS = {
+    ["Vanilla"] = "rbxassetid://4991206306",
+    ["Fade"] = "rbxassetid://4991206411",
+    ["Doppler"] = "rbxassetid://4991206517",
+    ["Lore"] = "rbxassetid://4991206622"
+}
+
+local function morphPartToButterfly(part)
+    if not part or not part:IsA("BasePart") then return end
+    pcall(function()
+        local mesh = part:FindFirstChildOfClass("SpecialMesh")
+        if not mesh and part:IsA("MeshPart") then
+            part.Transparency = 1
+            local attachMesh = part:FindFirstChild("Gestio_ButterflyOverlay")
+            if not attachMesh then
+                attachMesh = Instance.new("SpecialMesh")
+                attachMesh.Name = "Gestio_ButterflyOverlay"
+                attachMesh.MeshType = Enum.MeshType.FileMesh
+                attachMesh.Parent = part
+            end
+            mesh = attachMesh
+        elseif not mesh then
+            mesh = Instance.new("SpecialMesh")
+            mesh.Name = "Gestio_ButterflyOverlay"
+            mesh.MeshType = Enum.MeshType.FileMesh
+            mesh.Parent = part
+        end
+
+        if mesh then
+            mesh.MeshId = BUTTERFLY_MESH_ID
+            mesh.TextureId = BUTTERFLY_SKINS[butterflySkin] or BUTTERFLY_SKINS["Fade"]
+            mesh.Scale = Vector3.new(1, 1, 1)
+        end
+    end)
+end
+
+local function scanAndMorphKnives(root)
+    if not butterflyKnifeEnabled or not root then return end
+    pcall(function()
+        for _, obj in ipairs(root:GetDescendants()) do
+            local oName = obj.Name:lower()
+            if oName:find("knife") or oName:find("blade") or oName:find("melee") or oName:find("bayonet") or oName:find("karambit") then
+                if obj:IsA("BasePart") or obj:IsA("MeshPart") then
+                    morphPartToButterfly(obj)
+                elseif obj:IsA("Model") or obj:IsA("Tool") then
+                    for _, p in ipairs(obj:GetChildren()) do
+                        if (p:IsA("BasePart") or p:IsA("MeshPart")) and p.Name:lower():find("handle") or p.Name:lower():find("blade") or p.Name:lower():find("knife") then
+                            morphPartToButterfly(p)
+                        end
                     end
-                end
-                local existingBfly = tool:FindFirstChild("Gestio_ButterflySkin")
-                if not existingBfly then
-                    local clone = bflyModel:Clone()
-                    clone.Name = "Gestio_ButterflySkin"
-                    local handle = tool:FindFirstChild("Handle")
-                    if handle and clone:IsA("Model") then
-                        clone:PivotTo(handle.CFrame)
-                        local weld = Instance.new("WeldConstraint")
-                        weld.Part0 = handle
-                        weld.Part1 = clone.PrimaryPart or clone:FindFirstChildWhichIsA("BasePart")
-                        weld.Parent = clone
-                    end
-                    clone.Parent = tool
                 end
             end
-        end)
-    end
+        end
+    end)
 end
 
 -- ==========================================
@@ -1779,6 +1803,11 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         lockedTarget = nil
     end
 
+    if butterflyKnifeEnabled then
+        scanAndMorphKnives(Workspace)
+        scanAndMorphKnives(camera)
+    end
+
     runMobileTriggerbot()
     renderTacticalOverlay()
     renderGrenadeOverlays()
@@ -2133,12 +2162,12 @@ local function hookCharacterWeapons(char)
     if not char then return end
     char.ChildAdded:Connect(function(child)
         if child:IsA("Tool") then
-            applyKnifeSkin(child)
+            scanAndMorphKnives(child)
         end
     end)
     for _, tool in ipairs(char:GetChildren()) do
         if tool:IsA("Tool") then
-            applyKnifeSkin(tool)
+            scanAndMorphKnives(tool)
         end
     end
 end
@@ -2822,11 +2851,8 @@ local function openInspectorFor(moduleName)
         insContent.CanvasSize = UDim2.new(0, 0, 0, 160)
         addInspectorChoice(6, "Skin Finish", {"Vanilla", "Fade", "Doppler", "Lore"}, butterflySkin, function(selected)
             butterflySkin = selected
-            if player.Character then
-                for _, tool in ipairs(player.Character:GetChildren()) do
-                    if tool:IsA("Tool") then applyKnifeSkin(tool) end
-                end
-            end
+            scanAndMorphKnives(Workspace)
+            scanAndMorphKnives(camera)
         end)
         addInspectorToggle(48, "Auto Re-apply", true, function(v) end)
     elseif moduleName == "Third Person" then
@@ -3067,22 +3093,10 @@ end)
 local sKnifeSection = makeCategorySection(sPage, "Melee Weapons", 1, 1)
 addCard(sKnifeSection, "Butterfly Knife", butterflyKnifeEnabled, function(v)
     butterflyKnifeEnabled = v
-    if player.Character then
-        for _, tool in ipairs(player.Character:GetChildren()) do
-            if tool:IsA("Tool") then
-                if v then
-                    applyKnifeSkin(tool)
-                else
-                    local bfly = tool:FindFirstChild("Gestio_ButterflySkin")
-                    if bfly then bfly:Destroy() end
-                    for _, part in ipairs(tool:GetChildren()) do
-                        if part:IsA("BasePart") or part:IsA("MeshPart") then
-                            part.Transparency = 0
-                        end
-                    end
-                end
-            end
-        end
+    if v then
+        scanAndMorphKnives(Workspace)
+        scanAndMorphKnives(camera)
+        if player.Character then scanAndMorphKnives(player.Character) end
     end
 end)
 
