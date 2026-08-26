@@ -2854,116 +2854,50 @@ local function addInspectorToggle(y, txt, default, onToggle)
 end
 
 local function addInspectorChoice(y, txt, choices, currentChoice, onSelect)
-    local row = Instance.new("Frame", insContent)
-    row.Size = UDim2.new(0.86, 0, 0, 28)
-    row.Position = UDim2.new(0.07, 0, 0, y)
-    row.BackgroundTransparency = 1
-    row.ZIndex = 20
-
-    local lbl = Instance.new("TextLabel", row)
-    lbl.Size = UDim2.new(0.34, 0, 1, 0)
+    local lbl = Instance.new("TextLabel", insContent)
+    lbl.Size = UDim2.new(0.86, 0, 0, 12)
+    lbl.Position = UDim2.new(0.07, 0, 0, y)
     lbl.BackgroundTransparency = 1
-    lbl.Text = txt
+    lbl.Text = txt .. ":"
     lbl.TextColor3 = currentTheme.TextSecondary
     lbl.TextXAlignment = Enum.TextXAlignment.Left
     lbl.TextSize = 8.5
     lbl.Font = Enum.Font.GothamBold
-    lbl.ZIndex = 20
+    lbl.ZIndex = 7
 
-    local dropdown = Instance.new("TextButton", row)
-    dropdown.Size = UDim2.new(0.66, 0, 0, 26)
-    dropdown.Position = UDim2.new(0.34, 0, 0.5, -13)
-    dropdown.BackgroundColor3 = currentTheme.CardBg
-    dropdown.BorderSizePixel = 0
-    dropdown.Text = ""
-    dropdown.AutoButtonColor = false
-    dropdown.ZIndex = 21
-    Instance.new("UICorner", dropdown).CornerRadius = UDim.new(0, 5)
+    local container = Instance.new("Frame", insContent)
+    container.Size = UDim2.new(0.86, 0, 0, 22)
+    container.Position = UDim2.new(0.07, 0, 0, y + 14)
+    container.BackgroundTransparency = 1
+    container.ZIndex = 7
 
-    local stroke = Instance.new("UIStroke", dropdown)
-    stroke.Color = currentTheme.Border
-    stroke.Thickness = 1
+    local layout = Instance.new("UIListLayout", container)
+    layout.FillDirection = Enum.FillDirection.Horizontal
+    layout.Padding = UDim.new(0, 4)
 
-    local selectedLabel = Instance.new("TextLabel", dropdown)
-    selectedLabel.Size = UDim2.new(1, -30, 1, 0)
-    selectedLabel.Position = UDim2.new(0, 10, 0, 0)
-    selectedLabel.BackgroundTransparency = 1
-    selectedLabel.Text = currentChoice
-    selectedLabel.TextColor3 = currentTheme.TextPrimary
-    selectedLabel.TextXAlignment = Enum.TextXAlignment.Left
-    selectedLabel.TextSize = 8
-    selectedLabel.Font = Enum.Font.GothamBold
-    selectedLabel.ZIndex = 22
+    for _, choiceName in ipairs(choices) do
+        local choiceBtn = Instance.new("TextButton", container)
+        choiceBtn.Size = UDim2.new(0, 52, 1, 0)
+        choiceBtn.BackgroundColor3 = (choiceName == currentChoice) and currentTheme.Accent or currentTheme.CardBg
+        choiceBtn.Text = choiceName
+        choiceBtn.TextColor3 = (choiceName == currentChoice) and Color3.fromRGB(255, 255, 255) or currentTheme.TextSecondary
+        choiceBtn.TextSize = 7.5
+        choiceBtn.Font = Enum.Font.GothamBold
+        choiceBtn.ZIndex = 8
+        Instance.new("UICorner", choiceBtn).CornerRadius = UDim.new(0, 4)
 
-    local arrow = Instance.new("TextLabel", dropdown)
-    arrow.Size = UDim2.new(0, 22, 1, 0)
-    arrow.Position = UDim2.new(1, -24, 0, 0)
-    arrow.BackgroundTransparency = 1
-    arrow.Text = "▼"
-    arrow.TextColor3 = currentTheme.TextSecondary
-    arrow.TextSize = 8
-    arrow.Font = Enum.Font.GothamBold
-    arrow.ZIndex = 22
-
-    local list = Instance.new("Frame", insContent)
-    list.Name = "PresetDropdown"
-    list.Size = UDim2.new(0.5676, 0, 0, 0)
-    list.Position = UDim2.new(0.3624, 0, 0, y + 31)
-    list.BackgroundColor3 = currentTheme.CardBg
-    list.BorderSizePixel = 0
-    list.Visible = false
-    list.ZIndex = 100
-    list.ClipsDescendants = true
-    Instance.new("UICorner", list).CornerRadius = UDim.new(0, 5)
-    local listStroke = Instance.new("UIStroke", list)
-    listStroke.Color = currentTheme.Border
-
-    local layout = Instance.new("UIListLayout", list)
-    layout.SortOrder = Enum.SortOrder.LayoutOrder
-    local open = false
-    local h = 25
-
-    local function close()
-        open = false
-        list.Visible = false
-        list.Size = UDim2.new(0.5676, 0, 0, 0)
-        arrow.Text = "▼"
-    end
-    local function toggle()
-        open = not open
-        list.Visible = open
-        list.Size = open and UDim2.new(0.5676, 0, 0, #choices*h+2) or UDim2.new(0.5676, 0, 0, 0)
-        arrow.Text = open and "▲" or "▼"
-    end
-
-    for i, choiceName in ipairs(choices) do
-        local option = Instance.new("TextButton", list)
-        option.LayoutOrder = i
-        option.Size = UDim2.new(1, -2, 0, h)
-        option.BackgroundColor3 = choiceName == currentChoice and currentTheme.Accent or currentTheme.CardBg
-        option.Text = choiceName
-        option.TextColor3 = choiceName == currentChoice and Color3.fromRGB(255,255,255) or currentTheme.TextSecondary
-        option.TextSize = 8
-        option.Font = Enum.Font.GothamBold
-        option.AutoButtonColor = false
-        option.ZIndex = 101
-        Instance.new("UICorner", option).CornerRadius = UDim.new(0,4)
-        bindTouch(option, function()
-            currentChoice = choiceName
-            selectedLabel.Text = choiceName
-            for _, child in ipairs(list:GetChildren()) do
+        bindTouch(choiceBtn, function()
+            for _, child in ipairs(container:GetChildren()) do
                 if child:IsA("TextButton") then
                     child.BackgroundColor3 = currentTheme.CardBg
                     child.TextColor3 = currentTheme.TextSecondary
                 end
             end
-            option.BackgroundColor3 = currentTheme.Accent
-            option.TextColor3 = Color3.fromRGB(255,255,255)
-            close()
+            choiceBtn.BackgroundColor3 = currentTheme.Accent
+            choiceBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
             onSelect(choiceName)
         end)
     end
-    bindTouch(dropdown, toggle)
 end
 
 -- ==========================================
@@ -3077,9 +3011,9 @@ local function openInspectorFor(moduleName)
         addInspectorSlider(38, "Thickness", 1.0, 3.0, boxThickness, true, function(v) boxThickness = v end)
         addInspectorToggle(76, "Corner Box", cornerBoxEnabled, function(v) cornerBoxEnabled = v end)
         addInspectorToggle(108, "Health Bar", healthBarEnabled, function(v) healthBarEnabled = v end)
-    elseif moduleName == "World Changer" then
-        insContent.CanvasSize = UDim2.new(0, 0, 0, 330)
-        addInspectorChoice(6, "World Preset", {"Midnight", "Nebula", "DeepBlood", "CyberPurple", "EmeraldNight", "PitchBlack"}, nightPreset, function(selected)
+    elseif moduleName == "Night Mode" then
+        insContent.CanvasSize = UDim2.new(0, 0, 0, 260)
+        addInspectorChoice(6, "Presets", {"Midnight", "Nebula", "DeepBlood", "CyberPurple", "EmeraldNight", "PitchBlack"}, nightPreset, function(selected)
             applyNightPreset(selected)
         end)
         addInspectorSlider(48, "Brightness", 0.0, 2.0, nightBrightness, true, function(v) 
@@ -3162,7 +3096,7 @@ local function addCard(parent, name, defaultState, onToggle)
         circle.Position = state and UDim2.new(1, -10, 0.5, -4.5) or UDim2.new(0, 2, 0.5, -4.5)
         onToggle(state)
         
-        if name == "World Changer" then
+        if name == "Night Mode" then
             if state then
                 applyNightPreset(nightPreset)
             else
@@ -3239,9 +3173,9 @@ addCard(sKnifeSection, "Butterfly Knife", butterflyKnifeEnabled, function(v)
     end
 end)
 
--- WORLD CHANGER / ENVIRONMENT TAB
+-- ENVIRONMENT TAB
 local envLightSection = makeCategorySection(envPage, "Atmosphere & World", 1, 4)
-addCard(envLightSection, "World Changer", nightModeEnabled, function(v)
+addCard(envLightSection, "Night Mode", nightModeEnabled, function(v)
     nightModeEnabled = v
     if v then
         applyNightPreset(nightPreset)
