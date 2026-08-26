@@ -21,7 +21,6 @@ local CoreGui = game:GetService("CoreGui")
 local Lighting = game:GetService("Lighting")
 local Workspace = game:GetService("Workspace")
 local Stats = game:GetService("Stats")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local VirtualInputManager = nil
 pcall(function()
     VirtualInputManager = game:GetService("VirtualInputManager")
@@ -80,11 +79,6 @@ local mobileSlideInputActive = false
 local mobileSlideInput = nil
 local mobileJumpHookedButton = nil
 local mobileJumpConnections = {}
-local skinScanAccumulator = 0
-local savedAutoRotate = nil
-local hitmarkerSerial = 0
-local antiAfkEnabled = true
-local antiAfkConnection = nil
 
 local genv = (type(getgenv) == "function") and getgenv() or nil
 if genv and not genv.GestioSavedPos then
@@ -210,58 +204,6 @@ local thirdPersonEnabled = false
 local thirdPersonDistance = 12
 local thirdPersonHeight = 1.5
 local thirdPersonPreviousOffset = nil
-
--- ==========================================
--- SKINS & WEAPON MODS ENGINE
--- ==========================================
-local butterflyKnifeEnabled = false
-local butterflySkin = "Fade"
-
-local function hookBloxStrikeModules()
-    pcall(function()
-        if getgc then
-            for _, v in ipairs(getgc(true)) do
-                if type(v) == "table" and rawget(v, "EquippedMelee") ~= nil then
-                    v.EquippedMelee = "Butterfly Knife"
-                elseif type(v) == "table" and rawget(v, "MeleeSkin") ~= nil then
-                    v.MeleeSkin = butterflySkin
-                elseif type(v) == "table" and rawget(v, "Knife") ~= nil and type(v.Knife) == "table" then
-                    v.Knife.Name = "Butterfly Knife"
-                    v.Knife.Skin = butterflySkin
-                end
-            end
-        end
-    end)
-end
-
-local function scanAndMorphKnives(root)
-    if not butterflyKnifeEnabled or not root then return end
-    pcall(function()
-        for _, obj in ipairs(root:GetDescendants()) do
-            local oName = obj.Name:lower()
-            if oName:find("knife") or oName:find("melee") or oName:find("blade") or oName:find("karambit") or oName:find("bayonet") or oName:find("arms") or oName:find("viewmodel") then
-                for _, child in ipairs(obj:GetDescendants()) do
-                    local textureId
-                    if butterflySkin == "Fade" then
-                        textureId = "rbxassetid://4991206411"
-                    elseif butterflySkin == "Doppler" then
-                        textureId = "rbxassetid://4991206517"
-                    elseif butterflySkin == "Lore" then
-                        textureId = "rbxassetid://4991206622"
-                    else
-                        textureId = "rbxassetid://4991206306"
-                    end
-
-                    if child:IsA("MeshPart") then
-                        pcall(function() child.TextureID = textureId end)
-                    elseif child:IsA("SpecialMesh") then
-                        pcall(function() child.TextureId = textureId end)
-                    end
-                end
-            end
-        end
-    end)
-end
 
 -- ==========================================
 -- RECOIL CONTROL SYSTEM (RCS) VARIABLES
@@ -499,39 +441,43 @@ local function refreshHitmarkerTheme()
 end
 
 local function showHitmarker()
-    if not hitmarkerEnabled then return end
+    if not hitmarkerEnabled or hitmarkerBusy then return end
+    hitmarkerBusy = true
 
-    hitmarkerSerial += 1
-    local serial = hitmarkerSerial
     hitmarkerCenter.Visible = true
-
     for _, line in ipairs(hitmarkerLines) do
         line.BackgroundTransparency = 0
         local glow = line:FindFirstChild("NeonGlow")
         if glow then glow.Transparency = 0.05 end
     end
 
-    local fadeInfo = TweenInfo.new(
-        math.max(0.05, hitmarkerDuration),
-        Enum.EasingStyle.Quad,
-        Enum.EasingDirection.Out
-    )
+    task.spawn(function()
+        local fadeInfo = TweenInfo.new(
+            hitmarkerDuration,
+            Enum.EasingStyle.Quad,
+            Enum.EasingDirection.Out
+        )
 
-    for _, line in ipairs(hitmarkerLines) do
-        TweenService:Create(line, fadeInfo, {
-            BackgroundTransparency = 1
-        }):Play()
+        local tweens = {}
+        for _, line in ipairs(hitmarkerLines) do
+            local tween = TweenService:Create(line, fadeInfo, {
+                BackgroundTransparency = 1
+            })
+            table.insert(tweens, tween)
 
-        local glow = line:FindFirstChild("NeonGlow")
-        if glow then
-            TweenService:Create(glow, fadeInfo, {Transparency = 1}):Play()
+            local glow = line:FindFirstChild("NeonGlow")
+            if glow then
+                TweenService:Create(glow, fadeInfo, {
+                    Transparency = 1
+                }):Play()
+            end
+
+            tween:Play()
         end
-    end
 
-    task.delay(math.max(0.05, hitmarkerDuration), function()
-        if serial == hitmarkerSerial then
-            hitmarkerCenter.Visible = false
-        end
+        task.wait(hitmarkerDuration)
+        hitmarkerCenter.Visible = false
+        hitmarkerBusy = false
     end)
 end
 
@@ -629,22 +575,8 @@ end
 
 local function cleanup()
     pcall(function() setThirdPersonEnabled(false) end)
-    if player.Character then
-        local hum = player.Character:FindFirstChildOfClass("Humanoid")
-        if hum and savedAutoRotate ~= nil then
-            hum.AutoRotate = savedAutoRotate
-        end
-    end
-    savedAutoRotate = nil
-    hitmarkerSerial += 1
-    hitmarkerLastHealth = {}
-
     for _, c in pairs(connections) do 
         pcall(function() c:Disconnect() end) 
-    end
-    if antiAfkConnection then
-        pcall(function() antiAfkConnection:Disconnect() end)
-        antiAfkConnection = nil
     end
     for _, holder in pairs(activeEspHolders) do
         pcall(function() holder.Holder:Destroy() end)
@@ -1298,11 +1230,10 @@ local function getClosestTarget()
                 local targetPart = getTargetHitbox(char)
                 if targetPart then
                     local calcPos = targetPart.Position
-                    local screenCalcPos = calcPos
                     if predictionEnabled and targetPart.AssemblyLinearVelocity then
-                        screenCalcPos = calcPos + (targetPart.AssemblyLinearVelocity * predictionFactor)
+                        calcPos = calcPos + (targetPart.AssemblyLinearVelocity * predictionFactor)
                     end
-                    local screenPos, onScreen = camera:WorldToViewportPoint(screenCalcPos)
+                    local screenPos, onScreen = camera:WorldToViewportPoint(calcPos)
                     if onScreen and screenPos.Z > 0 then
                         local screenDist = (Vector2.new(screenPos.X, screenPos.Y) - screenCenter).Magnitude
                         if screenDist <= closestDist then
@@ -1314,7 +1245,6 @@ local function getClosestTarget()
                                     Part = targetPart,
                                     Hum = hum,
                                     Position = calcPos,
-                                    AimPosition = screenCalcPos,
                                     ScreenPosition = Vector2.new(screenPos.X, screenPos.Y),
                                     Distance = screenDist
                                 }
@@ -1479,12 +1409,6 @@ local function getOrCreateScreenEsp(plr)
 end
 
 table.insert(connections, Players.PlayerRemoving:Connect(function(plr)
-    local oldChar = plr.Character
-    local oldHum = oldChar and oldChar:FindFirstChildOfClass("Humanoid")
-    if oldHum then
-        hitmarkerLastHealth[oldHum] = nil
-    end
-
     local cache = screenEspCache[plr]
     if cache then
         pcall(function()
@@ -1759,8 +1683,7 @@ table.insert(connections, Players.PlayerAdded:Connect(attachEspToPlayer))
 -- MAIN ENGINE RENDER LOOP
 -- ==========================================
 table.insert(connections, RunService.RenderStepped:Connect(function(dt)
-    camera = Workspace.CurrentCamera or camera
-    if not camera then return end
+    if not camera then camera = Workspace.CurrentCamera return end
     local localPos = camera.CFrame.Position
 
     fpsCounter = fpsCounter + 1
@@ -1806,38 +1729,14 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         end
 
         if lockedTarget and lockedTarget.Position then
-            local aimPos = lockedTarget.AimPosition or lockedTarget.Position
-            if predictionEnabled and lockedTarget.Part and lockedTarget.Part.Parent then
-                aimPos = lockedTarget.Part.Position
-                if lockedTarget.Part.AssemblyLinearVelocity then
-                    aimPos += lockedTarget.Part.AssemblyLinearVelocity * predictionFactor
-                end
+            local aimPos = lockedTarget.Position
+            if predictionEnabled and lockedTarget.Part and lockedTarget.Part.AssemblyLinearVelocity then
+                aimPos = aimPos + (lockedTarget.Part.AssemblyLinearVelocity * predictionFactor)
             end
-
-            local desired = CFrame.lookAt(camera.CFrame.Position, aimPos)
-            if snapAimMode then
-                camera.CFrame = desired
-            else
-                local smooth = math.clamp(aimbotSmoothness, 0, 0.98)
-                local speedAlpha = 1 - math.exp(-math.max(1, aimbotSpeed) * dt)
-                local alpha = math.clamp(speedAlpha * (1 - smooth), 0.01, 1)
-                camera.CFrame = camera.CFrame:Lerp(desired, alpha)
-            end
+            camera.CFrame = CFrame.lookAt(camera.CFrame.Position, aimPos)
         end
     else
         lockedTarget = nil
-    end
-
-    if butterflyKnifeEnabled then
-        skinScanAccumulator += dt
-        if skinScanAccumulator >= 0.50 then
-            skinScanAccumulator = 0
-            scanAndMorphKnives(Workspace)
-            scanAndMorphKnives(camera)
-            hookBloxStrikeModules()
-        end
-    else
-        skinScanAccumulator = 0
     end
 
     runMobileTriggerbot()
@@ -1920,8 +1819,6 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
 
     if removeFogEnabled then
         Lighting.FogEnd = 100000
-    else
-        Lighting.FogEnd = defaultLighting.FogEnd
     end
     if antiFlashEnabled then
         pcall(function()
@@ -1936,25 +1833,14 @@ end))
 -- ANTI-AIM ROTATION LOOP
 -- ==========================================
 table.insert(connections, RunService.RenderStepped:Connect(function(dt)
+    if not antiAimEnabled then return end
+    
     local char = player.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
     local hum = char and char:FindFirstChildOfClass("Humanoid")
-
-    if not antiAimEnabled then
-        if hum and savedAutoRotate ~= nil then
-            hum.AutoRotate = savedAutoRotate
-            savedAutoRotate = nil
-        end
-        return
-    end
-
+    
     if not hrp or not hum or hum.Health <= 0 then return end
-
-    if savedAutoRotate == nil then
-        savedAutoRotate = hum.AutoRotate
-        hum.AutoRotate = false
-    end
-
+    
     currentSpinAngle = (currentSpinAngle + (spinSpeed * dt * 60)) % 360
     hrp.CFrame = CFrame.new(hrp.Position) * CFrame.Angles(0, math.rad(currentSpinAngle), 0)
 end))
@@ -2043,7 +1929,7 @@ local function updateMobileSlideVisibility()
 end
 
 local function triggerMobileSlideStart()
-    if not slideEnabled then return false end
+    if not slideEnabled then return end
 
     local char = player.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
@@ -2071,7 +1957,7 @@ local function triggerMobileSlideEnd()
     local char = player.Character
     local hum = char and char:FindFirstChildOfClass("Humanoid")
     if hum then
-        hum.HipHeight = defaultHipHeightCaptured and defaultHipHeight or hum.HipHeight
+        hum.HipHeight = defaultHipHeight
     end
 end
 
@@ -2123,10 +2009,6 @@ local function createMobileSlideButton()
     stroke.Parent = mobileSlideBtn
 
     local tapConn = mobileSlideBtn.Activated:Connect(function()
-        if mobileSlideDragging then
-            mobileSlideDragging = false
-            return
-        end
         toggleMobileSlide()
     end)
     table.insert(connections, tapConn)
@@ -2207,20 +2089,6 @@ end
 createMobileSlideButton()
 hookMobileJumpButton()
 
-local function hookCharacterWeapons(char)
-    if not char then return end
-    char.ChildAdded:Connect(function(child)
-        if child:IsA("Tool") then
-            scanAndMorphKnives(child)
-        end
-    end)
-    for _, tool in ipairs(char:GetChildren()) do
-        if tool:IsA("Tool") then
-            scanAndMorphKnives(tool)
-        end
-    end
-end
-
 table.insert(connections, player.CharacterAdded:Connect(function(char)
     thirdPersonPreviousOffset = nil
     task.defer(function()
@@ -2242,12 +2110,10 @@ table.insert(connections, player.CharacterAdded:Connect(function(char)
         hum.HipHeight = defaultHipHeight
     end
     hookMobileJumpButton()
-    hookCharacterWeapons(char)
 end))
 
 if player.Character then
     captureDefaultHipHeight(player.Character)
-    hookCharacterWeapons(player.Character)
 end
 
 local jumpReqConn = UserInputService.JumpRequest:Connect(function()
@@ -2291,10 +2157,7 @@ table.insert(connections, inEndedConn)
 -- HITMARKER TARGET HEALTH MONITOR (ALL ENEMIES)
 -- ==========================================
 table.insert(connections, RunService.Heartbeat:Connect(function()
-    if not hitmarkerEnabled then
-        hitmarkerLastHealth = {}
-        return
-    end
+    if not hitmarkerEnabled then return end
 
     for _, targetPlr in ipairs(Players:GetPlayers()) do
         if targetPlr ~= player then
@@ -2344,11 +2207,7 @@ table.insert(connections, RunService.Heartbeat:Connect(function(dt)
         local grounded = isPlayerGrounded(char, hrp)
         if grounded and currentSlideVel.Magnitude > slideMinSpeed then
             activeMode = "Slide"
-            local frictionFactor = math.pow(
-                math.clamp(slideFriction, 0, 1),
-                math.max(dt, 0) * 60
-            )
-            currentSlideVel = currentSlideVel * frictionFactor
+            currentSlideVel = currentSlideVel * slideFriction
             finalVelocity = Vector3.new(
                 currentSlideVel.X,
                 currentVel.Y,
@@ -2405,26 +2264,7 @@ end))
 -- ==========================================
 -- UI SCOPE FIX & DYNAMIC LAYOUT CALCULATION
 -- ==========================================
-local function setAntiAfkEnabled(enabled)
-    antiAfkEnabled = enabled
-    if antiAfkConnection then
-        pcall(function() antiAfkConnection:Disconnect() end)
-        antiAfkConnection = nil
-    end
-    if not antiAfkEnabled then return end
-
-    antiAfkConnection = player.Idled:Connect(function()
-        pcall(function()
-            if VirtualInputManager then
-                VirtualInputManager:SendMouseButtonEvent(1, 1, 0, true, game, 0)
-                VirtualInputManager:SendMouseButtonEvent(1, 1, 0, false, game, 0)
-            end
-        end)
-    end)
-end
-
 local function buildGestioUI()
-setAntiAfkEnabled(antiAfkEnabled)
 
 -- ==========================================
 -- FLOATING UI LAUNCHER
@@ -2542,68 +2382,53 @@ for r = 0, gridRows - 1 do
     end
 end
 
-local sidebar = Instance.new("ScrollingFrame", mainFrame)
-sidebar.Size = UDim2.new(0, 75, 1, -8)
-sidebar.Position = UDim2.new(0, 4, 0, 4)
+local sidebar = Instance.new("Frame", mainFrame)
+sidebar.Size = UDim2.new(0, 75, 1, 0)
 sidebar.BackgroundColor3 = currentTheme.Sidebar
 sidebar.BorderSizePixel = 0
 sidebar.ZIndex = 6
-sidebar.ScrollBarThickness = 0
-sidebar.CanvasSize = UDim2.new(0, 0, 0, 250)
 Instance.new("UICorner", sidebar).CornerRadius = UDim.new(0, 8)
 
-local sbLayout = Instance.new("UIListLayout", sidebar)
-sbLayout.FillDirection = Enum.FillDirection.Vertical
-sbLayout.SortOrder = Enum.SortOrder.LayoutOrder
-sbLayout.Padding = UDim.new(0, 3)
-sbLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-
-local sbPad = Instance.new("UIPadding", sidebar)
-sbPad.PaddingTop = UDim.new(0, 4)
-sbPad.PaddingBottom = UDim.new(0, 4)
-
 local logoBtn = Instance.new("TextButton", sidebar)
-logoBtn.Size = UDim2.new(0.9, 0, 0, 24)
+logoBtn.Size = UDim2.new(1, 0, 0, 30)
 logoBtn.BackgroundTransparency = 1
 logoBtn.Text = "Gestio"
 logoBtn.TextColor3 = currentTheme.Accent
-logoBtn.TextSize = 11
+logoBtn.TextSize = 12
 logoBtn.Font = Enum.Font.GothamBold
 logoBtn.ZIndex = 7
-logoBtn.LayoutOrder = 1
 bindTouch(logoBtn, toggleMenu)
 
-local function createNavBtn(order, txt)
+local function createNavBtn(y, txt)
     local b = Instance.new("TextButton", sidebar)
-    b.Size = UDim2.new(0.88, 0, 0, 19)
+    b.Size = UDim2.new(0.86, 0, 0, 20)
+    b.Position = UDim2.new(0.07, 0, 0, y)
     b.BackgroundColor3 = currentTheme.Sidebar
     b.TextColor3 = currentTheme.TextSecondary
     b.Text = txt
-    b.TextSize = 7.5
+    b.TextSize = 8
     b.Font = Enum.Font.GothamBold
     b.ZIndex = 7
-    b.LayoutOrder = order
     Instance.new("UICorner", b).CornerRadius = UDim.new(0, 4)
     return b
 end
 
-local cBtn = createNavBtn(2, "COMBAT")
-local mBtn = createNavBtn(3, "MOVEMENT")
-local eBtn = createNavBtn(4, "ESP")
-local sBtn = createNavBtn(5, "SKINS")
-local envBtn = createNavBtn(6, "ENV")
-local micsBtn = createNavBtn(7, "MICS")
-local setsBtn = createNavBtn(8, "SETTINGS")
+local cBtn = createNavBtn(32, "COMBAT")
+local mBtn = createNavBtn(54, "MOVEMENT")
+local eBtn = createNavBtn(76, "ESP")
+local envBtn = createNavBtn(98, "ENV")
+local micsBtn = createNavBtn(120, "MICS")
+local setsBtn = createNavBtn(142, "SETTINGS")
 cBtn.BackgroundColor3 = currentTheme.CardBg
 cBtn.TextColor3 = currentTheme.Accent
 
 local function makePageContainer()
     local c = Instance.new("ScrollingFrame", mainFrame)
-    c.Size = UDim2.new(1, -84, 1, -12)
-    c.Position = UDim2.new(0, 80, 0, 6)
+    c.Size = UDim2.new(1, -82, 1, -12)
+    c.Position = UDim2.new(0, 78, 0, 6)
     c.BackgroundTransparency = 1
     c.ScrollBarThickness = 2
-    c.CanvasSize = UDim2.new(0, 0, 0, 900)
+    c.CanvasSize = UDim2.new(0, 0, 0, 0)
     c.Visible = false
     c.ZIndex = 6
 
@@ -2618,23 +2443,33 @@ local function makePageContainer()
     pad.PaddingTop = UDim.new(0, 4)
     pad.PaddingBottom = UDim.new(0, 10)
 
+    list:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        c.CanvasSize = UDim2.new(0, 0, 0, list.AbsoluteContentSize.Y + 20)
+    end)
+
     return c
 end
 
-local function makeCategorySection(page, title, layoutOrder, cardCount)
-    local count = cardCount or 4
-    local rows = math.ceil(count / 4)
-    local gridHeight = rows * 64
-    local totalHeight = 22 + gridHeight
-
+local function makeCategorySection(page, title, layoutOrder)
     local sectionContainer = Instance.new("Frame", page)
-    sectionContainer.Size = UDim2.new(1, 0, 0, totalHeight)
+    sectionContainer.Size = UDim2.new(1, 0, 0, 30)
     sectionContainer.BackgroundTransparency = 1
     sectionContainer.LayoutOrder = layoutOrder or 1
     sectionContainer.ZIndex = 6
 
-    local headerLabel = Instance.new("TextLabel", sectionContainer)
-    headerLabel.Size = UDim2.new(1, 0, 0, 18)
+    local sectionList = Instance.new("UIListLayout", sectionContainer)
+    sectionList.FillDirection = Enum.FillDirection.Vertical
+    sectionList.SortOrder = Enum.SortOrder.LayoutOrder
+    sectionList.Padding = UDim.new(0, 6)
+
+    local headerFrame = Instance.new("Frame", sectionContainer)
+    headerFrame.Size = UDim2.new(1, 0, 0, 16)
+    headerFrame.BackgroundTransparency = 1
+    headerFrame.LayoutOrder = 1
+    headerFrame.ZIndex = 6
+
+    local headerLabel = Instance.new("TextLabel", headerFrame)
+    headerLabel.Size = UDim2.new(1, 0, 1, 0)
     headerLabel.BackgroundTransparency = 1
     headerLabel.Text = title:upper()
     headerLabel.TextColor3 = currentTheme.Accent
@@ -2644,14 +2479,22 @@ local function makeCategorySection(page, title, layoutOrder, cardCount)
     headerLabel.ZIndex = 7
 
     local gridFrame = Instance.new("Frame", sectionContainer)
-    gridFrame.Size = UDim2.new(1, 0, 0, gridHeight)
-    gridFrame.Position = UDim2.new(0, 0, 0, 20)
+    gridFrame.Size = UDim2.new(1, 0, 0, 60)
     gridFrame.BackgroundTransparency = 1
+    gridFrame.LayoutOrder = 2
     gridFrame.ZIndex = 6
 
     local grid = Instance.new("UIGridLayout", gridFrame)
     grid.CellSize = UDim2.new(0, 58, 0, 58)
     grid.CellPadding = UDim2.new(0, 6, 0, 6)
+
+    grid:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        gridFrame.Size = UDim2.new(1, 0, 0, grid.AbsoluteContentSize.Y)
+    end)
+
+    sectionList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        sectionContainer.Size = UDim2.new(1, 0, 0, sectionList.AbsoluteContentSize.Y)
+    end)
 
     return gridFrame
 end
@@ -2659,7 +2502,6 @@ end
 local cPage = makePageContainer()
 local mPage = makePageContainer()
 local ePage = makePageContainer()
-local sPage = makePageContainer()
 local envPage = makePageContainer()
 local micsPage = makePageContainer()
 local setsPage = makePageContainer()
@@ -2669,12 +2511,11 @@ local function switch(tab)
     cPage.Visible = (tab == "C")
     mPage.Visible = (tab == "M")
     ePage.Visible = (tab == "E")
-    sPage.Visible = (tab == "SKINS")
     envPage.Visible = (tab == "ENV")
     micsPage.Visible = (tab == "MICS")
     setsPage.Visible = (tab == "SETS")
 
-    local btns = {{cBtn, "C"}, {mBtn, "M"}, {eBtn, "E"}, {sBtn, "SKINS"}, {envBtn, "ENV"}, {micsBtn, "MICS"}, {setsBtn, "SETS"}}
+    local btns = {{cBtn, "C"}, {mBtn, "M"}, {eBtn, "E"}, {envBtn, "ENV"}, {micsBtn, "MICS"}, {setsBtn, "SETS"}}
     for _, item in ipairs(btns) do
         local on = (item[2] == tab)
         item[1].BackgroundColor3 = on and currentTheme.CardBg or currentTheme.Sidebar
@@ -2685,7 +2526,6 @@ end
 bindTouch(cBtn, function() switch("C") end)
 bindTouch(mBtn, function() switch("M") end)
 bindTouch(eBtn, function() switch("E") end)
-bindTouch(sBtn, function() switch("SKINS") end)
 bindTouch(envBtn, function() switch("ENV") end)
 bindTouch(micsBtn, function() switch("MICS") end)
 bindTouch(setsBtn, function() switch("SETS") end)
@@ -2877,7 +2717,7 @@ local function addInspectorChoice(y, txt, choices, currentChoice, onSelect)
 
     for _, choiceName in ipairs(choices) do
         local choiceBtn = Instance.new("TextButton", container)
-        choiceBtn.Size = UDim2.new(0, 52, 1, 0)
+        choiceBtn.Size = UDim2.new(0, 48, 1, 0)
         choiceBtn.BackgroundColor3 = (choiceName == currentChoice) and currentTheme.Accent or currentTheme.CardBg
         choiceBtn.Text = choiceName
         choiceBtn.TextColor3 = (choiceName == currentChoice) and Color3.fromRGB(255, 255, 255) or currentTheme.TextSecondary
@@ -2918,15 +2758,6 @@ local function openInspectorFor(moduleName)
         addInspectorToggle(192, "Prediction", predictionEnabled, function(v) predictionEnabled = v end)
         addInspectorToggle(218, "Show FOV Circle", showFovCircle, function(v) showFovCircle = v end)
         addInspectorToggle(244, "Visibility Check", visibleCheck, function(v) visibleCheck = v end)
-    elseif moduleName == "Butterfly Knife" then
-        insContent.CanvasSize = UDim2.new(0, 0, 0, 160)
-        addInspectorChoice(6, "Skin Finish", {"Vanilla", "Fade", "Doppler", "Lore"}, butterflySkin, function(selected)
-            butterflySkin = selected
-            hookBloxStrikeModules()
-            scanAndMorphKnives(Workspace)
-            scanAndMorphKnives(camera)
-        end)
-        addInspectorToggle(48, "Auto Re-apply", true, function(v) end)
     elseif moduleName == "Third Person" then
         insContent.CanvasSize = UDim2.new(0, 0, 0, 115)
         addInspectorSlider(6, "Distance", 5, 25, thirdPersonDistance, false, function(v)
@@ -3054,7 +2885,6 @@ end
 -- ==========================================
 local function addCard(parent, name, defaultState, onToggle)
     local card = Instance.new("Frame", parent)
-    card.Size = UDim2.new(0, 58, 0, 58)
     card.BackgroundColor3 = currentTheme.CardBg
     card.BorderSizePixel = 0
     card.ZIndex = 7
@@ -3115,8 +2945,8 @@ end
 -- ==========================================
 
 -- COMBAT TAB
-local cAimSection = makeCategorySection(cPage, "Aim & Ballistics", 1, 3)
-local cRageSection = makeCategorySection(cPage, "HVH & Anti-Aim", 2, 1)
+local cAimSection = makeCategorySection(cPage, "Aim & Ballistics", 1)
+local cRageSection = makeCategorySection(cPage, "HVH & Anti-Aim", 2)
 
 addCard(cAimSection, "Tracking", aimbotEnabled, function(v) aimbotEnabled = v end)
 addCard(cAimSection, "RCS", rcsEnabled, function(v) rcsEnabled = v end)
@@ -3124,8 +2954,8 @@ addCard(cAimSection, "Trigger Assistant", triggerbotEnabled, function(v) trigger
 addCard(cRageSection, "Anti-Aim", antiAimEnabled, function(v) antiAimEnabled = v end)
 
 -- MOVEMENT TAB
-local mHopSection = makeCategorySection(mPage, "Bhop Mechanics", 1, 1)
-local mBoostSection = makeCategorySection(mPage, "Physics Modifications", 2, 3)
+local mHopSection = makeCategorySection(mPage, "Bhop Mechanics", 1)
+local mBoostSection = makeCategorySection(mPage, "Physics Modifications", 2)
 
 addCard(mHopSection, "Bhop Engine", bunnyHopEnabled, function(v) bunnyHopEnabled = v end)
 addCard(mBoostSection, "Slide", slideEnabled, function(v) 
@@ -3136,8 +2966,8 @@ addCard(mBoostSection, "Speed Boost", speedEnabled, function(v) speedEnabled = v
 addCard(mBoostSection, "Flight", flightEnabled, function(v) flightEnabled = v end)
 
 -- ESP TAB
-local ePlayerSection = makeCategorySection(ePage, "Player Visuals", 1, 6)
-local eWorldSection = makeCategorySection(ePage, "World & Projectiles", 2, 2)
+local ePlayerSection = makeCategorySection(ePage, "Player Visuals", 1)
+local eWorldSection = makeCategorySection(ePage, "World & Projectiles", 2)
 
 addCard(ePlayerSection, "Nametags", nametagsEnabled, function(v) nametagsEnabled = v end)
 addCard(ePlayerSection, "Highlight", highlightEnabled, function(v) highlightEnabled = v end)
@@ -3162,52 +2992,21 @@ addCard(eWorldSection, "Jump Circle", jumpCircleEnabled, function(v)
     end
 end)
 
--- SKINS TAB (Skinchanger)
-local sKnifeSection = makeCategorySection(sPage, "Melee Weapons", 1, 1)
-addCard(sKnifeSection, "Butterfly Knife", butterflyKnifeEnabled, function(v)
-    butterflyKnifeEnabled = v
-    if v then
-        hookBloxStrikeModules()
-        scanAndMorphKnives(Workspace)
-        scanAndMorphKnives(camera)
-    end
-end)
-
 -- ENVIRONMENT TAB
-local envLightSection = makeCategorySection(envPage, "Atmosphere & World", 1, 4)
-addCard(envLightSection, "Night Mode", nightModeEnabled, function(v)
-    nightModeEnabled = v
-    if v then
-        applyNightPreset(nightPreset)
-    elseif not fullBrightEnabled then
-        restoreLightingState()
-    end
-end)
-addCard(envLightSection, "FullBright", fullBrightEnabled, function(v)
-    fullBrightEnabled = v
-    if not v and not nightModeEnabled then
-        restoreLightingState()
-    end
-end)
+local envLightSection = makeCategorySection(envPage, "Atmosphere & World", 1)
+addCard(envLightSection, "Night Mode", nightModeEnabled, function(v) nightModeEnabled = v end)
+addCard(envLightSection, "FullBright", fullBrightEnabled, function(v) fullBrightEnabled = v end)
 addCard(envLightSection, "Anti-Flash", antiFlashEnabled, function(v) antiFlashEnabled = v end)
-addCard(envLightSection, "No Fog", removeFogEnabled, function(v)
-    removeFogEnabled = v
-    if not v then
-        Lighting.FogEnd = defaultLighting.FogEnd
-    end
-end)
 
 -- MISC TAB
-local miscGeneralSection = makeCategorySection(micsPage, "Utilities", 1, 2)
+local miscGeneralSection = makeCategorySection(micsPage, "Utilities", 1)
 addCard(miscGeneralSection, "Third Person", thirdPersonEnabled, function(v)
     setThirdPersonEnabled(v)
 end)
-addCard(miscGeneralSection, "Anti-AFK", antiAfkEnabled, function(v)
-    setAntiAfkEnabled(v)
-end)
+addCard(miscGeneralSection, "Anti-AFK", true, function(v) end)
 
 -- SETTINGS TAB
-local setsGeneralSection = makeCategorySection(setsPage, "Configuration", 1, 1)
+local setsGeneralSection = makeCategorySection(setsPage, "Configuration", 1)
 addCard(setsGeneralSection, "Theme", true, function(v) end)
 
 openInspectorFor("Tracking")
