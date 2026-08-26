@@ -50,22 +50,30 @@ if not camera then
 end
 
 local function getSafeGui()
+    -- Prefer PlayerGui because it is the most reliable render target for
+    -- injected LocalScripts. Only use gethui/CoreGui when PlayerGui is unavailable.
     local ok, result = pcall(function()
+        return player:WaitForChild("PlayerGui", 10)
+    end)
+    if ok and result and typeof(result) == "Instance" then
+        return result
+    end
+
+    ok, result = pcall(function()
         if type(gethui) == "function" then
             return gethui()
         end
     end)
-    if ok and result then return result end
-
-    ok, result = pcall(function()
-        return player:WaitForChild("PlayerGui", 10)
-    end)
-    if ok and result then return result end
+    if ok and result and typeof(result) == "Instance" then
+        return result
+    end
 
     ok, result = pcall(function()
         return CoreGui
     end)
-    if ok and result then return result end
+    if ok and result and typeof(result) == "Instance" then
+        return result
+    end
 
     return nil
 end
@@ -3361,16 +3369,5 @@ end)
 
 -- SETTINGS TAB
 local setsGeneralSection = makeCategorySection(setsPage, "Configuration", 1, 1)
-addCard(setsGeneralSection, "Theme", true, function(v) end)
-
-openInspectorFor("Tracking")
-
-end
-local __gestioOk, __gestioErr = xpcall(buildGestioUI, function(err)
-    return debug.traceback("[Gestio] UI initialization error: " .. tostring(err), 2)
-end)
-
-if not __gestioOk then
-    warn(__gestioErr)
-  
+addCard
 Показана только часть файла из-за его большого размера
