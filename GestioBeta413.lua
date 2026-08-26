@@ -1,6 +1,6 @@
 -- ==============================================================================
--- [Gestio UI - Blox Strike Ultimate Mobile Engine | Version 4.1.3]
--- Architecture: Uncompressed Extended Pipeline
+-- [Gestio UI - Blox Strike Ultimate Mobile Engine | Version 4.3.2]
+-- Architecture: Modular Extended Pipeline
 -- Target Game: Blox Strike (Roblox)
 -- ==============================================================================
 
@@ -346,6 +346,16 @@ local showMolotovRadius = true
 local showSmokeRadius = true
 local grenadeMaxDist = 1500
 
+
+local fadeChamsEnabled = false
+local fadeChamsDistance = 120
+local fadeChamsMinTransparency = 0.15
+local fadeChamsMaxTransparency = 0.85
+
+local bulletGlowEnabled = false
+local bulletGlowLifetime = 0.45
+local bulletGlowWidth = 0.12
+local animatedDirection = "Right"
 -- ==========================================
 -- JUMP CIRCLE CONFIGURATION VARIABLES
 -- ==========================================
@@ -355,6 +365,34 @@ local jumpCircleSegmentCount = 32
 local jumpCircleRadius = 3.5
 local jumpCircleHeightOffset = -2.8
 local activeJumpCircleData = nil
+
+-- ==========================================
+-- WORLD VISUAL CONFIGURATION
+-- ==========================================
+local worldParticlesEnabled = false
+local worldParticleMode = "Snow"
+local worldParticleRate = 35
+local worldParticleLifetime = 4.0
+local worldParticleArea = 70
+
+local bloomEnabled = false
+local bloomIntensity = 0.35
+local bloomSize = 24
+local bloomThreshold = 0.8
+
+local vignetteEnabled = false
+local vignetteStrength = 0.35
+
+local colorGradingEnabled = false
+local colorGradingContrast = 0.08
+local colorGradingSaturation = 0.05
+local colorGradingTint = Color3.fromRGB(255, 255, 255)
+
+local worldParticleFolder = nil
+local worldParticleEmitter = nil
+local bloomEffect = nil
+local colorCorrectionEffect = nil
+local vignetteGui = nil
 
 -- ==========================================
 -- ENVIRONMENT & LIGHTING VARIABLES
@@ -612,6 +650,164 @@ local function restoreLightingState()
 end
 
 -- ==========================================
+-- WORLD VISUAL EFFECTS
+-- ==========================================
+local function destroyWorldVisualEffects()
+    if worldParticleEmitter then
+        worldParticleEmitter:Destroy()
+        worldParticleEmitter = nil
+    end
+    if worldParticleFolder then
+        worldParticleFolder:Destroy()
+        worldParticleFolder = nil
+    end
+    if bloomEffect then
+        bloomEffect:Destroy()
+        bloomEffect = nil
+    end
+    if colorCorrectionEffect then
+        colorCorrectionEffect:Destroy()
+        colorCorrectionEffect = nil
+    end
+    if vignetteGui then
+        vignetteGui:Destroy()
+        vignetteGui = nil
+    end
+end
+
+local function ensureWorldVisualEffects()
+    if bloomEnabled and not bloomEffect then
+        bloomEffect = Instance.new("BloomEffect")
+        bloomEffect.Name = "GestioBloom"
+        bloomEffect.Intensity = bloomIntensity
+        bloomEffect.Size = bloomSize
+        bloomEffect.Threshold = bloomThreshold
+        bloomEffect.Parent = Lighting
+    end
+
+    if bloomEffect then
+        bloomEffect.Enabled = bloomEnabled
+        bloomEffect.Intensity = bloomIntensity
+        bloomEffect.Size = bloomSize
+        bloomEffect.Threshold = bloomThreshold
+    end
+
+    if colorGradingEnabled and not colorCorrectionEffect then
+        colorCorrectionEffect = Instance.new("ColorCorrectionEffect")
+        colorCorrectionEffect.Name = "GestioColorGrading"
+        colorCorrectionEffect.Parent = Lighting
+    end
+
+    if colorCorrectionEffect then
+        colorCorrectionEffect.Enabled = colorGradingEnabled
+        colorCorrectionEffect.Contrast = colorGradingContrast
+        colorCorrectionEffect.Saturation = colorGradingSaturation
+        colorCorrectionEffect.TintColor = colorGradingTint
+    end
+
+    if vignetteEnabled and not vignetteGui then
+        vignetteGui = Instance.new("ScreenGui")
+        vignetteGui.Name = "GestioVignette"
+        vignetteGui.IgnoreGuiInset = true
+        vignetteGui.ResetOnSpawn = false
+        vignetteGui.DisplayOrder = 8
+        vignetteGui.Parent = targetGui
+
+        local frame = Instance.new("Frame")
+        frame.Name = "Vignette"
+        frame.Size = UDim2.fromScale(1,1)
+        frame.BackgroundTransparency = 1
+        frame.Parent = vignetteGui
+
+        local gradient = Instance.new("UIGradient")
+        gradient.Transparency = NumberSequence.new({
+            NumberSequenceKeypoint.new(0, 0.05),
+            NumberSequenceKeypoint.new(0.5, 1),
+            NumberSequenceKeypoint.new(1, 0.05)
+        })
+        gradient.Rotation = 90
+        gradient.Parent = frame
+    end
+
+    if vignetteGui then
+        vignetteGui.Enabled = vignetteEnabled
+        local frame = vignetteGui:FindFirstChild("Vignette")
+        if frame then
+            frame.BackgroundColor3 = Color3.new(0,0,0)
+            frame.BackgroundTransparency = math.clamp(1 - vignetteStrength, 0, 1)
+        end
+    end
+end
+
+local function setWorldParticleMode(mode)
+    worldParticleMode = mode
+    if worldParticleEmitter then
+        worldParticleEmitter:Destroy()
+        worldParticleEmitter = nil
+    end
+    if worldParticleFolder then
+        worldParticleFolder:Destroy()
+        worldParticleFolder = nil
+    end
+    if not worldParticlesEnabled then return end
+
+    worldParticleFolder = Instance.new("Folder")
+    worldParticleFolder.Name = "GestioWorldParticles"
+    worldParticleFolder.Parent = Workspace
+
+    local holder = Instance.new("Part")
+    holder.Name = "ParticleHolder"
+    holder.Anchored = true
+    holder.CanCollide = false
+    holder.CanQuery = false
+    holder.CanTouch = false
+    holder.Transparency = 1
+    holder.Size = Vector3.new(worldParticleArea, 1, worldParticleArea)
+    holder.CFrame = CFrame.new(camera.CFrame.Position + Vector3.new(0, 35, 0))
+    holder.Parent = worldParticleFolder
+
+    local emitter = Instance.new("ParticleEmitter")
+    emitter.Name = "WorldParticleEmitter"
+    emitter.Rate = worldParticleRate
+    emitter.Lifetime = NumberRange.new(worldParticleLifetime * 0.75, worldParticleLifetime)
+    emitter.Speed = NumberRange.new(8, 14)
+    emitter.SpreadAngle = Vector2.new(8,8)
+    emitter.Acceleration = Vector3.new(0,-8,0)
+    emitter.Parent = holder
+
+    if mode == "Snow" then
+        emitter.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+        emitter.Size = NumberSequence.new(0.12)
+        emitter.Transparency = NumberSequence.new(0.25)
+        emitter.Rotation = NumberRange.new(0,360)
+    elseif mode == "Rain" then
+        emitter.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+        emitter.Size = NumberSequence.new(0.05)
+        emitter.Speed = NumberRange.new(45,60)
+        emitter.Acceleration = Vector3.new(0,-35,0)
+        emitter.Transparency = NumberSequence.new(0.15)
+    else
+        emitter.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+        emitter.Size = NumberSequence.new(0.18)
+        emitter.Speed = NumberRange.new(3,8)
+        emitter.Transparency = NumberSequence.new(0.2)
+    end
+
+    worldParticleEmitter = emitter
+end
+
+local function refreshWorldVisuals()
+    if worldParticlesEnabled then
+        setWorldParticleMode(worldParticleMode)
+    else
+        if worldParticleEmitter then worldParticleEmitter:Destroy(); worldParticleEmitter = nil end
+        if worldParticleFolder then worldParticleFolder:Destroy(); worldParticleFolder = nil end
+    end
+    ensureWorldVisualEffects()
+end
+
+
+-- ==========================================
 -- CLEANUP ROUTINES
 -- ==========================================
 local function clearActiveJumpCircle()
@@ -628,6 +824,7 @@ local function clearActiveJumpCircle()
 end
 
 local function cleanup()
+    pcall(function() destroyWorldVisualEffects() end)
     pcall(function() setThirdPersonEnabled(false) end)
     if player.Character then
         local hum = player.Character:FindFirstChildOfClass("Humanoid")
@@ -2967,6 +3164,7 @@ local function addInspectorChoice(y, txt, choices, currentChoice, onSelect)
 end
 
 -- ==========================================
+
 -- DETAILED INSPECTOR ROUTING
 -- ==========================================
 local function openInspectorFor(moduleName)
@@ -3078,17 +3276,53 @@ local function openInspectorFor(moduleName)
         addInspectorToggle(76, "Corner Box", cornerBoxEnabled, function(v) cornerBoxEnabled = v end)
         addInspectorToggle(108, "Health Bar", healthBarEnabled, function(v) healthBarEnabled = v end)
     elseif moduleName == "World Changer" then
-        insContent.CanvasSize = UDim2.new(0, 0, 0, 330)
-        addInspectorChoice(6, "World Preset", {"Midnight", "Nebula", "DeepBlood", "CyberPurple", "EmeraldNight", "PitchBlack"}, nightPreset, function(selected)
+        insContent.CanvasSize = UDim2.new(0, 0, 0, 390)
+        addInspectorChoice(6, "Preset", {"Midnight", "Nebula", "DeepBlood", "CyberPurple", "EmeraldNight", "PitchBlack"}, nightPreset, function(selected)
+            nightPreset = selected
             applyNightPreset(selected)
         end)
-        addInspectorSlider(48, "Brightness", 0.0, 2.0, nightBrightness, true, function(v) 
-            nightBrightness = v 
+        addInspectorSlider(42, "Brightness", 0.0, 2.0, nightBrightness, true, function(v)
+            nightBrightness = v
             if nightModeEnabled then Lighting.Brightness = v end
         end)
-        addInspectorSlider(80, "Clock Time", 0.0, 24.0, nightClockTime, true, function(v) 
-            nightClockTime = v 
+        addInspectorSlider(74, "Clock Time", 0.0, 24.0, nightClockTime, true, function(v)
+            nightClockTime = v
             if nightModeEnabled then Lighting.ClockTime = v end
+        end)
+        addInspectorToggle(108, "World Particles", worldParticlesEnabled, function(v)
+            worldParticlesEnabled = v
+            refreshWorldVisuals()
+        end)
+        addInspectorChoice(136, "Particles", {"Soul", "Snow", "Rain"}, worldParticleMode, function(v)
+            setWorldParticleMode(v)
+        end)
+        addInspectorToggle(172, "Bloom", bloomEnabled, function(v)
+            bloomEnabled = v
+            refreshWorldVisuals()
+        end)
+        addInspectorSlider(200, "Bloom Intensity", 0, 2, bloomIntensity, true, function(v)
+            bloomIntensity = v
+            ensureWorldVisualEffects()
+        end)
+        addInspectorToggle(234, "Vignette", vignetteEnabled, function(v)
+            vignetteEnabled = v
+            refreshWorldVisuals()
+        end)
+        addInspectorSlider(262, "Vignette Strength", 0, 1, vignetteStrength, true, function(v)
+            vignetteStrength = v
+            ensureWorldVisualEffects()
+        end)
+        addInspectorToggle(296, "Color Grading", colorGradingEnabled, function(v)
+            colorGradingEnabled = v
+            refreshWorldVisuals()
+        end)
+        addInspectorSlider(324, "Contrast", -1, 1, colorGradingContrast, true, function(v)
+            colorGradingContrast = v
+            ensureWorldVisualEffects()
+        end)
+        addInspectorSlider(356, "Saturation", -1, 1, colorGradingSaturation, true, function(v)
+            colorGradingSaturation = v
+            ensureWorldVisualEffects()
         end)
     elseif moduleName == "RCS" then
         insContent.CanvasSize = UDim2.new(0, 0, 0, 240)
