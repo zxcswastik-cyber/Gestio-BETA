@@ -32,34 +32,41 @@ end)
 -- ==========================================
 local player = Players.LocalPlayer
 if not player then
-    local startWait = tick()
-    while not player and (tick() - startWait) < 5 do
+    local startWait = os.clock()
+    while not player and (os.clock() - startWait) < 10 do
         player = Players.LocalPlayer
-        task.wait(0.1)
-    end
-    if not player then
-        player = Players:GetPlayers()[1]
+        if not player then task.wait(0.1) end
     end
 end
 
-local camera = Workspace.CurrentCamera or Workspace:FindFirstChildOfClass("Camera")
+if not player then
+    warn("[Gestio] Injection aborted: LocalPlayer is unavailable.")
+    return
+end
+
+local camera = Workspace.CurrentCamera
+if not camera then
+    camera = Workspace:WaitForChild("Camera", 10)
+end
 
 local function getSafeGui()
-    local success, result = pcall(function()
-        if gethui then
+    local ok, result = pcall(function()
+        if type(gethui) == "function" then
             return gethui()
         end
     end)
-    if success and result then return result end
-    
-    success, result = pcall(function()
+    if ok and result then return result end
+
+    ok, result = pcall(function()
+        return player:WaitForChild("PlayerGui", 10)
+    end)
+    if ok and result then return result end
+
+    ok, result = pcall(function()
         return CoreGui
     end)
-    if success and result then return result end
-    
-    if player then
-        return player:WaitForChild("PlayerGui", 5) or player:FindFirstChildOfClass("PlayerGui")
-    end
+    if ok and result then return result end
+
     return nil
 end
 
@@ -3359,5 +3366,11 @@ addCard(setsGeneralSection, "Theme", true, function(v) end)
 openInspectorFor("Tracking")
 
 end
+local __gestioOk, __gestioErr = xpcall(buildGestioUI, function(err)
+    return debug.traceback("[Gestio] UI initialization error: " .. tostring(err), 2)
+end)
 
-buildGestioUI()
+if not __gestioOk then
+    warn(__gestioErr)
+  
+Показана только часть файла из-за его большого размера
