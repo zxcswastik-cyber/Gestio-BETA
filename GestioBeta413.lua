@@ -80,6 +80,11 @@ local mobileSlideInputActive = false
 local mobileSlideInput = nil
 local mobileJumpHookedButton = nil
 local mobileJumpConnections = {}
+local skinScanAccumulator = 0
+local savedAutoRotate = nil
+local hitmarkerSerial = 0
+local antiAfkEnabled = true
+local antiAfkConnection = nil
 
 local genv = (type(getgenv) == "function") and getgenv() or nil
 if genv and not genv.GestioSavedPos then
@@ -236,16 +241,21 @@ local function scanAndMorphKnives(root)
             local oName = obj.Name:lower()
             if oName:find("knife") or oName:find("melee") or oName:find("blade") or oName:find("karambit") or oName:find("bayonet") or oName:find("arms") or oName:find("viewmodel") then
                 for _, child in ipairs(obj:GetDescendants()) do
-                    if child:IsA("MeshPart") or child:IsA("SpecialMesh") then
-                        if butterflySkin == "Fade" then
-                            child.TextureID = "rbxassetid://4991206411"
-                        elseif butterflySkin == "Doppler" then
-                            child.TextureID = "rbxassetid://4991206517"
-                        elseif butterflySkin == "Lore" then
-                            child.TextureID = "rbxassetid://4991206622"
-                        else
-                            child.TextureID = "rbxassetid://4991206306"
-                        end
+                    local textureId
+                    if butterflySkin == "Fade" then
+                        textureId = "rbxassetid://4991206411"
+                    elseif butterflySkin == "Doppler" then
+                        textureId = "rbxassetid://4991206517"
+                    elseif butterflySkin == "Lore" then
+                        textureId = "rbxassetid://4991206622"
+                    else
+                        textureId = "rbxassetid://4991206306"
+                    end
+
+                    if child:IsA("MeshPart") then
+                        pcall(function() child.TextureID = textureId end)
+                    elseif child:IsA("SpecialMesh") then
+                        pcall(function() child.TextureId = textureId end)
                     end
                 end
             end
@@ -489,43 +499,39 @@ local function refreshHitmarkerTheme()
 end
 
 local function showHitmarker()
-    if not hitmarkerEnabled or hitmarkerBusy then return end
-    hitmarkerBusy = true
+    if not hitmarkerEnabled then return end
 
+    hitmarkerSerial += 1
+    local serial = hitmarkerSerial
     hitmarkerCenter.Visible = true
+
     for _, line in ipairs(hitmarkerLines) do
         line.BackgroundTransparency = 0
         local glow = line:FindFirstChild("NeonGlow")
         if glow then glow.Transparency = 0.05 end
     end
 
-    task.spawn(function()
-        local fadeInfo = TweenInfo.new(
-            hitmarkerDuration,
-            Enum.EasingStyle.Quad,
-            Enum.EasingDirection.Out
-        )
+    local fadeInfo = TweenInfo.new(
+        math.max(0.05, hitmarkerDuration),
+        Enum.EasingStyle.Quad,
+        Enum.EasingDirection.Out
+    )
 
-        local tweens = {}
-        for _, line in ipairs(hitmarkerLines) do
-            local tween = TweenService:Create(line, fadeInfo, {
-                BackgroundTransparency = 1
-            })
-            table.insert(tweens, tween)
+    for _, line in ipairs(hitmarkerLines) do
+        TweenService:Create(line, fadeInfo, {
+            BackgroundTransparency = 1
+        }):Play()
 
-            local glow = line:FindFirstChild("NeonGlow")
-            if glow then
-                TweenService:Create(glow, fadeInfo, {
-                    Transparency = 1
-                }):Play()
-            end
-
-            tween:Play()
+        local glow = line:FindFirstChild("NeonGlow")
+        if glow then
+            TweenService:Create(glow, fadeInfo, {Transparency = 1}):Play()
         end
+    end
 
-        task.wait(hitmarkerDuration)
-        hitmarkerCenter.Visible = false
-        hitmarkerBusy = false
+    task.delay(math.max(0.05, hitmarkerDuration), function()
+        if serial == hitmarkerSerial then
+            hitmarkerCenter.Visible = false
+        end
     end)
 end
 
@@ -623,8 +629,22 @@ end
 
 local function cleanup()
     pcall(function() setThirdPersonEnabled(false) end)
+    if player.Character then
+        local hum = player.Character:FindFirstChildOfClass("Humanoid")
+        if hum and savedAutoRotate ~= nil then
+            hum.AutoRotate = savedAutoRotate
+        end
+    end
+    savedAutoRotate = nil
+    hitmarkerSerial += 1
+    hitmarkerLastHealth = {}
+
     for _, c in pairs(connections) do 
         pcall(function() c:Disconnect() end) 
+    end
+    if antiAfkConnection then
+        pcall(function() antiAfkConnection:Disconnect() end)
+        antiAfkConnection = nil
     end
     for _, holder in pairs(activeEspHolders) do
         pcall(function() holder.Holder:Destroy() end)
@@ -1278,10 +1298,11 @@ local function getClosestTarget()
                 local targetPart = getTargetHitbox(char)
                 if targetPart then
                     local calcPos = targetPart.Position
+                    local screenCalcPos = calcPos
                     if predictionEnabled and targetPart.AssemblyLinearVelocity then
-                        calcPos = calcPos + (targetPart.AssemblyLinearVelocity * predictionFactor)
+                        screenCalcPos = calcPos + (targetPart.AssemblyLinearVelocity * predictionFactor)
                     end
-                    local screenPos, onScreen = camera:WorldToViewportPoint(calcPos)
+                    local screenPos, onScreen = camera:WorldToViewportPoint(screenCalcPos)
                     if onScreen and screenPos.Z > 0 then
                         local screenDist = (Vector2.new(screenPos.X, screenPos.Y) - screenCenter).Magnitude
                         if screenDist <= closestDist then
@@ -1293,6 +1314,7 @@ local function getClosestTarget()
                                     Part = targetPart,
                                     Hum = hum,
                                     Position = calcPos,
+                                    AimPosition = screenCalcPos,
                                     ScreenPosition = Vector2.new(screenPos.X, screenPos.Y),
                                     Distance = screenDist
                                 }
@@ -1457,6 +1479,12 @@ local function getOrCreateScreenEsp(plr)
 end
 
 table.insert(connections, Players.PlayerRemoving:Connect(function(plr)
+    local oldChar = plr.Character
+    local oldHum = oldChar and oldChar:FindFirstChildOfClass("Humanoid")
+    if oldHum then
+        hitmarkerLastHealth[oldHum] = nil
+    end
+
     local cache = screenEspCache[plr]
     if cache then
         pcall(function()
@@ -1731,7 +1759,8 @@ table.insert(connections, Players.PlayerAdded:Connect(attachEspToPlayer))
 -- MAIN ENGINE RENDER LOOP
 -- ==========================================
 table.insert(connections, RunService.RenderStepped:Connect(function(dt)
-    if not camera then camera = Workspace.CurrentCamera return end
+    camera = Workspace.CurrentCamera or camera
+    if not camera then return end
     local localPos = camera.CFrame.Position
 
     fpsCounter = fpsCounter + 1
@@ -1777,20 +1806,38 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         end
 
         if lockedTarget and lockedTarget.Position then
-            local aimPos = lockedTarget.Position
-            if predictionEnabled and lockedTarget.Part and lockedTarget.Part.AssemblyLinearVelocity then
-                aimPos = aimPos + (lockedTarget.Part.AssemblyLinearVelocity * predictionFactor)
+            local aimPos = lockedTarget.AimPosition or lockedTarget.Position
+            if predictionEnabled and lockedTarget.Part and lockedTarget.Part.Parent then
+                aimPos = lockedTarget.Part.Position
+                if lockedTarget.Part.AssemblyLinearVelocity then
+                    aimPos += lockedTarget.Part.AssemblyLinearVelocity * predictionFactor
+                end
             end
-            camera.CFrame = CFrame.lookAt(camera.CFrame.Position, aimPos)
+
+            local desired = CFrame.lookAt(camera.CFrame.Position, aimPos)
+            if snapAimMode then
+                camera.CFrame = desired
+            else
+                local smooth = math.clamp(aimbotSmoothness, 0, 0.98)
+                local speedAlpha = 1 - math.exp(-math.max(1, aimbotSpeed) * dt)
+                local alpha = math.clamp(speedAlpha * (1 - smooth), 0.01, 1)
+                camera.CFrame = camera.CFrame:Lerp(desired, alpha)
+            end
         end
     else
         lockedTarget = nil
     end
 
     if butterflyKnifeEnabled then
-        scanAndMorphKnives(Workspace)
-        scanAndMorphKnives(camera)
-        hookBloxStrikeModules()
+        skinScanAccumulator += dt
+        if skinScanAccumulator >= 0.50 then
+            skinScanAccumulator = 0
+            scanAndMorphKnives(Workspace)
+            scanAndMorphKnives(camera)
+            hookBloxStrikeModules()
+        end
+    else
+        skinScanAccumulator = 0
     end
 
     runMobileTriggerbot()
@@ -1873,6 +1920,8 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
 
     if removeFogEnabled then
         Lighting.FogEnd = 100000
+    else
+        Lighting.FogEnd = defaultLighting.FogEnd
     end
     if antiFlashEnabled then
         pcall(function()
@@ -1887,14 +1936,25 @@ end))
 -- ANTI-AIM ROTATION LOOP
 -- ==========================================
 table.insert(connections, RunService.RenderStepped:Connect(function(dt)
-    if not antiAimEnabled then return end
-    
     local char = player.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
     local hum = char and char:FindFirstChildOfClass("Humanoid")
-    
+
+    if not antiAimEnabled then
+        if hum and savedAutoRotate ~= nil then
+            hum.AutoRotate = savedAutoRotate
+            savedAutoRotate = nil
+        end
+        return
+    end
+
     if not hrp or not hum or hum.Health <= 0 then return end
-    
+
+    if savedAutoRotate == nil then
+        savedAutoRotate = hum.AutoRotate
+        hum.AutoRotate = false
+    end
+
     currentSpinAngle = (currentSpinAngle + (spinSpeed * dt * 60)) % 360
     hrp.CFrame = CFrame.new(hrp.Position) * CFrame.Angles(0, math.rad(currentSpinAngle), 0)
 end))
@@ -2011,7 +2071,7 @@ local function triggerMobileSlideEnd()
     local char = player.Character
     local hum = char and char:FindFirstChildOfClass("Humanoid")
     if hum then
-        hum.HipHeight = defaultHipHeight
+        hum.HipHeight = defaultHipHeightCaptured and defaultHipHeight or hum.HipHeight
     end
 end
 
@@ -2063,6 +2123,10 @@ local function createMobileSlideButton()
     stroke.Parent = mobileSlideBtn
 
     local tapConn = mobileSlideBtn.Activated:Connect(function()
+        if mobileSlideDragging then
+            mobileSlideDragging = false
+            return
+        end
         toggleMobileSlide()
     end)
     table.insert(connections, tapConn)
@@ -2227,7 +2291,10 @@ table.insert(connections, inEndedConn)
 -- HITMARKER TARGET HEALTH MONITOR (ALL ENEMIES)
 -- ==========================================
 table.insert(connections, RunService.Heartbeat:Connect(function()
-    if not hitmarkerEnabled then return end
+    if not hitmarkerEnabled then
+        hitmarkerLastHealth = {}
+        return
+    end
 
     for _, targetPlr in ipairs(Players:GetPlayers()) do
         if targetPlr ~= player then
@@ -2277,7 +2344,11 @@ table.insert(connections, RunService.Heartbeat:Connect(function(dt)
         local grounded = isPlayerGrounded(char, hrp)
         if grounded and currentSlideVel.Magnitude > slideMinSpeed then
             activeMode = "Slide"
-            currentSlideVel = currentSlideVel * slideFriction
+            local frictionFactor = math.pow(
+                math.clamp(slideFriction, 0, 1),
+                math.max(dt, 0) * 60
+            )
+            currentSlideVel = currentSlideVel * frictionFactor
             finalVelocity = Vector3.new(
                 currentSlideVel.X,
                 currentVel.Y,
@@ -2334,7 +2405,26 @@ end))
 -- ==========================================
 -- UI SCOPE FIX & DYNAMIC LAYOUT CALCULATION
 -- ==========================================
+local function setAntiAfkEnabled(enabled)
+    antiAfkEnabled = enabled
+    if antiAfkConnection then
+        pcall(function() antiAfkConnection:Disconnect() end)
+        antiAfkConnection = nil
+    end
+    if not antiAfkEnabled then return end
+
+    antiAfkConnection = player.Idled:Connect(function()
+        pcall(function()
+            if VirtualInputManager then
+                VirtualInputManager:SendMouseButtonEvent(1, 1, 0, true, game, 0)
+                VirtualInputManager:SendMouseButtonEvent(1, 1, 0, false, game, 0)
+            end
+        end)
+    end)
+end
+
 local function buildGestioUI()
+setAntiAfkEnabled(antiAfkEnabled)
 
 -- ==========================================
 -- FLOATING UI LAUNCHER
@@ -3084,17 +3174,37 @@ addCard(sKnifeSection, "Butterfly Knife", butterflyKnifeEnabled, function(v)
 end)
 
 -- ENVIRONMENT TAB
-local envLightSection = makeCategorySection(envPage, "Atmosphere & World", 1, 3)
-addCard(envLightSection, "Night Mode", nightModeEnabled, function(v) nightModeEnabled = v end)
-addCard(envLightSection, "FullBright", fullBrightEnabled, function(v) fullBrightEnabled = v end)
+local envLightSection = makeCategorySection(envPage, "Atmosphere & World", 1, 4)
+addCard(envLightSection, "Night Mode", nightModeEnabled, function(v)
+    nightModeEnabled = v
+    if v then
+        applyNightPreset(nightPreset)
+    elseif not fullBrightEnabled then
+        restoreLightingState()
+    end
+end)
+addCard(envLightSection, "FullBright", fullBrightEnabled, function(v)
+    fullBrightEnabled = v
+    if not v and not nightModeEnabled then
+        restoreLightingState()
+    end
+end)
 addCard(envLightSection, "Anti-Flash", antiFlashEnabled, function(v) antiFlashEnabled = v end)
+addCard(envLightSection, "No Fog", removeFogEnabled, function(v)
+    removeFogEnabled = v
+    if not v then
+        Lighting.FogEnd = defaultLighting.FogEnd
+    end
+end)
 
 -- MISC TAB
 local miscGeneralSection = makeCategorySection(micsPage, "Utilities", 1, 2)
 addCard(miscGeneralSection, "Third Person", thirdPersonEnabled, function(v)
     setThirdPersonEnabled(v)
 end)
-addCard(miscGeneralSection, "Anti-AFK", true, function(v) end)
+addCard(miscGeneralSection, "Anti-AFK", antiAfkEnabled, function(v)
+    setAntiAfkEnabled(v)
+end)
 
 -- SETTINGS TAB
 local setsGeneralSection = makeCategorySection(setsPage, "Configuration", 1, 1)
