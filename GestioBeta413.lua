@@ -184,7 +184,7 @@ local snapAimMode = true
 local isAiming = false
 local lockedTarget = nil
 local aimboneIndex = 1
-local headAimOffsetY = -0.35 -- aim slightly below the center of the Head
+local headAimOffsetY = -0.35
 local targetSwitchDelay = 0.05
 local shotDelay = 0.0
 local hitChance = 85
@@ -818,7 +818,9 @@ end
 
 local function getTargetHitbox(char)
     if not char then return nil end
-
+    if bodyAimOnly then
+        return char:FindFirstChild("UpperTorso") or char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso")
+    end
     if aimboneIndex == 1 then
         return char:FindFirstChild("Head") or char:FindFirstChild("UpperTorso")
     elseif aimboneIndex == 2 then
@@ -830,15 +832,10 @@ end
 
 local function getTargetAimPosition(part)
     if not part then return nil end
-
-    local position = part.Position
-
-    -- Head: aim a little below the geometric center.
     if aimboneIndex == 1 and part.Name == "Head" then
-        position = position + Vector3.new(0, headAimOffsetY, 0)
+        return part.Position + Vector3.new(0, headAimOffsetY, 0)
     end
-
-    return position
+    return part.Position
 end
 
 local function isEntityAlive(char, hum)
@@ -3041,24 +3038,21 @@ local function openInspectorFor(moduleName)
         addInspectorSlider(38, "Speed", 1.0, 50.0, aimbotSpeed, true, function(v) aimbotSpeed = v end)
         addInspectorSlider(70, "Smoothness", 0.0, 0.95, aimbotSmoothness, true, function(v) aimbotSmoothness = v end)
         addInspectorSlider(102, "Prediction Factor", 0.05, 0.3, predictionFactor, true, function(v) predictionFactor = v end)
-        addInspectorChoice(140, "Aim Part", {"Head", "Chest", "Pelvis"}, 
-            aimboneIndex == 1 and "Head" or (aimboneIndex == 2 and "Chest" or "Pelvis"),
-            function(selected)
-                if selected == "Head" then
-                    aimboneIndex = 1
-                elseif selected == "Chest" then
-                    aimboneIndex = 2
-                else
-                    aimboneIndex = 3
-                end
-                lockedTarget = nil
+        addInspectorChoice(136, "Aim Part", {"Head", "Chest", "Pelvis"}, aimboneIndex == 1 and "Head" or (aimboneIndex == 2 and "Chest" or "Pelvis"), function(v)
+            if v == "Head" then
+                aimboneIndex = 1
+            elseif v == "Chest" then
+                aimboneIndex = 2
+            else
+                aimboneIndex = 3
             end
-        )
-        addInspectorToggle(176, "Body Priority", bodyAimOnly, function(v) bodyAimOnly = v end)
-        addInspectorToggle(202, "Snap Lock Mode", snapAimMode, function(v) snapAimMode = v end)
-        addInspectorToggle(228, "Prediction", predictionEnabled, function(v) predictionEnabled = v end)
-        addInspectorToggle(254, "Show FOV Circle", showFovCircle, function(v) showFovCircle = v end)
-        addInspectorToggle(280, "Visibility Check", visibleCheck, function(v) visibleCheck = v end)
+            lockedTarget = nil
+        end)
+        addInspectorToggle(174, "Body Priority", bodyAimOnly, function(v) bodyAimOnly = v end)
+        addInspectorToggle(166, "Snap Lock Mode", snapAimMode, function(v) snapAimMode = v end)
+        addInspectorToggle(192, "Prediction", predictionEnabled, function(v) predictionEnabled = v end)
+        addInspectorToggle(218, "Show FOV Circle", showFovCircle, function(v) showFovCircle = v end)
+        addInspectorToggle(244, "Visibility Check", visibleCheck, function(v) visibleCheck = v end)
     elseif moduleName == "Butterfly Knife" then
         insContent.CanvasSize = UDim2.new(0, 0, 0, 160)
         addInspectorChoice(6, "Skin Finish", {"Vanilla", "Fade", "Doppler", "Lore"}, butterflySkin, function(selected)
