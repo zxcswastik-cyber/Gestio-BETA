@@ -184,6 +184,7 @@ local snapAimMode = true
 local isAiming = false
 local lockedTarget = nil
 local aimboneIndex = 1
+local headAimOffsetY = -0.35 -- aim slightly below the center of the Head
 local targetSwitchDelay = 0.05
 local shotDelay = 0.0
 local hitChance = 85
@@ -817,9 +818,7 @@ end
 
 local function getTargetHitbox(char)
     if not char then return nil end
-    if bodyAimOnly then
-        return char:FindFirstChild("UpperTorso") or char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso")
-    end
+
     if aimboneIndex == 1 then
         return char:FindFirstChild("Head") or char:FindFirstChild("UpperTorso")
     elseif aimboneIndex == 2 then
@@ -827,6 +826,19 @@ local function getTargetHitbox(char)
     else
         return char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("UpperTorso") or char:FindFirstChild("Head")
     end
+end
+
+local function getTargetAimPosition(part)
+    if not part then return nil end
+
+    local position = part.Position
+
+    -- Head: aim a little below the geometric center.
+    if aimboneIndex == 1 and part.Name == "Head" then
+        position = position + Vector3.new(0, headAimOffsetY, 0)
+    end
+
+    return position
 end
 
 local function isEntityAlive(char, hum)
@@ -1304,7 +1316,7 @@ local function getClosestTarget()
             if isEntityAlive(char, hum) then
                 local targetPart = getTargetHitbox(char)
                 if targetPart then
-                    local calcPos = targetPart.Position
+                    local calcPos = getTargetAimPosition(targetPart)
                     local screenCalcPos = calcPos
                     if predictionEnabled and targetPart.AssemblyLinearVelocity then
                         screenCalcPos = calcPos + (targetPart.AssemblyLinearVelocity * predictionFactor)
@@ -1506,6 +1518,31 @@ table.insert(connections, Players.PlayerRemoving:Connect(function(plr)
         screenEspCache[plr] = nil
     end
 end))
+
+-- Instantly hide every ESP layer for a player when their character dies.
+local function hidePlayerEsp(plr)
+    local screen = screenEspCache[plr]
+    if screen then
+        pcall(function() screen.Box.Visible = false end)
+        pcall(function() screen.HealthBarBg.Visible = false end)
+        pcall(function() screen.TagCard.Visible = false end)
+        pcall(function()
+            for _, corner in ipairs(screen.Corners) do
+                corner.H.Visible = false
+                corner.V.Visible = false
+            end
+        end)
+    end
+
+    local data = activeEspHolders[plr]
+    if data then
+        pcall(function() data.HeadDot.Enabled = false end)
+        pcall(function() data.Highlight.Enabled = false end)
+        pcall(function() data.Tracer.Visible = false end)
+        pcall(function() data.Highlight.Adornee = nil end)
+        pcall(function() data.HeadDot.Adornee = nil end)
+    end
+end
 
 -- ==========================================
 -- TACTICAL ESP SCREEN RENDER LOOP
@@ -1743,20 +1780,38 @@ local function attachEspToPlayer(plr)
 
     local function setupCharacter(char)
         if not char then return end
+
+        -- Hide the previous character's ESP immediately when a new character
+        -- starts spawning.
+        hidePlayerEsp(plr)
+
         task.spawn(function()
             local head = char:WaitForChild("Head", 3)
-            if head and dotBillboard then
+            if head and dotBillboard and char == plr.Character then
                 dotBillboard.Adornee = head
             end
-            if hl then
+            if hl and char == plr.Character then
                 hl.Adornee = char
             end
         end)
+
+        local hum = char:FindFirstChildOfClass("Humanoid") or char:WaitForChild("Humanoid", 3)
+        if hum then
+            local diedConn = hum.Died:Connect(function()
+                hidePlayerEsp(plr)
+            end)
+            table.insert(connections, diedConn)
+        end
     end
 
     if plr.Character then setupCharacter(plr.Character) end
     local charConn = plr.CharacterAdded:Connect(setupCharacter)
     table.insert(connections, charConn)
+
+    local removingConn = plr.CharacterRemoving:Connect(function(char)
+        hidePlayerEsp(plr)
+    end)
+    table.insert(connections, removingConn)
 end
 
 for _, v in pairs(Players:GetPlayers()) do attachEspToPlayer(v) end
@@ -1815,7 +1870,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         if lockedTarget and lockedTarget.Position then
             local aimPos = lockedTarget.AimPosition or lockedTarget.Position
             if predictionEnabled and lockedTarget.Part and lockedTarget.Part.Parent then
-                aimPos = lockedTarget.Part.Position
+                aimPos = getTargetAimPosition(lockedTarget.Part)
                 if lockedTarget.Part.AssemblyLinearVelocity then
                     aimPos = aimPos + lockedTarget.Part.AssemblyLinearVelocity * predictionFactor
                 end
@@ -2986,11 +3041,24 @@ local function openInspectorFor(moduleName)
         addInspectorSlider(38, "Speed", 1.0, 50.0, aimbotSpeed, true, function(v) aimbotSpeed = v end)
         addInspectorSlider(70, "Smoothness", 0.0, 0.95, aimbotSmoothness, true, function(v) aimbotSmoothness = v end)
         addInspectorSlider(102, "Prediction Factor", 0.05, 0.3, predictionFactor, true, function(v) predictionFactor = v end)
-        addInspectorToggle(140, "Body Priority", bodyAimOnly, function(v) bodyAimOnly = v end)
-        addInspectorToggle(166, "Snap Lock Mode", snapAimMode, function(v) snapAimMode = v end)
-        addInspectorToggle(192, "Prediction", predictionEnabled, function(v) predictionEnabled = v end)
-        addInspectorToggle(218, "Show FOV Circle", showFovCircle, function(v) showFovCircle = v end)
-        addInspectorToggle(244, "Visibility Check", visibleCheck, function(v) visibleCheck = v end)
+        addInspectorChoice(140, "Aim Part", {"Head", "Chest", "Pelvis"}, 
+            aimboneIndex == 1 and "Head" or (aimboneIndex == 2 and "Chest" or "Pelvis"),
+            function(selected)
+                if selected == "Head" then
+                    aimboneIndex = 1
+                elseif selected == "Chest" then
+                    aimboneIndex = 2
+                else
+                    aimboneIndex = 3
+                end
+                lockedTarget = nil
+            end
+        )
+        addInspectorToggle(176, "Body Priority", bodyAimOnly, function(v) bodyAimOnly = v end)
+        addInspectorToggle(202, "Snap Lock Mode", snapAimMode, function(v) snapAimMode = v end)
+        addInspectorToggle(228, "Prediction", predictionEnabled, function(v) predictionEnabled = v end)
+        addInspectorToggle(254, "Show FOV Circle", showFovCircle, function(v) showFovCircle = v end)
+        addInspectorToggle(280, "Visibility Check", visibleCheck, function(v) visibleCheck = v end)
     elseif moduleName == "Butterfly Knife" then
         insContent.CanvasSize = UDim2.new(0, 0, 0, 160)
         addInspectorChoice(6, "Skin Finish", {"Vanilla", "Fade", "Doppler", "Lore"}, butterflySkin, function(selected)
