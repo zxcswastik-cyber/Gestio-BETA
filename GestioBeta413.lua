@@ -207,7 +207,7 @@ local thirdPersonHeight = 1.5
 local thirdPersonPreviousOffset = nil
 
 -- ==========================================
--- SKINS & WEAPON MODS ENGINE (BLOX STRIKE HOOK)
+-- SKINS & WEAPON MODS ENGINE
 -- ==========================================
 local butterflyKnifeEnabled = false
 local butterflySkin = "Fade"
@@ -2332,7 +2332,7 @@ table.insert(connections, RunService.Heartbeat:Connect(function(dt)
 end))
 
 -- ==========================================
--- UI SCOPE FIX & DYNAMIC LAYOUT CALCULATION
+-- UI SCOPE FIX
 -- ==========================================
 local function buildGestioUI()
 
@@ -2459,7 +2459,7 @@ sidebar.BackgroundColor3 = currentTheme.Sidebar
 sidebar.BorderSizePixel = 0
 sidebar.ZIndex = 6
 sidebar.ScrollBarThickness = 0
-sidebar.CanvasSize = UDim2.new(0, 0, 0, 240)
+sidebar.CanvasSize = UDim2.new(0, 0, 0, 250)
 Instance.new("UICorner", sidebar).CornerRadius = UDim.new(0, 8)
 
 local sbLayout = Instance.new("UIListLayout", sidebar)
@@ -2520,7 +2520,7 @@ local function makePageContainer()
     local list = Instance.new("UIListLayout", c)
     list.FillDirection = Enum.FillDirection.Vertical
     list.SortOrder = Enum.SortOrder.LayoutOrder
-    list.Padding = UDim.new(0, 8)
+    list.Padding = UDim.new(0, 10)
 
     local pad = Instance.new("UIPadding", c)
     pad.PaddingLeft = UDim.new(0, 4)
@@ -2532,23 +2532,19 @@ local function makePageContainer()
 end
 
 local function makeCategorySection(page, title, layoutOrder, cardCount)
-    local rows = math.ceil((cardCount or 4) / 4)
+    local count = cardCount or 4
+    local rows = math.ceil(count / 4)
     local gridHeight = rows * 64
-    local calculatedHeight = 22 + gridHeight
+    local totalHeight = 22 + gridHeight
 
     local sectionContainer = Instance.new("Frame", page)
-    sectionContainer.Size = UDim2.new(1, 0, 0, calculatedHeight)
+    sectionContainer.Size = UDim2.new(1, 0, 0, totalHeight)
     sectionContainer.BackgroundTransparency = 1
     sectionContainer.LayoutOrder = layoutOrder or 1
     sectionContainer.ZIndex = 6
 
-    local headerFrame = Instance.new("Frame", sectionContainer)
-    headerFrame.Size = UDim2.new(1, 0, 0, 16)
-    headerFrame.BackgroundTransparency = 1
-    headerFrame.ZIndex = 6
-
-    local headerLabel = Instance.new("TextLabel", headerFrame)
-    headerLabel.Size = UDim2.new(1, 0, 1, 0)
+    local headerLabel = Instance.new("TextLabel", sectionContainer)
+    headerLabel.Size = UDim2.new(1, 0, 0, 18)
     headerLabel.BackgroundTransparency = 1
     headerLabel.Text = title:upper()
     headerLabel.TextColor3 = currentTheme.Accent
@@ -2565,7 +2561,7 @@ local function makeCategorySection(page, title, layoutOrder, cardCount)
 
     local grid = Instance.new("UIGridLayout", gridFrame)
     grid.CellSize = UDim2.new(0, 58, 0, 58)
-    grid.CellPadding = UDim.new(0, 6, 0, 6)
+    grid.CellPadding = UDim2.new(0, 6, 0, 6)
 
     return gridFrame
 end
