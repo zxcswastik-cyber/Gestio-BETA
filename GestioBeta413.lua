@@ -1,6 +1,6 @@
 -- ==============================================================================
--- [Gestio UI - Blox Strike Ultimate Mobile Engine | Version 4.3.2]
--- Architecture: Modular Extended Pipeline
+-- [Gestio UI - Blox Strike Ultimate Mobile Engine | Version 4.3.3]
+-- Architecture: Modular Extended Pipeline | Boot-Safe
 -- Target Game: Blox Strike (Roblox)
 -- ==============================================================================
 
@@ -68,7 +68,8 @@ if not targetGui and player then
     pcall(function() targetGui = player:WaitForChild("PlayerGui", 5) end)
 end
 if not targetGui then
-    error("[Gestio] GUI initialization failed: no valid GUI parent", 0)
+    warn("[Gestio] GUI initialization failed: no valid GUI parent")
+    return
 end
 local connections = {}
 local activeEspHolders = {}
@@ -652,6 +653,7 @@ end
 -- WORLD VISUAL EFFECTS
 -- ==========================================
 local function destroyWorldVisualEffects()
+    pcall(function()
     if worldParticleEmitter then
         worldParticleEmitter:Destroy()
         worldParticleEmitter = nil
@@ -672,9 +674,11 @@ local function destroyWorldVisualEffects()
         vignetteGui:Destroy()
         vignetteGui = nil
     end
+    end)
 end
 
 local function ensureWorldVisualEffects()
+    pcall(function()
     if bloomEnabled and not bloomEffect then
         bloomEffect = Instance.new("BloomEffect")
         bloomEffect.Name = "GestioBloom"
@@ -736,9 +740,11 @@ local function ensureWorldVisualEffects()
             frame.BackgroundTransparency = math.clamp(1 - vignetteStrength, 0, 1)
         end
     end
+    end)
 end
 
 local function setWorldParticleMode(mode)
+    pcall(function()
     worldParticleMode = mode
     if worldParticleEmitter then
         worldParticleEmitter:Destroy()
@@ -793,6 +799,7 @@ local function setWorldParticleMode(mode)
     end
 
     worldParticleEmitter = emitter
+    end)
 end
 
 local function refreshWorldVisuals()
