@@ -181,7 +181,6 @@ local aimbotSmoothness = 0.0
 local aimFov = 160
 local showFovCircle = true
 local snapAimMode = true
-local isAiming = false
 local lockedTarget = nil
 local aimboneIndex = 1
 local headAimOffsetY = -0.35
@@ -416,6 +415,7 @@ local nightPresets = {
 }
 
 local defaultLighting = nil
+local lightingSnapshotActive = false
 
 local function captureLightingState()
     defaultLighting = {
@@ -427,6 +427,7 @@ local function captureLightingState()
         FogEnd = Lighting.FogEnd,
         FogColor = Lighting.FogColor
     }
+    lightingSnapshotActive = true
 end
 
 -- ==========================================
@@ -605,6 +606,10 @@ local function applyNightPreset(presetName)
 end
 
 local function restoreLightingState()
+    if not defaultLighting or not lightingSnapshotActive then
+        return false
+    end
+
     pcall(function()
         Lighting.Brightness = defaultLighting.Brightness
         Lighting.ClockTime = defaultLighting.ClockTime
@@ -614,6 +619,10 @@ local function restoreLightingState()
         Lighting.FogEnd = defaultLighting.FogEnd
         Lighting.FogColor = defaultLighting.FogColor
     end)
+
+    defaultLighting = nil
+    lightingSnapshotActive = false
+    return true
 end
 
 -- ==========================================
@@ -1980,7 +1989,9 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     if removeFogEnabled then
         Lighting.FogEnd = 100000
     else
+        if defaultLighting and lightingSnapshotActive then
         Lighting.FogEnd = defaultLighting.FogEnd
+    end
     end
     if antiFlashEnabled then
         pcall(function()
@@ -3048,11 +3059,11 @@ local function openInspectorFor(moduleName)
             end
             lockedTarget = nil
         end)
-        addInspectorToggle(174, "Body Priority", bodyAimOnly, function(v) bodyAimOnly = v end)
-        addInspectorToggle(166, "Snap Lock Mode", snapAimMode, function(v) snapAimMode = v end)
-        addInspectorToggle(192, "Prediction", predictionEnabled, function(v) predictionEnabled = v end)
-        addInspectorToggle(218, "Show FOV Circle", showFovCircle, function(v) showFovCircle = v end)
-        addInspectorToggle(244, "Visibility Check", visibleCheck, function(v) visibleCheck = v end)
+        addInspectorToggle(190, "Body Priority", bodyAimOnly, function(v) bodyAimOnly = v end)
+        addInspectorToggle(216, "Snap Lock Mode", snapAimMode, function(v) snapAimMode = v end)
+        addInspectorToggle(242, "Prediction", predictionEnabled, function(v) predictionEnabled = v end)
+        addInspectorToggle(268, "Show FOV Circle", showFovCircle, function(v) showFovCircle = v end)
+        addInspectorToggle(294, "Visibility Check", visibleCheck, function(v) visibleCheck = v end)
     elseif moduleName == "Butterfly Knife" then
         insContent.CanvasSize = UDim2.new(0, 0, 0, 160)
         addInspectorChoice(6, "Skin Finish", {"Vanilla", "Fade", "Doppler", "Lore"}, butterflySkin, function(selected)
@@ -3326,7 +3337,9 @@ addCard(envLightSection, "Anti-Flash", antiFlashEnabled, function(v) antiFlashEn
 addCard(envLightSection, "No Fog", removeFogEnabled, function(v)
     removeFogEnabled = v
     if not v and defaultLighting then
+        if defaultLighting and lightingSnapshotActive then
         Lighting.FogEnd = defaultLighting.FogEnd
+    end
     end
 end)
 
