@@ -68,8 +68,7 @@ if not targetGui and player then
     pcall(function() targetGui = player:WaitForChild("PlayerGui", 5) end)
 end
 if not targetGui then
-    warn("[Gestio] GUI initialization failed: no valid GUI parent")
-    return
+    error("[Gestio] GUI initialization failed: no valid GUI parent", 0)
 end
 local connections = {}
 local activeEspHolders = {}
