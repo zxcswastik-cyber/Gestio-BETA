@@ -212,17 +212,14 @@ local thirdPersonPreviousOffset = nil
 local butterflyKnifeEnabled = false
 local butterflySkin = "Vanilla"
 
-local function getSkinsFolder()
-    return ReplicatedStorage:FindFirstChild("Weapons") or ReplicatedStorage:FindFirstChild("Skins") or ReplicatedStorage:FindFirstChild("Items") or ReplicatedStorage
-end
-
 local function applyKnifeSkin(tool)
-    if not butterflyKnifeEnabled or not tool then return end
+    if not butterflyKnifeEnabled or not tool or not tool:IsA("Tool") then return end
     local name = tool.Name:lower()
     if name:find("knife") or name:find("melee") then
         pcall(function()
-            local modelContainer = getSkinsFolder()
+            local modelContainer = ReplicatedStorage:FindFirstChild("Weapons") or ReplicatedStorage:FindFirstChild("Skins") or ReplicatedStorage
             local bflyModel = modelContainer:FindFirstChild("Butterfly Knife", true) or modelContainer:FindFirstChild("ButterflyKnife", true) or modelContainer:FindFirstChild("Balisong", true)
+            
             if bflyModel then
                 for _, part in ipairs(tool:GetChildren()) do
                     if (part:IsA("BasePart") or part:IsA("MeshPart")) and part.Name ~= "Handle" then
@@ -2321,7 +2318,7 @@ table.insert(connections, RunService.Heartbeat:Connect(function(dt)
 end))
 
 -- ==========================================
--- UI SCOPE FIX
+-- UI SCOPE FIX & DYNAMIC LAYOUT CALCULATION
 -- ==========================================
 local function buildGestioUI()
 
@@ -2502,7 +2499,7 @@ local function makePageContainer()
     c.Position = UDim2.new(0, 80, 0, 6)
     c.BackgroundTransparency = 1
     c.ScrollBarThickness = 2
-    c.CanvasSize = UDim2.new(0, 0, 0, 400)
+    c.CanvasSize = UDim2.new(0, 0, 0, 450)
     c.Visible = false
     c.ZIndex = 6
 
@@ -2522,7 +2519,8 @@ end
 
 local function makeCategorySection(page, title, layoutOrder, cardCount)
     local rows = math.ceil((cardCount or 4) / 4)
-    local calculatedHeight = 22 + (rows * 64)
+    local gridHeight = rows * 64
+    local calculatedHeight = 22 + gridHeight
 
     local sectionContainer = Instance.new("Frame", page)
     sectionContainer.Size = UDim2.new(1, 0, 0, calculatedHeight)
@@ -2546,7 +2544,7 @@ local function makeCategorySection(page, title, layoutOrder, cardCount)
     headerLabel.ZIndex = 7
 
     local gridFrame = Instance.new("Frame", sectionContainer)
-    gridFrame.Size = UDim2.new(1, 0, 1, -20)
+    gridFrame.Size = UDim2.new(1, 0, 0, gridHeight)
     gridFrame.Position = UDim2.new(0, 0, 0, 20)
     gridFrame.BackgroundTransparency = 1
     gridFrame.ZIndex = 6
