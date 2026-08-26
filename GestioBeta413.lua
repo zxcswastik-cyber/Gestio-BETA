@@ -2332,7 +2332,7 @@ table.insert(connections, RunService.Heartbeat:Connect(function(dt)
 end))
 
 -- ==========================================
--- UI SCOPE FIX
+-- UI SCOPE FIX & DYNAMIC LAYOUT CALCULATION
 -- ==========================================
 local function buildGestioUI()
 
@@ -2513,7 +2513,7 @@ local function makePageContainer()
     c.Position = UDim2.new(0, 80, 0, 6)
     c.BackgroundTransparency = 1
     c.ScrollBarThickness = 2
-    c.CanvasSize = UDim2.new(0, 0, 0, 450)
+    c.CanvasSize = UDim2.new(0, 0, 0, 900)
     c.Visible = false
     c.ZIndex = 6
 
@@ -2964,6 +2964,7 @@ end
 -- ==========================================
 local function addCard(parent, name, defaultState, onToggle)
     local card = Instance.new("Frame", parent)
+    card.Size = UDim2.new(0, 58, 0, 58)
     card.BackgroundColor3 = currentTheme.CardBg
     card.BorderSizePixel = 0
     card.ZIndex = 7
