@@ -2321,7 +2321,7 @@ table.insert(connections, RunService.Heartbeat:Connect(function(dt)
 end))
 
 -- ==========================================
--- UI SCOPE FIX & DYNAMIC LAYOUT CALCULATION
+-- UI SCOPE FIX
 -- ==========================================
 local function buildGestioUI()
 
@@ -2441,61 +2441,75 @@ for r = 0, gridRows - 1 do
     end
 end
 
-local sidebar = Instance.new("Frame", mainFrame)
-sidebar.Size = UDim2.new(0, 75, 1, 0)
+local sidebar = Instance.new("ScrollingFrame", mainFrame)
+sidebar.Size = UDim2.new(0, 75, 1, -8)
+sidebar.Position = UDim2.new(0, 4, 0, 4)
 sidebar.BackgroundColor3 = currentTheme.Sidebar
 sidebar.BorderSizePixel = 0
 sidebar.ZIndex = 6
+sidebar.ScrollBarThickness = 0
+sidebar.CanvasSize = UDim2.new(0, 0, 0, 240)
 Instance.new("UICorner", sidebar).CornerRadius = UDim.new(0, 8)
 
+local sbLayout = Instance.new("UIListLayout", sidebar)
+sbLayout.FillDirection = Enum.FillDirection.Vertical
+sbLayout.SortOrder = Enum.SortOrder.LayoutOrder
+sbLayout.Padding = UDim.new(0, 3)
+sbLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+
+local sbPad = Instance.new("UIPadding", sidebar)
+sbPad.PaddingTop = UDim.new(0, 4)
+sbPad.PaddingBottom = UDim.new(0, 4)
+
 local logoBtn = Instance.new("TextButton", sidebar)
-logoBtn.Size = UDim2.new(1, 0, 0, 30)
+logoBtn.Size = UDim2.new(0.9, 0, 0, 24)
 logoBtn.BackgroundTransparency = 1
 logoBtn.Text = "Gestio"
 logoBtn.TextColor3 = currentTheme.Accent
-logoBtn.TextSize = 12
+logoBtn.TextSize = 11
 logoBtn.Font = Enum.Font.GothamBold
 logoBtn.ZIndex = 7
+logoBtn.LayoutOrder = 1
 bindTouch(logoBtn, toggleMenu)
 
-local function createNavBtn(y, txt)
+local function createNavBtn(order, txt)
     local b = Instance.new("TextButton", sidebar)
-    b.Size = UDim2.new(0.86, 0, 0, 18)
-    b.Position = UDim2.new(0.07, 0, 0, y)
+    b.Size = UDim2.new(0.88, 0, 0, 19)
     b.BackgroundColor3 = currentTheme.Sidebar
     b.TextColor3 = currentTheme.TextSecondary
     b.Text = txt
     b.TextSize = 7.5
     b.Font = Enum.Font.GothamBold
     b.ZIndex = 7
+    b.LayoutOrder = order
     Instance.new("UICorner", b).CornerRadius = UDim.new(0, 4)
     return b
 end
 
-local cBtn = createNavBtn(30, "COMBAT")
-local mBtn = createNavBtn(50, "MOVEMENT")
-local eBtn = createNavBtn(70, "ESP")
-local sBtn = createNavBtn(90, "SKINS")
-local envBtn = createNavBtn(110, "ENV")
-local micsBtn = createNavBtn(130, "MICS")
-local setsBtn = createNavBtn(150, "SETTINGS")
+local cBtn = createNavBtn(2, "COMBAT")
+local mBtn = createNavBtn(3, "MOVEMENT")
+local eBtn = createNavBtn(4, "ESP")
+local sBtn = createNavBtn(5, "SKINS")
+local envBtn = createNavBtn(6, "ENV")
+local micsBtn = createNavBtn(7, "MICS")
+local setsBtn = createNavBtn(8, "SETTINGS")
 cBtn.BackgroundColor3 = currentTheme.CardBg
 cBtn.TextColor3 = currentTheme.Accent
 
 local function makePageContainer()
     local c = Instance.new("ScrollingFrame", mainFrame)
-    c.Size = UDim2.new(1, -82, 1, -12)
-    c.Position = UDim2.new(0, 78, 0, 6)
+    c.Size = UDim2.new(1, -84, 1, -12)
+    c.Position = UDim2.new(0, 80, 0, 6)
     c.BackgroundTransparency = 1
     c.ScrollBarThickness = 2
-    c.CanvasSize = UDim2.new(0, 0, 0, 0)
+    c.CanvasSize = UDim2.new(0, 0, 0, 400)
     c.Visible = false
     c.ZIndex = 6
 
     local list = Instance.new("UIListLayout", c)
     list.FillDirection = Enum.FillDirection.Vertical
     list.SortOrder = Enum.SortOrder.LayoutOrder
-    list.Padding = UDim.new(0, 10)
+    list.Padding = UDim.new(0, 8)
 
     local pad = Instance.new("UIPadding", c)
     pad.PaddingLeft = UDim.new(0, 4)
@@ -2503,29 +2517,22 @@ local function makePageContainer()
     pad.PaddingTop = UDim.new(0, 4)
     pad.PaddingBottom = UDim.new(0, 10)
 
-    list:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        c.CanvasSize = UDim2.new(0, 0, 0, list.AbsoluteContentSize.Y + 20)
-    end)
-
     return c
 end
 
-local function makeCategorySection(page, title, layoutOrder)
+local function makeCategorySection(page, title, layoutOrder, cardCount)
+    local rows = math.ceil((cardCount or 4) / 4)
+    local calculatedHeight = 22 + (rows * 64)
+
     local sectionContainer = Instance.new("Frame", page)
-    sectionContainer.Size = UDim2.new(1, 0, 0, 30)
+    sectionContainer.Size = UDim2.new(1, 0, 0, calculatedHeight)
     sectionContainer.BackgroundTransparency = 1
     sectionContainer.LayoutOrder = layoutOrder or 1
     sectionContainer.ZIndex = 6
 
-    local sectionList = Instance.new("UIListLayout", sectionContainer)
-    sectionList.FillDirection = Enum.FillDirection.Vertical
-    sectionList.SortOrder = Enum.SortOrder.LayoutOrder
-    sectionList.Padding = UDim.new(0, 6)
-
     local headerFrame = Instance.new("Frame", sectionContainer)
     headerFrame.Size = UDim2.new(1, 0, 0, 16)
     headerFrame.BackgroundTransparency = 1
-    headerFrame.LayoutOrder = 1
     headerFrame.ZIndex = 6
 
     local headerLabel = Instance.new("TextLabel", headerFrame)
@@ -2539,22 +2546,14 @@ local function makeCategorySection(page, title, layoutOrder)
     headerLabel.ZIndex = 7
 
     local gridFrame = Instance.new("Frame", sectionContainer)
-    gridFrame.Size = UDim2.new(1, 0, 0, 60)
+    gridFrame.Size = UDim2.new(1, 0, 1, -20)
+    gridFrame.Position = UDim2.new(0, 0, 0, 20)
     gridFrame.BackgroundTransparency = 1
-    gridFrame.LayoutOrder = 2
     gridFrame.ZIndex = 6
 
     local grid = Instance.new("UIGridLayout", gridFrame)
     grid.CellSize = UDim2.new(0, 58, 0, 58)
-    grid.CellPadding = UDim.new(0, 6, 0, 6)
-
-    grid:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        gridFrame.Size = UDim2.new(1, 0, 0, grid.AbsoluteContentSize.Y)
-    end)
-
-    sectionList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        sectionContainer.Size = UDim2.new(1, 0, 0, sectionList.AbsoluteContentSize.Y)
-    end)
+    grid.CellPadding = UDim2.new(0, 6, 0, 6)
 
     return gridFrame
 end
@@ -3019,8 +3018,8 @@ end
 -- ==========================================
 
 -- COMBAT TAB
-local cAimSection = makeCategorySection(cPage, "Aim & Ballistics", 1)
-local cRageSection = makeCategorySection(cPage, "HVH & Anti-Aim", 2)
+local cAimSection = makeCategorySection(cPage, "Aim & Ballistics", 1, 3)
+local cRageSection = makeCategorySection(cPage, "HVH & Anti-Aim", 2, 1)
 
 addCard(cAimSection, "Tracking", aimbotEnabled, function(v) aimbotEnabled = v end)
 addCard(cAimSection, "RCS", rcsEnabled, function(v) rcsEnabled = v end)
@@ -3028,8 +3027,8 @@ addCard(cAimSection, "Trigger Assistant", triggerbotEnabled, function(v) trigger
 addCard(cRageSection, "Anti-Aim", antiAimEnabled, function(v) antiAimEnabled = v end)
 
 -- MOVEMENT TAB
-local mHopSection = makeCategorySection(mPage, "Bhop Mechanics", 1)
-local mBoostSection = makeCategorySection(mPage, "Physics Modifications", 2)
+local mHopSection = makeCategorySection(mPage, "Bhop Mechanics", 1, 1)
+local mBoostSection = makeCategorySection(mPage, "Physics Modifications", 2, 3)
 
 addCard(mHopSection, "Bhop Engine", bunnyHopEnabled, function(v) bunnyHopEnabled = v end)
 addCard(mBoostSection, "Slide", slideEnabled, function(v) 
@@ -3040,8 +3039,8 @@ addCard(mBoostSection, "Speed Boost", speedEnabled, function(v) speedEnabled = v
 addCard(mBoostSection, "Flight", flightEnabled, function(v) flightEnabled = v end)
 
 -- ESP TAB
-local ePlayerSection = makeCategorySection(ePage, "Player Visuals", 1)
-local eWorldSection = makeCategorySection(ePage, "World & Projectiles", 2)
+local ePlayerSection = makeCategorySection(ePage, "Player Visuals", 1, 6)
+local eWorldSection = makeCategorySection(ePage, "World & Projectiles", 2, 2)
 
 addCard(ePlayerSection, "Nametags", nametagsEnabled, function(v) nametagsEnabled = v end)
 addCard(ePlayerSection, "Highlight", highlightEnabled, function(v) highlightEnabled = v end)
@@ -3067,7 +3066,7 @@ addCard(eWorldSection, "Jump Circle", jumpCircleEnabled, function(v)
 end)
 
 -- SKINS TAB (Skinchanger)
-local sKnifeSection = makeCategorySection(sPage, "Melee Weapons", 1)
+local sKnifeSection = makeCategorySection(sPage, "Melee Weapons", 1, 1)
 addCard(sKnifeSection, "Butterfly Knife", butterflyKnifeEnabled, function(v)
     butterflyKnifeEnabled = v
     if player.Character then
@@ -3090,20 +3089,20 @@ addCard(sKnifeSection, "Butterfly Knife", butterflyKnifeEnabled, function(v)
 end)
 
 -- ENVIRONMENT TAB
-local envLightSection = makeCategorySection(envPage, "Atmosphere & World", 1)
+local envLightSection = makeCategorySection(envPage, "Atmosphere & World", 1, 3)
 addCard(envLightSection, "Night Mode", nightModeEnabled, function(v) nightModeEnabled = v end)
 addCard(envLightSection, "FullBright", fullBrightEnabled, function(v) fullBrightEnabled = v end)
 addCard(envLightSection, "Anti-Flash", antiFlashEnabled, function(v) antiFlashEnabled = v end)
 
 -- MISC TAB
-local miscGeneralSection = makeCategorySection(micsPage, "Utilities", 1)
+local miscGeneralSection = makeCategorySection(micsPage, "Utilities", 1, 2)
 addCard(miscGeneralSection, "Third Person", thirdPersonEnabled, function(v)
     setThirdPersonEnabled(v)
 end)
 addCard(miscGeneralSection, "Anti-AFK", true, function(v) end)
 
 -- SETTINGS TAB
-local setsGeneralSection = makeCategorySection(setsPage, "Configuration", 1)
+local setsGeneralSection = makeCategorySection(setsPage, "Configuration", 1, 1)
 addCard(setsGeneralSection, "Theme", true, function(v) end)
 
 openInspectorFor("Tracking")
