@@ -207,44 +207,24 @@ local thirdPersonHeight = 1.5
 local thirdPersonPreviousOffset = nil
 
 -- ==========================================
--- SKINS & WEAPON MODS ENGINE (VIEWMODEL & THIRD PERSON)
+-- SKINS & WEAPON MODS ENGINE (BLOX STRIKE HOOK)
 -- ==========================================
 local butterflyKnifeEnabled = false
 local butterflySkin = "Fade"
 
-local BUTTERFLY_MESH_ID = "rbxassetid://4991206198"
-local BUTTERFLY_SKINS = {
-    ["Vanilla"] = "rbxassetid://4991206306",
-    ["Fade"] = "rbxassetid://4991206411",
-    ["Doppler"] = "rbxassetid://4991206517",
-    ["Lore"] = "rbxassetid://4991206622"
-}
-
-local function morphPartToButterfly(part)
-    if not part or not part:IsA("BasePart") then return end
+local function hookBloxStrikeModules()
     pcall(function()
-        local mesh = part:FindFirstChildOfClass("SpecialMesh")
-        if not mesh and part:IsA("MeshPart") then
-            part.Transparency = 1
-            local attachMesh = part:FindFirstChild("Gestio_ButterflyOverlay")
-            if not attachMesh then
-                attachMesh = Instance.new("SpecialMesh")
-                attachMesh.Name = "Gestio_ButterflyOverlay"
-                attachMesh.MeshType = Enum.MeshType.FileMesh
-                attachMesh.Parent = part
+        if getgc then
+            for _, v in ipairs(getgc(true)) do
+                if type(v) == "table" and rawget(v, "EquippedMelee") ~= nil then
+                    v.EquippedMelee = "Butterfly Knife"
+                elseif type(v) == "table" and rawget(v, "MeleeSkin") ~= nil then
+                    v.MeleeSkin = butterflySkin
+                elseif type(v) == "table" and rawget(v, "Knife") ~= nil and type(v.Knife) == "table" then
+                    v.Knife.Name = "Butterfly Knife"
+                    v.Knife.Skin = butterflySkin
+                end
             end
-            mesh = attachMesh
-        elseif not mesh then
-            mesh = Instance.new("SpecialMesh")
-            mesh.Name = "Gestio_ButterflyOverlay"
-            mesh.MeshType = Enum.MeshType.FileMesh
-            mesh.Parent = part
-        end
-
-        if mesh then
-            mesh.MeshId = BUTTERFLY_MESH_ID
-            mesh.TextureId = BUTTERFLY_SKINS[butterflySkin] or BUTTERFLY_SKINS["Fade"]
-            mesh.Scale = Vector3.new(1, 1, 1)
         end
     end)
 end
@@ -254,13 +234,17 @@ local function scanAndMorphKnives(root)
     pcall(function()
         for _, obj in ipairs(root:GetDescendants()) do
             local oName = obj.Name:lower()
-            if oName:find("knife") or oName:find("blade") or oName:find("melee") or oName:find("bayonet") or oName:find("karambit") then
-                if obj:IsA("BasePart") or obj:IsA("MeshPart") then
-                    morphPartToButterfly(obj)
-                elseif obj:IsA("Model") or obj:IsA("Tool") then
-                    for _, p in ipairs(obj:GetChildren()) do
-                        if (p:IsA("BasePart") or p:IsA("MeshPart")) and p.Name:lower():find("handle") or p.Name:lower():find("blade") or p.Name:lower():find("knife") then
-                            morphPartToButterfly(p)
+            if oName:find("knife") or oName:find("melee") or oName:find("blade") or oName:find("karambit") or oName:find("bayonet") or oName:find("arms") or oName:find("viewmodel") then
+                for _, child in ipairs(obj:GetDescendants()) do
+                    if child:IsA("MeshPart") or child:IsA("SpecialMesh") then
+                        if butterflySkin == "Fade" then
+                            child.TextureID = "rbxassetid://4991206411"
+                        elseif butterflySkin == "Doppler" then
+                            child.TextureID = "rbxassetid://4991206517"
+                        elseif butterflySkin == "Lore" then
+                            child.TextureID = "rbxassetid://4991206622"
+                        else
+                            child.TextureID = "rbxassetid://4991206306"
                         end
                     end
                 end
@@ -1806,6 +1790,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     if butterflyKnifeEnabled then
         scanAndMorphKnives(Workspace)
         scanAndMorphKnives(camera)
+        hookBloxStrikeModules()
     end
 
     runMobileTriggerbot()
@@ -2580,7 +2565,7 @@ local function makeCategorySection(page, title, layoutOrder, cardCount)
 
     local grid = Instance.new("UIGridLayout", gridFrame)
     grid.CellSize = UDim2.new(0, 58, 0, 58)
-    grid.CellPadding = UDim2.new(0, 6, 0, 6)
+    grid.CellPadding = UDim.new(0, 6, 0, 6)
 
     return gridFrame
 end
@@ -2851,6 +2836,7 @@ local function openInspectorFor(moduleName)
         insContent.CanvasSize = UDim2.new(0, 0, 0, 160)
         addInspectorChoice(6, "Skin Finish", {"Vanilla", "Fade", "Doppler", "Lore"}, butterflySkin, function(selected)
             butterflySkin = selected
+            hookBloxStrikeModules()
             scanAndMorphKnives(Workspace)
             scanAndMorphKnives(camera)
         end)
@@ -3094,9 +3080,9 @@ local sKnifeSection = makeCategorySection(sPage, "Melee Weapons", 1, 1)
 addCard(sKnifeSection, "Butterfly Knife", butterflyKnifeEnabled, function(v)
     butterflyKnifeEnabled = v
     if v then
+        hookBloxStrikeModules()
         scanAndMorphKnives(Workspace)
         scanAndMorphKnives(camera)
-        if player.Character then scanAndMorphKnives(player.Character) end
     end
 end)
 
