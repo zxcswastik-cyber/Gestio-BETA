@@ -639,6 +639,11 @@ local function restoreLightingState()
 end
 
 local function beginWorldChanger()
+    if nightModeEnabled then
+        applyNightPreset(nightPreset)
+        return
+    end
+
     captureWorldLighting()
     nightModeEnabled = true
     applyNightPreset(nightPreset)
@@ -3204,16 +3209,6 @@ local function addCard(parent, name, defaultState, onToggle)
         toggleBtn.BackgroundColor3 = state and currentTheme.Accent or Color3.fromRGB(50, 53, 60)
         circle.Position = state and UDim2.new(1, -10, 0.5, -4.5) or UDim2.new(0, 2, 0.5, -4.5)
         onToggle(state)
-        
-        if name == "World Changer" then
-            if state then
-                beginWorldChanger()
-            else
-                endWorldChanger()
-            end
-        elseif name == "FullBright" and not state and not nightModeEnabled then
-            restoreLightingState()
-        end
     end
 
     bindTouch(toggleBtn, executeToggle)
@@ -3287,11 +3282,8 @@ local envLightSection = makeCategorySection(envPage, "Atmosphere & World", 1, 4)
 addCard(envLightSection, "World Changer", nightModeEnabled, function(v)
     if v then
         beginWorldChanger()
-    elseif not fullBrightEnabled then
-        endWorldChanger()
     else
-        nightModeEnabled = false
-        worldLightingSnapshot = nil
+        endWorldChanger()
     end
 end)
 addCard(envLightSection, "FullBright", fullBrightEnabled, function(v)
@@ -3308,7 +3300,11 @@ addCard(envLightSection, "Anti-Flash", antiFlashEnabled, function(v) antiFlashEn
 addCard(envLightSection, "No Fog", removeFogEnabled, function(v)
     removeFogEnabled = v
     if not v then
-        Lighting.FogEnd = defaultLighting.FogEnd
+        if worldLightingSnapshot and worldLightingSnapshot.FogEnd ~= nil then
+            Lighting.FogEnd = worldLightingSnapshot.FogEnd
+        end
+    else
+        Lighting.FogEnd = 100000
     end
 end)
 
