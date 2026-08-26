@@ -21,6 +21,7 @@ local CoreGui = game:GetService("CoreGui")
 local Lighting = game:GetService("Lighting")
 local Workspace = game:GetService("Workspace")
 local Stats = game:GetService("Stats")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local VirtualInputManager = nil
 pcall(function()
     VirtualInputManager = game:GetService("VirtualInputManager")
@@ -204,6 +205,48 @@ local thirdPersonEnabled = false
 local thirdPersonDistance = 12
 local thirdPersonHeight = 1.5
 local thirdPersonPreviousOffset = nil
+
+-- ==========================================
+-- SKINS & WEAPON MODS VARIABLES
+-- ==========================================
+local butterflyKnifeEnabled = false
+local butterflySkin = "Vanilla"
+
+local function getSkinsFolder()
+    return ReplicatedStorage:FindFirstChild("Weapons") or ReplicatedStorage:FindFirstChild("Skins") or ReplicatedStorage:FindFirstChild("Items") or ReplicatedStorage
+end
+
+local function applyKnifeSkin(tool)
+    if not butterflyKnifeEnabled or not tool then return end
+    local name = tool.Name:lower()
+    if name:find("knife") or name:find("melee") then
+        pcall(function()
+            local modelContainer = getSkinsFolder()
+            local bflyModel = modelContainer:FindFirstChild("Butterfly Knife", true) or modelContainer:FindFirstChild("ButterflyKnife", true) or modelContainer:FindFirstChild("Balisong", true)
+            if bflyModel then
+                for _, part in ipairs(tool:GetChildren()) do
+                    if (part:IsA("BasePart") or part:IsA("MeshPart")) and part.Name ~= "Handle" then
+                        part.Transparency = 1
+                    end
+                end
+                local existingBfly = tool:FindFirstChild("Gestio_ButterflySkin")
+                if not existingBfly then
+                    local clone = bflyModel:Clone()
+                    clone.Name = "Gestio_ButterflySkin"
+                    local handle = tool:FindFirstChild("Handle")
+                    if handle and clone:IsA("Model") then
+                        clone:PivotTo(handle.CFrame)
+                        local weld = Instance.new("WeldConstraint")
+                        weld.Part0 = handle
+                        weld.Part1 = clone.PrimaryPart or clone:FindFirstChildWhichIsA("BasePart")
+                        weld.Parent = clone
+                    end
+                    clone.Parent = tool
+                end
+            end
+        end)
+    end
+end
 
 -- ==========================================
 -- RECOIL CONTROL SYSTEM (RCS) VARIABLES
@@ -1929,7 +1972,7 @@ local function updateMobileSlideVisibility()
 end
 
 local function triggerMobileSlideStart()
-    if not slideEnabled then return end
+    if not slideEnabled then return false end
 
     local char = player.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
@@ -2089,6 +2132,20 @@ end
 createMobileSlideButton()
 hookMobileJumpButton()
 
+local function hookCharacterWeapons(char)
+    if not char then return end
+    char.ChildAdded:Connect(function(child)
+        if child:IsA("Tool") then
+            applyKnifeSkin(child)
+        end
+    end)
+    for _, tool in ipairs(char:GetChildren()) do
+        if tool:IsA("Tool") then
+            applyKnifeSkin(tool)
+        end
+    end
+end
+
 table.insert(connections, player.CharacterAdded:Connect(function(char)
     thirdPersonPreviousOffset = nil
     task.defer(function()
@@ -2110,10 +2167,12 @@ table.insert(connections, player.CharacterAdded:Connect(function(char)
         hum.HipHeight = defaultHipHeight
     end
     hookMobileJumpButton()
+    hookCharacterWeapons(char)
 end))
 
 if player.Character then
     captureDefaultHipHeight(player.Character)
+    hookCharacterWeapons(player.Character)
 end
 
 local jumpReqConn = UserInputService.JumpRequest:Connect(function()
@@ -2401,24 +2460,25 @@ bindTouch(logoBtn, toggleMenu)
 
 local function createNavBtn(y, txt)
     local b = Instance.new("TextButton", sidebar)
-    b.Size = UDim2.new(0.86, 0, 0, 20)
+    b.Size = UDim2.new(0.86, 0, 0, 18)
     b.Position = UDim2.new(0.07, 0, 0, y)
     b.BackgroundColor3 = currentTheme.Sidebar
     b.TextColor3 = currentTheme.TextSecondary
     b.Text = txt
-    b.TextSize = 8
+    b.TextSize = 7.5
     b.Font = Enum.Font.GothamBold
     b.ZIndex = 7
     Instance.new("UICorner", b).CornerRadius = UDim.new(0, 4)
     return b
 end
 
-local cBtn = createNavBtn(32, "COMBAT")
-local mBtn = createNavBtn(54, "MOVEMENT")
-local eBtn = createNavBtn(76, "ESP")
-local envBtn = createNavBtn(98, "ENV")
-local micsBtn = createNavBtn(120, "MICS")
-local setsBtn = createNavBtn(142, "SETTINGS")
+local cBtn = createNavBtn(30, "COMBAT")
+local mBtn = createNavBtn(50, "MOVEMENT")
+local eBtn = createNavBtn(70, "ESP")
+local sBtn = createNavBtn(90, "SKINS")
+local envBtn = createNavBtn(110, "ENV")
+local micsBtn = createNavBtn(130, "MICS")
+local setsBtn = createNavBtn(150, "SETTINGS")
 cBtn.BackgroundColor3 = currentTheme.CardBg
 cBtn.TextColor3 = currentTheme.Accent
 
@@ -2486,7 +2546,7 @@ local function makeCategorySection(page, title, layoutOrder)
 
     local grid = Instance.new("UIGridLayout", gridFrame)
     grid.CellSize = UDim2.new(0, 58, 0, 58)
-    grid.CellPadding = UDim2.new(0, 6, 0, 6)
+    grid.CellPadding = UDim.new(0, 6, 0, 6)
 
     grid:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
         gridFrame.Size = UDim2.new(1, 0, 0, grid.AbsoluteContentSize.Y)
@@ -2502,6 +2562,7 @@ end
 local cPage = makePageContainer()
 local mPage = makePageContainer()
 local ePage = makePageContainer()
+local sPage = makePageContainer()
 local envPage = makePageContainer()
 local micsPage = makePageContainer()
 local setsPage = makePageContainer()
@@ -2511,11 +2572,12 @@ local function switch(tab)
     cPage.Visible = (tab == "C")
     mPage.Visible = (tab == "M")
     ePage.Visible = (tab == "E")
+    sPage.Visible = (tab == "SKINS")
     envPage.Visible = (tab == "ENV")
     micsPage.Visible = (tab == "MICS")
     setsPage.Visible = (tab == "SETS")
 
-    local btns = {{cBtn, "C"}, {mBtn, "M"}, {eBtn, "E"}, {envBtn, "ENV"}, {micsBtn, "MICS"}, {setsBtn, "SETS"}}
+    local btns = {{cBtn, "C"}, {mBtn, "M"}, {eBtn, "E"}, {sBtn, "SKINS"}, {envBtn, "ENV"}, {micsBtn, "MICS"}, {setsBtn, "SETS"}}
     for _, item in ipairs(btns) do
         local on = (item[2] == tab)
         item[1].BackgroundColor3 = on and currentTheme.CardBg or currentTheme.Sidebar
@@ -2526,6 +2588,7 @@ end
 bindTouch(cBtn, function() switch("C") end)
 bindTouch(mBtn, function() switch("M") end)
 bindTouch(eBtn, function() switch("E") end)
+bindTouch(sBtn, function() switch("SKINS") end)
 bindTouch(envBtn, function() switch("ENV") end)
 bindTouch(micsBtn, function() switch("MICS") end)
 bindTouch(setsBtn, function() switch("SETS") end)
@@ -2717,7 +2780,7 @@ local function addInspectorChoice(y, txt, choices, currentChoice, onSelect)
 
     for _, choiceName in ipairs(choices) do
         local choiceBtn = Instance.new("TextButton", container)
-        choiceBtn.Size = UDim2.new(0, 48, 1, 0)
+        choiceBtn.Size = UDim2.new(0, 52, 1, 0)
         choiceBtn.BackgroundColor3 = (choiceName == currentChoice) and currentTheme.Accent or currentTheme.CardBg
         choiceBtn.Text = choiceName
         choiceBtn.TextColor3 = (choiceName == currentChoice) and Color3.fromRGB(255, 255, 255) or currentTheme.TextSecondary
@@ -2758,6 +2821,17 @@ local function openInspectorFor(moduleName)
         addInspectorToggle(192, "Prediction", predictionEnabled, function(v) predictionEnabled = v end)
         addInspectorToggle(218, "Show FOV Circle", showFovCircle, function(v) showFovCircle = v end)
         addInspectorToggle(244, "Visibility Check", visibleCheck, function(v) visibleCheck = v end)
+    elseif moduleName == "Butterfly Knife" then
+        insContent.CanvasSize = UDim2.new(0, 0, 0, 160)
+        addInspectorChoice(6, "Skin Finish", {"Vanilla", "Fade", "Doppler", "Lore"}, butterflySkin, function(selected)
+            butterflySkin = selected
+            if player.Character then
+                for _, tool in ipairs(player.Character:GetChildren()) do
+                    if tool:IsA("Tool") then applyKnifeSkin(tool) end
+                end
+            end
+        end)
+        addInspectorToggle(48, "Auto Re-apply", true, function(v) end)
     elseif moduleName == "Third Person" then
         insContent.CanvasSize = UDim2.new(0, 0, 0, 115)
         addInspectorSlider(6, "Distance", 5, 25, thirdPersonDistance, false, function(v)
@@ -2989,6 +3063,29 @@ addCard(eWorldSection, "Jump Circle", jumpCircleEnabled, function(v)
         initJumpCircleForCharacter(player.Character)
     else
         clearActiveJumpCircle()
+    end
+end)
+
+-- SKINS TAB (Skinchanger)
+local sKnifeSection = makeCategorySection(sPage, "Melee Weapons", 1)
+addCard(sKnifeSection, "Butterfly Knife", butterflyKnifeEnabled, function(v)
+    butterflyKnifeEnabled = v
+    if player.Character then
+        for _, tool in ipairs(player.Character:GetChildren()) do
+            if tool:IsA("Tool") then
+                if v then
+                    applyKnifeSkin(tool)
+                else
+                    local bfly = tool:FindFirstChild("Gestio_ButterflySkin")
+                    if bfly then bfly:Destroy() end
+                    for _, part in ipairs(tool:GetChildren()) do
+                        if part:IsA("BasePart") or part:IsA("MeshPart") then
+                            part.Transparency = 0
+                        end
+                    end
+                end
+            end
+        end
     end
 end)
 
