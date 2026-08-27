@@ -2468,31 +2468,6 @@ masterFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
 masterFrame.BackgroundTransparency = 1
 masterFrame.Visible = true
 
--- Smooth UI animation controller
-local menuScale = Instance.new("UIScale", masterFrame)
-menuScale.Scale = 0.94
-local menuTweenToken = 0
-local menuOpen = true
-local MENU_TWEEN = TweenInfo.new(0.24, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-local MENU_CLOSE_TWEEN = TweenInfo.new(0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
-
-local function playMenuTween(open)
-    menuTweenToken += 1
-    local token = menuTweenToken
-    if open then
-        masterFrame.Visible = true
-        menuScale.Scale = 0.94
-        TweenService:Create(menuScale, MENU_TWEEN, {Scale = 1}):Play()
-    else
-        TweenService:Create(menuScale, MENU_CLOSE_TWEEN, {Scale = 0.94}):Play()
-        task.delay(MENU_CLOSE_TWEEN.Time, function()
-            if token == menuTweenToken and not menuOpen then
-                masterFrame.Visible = false
-            end
-        end)
-    end
-end
-
 local sizeConstraint = Instance.new("UISizeConstraint", masterFrame)
 sizeConstraint.MaxSize = Vector2.new(740, 320)
 sizeConstraint.MinSize = Vector2.new(300, 200)
@@ -2503,9 +2478,8 @@ masterLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 masterLayout.VerticalAlignment = Enum.VerticalAlignment.Center
 masterLayout.Padding = UDim.new(0, 6)
 
-local function toggleMenu()
-    menuOpen = not menuOpen
-    playMenuTween(menuOpen)
+local function toggleMenu() 
+    masterFrame.Visible = not masterFrame.Visible 
 end
 
 local btnDrag, btnStartPos, btnInputStart = false, nil, nil
@@ -2691,40 +2665,20 @@ local micsPage = makePageContainer()
 local setsPage = makePageContainer()
 cPage.Visible = true
 
-local pageTweens = {}
-local function animatePage(page, show)
-    if pageTweens[page] then pageTweens[page]:Cancel() end
-    if show then
-        page.Visible = true
-        page.Position = UDim2.new(0, 84, 0, 10)
-        local tween = TweenService:Create(page, TweenInfo.new(0.20, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-            Position = UDim2.new(0, 80, 0, 6)
-        })
-        pageTweens[page] = tween
-        tween:Play()
-    else
-        page.Visible = false
-    end
-end
-
 local function switch(tab)
-    animatePage(cPage, tab == "C")
-    animatePage(mPage, tab == "M")
-    animatePage(ePage, tab == "E")
-    animatePage(sPage, tab == "SKINS")
-    animatePage(envPage, tab == "ENV")
-    animatePage(micsPage, tab == "MICS")
-    animatePage(setsPage, tab == "SETS")
+    cPage.Visible = (tab == "C")
+    mPage.Visible = (tab == "M")
+    ePage.Visible = (tab == "E")
+    sPage.Visible = (tab == "SKINS")
+    envPage.Visible = (tab == "ENV")
+    micsPage.Visible = (tab == "MICS")
+    setsPage.Visible = (tab == "SETS")
 
     local btns = {{cBtn, "C"}, {mBtn, "M"}, {eBtn, "E"}, {sBtn, "SKINS"}, {envBtn, "ENV"}, {micsBtn, "MICS"}, {setsBtn, "SETS"}}
     for _, item in ipairs(btns) do
         local on = (item[2] == tab)
-        local targetBg = on and currentTheme.CardBg or currentTheme.Sidebar
-        local targetText = on and currentTheme.Accent or currentTheme.TextSecondary
-        TweenService:Create(item[1], TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            BackgroundColor3 = targetBg,
-            TextColor3 = targetText
-        }):Play()
+        item[1].BackgroundColor3 = on and currentTheme.CardBg or currentTheme.Sidebar
+        item[1].TextColor3 = on and currentTheme.Accent or currentTheme.TextSecondary
     end
 end
 
@@ -2889,15 +2843,10 @@ local function addInspectorToggle(y, txt, default, onToggle)
     Instance.new("UICorner", circle).CornerRadius = UDim.new(1, 0)
 
     local state = default
-    local toggleTween = nil
     local function executeToggle()
         state = not state
-        local targetColor = state and currentTheme.Accent or Color3.fromRGB(50, 53, 60)
-        local targetPos = state and UDim2.new(1, -11, 0.5, -5) or UDim2.new(0, 2, 0.5, -5)
-        if toggleTween then toggleTween:Cancel() end
-        toggleTween = TweenService:Create(btn, TweenInfo.new(0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {BackgroundColor3 = targetColor})
-        toggleTween:Play()
-        TweenService:Create(circle, TweenInfo.new(0.18, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = targetPos}):Play()
+        btn.BackgroundColor3 = state and currentTheme.Accent or Color3.fromRGB(50, 53, 60)
+        circle.Position = state and UDim2.new(1, -11, 0.5, -5) or UDim2.new(0, 2, 0.5, -5)
         onToggle(state)
     end
 
@@ -3207,26 +3156,10 @@ local function addCard(parent, name, defaultState, onToggle)
     Instance.new("UICorner", circle).CornerRadius = UDim.new(1, 0)
 
     local state = defaultState
-    local cardScale = Instance.new("UIScale", card)
-    cardScale.Scale = 1
-    local toggleTween = nil
     local function executeToggle()
         state = not state
-        local targetColor = state and currentTheme.Accent or Color3.fromRGB(50, 53, 60)
-        local targetPos = state and UDim2.new(1, -10, 0.5, -4.5) or UDim2.new(0, 2, 0.5, -4.5)
-        if toggleTween then toggleTween:Cancel() end
-        toggleTween = TweenService:Create(toggleBtn, TweenInfo.new(0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {BackgroundColor3 = targetColor})
-        toggleTween:Play()
-        TweenService:Create(circle, TweenInfo.new(0.18, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = targetPos}):Play()
-
-        -- Small tactile card pulse on mobile/touch and mouse alike.
-        TweenService:Create(cardScale, TweenInfo.new(0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Scale = 1.045}):Play()
-        task.delay(0.08, function()
-            if cardScale and cardScale.Parent then
-                TweenService:Create(cardScale, TweenInfo.new(0.16, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Scale = 1}):Play()
-            end
-        end)
-
+        toggleBtn.BackgroundColor3 = state and currentTheme.Accent or Color3.fromRGB(50, 53, 60)
+        circle.Position = state and UDim2.new(1, -10, 0.5, -4.5) or UDim2.new(0, 2, 0.5, -4.5)
         onToggle(state)
         
         if name == "World Changer" then
@@ -3344,9 +3277,6 @@ local setsGeneralSection = makeCategorySection(setsPage, "Configuration", 1, 1)
 addCard(setsGeneralSection, "Theme", true, function(v) end)
 
 openInspectorFor("Tracking")
-
--- Initial entrance animation.
-playMenuTween(true)
 
 end
 
