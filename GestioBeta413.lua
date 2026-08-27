@@ -176,8 +176,8 @@ local currentTheme = themeLibrary["Charcoal Crimson"]
 -- COMBAT ENGINE STATE VARIABLES
 -- ==========================================
 local aimbotEnabled = false
-local aimbotSpeed = 35.0
-local aimbotSmoothness = 0.15
+local aimbotSpeed = 18.0
+local aimbotSmoothness = 0.55
 local aimFov = 160
 local showFovCircle = true
 local snapAimMode = false
@@ -191,7 +191,7 @@ local minDamage = 15
 local bodyAimOnly = false
 local autoWallCheck = false
 local predictionEnabled = true
-local predictionFactor = 0.135
+local predictionFactor = 0.065
 local visibleCheck = false
 local aimSensitivity = 1.0
 local lockOnJump = true
@@ -1299,8 +1299,14 @@ local function getClosestTarget()
                 if targetPart then
                     local calcPos = targetPart.Position
                     local screenCalcPos = calcPos
-                    if predictionEnabled and targetPart.AssemblyLinearVelocity then
-                        screenCalcPos = calcPos + (targetPart.AssemblyLinearVelocity * predictionFactor)
+                    if predictionEnabled then
+                        local velocity = targetPart.AssemblyLinearVelocity
+                        local horizontalVelocity = Vector3.new(velocity.X, 0, velocity.Z)
+                        -- Do not predict tiny idle/network velocities. They are a
+                        -- common source of consistent misses on stationary targets.
+                        if horizontalVelocity.Magnitude > 2 then
+                            screenCalcPos = calcPos + (horizontalVelocity * predictionFactor)
+                        end
                     end
                     local screenPos, onScreen = camera:WorldToViewportPoint(screenCalcPos)
                     if onScreen and screenPos.Z > 0 then
@@ -1808,8 +1814,9 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
             if predictionEnabled and lockedTarget.Part and lockedTarget.Part.Parent then
                 checkPos = lockedTarget.Part.Position
                 local velocity = lockedTarget.Part.AssemblyLinearVelocity
-                if velocity then
-                    checkPos += velocity * predictionFactor
+                local horizontalVelocity = Vector3.new(velocity.X, 0, velocity.Z)
+                if horizontalVelocity.Magnitude > 2 then
+                    checkPos += horizontalVelocity * predictionFactor
                 end
             end
             local scrPos, onScreen = camera:WorldToViewportPoint(checkPos)
@@ -1821,22 +1828,39 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         end
 
         if lockedTarget and lockedTarget.Position then
-            local aimPos = lockedTarget.AimPosition or lockedTarget.Position
+            local aimPos = lockedTarget.Part and lockedTarget.Part.Position or lockedTarget.AimPosition or lockedTarget.Position
             if predictionEnabled and lockedTarget.Part and lockedTarget.Part.Parent then
-                aimPos = lockedTarget.Part.Position
-                if lockedTarget.Part.AssemblyLinearVelocity then
-                    aimPos += lockedTarget.Part.AssemblyLinearVelocity * predictionFactor
+                local velocity = lockedTarget.Part.AssemblyLinearVelocity
+                local horizontalVelocity = Vector3.new(velocity.X, 0, velocity.Z)
+                if horizontalVelocity.Magnitude > 2 then
+                    aimPos += horizontalVelocity * predictionFactor
                 end
             end
 
             local desired = CFrame.lookAt(camera.CFrame.Position, aimPos)
-            if snapAimMode then
-                camera.CFrame = desired
-            else
-                local smooth = math.clamp(aimbotSmoothness, 0, 0.98)
-                local speedAlpha = 1 - math.exp(-math.max(1, aimbotSpeed) * dt)
-                local alpha = math.clamp(speedAlpha * (1 - smooth), 0.01, 1)
-                camera.CFrame = camera.CFrame:Lerp(desired, alpha)
+            local currentLook = camera.CFrame.LookVector
+            local desiredLook = desired.LookVector
+            local dot = math.clamp(currentLook:Dot(desiredLook), -1, 1)
+            local angle = math.acos(dot)
+
+            -- Ignore microscopic corrections. They cause visible camera jitter
+            -- when the target is already under the crosshair.
+            if angle > math.rad(0.12) then
+                if snapAimMode then
+                    -- Snap only for a meaningful angular error; otherwise leave
+                    -- the camera untouched.
+                    camera.CFrame = desired
+                else
+                    -- Stable frame-rate independent smoothing. The previous
+                    -- implementation could apply a very large correction every
+                    -- RenderStepped, which made mobile camera control fight back.
+                    local speed = math.max(1, aimbotSpeed)
+                    local smooth = math.clamp(aimbotSmoothness, 0, 0.95)
+                    local alpha = 1 - math.exp(-speed * dt)
+                    alpha = alpha * (1 - smooth)
+                    alpha = math.clamp(alpha, 0.015, 0.22)
+                    camera.CFrame = camera.CFrame:Lerp(desired, alpha)
+                end
             end
         end
     else
