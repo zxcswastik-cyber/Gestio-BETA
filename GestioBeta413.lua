@@ -1478,6 +1478,45 @@ local function getOrCreateScreenEsp(plr)
     return data
 end
 
+local function hideAllEspForPlayer(plr)
+    local esp = screenEspCache[plr]
+    if esp then
+        pcall(function()
+            esp.Box.Visible = false
+            esp.HealthBarBg.Visible = false
+            esp.TagCard.Visible = false
+            for _, corner in ipairs(esp.Corners) do
+                corner.H.Visible = false
+                corner.V.Visible = false
+            end
+        end)
+    end
+
+    local data = activeEspHolders[plr]
+    if data then
+        pcall(function()
+            data.Highlight.Enabled = false
+            data.Highlight.Adornee = nil
+            data.HeadDot.Enabled = false
+            data.HeadDot.Adornee = nil
+            data.Tracer.Visible = false
+        end)
+    end
+end
+
+local function bindEspDeathCleanup(plr, char)
+    if not char then return end
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if not hum then
+        hum = char:WaitForChild("Humanoid", 2)
+    end
+    if hum then
+        table.insert(connections, hum.Died:Connect(function()
+            hideAllEspForPlayer(plr)
+        end))
+    end
+end
+
 table.insert(connections, Players.PlayerRemoving:Connect(function(plr)
     local oldChar = plr.Character
     local oldHum = oldChar and oldChar:FindFirstChildOfClass("Humanoid")
@@ -1518,7 +1557,11 @@ local function renderTacticalOverlay()
         local isEnemy = isTargetEnemy(plr, char)
         local isAlive = isEntityAlive(char, hum)
 
-        if isEnemy and isAlive and rootPart and (nametagsEnabled or boxEspEnabled or cornerBoxEnabled) then
+        if not char or not char.Parent or not hum or hum.Health <= 0 or not rootPart or not rootPart.Parent then
+            hideAllEspForPlayer(plr)
+        end
+
+        if isEnemy and isAlive and rootPart and rootPart.Parent and (nametagsEnabled or boxEspEnabled or cornerBoxEnabled) then
             local dist = (rootPart.Position - camPos).Magnitude
 
             if dist <= espMaxDist then
@@ -1734,51 +1777,31 @@ local function attachEspToPlayer(plr)
     }
     activeEspHolders[plr] = espData
 
-    local function disableCharacterESP()
-        pcall(function()
-            dotBillboard.Enabled = false
-            dotBillboard.Adornee = nil
-            hl.Enabled = false
-            hl.Adornee = nil
-            tracerLine.Visible = false
-        end)
-    end
-
     local function setupCharacter(char)
-        disableCharacterESP()
         if not char then return end
-
         task.spawn(function()
             local head = char:WaitForChild("Head", 3)
-            local hum = char:FindFirstChildOfClass("Humanoid") or char:WaitForChild("Humanoid", 3)
-            if not char.Parent or not hum or hum.Health <= 0 then
-                disableCharacterESP()
-                return
-            end
             if head and dotBillboard then
                 dotBillboard.Adornee = head
             end
             if hl then
                 hl.Adornee = char
             end
-
-            if hum then
-                local diedConn = hum.Died:Connect(function()
-                    disableCharacterESP()
-                end)
-                table.insert(connections, diedConn)
-            end
         end)
     end
 
-    if plr.Character then setupCharacter(plr.Character) end
-    local charConn = plr.CharacterAdded:Connect(setupCharacter)
+    if plr.Character then
+        setupCharacter(plr.Character)
+        bindEspDeathCleanup(plr, plr.Character)
+    end
+    local charConn = plr.CharacterAdded:Connect(function(char)
+        hideAllEspForPlayer(plr)
+        setupCharacter(char)
+        bindEspDeathCleanup(plr, char)
+    end)
     table.insert(connections, charConn)
-
-    local removingConn = plr.CharacterRemoving:Connect(function(char)
-        if char == plr.Character then
-            disableCharacterESP()
-        end
+    local removingConn = plr.CharacterRemoving:Connect(function()
+        hideAllEspForPlayer(plr)
     end)
     table.insert(connections, removingConn)
 end
@@ -1824,15 +1847,54 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         camera.CFrame = camera.CFrame * CFrame.Angles(rcsComp * rcsPitchFactor, 0, 0)
     end
 
-    -- Aimbot target state is maintained here, but the final camera write is
-    -- performed in the post-camera render step below.  This prevents the
-    -- game's camera controller from overwriting the aim direction.
+    -- Tracking is toggle-based in the mobile UI. The old build never assigned
+    -- isAiming, so the entire aiming branch could remain disabled forever.
     isAiming = aimbotEnabled
-    if not aimbotEnabled then
+
+    if aimbotEnabled and isAiming then
+        if not lockedTarget or not isEntityAlive(lockedTarget.Char, lockedTarget.Hum) then
+            lockedTarget = getClosestTarget()
+        else
+            -- Re-check the target using the same predicted point used during
+            -- acquisition. This prevents a target from being considered out
+            -- of FOV just because its unpredicted hitbox moved.
+            local checkPos = lockedTarget.Position
+            if predictionEnabled and lockedTarget.Part and lockedTarget.Part.Parent then
+                checkPos = lockedTarget.Part.Position
+                local velocity = lockedTarget.Part.AssemblyLinearVelocity
+                if velocity then
+                    checkPos += velocity * predictionFactor
+                end
+            end
+            local scrPos, onScreen = camera:WorldToViewportPoint(checkPos)
+            local vp = camera.ViewportSize
+            local screenDist = (Vector2.new(scrPos.X, scrPos.Y) - Vector2.new(vp.X * 0.5, vp.Y * 0.5)).Magnitude
+            if not onScreen or scrPos.Z <= 0 or screenDist > aimFov then
+                lockedTarget = getClosestTarget()
+            end
+        end
+
+        if lockedTarget and lockedTarget.Position then
+            local aimPos = lockedTarget.AimPosition or lockedTarget.Position
+            if predictionEnabled and lockedTarget.Part and lockedTarget.Part.Parent then
+                aimPos = lockedTarget.Part.Position
+                if lockedTarget.Part.AssemblyLinearVelocity then
+                    aimPos += lockedTarget.Part.AssemblyLinearVelocity * predictionFactor
+                end
+            end
+
+            local desired = CFrame.lookAt(camera.CFrame.Position, aimPos)
+            if snapAimMode then
+                camera.CFrame = desired
+            else
+                local smooth = math.clamp(aimbotSmoothness, 0, 0.98)
+                local speedAlpha = 1 - math.exp(-math.max(1, aimbotSpeed) * dt)
+                local alpha = math.clamp(speedAlpha * (1 - smooth), 0.01, 1)
+                camera.CFrame = camera.CFrame:Lerp(desired, alpha)
+            end
+        end
+    else
         lockedTarget = nil
-    elseif not lockedTarget or not lockedTarget.Part or not lockedTarget.Part.Parent
-        or not isEntityAlive(lockedTarget.Char, lockedTarget.Hum) then
-        lockedTarget = getClosestTarget()
     end
 
     if butterflyKnifeEnabled then
@@ -1937,121 +1999,6 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
             end
         end)
     end
-end))
-
--- ==========================================
--- POST-CAMERA AIM APPLICATION
--- ==========================================
--- The weapon/camera pipeline samples the final camera orientation.  Applying
--- aim after Roblox's normal camera update removes the one-frame race that can
--- make the crosshair appear locked while the shot leaves in another direction.
-local function applyPostCameraAim(dt)
-    camera = Workspace.CurrentCamera or camera
-    if not camera or not aimbotEnabled then
-        lockedTarget = nil
-        return
-    end
-
-    if not lockedTarget or not lockedTarget.Part or not lockedTarget.Part.Parent
-        or not isEntityAlive(lockedTarget.Char, lockedTarget.Hum) then
-        lockedTarget = getClosestTarget()
-    end
-    if not lockedTarget or not lockedTarget.Part then return end
-
-    -- Recalculate from the live hitbox immediately before committing the aim.
-    -- Never reuse AimPosition from target acquisition; it can be one or more
-    -- frames old on fast-moving targets.
-    local aimPos = lockedTarget.Part.Position
-    if predictionEnabled then
-        local velocity = lockedTarget.Part.AssemblyLinearVelocity
-        if velocity then
-            aimPos += velocity * predictionFactor
-        end
-    end
-
-    local vp = camera.ViewportSize
-    local screenPos, onScreen = camera:WorldToViewportPoint(aimPos)
-    if not onScreen or screenPos.Z <= 0 then
-        lockedTarget = getClosestTarget()
-        if not lockedTarget or not lockedTarget.Part then return end
-        aimPos = lockedTarget.Part.Position
-        if predictionEnabled then
-            local velocity = lockedTarget.Part.AssemblyLinearVelocity
-            if velocity then aimPos += velocity * predictionFactor end
-        end
-    end
-
-    local desired = CFrame.lookAt(camera.CFrame.Position, aimPos)
-    if snapAimMode then
-        camera.CFrame = desired
-    else
-        local smooth = math.clamp(aimbotSmoothness, 0, 0.98)
-        local alpha = 1 - math.exp(-math.max(1, aimbotSpeed) * math.max(dt, 1/240))
-        alpha = math.clamp(alpha * (1 - smooth), 0.01, 1)
-        camera.CFrame = camera.CFrame:Lerp(desired, alpha)
-    end
-end
-
-pcall(function()
-    RunService:BindToRenderStep('Gestio_PostCameraAim', Enum.RenderPriority.Camera.Value + 1, applyPostCameraAim)
-end)
-table.insert(connections, function()
-    pcall(function() RunService:UnbindFromRenderStep('Gestio_PostCameraAim') end)
-end)
-
--- ==========================================
--- SHOT-TIME AIM SYNCHRONIZATION
--- ==========================================
-local function syncAimForShot()
-    if not aimbotEnabled then return end
-    camera = Workspace.CurrentCamera or camera
-    if not camera then return end
-
-    local target = lockedTarget
-    if not target or not target.Part or not target.Part.Parent
-        or not isEntityAlive(target.Char, target.Hum) then
-        target = getClosestTarget()
-        lockedTarget = target
-    end
-    if not target or not target.Part or not target.Part.Parent then return end
-
-    local aimPos = target.Part.Position
-    if predictionEnabled then
-        local velocity = target.Part.AssemblyLinearVelocity
-        if velocity then aimPos += velocity * predictionFactor end
-    end
-
-    -- Final direction is sampled at activation time, eliminating a frame race
-    -- between camera updates and Tool.Activated on supported weapons.
-    camera.CFrame = CFrame.lookAt(camera.CFrame.Position, aimPos)
-end
-
-local function hookToolForShotSync(tool)
-    if not tool or not tool:IsA('Tool') then return end
-    if tool:GetAttribute('GestioShotSyncHooked') then return end
-    tool:SetAttribute('GestioShotSyncHooked', true)
-    local ok, conn = pcall(function()
-        return tool.Activated:Connect(syncAimForShot)
-    end)
-    if ok and conn then table.insert(connections, conn) end
-end
-
-local function scanEquippedTools()
-    local char = player.Character
-    if not char then return end
-    for _, obj in ipairs(char:GetChildren()) do hookToolForShotSync(obj) end
-end
-
-local function watchCharacter(char)
-    if not char then return end
-    for _, obj in ipairs(char:GetChildren()) do hookToolForShotSync(obj) end
-    table.insert(connections, char.ChildAdded:Connect(hookToolForShotSync))
-end
-
-scanEquippedTools()
-if player.Character then watchCharacter(player.Character) end
-table.insert(connections, player.CharacterAdded:Connect(function(char)
-    task.defer(watchCharacter, char)
 end))
 
 -- ==========================================
