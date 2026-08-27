@@ -177,10 +177,10 @@ local currentTheme = themeLibrary["Charcoal Crimson"]
 -- ==========================================
 local aimbotEnabled = false
 local aimbotSpeed = 35.0
-local aimbotSmoothness = 0.0
+local aimbotSmoothness = 0.15
 local aimFov = 160
 local showFovCircle = true
-local snapAimMode = true
+local snapAimMode = false
 local isAiming = false
 local lockedTarget = nil
 local aimboneIndex = 1
@@ -1793,14 +1793,29 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         camera.CFrame = camera.CFrame * CFrame.Angles(rcsComp * rcsPitchFactor, 0, 0)
     end
 
+    -- Tracking is toggle-based in the mobile UI. The old build never assigned
+    -- isAiming, so the entire aiming branch could remain disabled forever.
+    isAiming = aimbotEnabled
+
     if aimbotEnabled and isAiming then
         if not lockedTarget or not isEntityAlive(lockedTarget.Char, lockedTarget.Hum) then
             lockedTarget = getClosestTarget()
         else
-            local scrPos, onScreen = camera:WorldToViewportPoint(lockedTarget.Position)
+            -- Re-check the target using the same predicted point used during
+            -- acquisition. This prevents a target from being considered out
+            -- of FOV just because its unpredicted hitbox moved.
+            local checkPos = lockedTarget.Position
+            if predictionEnabled and lockedTarget.Part and lockedTarget.Part.Parent then
+                checkPos = lockedTarget.Part.Position
+                local velocity = lockedTarget.Part.AssemblyLinearVelocity
+                if velocity then
+                    checkPos += velocity * predictionFactor
+                end
+            end
+            local scrPos, onScreen = camera:WorldToViewportPoint(checkPos)
             local vp = camera.ViewportSize
             local screenDist = (Vector2.new(scrPos.X, scrPos.Y) - Vector2.new(vp.X * 0.5, vp.Y * 0.5)).Magnitude
-            if not onScreen or screenDist > aimFov then
+            if not onScreen or scrPos.Z <= 0 or screenDist > aimFov then
                 lockedTarget = getClosestTarget()
             end
         end
@@ -3184,7 +3199,13 @@ end
 local cAimSection = makeCategorySection(cPage, "Aim & Ballistics", 1, 3)
 local cRageSection = makeCategorySection(cPage, "HVH & Anti-Aim", 2, 1)
 
-addCard(cAimSection, "Tracking", aimbotEnabled, function(v) aimbotEnabled = v end)
+addCard(cAimSection, "Tracking", aimbotEnabled, function(v)
+    aimbotEnabled = v
+    isAiming = v
+    if not v then
+        lockedTarget = nil
+    end
+end)
 addCard(cAimSection, "RCS", rcsEnabled, function(v) rcsEnabled = v end)
 addCard(cAimSection, "Trigger Assistant", triggerbotEnabled, function(v) triggerbotEnabled = v end)
 addCard(cRageSection, "Anti-Aim", antiAimEnabled, function(v) antiAimEnabled = v end)
