@@ -180,8 +180,6 @@ local aimbotSpeed = 35.0
 local aimbotSmoothness = 0.15
 local aimFov = 160
 local showFovCircle = true
-local aimTargetPart = "Head"
-local aimTeamCheck = true
 local snapAimMode = false
 local isAiming = false
 local lockedTarget = nil
@@ -1278,21 +1276,6 @@ local function isTargetVisible(originPos, targetPart, targetChar)
     return false
 end
 
-local function getAimTargetHitbox(char)
-    if not char then return nil end
-    if aimTargetPart == "HumanoidRootPart" then
-        return char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("UpperTorso") or char:FindFirstChild("Head")
-    end
-    return char:FindFirstChild("Head") or char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("UpperTorso")
-end
-
-local function isAimTargetEnemy(plr, char)
-    if not plr or plr == player then return false end
-    if char and char == player.Character then return false end
-    if not aimTeamCheck then return true end
-    return isTargetEnemy(plr, char)
-end
-
 local function getClosestTarget()
     if not camera then 
         camera = Workspace.CurrentCamera 
@@ -1301,17 +1284,18 @@ local function getClosestTarget()
 
     local closestTarget = nil
     local closestDist = aimFov
-    local mousePos = UserInputService:GetMouseLocation()
+    local vp = camera.ViewportSize
+    local screenCenter = Vector2.new(vp.X * 0.5, vp.Y * 0.5)
     local camPos = camera.CFrame.Position
     local allPlayers = Players:GetPlayers()
 
     for i = 1, #allPlayers do
         local plr = allPlayers[i]
         local char = plr.Character
-        if char and plr ~= player and isAimTargetEnemy(plr, char) then
+        if char and plr ~= player and isTargetEnemy(plr, char) then
             local hum = char:FindFirstChildOfClass("Humanoid")
             if isEntityAlive(char, hum) then
-                local targetPart = getAimTargetHitbox(char)
+                local targetPart = getTargetHitbox(char)
                 if targetPart then
                     local calcPos = targetPart.Position
                     local screenCalcPos = calcPos
@@ -1320,7 +1304,7 @@ local function getClosestTarget()
                     end
                     local screenPos, onScreen = camera:WorldToViewportPoint(screenCalcPos)
                     if onScreen and screenPos.Z > 0 then
-                        local screenDist = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
+                        local screenDist = (Vector2.new(screenPos.X, screenPos.Y) - screenCenter).Magnitude
                         if screenDist <= closestDist then
                             if isTargetVisible(camPos, targetPart, char) then
                                 closestDist = screenDist
@@ -1342,31 +1326,6 @@ local function getClosestTarget()
         end
     end
     return closestTarget
-end
-
--- ==========================================
--- SHOT DIRECTION CALCULATION
--- ==========================================
-local function calculateRedirectedRay(origin, originalDirection, targetPartName)
-    if not aimbotEnabled then return originalDirection end
-
-    local target = lockedTarget
-    if not target or not target.Part or not target.Part.Parent
-        or not isEntityAlive(target.Char, target.Hum) then
-        target = getClosestTarget()
-        lockedTarget = target
-    end
-
-    if not target or not target.Part then return originalDirection end
-
-    local part = target.Part
-    if targetPartName and target.Char then
-        part = getAimTargetHitbox(target.Char) or part
-    end
-
-    local delta = part.Position - origin
-    if delta.Magnitude <= 0.001 then return originalDirection end
-    return delta.Unit
 end
 
 -- ==========================================
@@ -1857,8 +1816,6 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         if isFovVisible then
             local diameter = aimFov * 2
             fovFrame.Size = UDim2.new(0, diameter, 0, diameter)
-            local mousePos = UserInputService:GetMouseLocation()
-            fovFrame.Position = UDim2.fromOffset(mousePos.X, mousePos.Y)
         end
     end
 
