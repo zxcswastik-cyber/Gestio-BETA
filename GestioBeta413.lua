@@ -1,5 +1,6 @@
 -- ==============================================================================
 -- [Gestio UI - Blox Strike Ultimate Mobile Engine | Version 4.1.3]
+-- Target Assist fix: uses existing Gestio combat state to avoid extra top-level locals.
 -- Architecture: Uncompressed Extended Pipeline
 -- Target Game: Blox Strike (Roblox)
 -- ==============================================================================
@@ -1292,19 +1293,23 @@ local function getClosestTarget()
         if char and plr ~= player and isTargetEnemy(plr, char) then
             local hum = char:FindFirstChildOfClass("Humanoid")
             if isEntityAlive(char, hum) then
+                -- Reuse Gestio's existing hitbox selector.
+                -- aimboneIndex/bodyAimOnly already control Head/body selection.
                 local targetPart = getTargetHitbox(char)
                 if targetPart then
                     local calcPos = targetPart.Position
                     local screenCalcPos = calcPos
-                    local velocity = targetPart.AssemblyLinearVelocity
-                    if predictionEnabled and velocity then
-                        screenCalcPos = calcPos + velocity * predictionFactor
+
+                    if predictionEnabled then
+                        local velocity = targetPart.AssemblyLinearVelocity
+                        if velocity then
+                            screenCalcPos = calcPos + velocity * predictionFactor
+                        end
                     end
+
                     local screenPos, onScreen = camera:WorldToViewportPoint(screenCalcPos)
                     if onScreen and screenPos.Z > 0 then
-                        local dx = screenPos.X - mousePos.X
-                        local dy = screenPos.Y - mousePos.Y
-                        local screenDist = math.sqrt(dx * dx + dy * dy)
+                        local screenDist = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
                         if screenDist <= closestDist and isTargetVisible(camPos, targetPart, char) then
                             closestDist = screenDist
                             closestTarget = {
@@ -1323,34 +1328,8 @@ local function getClosestTarget()
             end
         end
     end
+
     return closestTarget
-end
-
--- Returns a normalized direction toward the selected target.
--- This function is intentionally independent from the shot pipeline.
-local function CalculateRedirectedRay(origin, originalDirection, targetPartName)
-    if not aimbotEnabled then
-        return originalDirection
-    end
-
-    local target = getClosestTarget()
-    if not target or not target.Part then
-        return originalDirection
-    end
-
-    local part = target.Part
-    if targetPartName == "Head" then
-        part = target.Char:FindFirstChild("Head") or part
-    elseif targetPartName == "HumanoidRootPart" then
-        part = target.Char:FindFirstChild("HumanoidRootPart") or part
-    end
-
-    local delta = part.Position - origin
-    if delta.Magnitude <= 0.001 then
-        return originalDirection
-    end
-
-    return delta.Unit
 end
 
 -- ==========================================
