@@ -1478,45 +1478,6 @@ local function getOrCreateScreenEsp(plr)
     return data
 end
 
-local function hideAllEspForPlayer(plr)
-    local esp = screenEspCache[plr]
-    if esp then
-        pcall(function()
-            esp.Box.Visible = false
-            esp.HealthBarBg.Visible = false
-            esp.TagCard.Visible = false
-            for _, corner in ipairs(esp.Corners) do
-                corner.H.Visible = false
-                corner.V.Visible = false
-            end
-        end)
-    end
-
-    local data = activeEspHolders[plr]
-    if data then
-        pcall(function()
-            data.Highlight.Enabled = false
-            data.Highlight.Adornee = nil
-            data.HeadDot.Enabled = false
-            data.HeadDot.Adornee = nil
-            data.Tracer.Visible = false
-        end)
-    end
-end
-
-local function bindEspDeathCleanup(plr, char)
-    if not char then return end
-    local hum = char:FindFirstChildOfClass("Humanoid")
-    if not hum then
-        hum = char:WaitForChild("Humanoid", 2)
-    end
-    if hum then
-        table.insert(connections, hum.Died:Connect(function()
-            hideAllEspForPlayer(plr)
-        end))
-    end
-end
-
 table.insert(connections, Players.PlayerRemoving:Connect(function(plr)
     local oldChar = plr.Character
     local oldHum = oldChar and oldChar:FindFirstChildOfClass("Humanoid")
@@ -1557,11 +1518,7 @@ local function renderTacticalOverlay()
         local isEnemy = isTargetEnemy(plr, char)
         local isAlive = isEntityAlive(char, hum)
 
-        if not char or not char.Parent or not hum or hum.Health <= 0 or not rootPart or not rootPart.Parent then
-            hideAllEspForPlayer(plr)
-        end
-
-        if isEnemy and isAlive and rootPart and rootPart.Parent and (nametagsEnabled or boxEspEnabled or cornerBoxEnabled) then
+        if isEnemy and isAlive and rootPart and (nametagsEnabled or boxEspEnabled or cornerBoxEnabled) then
             local dist = (rootPart.Position - camPos).Magnitude
 
             if dist <= espMaxDist then
@@ -1777,31 +1734,51 @@ local function attachEspToPlayer(plr)
     }
     activeEspHolders[plr] = espData
 
+    local function disableCharacterESP()
+        pcall(function()
+            dotBillboard.Enabled = false
+            dotBillboard.Adornee = nil
+            hl.Enabled = false
+            hl.Adornee = nil
+            tracerLine.Visible = false
+        end)
+    end
+
     local function setupCharacter(char)
+        disableCharacterESP()
         if not char then return end
+
         task.spawn(function()
             local head = char:WaitForChild("Head", 3)
+            local hum = char:FindFirstChildOfClass("Humanoid") or char:WaitForChild("Humanoid", 3)
+            if not char.Parent or not hum or hum.Health <= 0 then
+                disableCharacterESP()
+                return
+            end
             if head and dotBillboard then
                 dotBillboard.Adornee = head
             end
             if hl then
                 hl.Adornee = char
             end
+
+            if hum then
+                local diedConn = hum.Died:Connect(function()
+                    disableCharacterESP()
+                end)
+                table.insert(connections, diedConn)
+            end
         end)
     end
 
-    if plr.Character then
-        setupCharacter(plr.Character)
-        bindEspDeathCleanup(plr, plr.Character)
-    end
-    local charConn = plr.CharacterAdded:Connect(function(char)
-        hideAllEspForPlayer(plr)
-        setupCharacter(char)
-        bindEspDeathCleanup(plr, char)
-    end)
+    if plr.Character then setupCharacter(plr.Character) end
+    local charConn = plr.CharacterAdded:Connect(setupCharacter)
     table.insert(connections, charConn)
-    local removingConn = plr.CharacterRemoving:Connect(function()
-        hideAllEspForPlayer(plr)
+
+    local removingConn = plr.CharacterRemoving:Connect(function(char)
+        if char == plr.Character then
+            disableCharacterESP()
+        end
     end)
     table.insert(connections, removingConn)
 end
