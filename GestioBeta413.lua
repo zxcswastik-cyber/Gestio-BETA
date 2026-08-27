@@ -1501,56 +1501,6 @@ table.insert(connections, Players.PlayerRemoving:Connect(function(plr)
 end))
 
 -- ==========================================
--- TACTICAL ESP LIFECYCLE CLEANUP
--- ==========================================
-local function hideScreenEsp(esp)
-    if not esp then return end
-    pcall(function()
-        esp.Box.Visible = false
-        esp.HealthBarBg.Visible = false
-        esp.TagCard.Visible = false
-        for _, corner in ipairs(esp.Corners) do
-            corner.H.Visible = false
-            corner.V.Visible = false
-        end
-    end)
-end
-
-local function clearCharacterEsp(plr)
-    local esp = screenEspCache[plr]
-    if esp then
-        hideScreenEsp(esp)
-    end
-
-    local holder = activeEspHolders[plr]
-    if holder then
-        pcall(function()
-            holder.Highlight.Enabled = false
-            holder.Highlight.Adornee = nil
-            holder.HeadDot.Enabled = false
-            holder.HeadDot.Adornee = nil
-            holder.Tracer.Visible = false
-        end)
-    end
-end
-
-local function bindEspCharacterLifecycle(plr, char)
-    if not char then return end
-
-    local hum = char:FindFirstChildOfClass("Humanoid")
-    if not hum then
-        hum = char:WaitForChild("Humanoid", 2)
-    end
-
-    if hum then
-        local diedConn = hum.Died:Connect(function()
-            clearCharacterEsp(plr)
-        end)
-        table.insert(connections, diedConn)
-    end
-end
-
--- ==========================================
 -- TACTICAL ESP SCREEN RENDER LOOP
 -- ==========================================
 local function renderTacticalOverlay()
@@ -1568,12 +1518,7 @@ local function renderTacticalOverlay()
         local isEnemy = isTargetEnemy(plr, char)
         local isAlive = isEntityAlive(char, hum)
 
-        -- Never render stale ESP for dead/detached characters.
-        if not char or not char.Parent or not hum or hum.Health <= 0 or not rootPart or not rootPart.Parent then
-            hideScreenEsp(esp)
-        end
-
-        if isEnemy and isAlive and rootPart and rootPart.Parent and (nametagsEnabled or boxEspEnabled or cornerBoxEnabled) then
+        if isEnemy and isAlive and rootPart and (nametagsEnabled or boxEspEnabled or cornerBoxEnabled) then
             local dist = (rootPart.Position - camPos).Magnitude
 
             if dist <= espMaxDist then
@@ -1802,22 +1747,9 @@ local function attachEspToPlayer(plr)
         end)
     end
 
-    if plr.Character then
-        setupCharacter(plr.Character)
-        bindEspCharacterLifecycle(plr, plr.Character)
-    end
-
-    local charConn = plr.CharacterAdded:Connect(function(char)
-        clearCharacterEsp(plr)
-        setupCharacter(char)
-        bindEspCharacterLifecycle(plr, char)
-    end)
+    if plr.Character then setupCharacter(plr.Character) end
+    local charConn = plr.CharacterAdded:Connect(setupCharacter)
     table.insert(connections, charConn)
-
-    local removingConn = plr.CharacterRemoving:Connect(function()
-        clearCharacterEsp(plr)
-    end)
-    table.insert(connections, removingConn)
 end
 
 for _, v in pairs(Players:GetPlayers()) do attachEspToPlayer(v) end
@@ -1937,7 +1869,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         local isAlive = isEntityAlive(char, hum)
         local dist = rootPart and (rootPart.Position - localPos).Magnitude or 9999
 
-        if char and char.Parent and isEnemy and isAlive and hum and hum.Health > 0 and rootPart and rootPart.Parent and (dist <= espMaxDist) then
+        if char and isEnemy and isAlive and (dist <= espMaxDist) then
             local isVisible = isVisibleThroughWalls(head or rootPart, char)
             local activeAccent = isVisible and currentTheme.Enemy_Accent or currentTheme.Enemy_Hidden
             local activeHighlight = isVisible and currentTheme.Enemy_Fill or currentTheme.Enemy_Hidden
