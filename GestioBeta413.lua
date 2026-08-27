@@ -176,8 +176,8 @@ local currentTheme = themeLibrary["Charcoal Crimson"]
 -- COMBAT ENGINE STATE VARIABLES
 -- ==========================================
 local aimbotEnabled = false
-local aimbotSpeed = 18.0
-local aimbotSmoothness = 0.55
+local aimbotSpeed = 35.0
+local aimbotSmoothness = 0.15
 local aimFov = 160
 local showFovCircle = true
 local snapAimMode = false
@@ -191,7 +191,7 @@ local minDamage = 15
 local bodyAimOnly = false
 local autoWallCheck = false
 local predictionEnabled = true
-local predictionFactor = 0.065
+local predictionFactor = 0.135
 local visibleCheck = false
 local aimSensitivity = 1.0
 local lockOnJump = true
@@ -1299,14 +1299,8 @@ local function getClosestTarget()
                 if targetPart then
                     local calcPos = targetPart.Position
                     local screenCalcPos = calcPos
-                    if predictionEnabled then
-                        local velocity = targetPart.AssemblyLinearVelocity
-                        local horizontalVelocity = Vector3.new(velocity.X, 0, velocity.Z)
-                        -- Do not predict tiny idle/network velocities. They are a
-                        -- common source of consistent misses on stationary targets.
-                        if horizontalVelocity.Magnitude > 2 then
-                            screenCalcPos = calcPos + (horizontalVelocity * predictionFactor)
-                        end
+                    if predictionEnabled and targetPart.AssemblyLinearVelocity then
+                        screenCalcPos = calcPos + (targetPart.AssemblyLinearVelocity * predictionFactor)
                     end
                     local screenPos, onScreen = camera:WorldToViewportPoint(screenCalcPos)
                     if onScreen and screenPos.Z > 0 then
@@ -1507,7 +1501,7 @@ table.insert(connections, Players.PlayerRemoving:Connect(function(plr)
 end))
 
 -- ==========================================
--- TACTICAL ESP CLEANUP
+-- TACTICAL ESP LIFECYCLE CLEANUP
 -- ==========================================
 local function hideScreenEsp(esp)
     if not esp then return end
@@ -1522,9 +1516,11 @@ local function hideScreenEsp(esp)
     end)
 end
 
-local function clearCharacterEsp(plr, char)
+local function clearCharacterEsp(plr)
     local esp = screenEspCache[plr]
-    if esp then hideScreenEsp(esp) end
+    if esp then
+        hideScreenEsp(esp)
+    end
 
     local holder = activeEspHolders[plr]
     if holder then
@@ -1538,15 +1534,17 @@ local function clearCharacterEsp(plr, char)
     end
 end
 
--- Hide ESP immediately when a character is removed or dies, instead of
--- waiting for the next character to spawn. This prevents stale boxes,
--- nametags, head dots and highlights from remaining at the corpse position.
 local function bindEspCharacterLifecycle(plr, char)
     if not char then return end
-    local hum = char:FindFirstChildOfClass("Humanoid") or char:WaitForChild("Humanoid", 2)
+
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if not hum then
+        hum = char:WaitForChild("Humanoid", 2)
+    end
+
     if hum then
         local diedConn = hum.Died:Connect(function()
-            clearCharacterEsp(plr, char)
+            clearCharacterEsp(plr)
         end)
         table.insert(connections, diedConn)
     end
@@ -1570,7 +1568,7 @@ local function renderTacticalOverlay()
         local isEnemy = isTargetEnemy(plr, char)
         local isAlive = isEntityAlive(char, hum)
 
-        -- A dead/detached character must never keep any screen ESP visible.
+        -- Never render stale ESP for dead/detached characters.
         if not char or not char.Parent or not hum or hum.Health <= 0 or not rootPart or not rootPart.Parent then
             hideScreenEsp(esp)
         end
@@ -1808,6 +1806,7 @@ local function attachEspToPlayer(plr)
         setupCharacter(plr.Character)
         bindEspCharacterLifecycle(plr, plr.Character)
     end
+
     local charConn = plr.CharacterAdded:Connect(function(char)
         clearCharacterEsp(plr)
         setupCharacter(char)
@@ -1815,8 +1814,8 @@ local function attachEspToPlayer(plr)
     end)
     table.insert(connections, charConn)
 
-    local removingConn = plr.CharacterRemoving:Connect(function(char)
-        clearCharacterEsp(plr, char)
+    local removingConn = plr.CharacterRemoving:Connect(function()
+        clearCharacterEsp(plr)
     end)
     table.insert(connections, removingConn)
 end
@@ -1877,9 +1876,8 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
             if predictionEnabled and lockedTarget.Part and lockedTarget.Part.Parent then
                 checkPos = lockedTarget.Part.Position
                 local velocity = lockedTarget.Part.AssemblyLinearVelocity
-                local horizontalVelocity = Vector3.new(velocity.X, 0, velocity.Z)
-                if horizontalVelocity.Magnitude > 2 then
-                    checkPos += horizontalVelocity * predictionFactor
+                if velocity then
+                    checkPos += velocity * predictionFactor
                 end
             end
             local scrPos, onScreen = camera:WorldToViewportPoint(checkPos)
@@ -1891,39 +1889,22 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         end
 
         if lockedTarget and lockedTarget.Position then
-            local aimPos = lockedTarget.Part and lockedTarget.Part.Position or lockedTarget.AimPosition or lockedTarget.Position
+            local aimPos = lockedTarget.AimPosition or lockedTarget.Position
             if predictionEnabled and lockedTarget.Part and lockedTarget.Part.Parent then
-                local velocity = lockedTarget.Part.AssemblyLinearVelocity
-                local horizontalVelocity = Vector3.new(velocity.X, 0, velocity.Z)
-                if horizontalVelocity.Magnitude > 2 then
-                    aimPos += horizontalVelocity * predictionFactor
+                aimPos = lockedTarget.Part.Position
+                if lockedTarget.Part.AssemblyLinearVelocity then
+                    aimPos += lockedTarget.Part.AssemblyLinearVelocity * predictionFactor
                 end
             end
 
             local desired = CFrame.lookAt(camera.CFrame.Position, aimPos)
-            local currentLook = camera.CFrame.LookVector
-            local desiredLook = desired.LookVector
-            local dot = math.clamp(currentLook:Dot(desiredLook), -1, 1)
-            local angle = math.acos(dot)
-
-            -- Ignore microscopic corrections. They cause visible camera jitter
-            -- when the target is already under the crosshair.
-            if angle > math.rad(0.12) then
-                if snapAimMode then
-                    -- Snap only for a meaningful angular error; otherwise leave
-                    -- the camera untouched.
-                    camera.CFrame = desired
-                else
-                    -- Stable frame-rate independent smoothing. The previous
-                    -- implementation could apply a very large correction every
-                    -- RenderStepped, which made mobile camera control fight back.
-                    local speed = math.max(1, aimbotSpeed)
-                    local smooth = math.clamp(aimbotSmoothness, 0, 0.95)
-                    local alpha = 1 - math.exp(-speed * dt)
-                    alpha = alpha * (1 - smooth)
-                    alpha = math.clamp(alpha, 0.015, 0.22)
-                    camera.CFrame = camera.CFrame:Lerp(desired, alpha)
-                end
+            if snapAimMode then
+                camera.CFrame = desired
+            else
+                local smooth = math.clamp(aimbotSmoothness, 0, 0.98)
+                local speedAlpha = 1 - math.exp(-math.max(1, aimbotSpeed) * dt)
+                local alpha = math.clamp(speedAlpha * (1 - smooth), 0.01, 1)
+                camera.CFrame = camera.CFrame:Lerp(desired, alpha)
             end
         end
     else
@@ -3069,6 +3050,8 @@ local function addInspectorChoice(y, txt, choices, currentChoice, onSelect)
 end
 
 -- ==========================================
+-- DETAILED INSPECTOR ROUTING
+-- ==========================================
 local function openInspectorFor(moduleName)
     insHeader.Text = moduleName
     for _, child in pairs(insContent:GetChildren()) do child:Destroy() end
@@ -3338,4 +3321,52 @@ end)
 local sKnifeSection = makeCategorySection(sPage, "Melee Weapons", 1, 1)
 addCard(sKnifeSection, "Butterfly Knife", butterflyKnifeEnabled, function(v)
     butterflyKnifeEnabled = v
-Показана только часть файла из-за его большого размера
+    if v then
+        hookBloxStrikeModules()
+        scanAndMorphKnives(Workspace)
+        scanAndMorphKnives(camera)
+    end
+end)
+
+-- WORLD CHANGER / ENVIRONMENT TAB
+local envLightSection = makeCategorySection(envPage, "Atmosphere & World", 1, 4)
+addCard(envLightSection, "World Changer", nightModeEnabled, function(v)
+    nightModeEnabled = v
+    if v then
+        applyNightPreset(nightPreset)
+    elseif not fullBrightEnabled then
+        restoreLightingState()
+    end
+end)
+addCard(envLightSection, "FullBright", fullBrightEnabled, function(v)
+    fullBrightEnabled = v
+    if not v and not nightModeEnabled then
+        restoreLightingState()
+    end
+end)
+addCard(envLightSection, "Anti-Flash", antiFlashEnabled, function(v) antiFlashEnabled = v end)
+addCard(envLightSection, "No Fog", removeFogEnabled, function(v)
+    removeFogEnabled = v
+    if not v then
+        Lighting.FogEnd = defaultLighting.FogEnd
+    end
+end)
+
+-- MISC TAB
+local miscGeneralSection = makeCategorySection(micsPage, "Utilities", 1, 2)
+addCard(miscGeneralSection, "Third Person", thirdPersonEnabled, function(v)
+    setThirdPersonEnabled(v)
+end)
+addCard(miscGeneralSection, "Anti-AFK", antiAfkEnabled, function(v)
+    setAntiAfkEnabled(v)
+end)
+
+-- SETTINGS TAB
+local setsGeneralSection = makeCategorySection(setsPage, "Configuration", 1, 1)
+addCard(setsGeneralSection, "Theme", true, function(v) end)
+
+openInspectorFor("Tracking")
+
+end
+
+buildGestioUI()
