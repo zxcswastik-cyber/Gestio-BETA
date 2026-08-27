@@ -3069,8 +3069,6 @@ local function addInspectorChoice(y, txt, choices, currentChoice, onSelect)
 end
 
 -- ==========================================
--- DETAILED INSPECTOR ROUTING
--- ==========================================
 local function openInspectorFor(moduleName)
     insHeader.Text = moduleName
     for _, child in pairs(insContent:GetChildren()) do child:Destroy() end
@@ -3340,52 +3338,4 @@ end)
 local sKnifeSection = makeCategorySection(sPage, "Melee Weapons", 1, 1)
 addCard(sKnifeSection, "Butterfly Knife", butterflyKnifeEnabled, function(v)
     butterflyKnifeEnabled = v
-    if v then
-        hookBloxStrikeModules()
-        scanAndMorphKnives(Workspace)
-        scanAndMorphKnives(camera)
-    end
-end)
-
--- WORLD CHANGER / ENVIRONMENT TAB
-local envLightSection = makeCategorySection(envPage, "Atmosphere & World", 1, 4)
-addCard(envLightSection, "World Changer", nightModeEnabled, function(v)
-    nightModeEnabled = v
-    if v then
-        applyNightPreset(nightPreset)
-    elseif not fullBrightEnabled then
-        restoreLightingState()
-    end
-end)
-addCard(envLightSection, "FullBright", fullBrightEnabled, function(v)
-    fullBrightEnabled = v
-    if not v and not nightModeEnabled then
-        restoreLightingState()
-    end
-end)
-addCard(envLightSection, "Anti-Flash", antiFlashEnabled, function(v) antiFlashEnabled = v end)
-addCard(envLightSection, "No Fog", removeFogEnabled, function(v)
-    removeFogEnabled = v
-    if not v then
-        Lighting.FogEnd = defaultLighting.FogEnd
-    end
-end)
-
--- MISC TAB
-local miscGeneralSection = makeCategorySection(micsPage, "Utilities", 1, 2)
-addCard(miscGeneralSection, "Third Person", thirdPersonEnabled, function(v)
-    setThirdPersonEnabled(v)
-end)
-addCard(miscGeneralSection, "Anti-AFK", antiAfkEnabled, function(v)
-    setAntiAfkEnabled(v)
-end)
-
--- SETTINGS TAB
-local setsGeneralSection = makeCategorySection(setsPage, "Configuration", 1, 1)
-addCard(setsGeneralSection, "Theme", true, function(v) end)
-
-openInspectorFor("Tracking")
-
-end
-
-buildGestioUI()
+Показана только часть файла из-за его большого размера
