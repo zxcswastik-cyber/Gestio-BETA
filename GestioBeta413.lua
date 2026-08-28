@@ -1,5 +1,5 @@
 -- ==============================================================================
--- [Gestio UI - Blox Strike Ultimate Mobile Engine | Version 4.1.7 Vibrant Chams]
+-- [Gestio UI - Blox Strike Ultimate Mobile Engine | Version 4.2.0 Universal Skinchanger]
 -- Target Game: Blox Strike (Roblox)
 -- ==============================================================================
 
@@ -225,7 +225,7 @@ end)
 table.insert(connections, fireEndConn)
 
 -- ==========================================
--- VIBRANT CHAMS CONFIGURATION
+-- VIBRANT CHAMS CONFIGURATION (GRAY OCCLUDED)
 -- ==========================================
 local chamsEnabled = false
 local chamsTeamCheck = true
@@ -234,10 +234,10 @@ local chamsOcclusion = true
 local chamsFillTransparency = 0.45
 local chamsOutlineTransparency = 0.10
 
-local chamsColorVisible = Color3.fromRGB(255, 45, 85)
-local chamsColorHidden = Color3.fromRGB(130, 40, 220)
-local chamsColorAlly = Color3.fromRGB(0, 230, 255)
-local chamsOutlineColor = Color3.fromRGB(255, 255, 255)
+local chamsColorVisible = Color3.fromRGB(255, 45, 85)       -- Малиновый неон (виден)
+local chamsColorHidden = Color3.fromRGB(110, 115, 125)      -- Матовый серый (за стеной)
+local chamsColorAlly = Color3.fromRGB(0, 230, 255)          -- Кибер-бирюзовый (союзники)
+local chamsOutlineColor = Color3.fromRGB(240, 240, 245)     -- Контур
 
 -- ==========================================
 -- CRIMSON NEON HITMARKER & THIRD PERSON
@@ -255,51 +255,98 @@ local thirdPersonHeight = 1.5
 local thirdPersonPreviousOffset = nil
 
 -- ==========================================
--- SKINS & WEAPON MODS ENGINE
+-- SKINS & WEAPON MODS ENGINE (EXPANDED SKINCHANGER)
 -- ==========================================
-local butterflyKnifeEnabled = false
-local butterflySkin = "Fade"
+local skinChangerEnabled = false
+local selectedKnifeType = "Butterfly Knife"
+local selectedSkin = "Fade"
 
-function hookBloxStrikeModules()
+local knifeSkinCatalog = {
+    ["Butterfly Knife"] = {
+        ["Vanilla"] = "rbxassetid://4991206306",
+        ["Fade"]    = "rbxassetid://4991206411",
+        ["Doppler"] = "rbxassetid://4991206517",
+        ["Lore"]    = "rbxassetid://4991206622"
+    },
+    ["Karambit"] = {
+        ["Vanilla"] = "rbxassetid://4991206306",
+        ["Fade"]    = "rbxassetid://4991206411",
+        ["Doppler"] = "rbxassetid://4991206517",
+        ["Lore"]    = "rbxassetid://4991206622"
+    },
+    ["Bayonet"] = {
+        ["Vanilla"] = "rbxassetid://4991206306",
+        ["Fade"]    = "rbxassetid://4991206411",
+        ["Doppler"] = "rbxassetid://4991206517"
+    },
+    ["Shadow Daggers"] = {
+        ["Vanilla"] = "rbxassetid://4991206306",
+        ["Fade"]    = "rbxassetid://4991206411"
+    },
+    ["Huntsman"] = {
+        ["Vanilla"] = "rbxassetid://4991206306",
+        ["Doppler"] = "rbxassetid://4991206517"
+    }
+}
+
+local knifeTypeNames = {}
+for k in pairs(knifeSkinCatalog) do table.insert(knifeTypeNames, k) end
+table.sort(knifeTypeNames)
+
+local function getSkinTextureId()
+    local cat = knifeSkinCatalog[selectedKnifeType]
+    if cat and cat[selectedSkin] then
+        return cat[selectedSkin]
+    end
+    return "rbxassetid://4991206306"
+end
+
+local function hookBloxStrikeModules()
     pcall(function()
         if getgc then
             for _, v in ipairs(getgc(true)) do
-                if type(v) == "table" and rawget(v, "EquippedMelee") ~= nil then
-                    v.EquippedMelee = "Butterfly Knife"
-                elseif type(v) == "table" and rawget(v, "MeleeSkin") ~= nil then
-                    v.MeleeSkin = butterflySkin
-                elseif type(v) == "table" and rawget(v, "Knife") ~= nil and type(v.Knife) == "table" then
-                    v.Knife.Name = "Butterfly Knife"
-                    v.Knife.Skin = butterflySkin
+                if type(v) == "table" then
+                    if rawget(v, "EquippedMelee") ~= nil then
+                        v.EquippedMelee = selectedKnifeType
+                    end
+                    if rawget(v, "MeleeSkin") ~= nil then
+                        v.MeleeSkin = selectedSkin
+                    end
+                    if rawget(v, "Knife") ~= nil and type(v.Knife) == "table" then
+                        v.Knife.Name = selectedKnifeType
+                        v.Knife.Skin = selectedSkin
+                    end
                 end
             end
         end
     end)
 end
 
-function scanAndMorphKnives(root)
-    if not butterflyKnifeEnabled or not root then return end
+local function applyTextureToPart(child, textureId)
+    pcall(function()
+        if child:IsA("MeshPart") then
+            child.TextureID = textureId
+        elseif child:IsA("SpecialMesh") then
+            child.TextureId = textureId
+        end
+        local sa = child:FindFirstChildOfClass("SurfaceAppearance")
+        if sa then
+            pcall(function() sa.ColorMap = textureId end)
+        end
+    end)
+end
+
+local function scanAndMorphKnives(root)
+    if not skinChangerEnabled or not root then return end
+    local textureId = getSkinTextureId()
     pcall(function()
         for _, obj in ipairs(root:GetDescendants()) do
             local oName = obj.Name:lower()
-            if oName:find("knife") or oName:find("melee") or oName:find("blade") or oName:find("karambit") or oName:find("bayonet") or oName:find("arms") or oName:find("viewmodel") then
+            if oName:find("knife") or oName:find("melee") or oName:find("blade")
+               or oName:find("karambit") or oName:find("bayonet") or oName:find("daggers")
+               or oName:find("huntsman") or oName:find("arms") or oName:find("viewmodel") then
                 for _, child in ipairs(obj:GetDescendants()) do
-                    local textureId
-                    if butterflySkin == "Fade" then
-                        textureId = "rbxassetid://4991206411"
-                    elseif butterflySkin == "Doppler" then
-                        textureId = "rbxassetid://4991206517"
-                    elseif butterflySkin == "Lore" then
-                        textureId = "rbxassetid://4991206622"
-                    else
-                        textureId = "rbxassetid://4991206306"
-                    end
-
-                    if child:IsA("MeshPart") then
-                        pcall(function() child.TextureID = textureId end)
-                    elseif child:IsA("SpecialMesh") then
-                        pcall(function() child.TextureId = textureId end)
-                    end
+                    applyTextureToPart(child, textureId)
                 end
             end
         end
@@ -1878,7 +1925,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         lockedTarget = nil
     end
 
-    if butterflyKnifeEnabled then
+    if skinChangerEnabled then
         skinScanAccumulator += dt
         if skinScanAccumulator >= 0.50 then
             skinScanAccumulator = 0
@@ -2416,7 +2463,6 @@ table.insert(connections, RunService.Heartbeat:Connect(function(dt)
         activeMode = "Flight"
         local camLook = camera.CFrame.LookVector
         finalVelocity = camLook * flightSpeed
-
     -- 2. SLIDE
     elseif slideEnabled and isSliding then
         local grounded = isPlayerGrounded(char, hrp)
@@ -3074,15 +3120,33 @@ function openInspectorFor(moduleName)
         addInspectorSlider(6, "Recoil Dampener", 0.1, 1.0, noRecoil.strength, true, function(v)
             noRecoil.strength = v
         end)
-    elseif moduleName == "Butterfly Knife" then
-        insContent.CanvasSize = UDim2.new(0, 0, 0, 160)
-        addInspectorChoice(6, "Skin Finish", {"Vanilla", "Fade", "Doppler", "Lore"}, butterflySkin, function(selected)
-            butterflySkin = selected
+    elseif moduleName == "Knife Changer" then
+        insContent.CanvasSize = UDim2.new(0, 0, 0, 200)
+        addInspectorChoice(6, "Knife Type", knifeTypeNames, selectedKnifeType, function(selected)
+            selectedKnifeType = selected
+            hookBloxStrikeModules()
+            scanAndMorphKnives(Workspace)
+            scanAndMorphKnives(camera)
+            openInspectorFor("Knife Changer")
+        end)
+        
+        local availableSkins = {}
+        if knifeSkinCatalog[selectedKnifeType] then
+            for sName in pairs(knifeSkinCatalog[selectedKnifeType]) do
+                table.insert(availableSkins, sName)
+            end
+            table.sort(availableSkins)
+        else
+            availableSkins = {"Vanilla", "Fade", "Doppler", "Lore"}
+        end
+        
+        addInspectorChoice(44, "Skin Pattern", availableSkins, selectedSkin, function(selected)
+            selectedSkin = selected
             hookBloxStrikeModules()
             scanAndMorphKnives(Workspace)
             scanAndMorphKnives(camera)
         end)
-        addInspectorToggle(48, "Auto Re-apply", true, function(v) end)
+        addInspectorToggle(86, "Auto Re-morph", true, function(v) end)
     elseif moduleName == "Third Person" then
         insContent.CanvasSize = UDim2.new(0, 0, 0, 115)
         addInspectorSlider(6, "Distance", 5, 25, thirdPersonDistance, false, function(v)
@@ -3329,8 +3393,8 @@ end)
 
 -- SKINS TAB (Skinchanger)
 local sKnifeSection = makeCategorySection(sPage, "Melee Weapons", 1, 1)
-addCard(sKnifeSection, "Butterfly Knife", butterflyKnifeEnabled, function(v)
-    butterflyKnifeEnabled = v
+addCard(sKnifeSection, "Knife Changer", skinChangerEnabled, function(v)
+    skinChangerEnabled = v
     if v then
         hookBloxStrikeModules()
         scanAndMorphKnives(Workspace)
