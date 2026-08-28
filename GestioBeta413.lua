@@ -1,5 +1,5 @@
 -- ==============================================================================
--- [Gestio UI - Blox Strike Ultimate Mobile Engine | Version 4.2.0 Universal Skinchanger]
+-- [Gestio UI - Blox Strike Ultimate Mobile Engine | Version 4.2.1 Continuous Morph Engine]
 -- Target Game: Blox Strike (Roblox)
 -- ==============================================================================
 
@@ -255,7 +255,7 @@ local thirdPersonHeight = 1.5
 local thirdPersonPreviousOffset = nil
 
 -- ==========================================
--- SKINS & WEAPON MODS ENGINE (EXPANDED SKINCHANGER)
+-- SKINS & WEAPON MODS ENGINE (CONTINUOUS SKINCHANGER)
 -- ==========================================
 local skinChangerEnabled = false
 local selectedKnifeType = "Butterfly Knife"
@@ -303,19 +303,18 @@ end
 
 local function hookBloxStrikeModules()
     pcall(function()
-        if getgc then
-            for _, v in ipairs(getgc(true)) do
-                if type(v) == "table" then
-                    if rawget(v, "EquippedMelee") ~= nil then
-                        v.EquippedMelee = selectedKnifeType
-                    end
-                    if rawget(v, "MeleeSkin") ~= nil then
-                        v.MeleeSkin = selectedSkin
-                    end
-                    if rawget(v, "Knife") ~= nil and type(v.Knife) == "table" then
-                        v.Knife.Name = selectedKnifeType
-                        v.Knife.Skin = selectedSkin
-                    end
+        if not getgc then return end
+        for _, v in ipairs(getgc(true)) do
+            if type(v) == "table" then
+                if rawget(v, "EquippedMelee") ~= nil then
+                    v.EquippedMelee = selectedKnifeType
+                end
+                if rawget(v, "MeleeSkin") ~= nil then
+                    v.MeleeSkin = selectedSkin
+                end
+                if rawget(v, "Knife") ~= nil and type(v.Knife) == "table" then
+                    v.Knife.Name = selectedKnifeType
+                    v.Knife.Skin = selectedSkin
                 end
             end
         end
@@ -336,17 +335,27 @@ local function applyTextureToPart(child, textureId)
     end)
 end
 
+local function isKnifeTarget(name)
+    name = (name or ""):lower()
+    return name:find("knife") or name:find("melee") or name:find("blade")
+        or name:find("karambit") or name:find("bayonet") or name:find("dagger")
+        or name:find("huntsman") or name:find("arms") or name:find("viewmodel")
+        or name:find("weapon")
+end
+
 local function scanAndMorphKnives(root)
     if not skinChangerEnabled or not root then return end
     local textureId = getSkinTextureId()
     pcall(function()
         for _, obj in ipairs(root:GetDescendants()) do
-            local oName = obj.Name:lower()
-            if oName:find("knife") or oName:find("melee") or oName:find("blade")
-               or oName:find("karambit") or oName:find("bayonet") or oName:find("daggers")
-               or oName:find("huntsman") or oName:find("arms") or oName:find("viewmodel") then
+            if isKnifeTarget(obj.Name) or isKnifeTarget(obj.ClassName) then
+                if obj:IsA("MeshPart") or obj:IsA("SpecialMesh") then
+                    applyTextureToPart(obj, textureId)
+                end
                 for _, child in ipairs(obj:GetDescendants()) do
-                    applyTextureToPart(child, textureId)
+                    if child:IsA("MeshPart") or child:IsA("SpecialMesh") then
+                        applyTextureToPart(child, textureId)
+                    end
                 end
             end
         end
@@ -1925,13 +1934,17 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         lockedTarget = nil
     end
 
+    -- Continuous Morph Scan Pipeline (Re-morph viewmodels as they equip)
     if skinChangerEnabled then
         skinScanAccumulator += dt
-        if skinScanAccumulator >= 0.50 then
+        if skinScanAccumulator >= 0.30 then
             skinScanAccumulator = 0
-            scanAndMorphKnives(Workspace)
-            scanAndMorphKnives(camera)
             hookBloxStrikeModules()
+            scanAndMorphKnives(camera)
+            if player and player.Character then
+                scanAndMorphKnives(player.Character)
+            end
+            scanAndMorphKnives(Workspace)
         end
     else
         skinScanAccumulator = 0
@@ -3125,8 +3138,8 @@ function openInspectorFor(moduleName)
         addInspectorChoice(6, "Knife Type", knifeTypeNames, selectedKnifeType, function(selected)
             selectedKnifeType = selected
             hookBloxStrikeModules()
-            scanAndMorphKnives(Workspace)
             scanAndMorphKnives(camera)
+            if player and player.Character then scanAndMorphKnives(player.Character) end
             openInspectorFor("Knife Changer")
         end)
         
@@ -3143,8 +3156,8 @@ function openInspectorFor(moduleName)
         addInspectorChoice(44, "Skin Pattern", availableSkins, selectedSkin, function(selected)
             selectedSkin = selected
             hookBloxStrikeModules()
-            scanAndMorphKnives(Workspace)
             scanAndMorphKnives(camera)
+            if player and player.Character then scanAndMorphKnives(player.Character) end
         end)
         addInspectorToggle(86, "Auto Re-morph", true, function(v) end)
     elseif moduleName == "Third Person" then
@@ -3397,8 +3410,8 @@ addCard(sKnifeSection, "Knife Changer", skinChangerEnabled, function(v)
     skinChangerEnabled = v
     if v then
         hookBloxStrikeModules()
-        scanAndMorphKnives(Workspace)
         scanAndMorphKnives(camera)
+        if player and player.Character then scanAndMorphKnives(player.Character) end
     end
 end)
 
