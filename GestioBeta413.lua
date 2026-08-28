@@ -170,6 +170,7 @@ local themeLibrary = {
     }
 }
 
+-- Add nebula preset to theme if needed or keep lighting presets
 local currentTheme = themeLibrary["Charcoal Crimson"]
 
 -- ==========================================
@@ -264,7 +265,7 @@ function scanAndMorphKnives(root)
 end
 
 -- ==========================================
--- RECOIL CONTROL SYSTEM (RCS) VARIABLES
+-- RECOIL CONTROL SYSTEM (RCS) & NO RECOIL VARIABLES
 -- ==========================================
 local rcsEnabled = false
 local rcsStrength = 75
@@ -275,16 +276,12 @@ local rcsHorizontalComp = true
 local rcsBurstOnly = false
 local rcsRandomize = true
 
--- Compact No Recoil state. Kept as one table so the injection-safe register
--- layout of the working build is preserved.
+-- Redesigned No Recoil state for Blox Strike mobile & PC
 local noRecoil = {
     enabled = false,
     strength = 1.0,
-    window = 0.14,
-    activeUntil = 0,
-    baseline = nil,
-    tool = nil,
-    toolConn = nil
+    isFiring = false,
+    lastNonRecoilCFrame = nil
 }
 
 -- ==========================================
@@ -1805,17 +1802,12 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         camera.CFrame = camera.CFrame * CFrame.Angles(rcsComp * rcsPitchFactor, 0, 0)
     end
 
-    -- Tracking is toggle-based in the mobile UI. The old build never assigned
-    -- isAiming, so the entire aiming branch could remain disabled forever.
     isAiming = aimbotEnabled
 
     if aimbotEnabled and isAiming then
         if not lockedTarget or not isEntityAlive(lockedTarget.Char, lockedTarget.Hum) then
             lockedTarget = getClosestTarget()
         else
-            -- Re-check the target using the same predicted point used during
-            -- acquisition. This prevents a target from being considered out
-            -- of FOV just because its unpredicted hitbox moved.
             local checkPos = lockedTarget.Position
             if predictionEnabled and lockedTarget.Part and lockedTarget.Part.Parent then
                 checkPos = lockedTarget.Part.Position
@@ -1855,38 +1847,19 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         lockedTarget = nil
     end
 
-    -- NO RECOIL: this is intentionally after the Aimbot block.
-    -- We keep the previous post-aim camera orientation as the reference and
-    -- correct only the pitch introduced during the short shot window.
-    if noRecoil.enabled then
-        local char = player and player.Character
-        local equipped = char and char:FindFirstChildOfClass("Tool")
-        if equipped and equipped ~= noRecoil.tool then
-            if noRecoil.toolConn then pcall(function() noRecoil.toolConn:Disconnect() end) end
-            noRecoil.tool = equipped
-            noRecoil.toolConn = equipped.Activated:Connect(function()
-                noRecoil.activeUntil = os.clock() + math.max(0.04, noRecoil.window)
-            end)
-            table.insert(connections, noRecoil.toolConn)
-        elseif not equipped then
-            noRecoil.tool = nil
-        end
+    -- ==========================================
+    -- NO RECOIL ENGINE (Blox Strike Mobile/Desktop Fixed)
+    -- ==========================================
+    if noRecoil.enabled and noRecoil.isFiring and noRecoil.lastNonRecoilCFrame then
+        local currentPitch, currentYaw, currentRoll = camera.CFrame:ToOrientation()
+        local basePitch, baseYaw, _ = noRecoil.lastNonRecoilCFrame:ToOrientation()
 
-        if noRecoil.activeUntil > 0 and os.clock() < noRecoil.activeUntil and noRecoil.baseline then
-            local bx = select(1, noRecoil.baseline:ToOrientation())
-            local cx, cy, cz = camera.CFrame:ToOrientation()
-            local strength = math.clamp(noRecoil.strength, 0, 1)
-            local pitch = cx + (bx - cx) * strength
-            camera.CFrame = CFrame.new(camera.CFrame.Position) * CFrame.Angles(pitch, cy, cz)
-        else
-            noRecoil.activeUntil = 0
-        end
+        local strength = math.clamp(noRecoil.strength, 0, 1)
+        local compensatedPitch = currentPitch + (basePitch - currentPitch) * strength
 
-        -- Save the post-aim orientation for the next frame/shot.
-        noRecoil.baseline = camera.CFrame
-    else
-        noRecoil.activeUntil = 0
-        noRecoil.baseline = camera.CFrame
+        camera.CFrame = CFrame.new(camera.CFrame.Position) * CFrame.Angles(compensatedPitch, currentYaw, currentRoll)
+    elseif not noRecoil.isFiring then
+        noRecoil.lastNonRecoilCFrame = camera.CFrame
     end
 
     if butterflyKnifeEnabled then
@@ -2316,6 +2289,7 @@ local jumpReqConn = UserInputService.JumpRequest:Connect(function()
 end)
 table.insert(connections, jumpReqConn)
 
+-- Universal Input Listeners for Jump, Slide, and No Recoil Trigger
 local inBeganConn = UserInputService.InputBegan:Connect(function(input, processed)
     if input.KeyCode == Enum.KeyCode.Space then
         isMobileJumpHeld = true
@@ -2333,6 +2307,17 @@ local inBeganConn = UserInputService.InputBegan:Connect(function(input, processe
             hum.HipHeight = defaultHipHeight * 0.4
         end
     end
+
+    if noRecoil.enabled then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            local myChar = player.Character
+            local tool = myChar and myChar:FindFirstChildOfClass("Tool")
+            if tool then
+                noRecoil.isFiring = true
+                noRecoil.lastNonRecoilCFrame = camera.CFrame
+            end
+        end
+    end
 end)
 table.insert(connections, inBeganConn)
 
@@ -2344,6 +2329,11 @@ local inEndedConn = UserInputService.InputEnded:Connect(function(input, processe
         isSliding = false
         currentSlideVel = Vector3.zero
         restoreDefaultHipHeight()
+    end
+
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        noRecoil.isFiring = false
+        noRecoil.lastNonRecoilCFrame = nil
     end
 end)
 table.insert(connections, inEndedConn)
@@ -3045,6 +3035,11 @@ function openInspectorFor(moduleName)
         addInspectorToggle(192, "Prediction", predictionEnabled, function(v) predictionEnabled = v end)
         addInspectorToggle(218, "Show FOV Circle", showFovCircle, function(v) showFovCircle = v end)
         addInspectorToggle(244, "Visibility Check", visibleCheck, function(v) visibleCheck = v end)
+    elseif moduleName == "No Recoil" then
+        insContent.CanvasSize = UDim2.new(0, 0, 0, 120)
+        addInspectorSlider(6, "Strength", 0.1, 1.0, noRecoil.strength, true, function(v)
+            noRecoil.strength = v
+        end)
     elseif moduleName == "Butterfly Knife" then
         insContent.CanvasSize = UDim2.new(0, 0, 0, 160)
         addInspectorChoice(6, "Skin Finish", {"Vanilla", "Fade", "Doppler", "Lore"}, butterflySkin, function(selected)
@@ -3255,8 +3250,8 @@ end)
 addCard(cAimSection, "RCS", rcsEnabled, function(v) rcsEnabled = v end)
 addCard(cAimSection, "No Recoil", noRecoil.enabled, function(v)
     noRecoil.enabled = v
-    noRecoil.activeUntil = 0
-    noRecoil.baseline = camera and camera.CFrame or nil
+    noRecoil.isFiring = false
+    noRecoil.lastNonRecoilCFrame = camera and camera.CFrame or nil
 end)
 addCard(cAimSection, "Trigger Assistant", triggerbotEnabled, function(v) triggerbotEnabled = v end)
 addCard(cRageSection, "Anti-Aim", antiAimEnabled, function(v) antiAimEnabled = v end)
