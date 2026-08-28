@@ -44,7 +44,7 @@ end
 
 local camera = Workspace.CurrentCamera or Workspace:FindFirstChildOfClass("Camera")
 
-local function getSafeGui()
+function getSafeGui()
     local success, result = pcall(function()
         if gethui then
             return gethui()
@@ -217,7 +217,7 @@ local thirdPersonPreviousOffset = nil
 local butterflyKnifeEnabled = false
 local butterflySkin = "Fade"
 
-local function hookBloxStrikeModules()
+function hookBloxStrikeModules()
     pcall(function()
         if getgc then
             for _, v in ipairs(getgc(true)) do
@@ -234,7 +234,7 @@ local function hookBloxStrikeModules()
     end)
 end
 
-local function scanAndMorphKnives(root)
+function scanAndMorphKnives(root)
     if not butterflyKnifeEnabled or not root then return end
     pcall(function()
         for _, obj in ipairs(root:GetDescendants()) do
@@ -274,21 +274,6 @@ local rcsSmoothness = 0.2
 local rcsHorizontalComp = true
 local rcsBurstOnly = false
 local rcsRandomize = true
-
--- ==========================================
--- NO RECOIL ENGINE
--- Runs after the aimbot camera update so recoil compensation is not
--- immediately overwritten by target tracking.
--- ==========================================
-local noRecoilEnabled = false
-local noRecoilStrength = 100
-local noRecoilPitch = 1.0
-local noRecoilYaw = 0.0
-local noRecoilSmoothing = 0.35
-local noRecoilActiveUntil = 0
-local noRecoilLastShot = 0
-local noRecoilShotInterval = 0.065
-local noRecoilToolConnections = {}
 
 -- ==========================================
 -- TRIGGERBOT ASSISTANT VARIABLES
@@ -442,24 +427,24 @@ local defaultLighting = {
 -- ==========================================
 -- DISPLAY CONTAINERS SETUP
 -- ==========================================
-local mainContainer = Instance.new("ScreenGui")
+mainContainer = Instance.new("ScreenGui")
 mainContainer.Name = "GestioMainContainer"
 mainContainer.ResetOnSpawn = false
 mainContainer.DisplayOrder = 10
 mainContainer.IgnoreGuiInset = true
 mainContainer.Parent = targetGui
 
-local overlayContainer = Instance.new("Folder", mainContainer)
+overlayContainer = Instance.new("Folder", mainContainer)
 overlayContainer.Name = "Gestio_2DOverlay"
 
-local grenadeContainer = Instance.new("Folder", mainContainer)
+grenadeContainer = Instance.new("Folder", mainContainer)
 grenadeContainer.Name = "Gestio_GrenadeOverlay"
 
-local jumpCircleFolder = Instance.new("Folder", Workspace)
+jumpCircleFolder = Instance.new("Folder", Workspace)
 jumpCircleFolder.Name = "Gestio_JumpCircleWorld"
 
-local grenadePool = {}
-local mobileSlideBtn = nil
+grenadePool = {}
+mobileSlideBtn = nil
 
 -- ==========================================
 -- CRIMSON NEON HITMARKER UI
@@ -502,7 +487,7 @@ for i, rotation in ipairs({45, -45, 135, -135}) do
     hitmarkerLines[i] = line
 end
 
-local function refreshHitmarkerTheme()
+function refreshHitmarkerTheme()
     for _, line in ipairs(hitmarkerLines) do
         line.BackgroundColor3 = currentTheme.Accent
         local glow = line:FindFirstChild("NeonGlow")
@@ -513,7 +498,7 @@ local function refreshHitmarkerTheme()
     end
 end
 
-local function showHitmarker()
+function showHitmarker()
     if not hitmarkerEnabled then return end
 
     hitmarkerSerial += 1
@@ -557,7 +542,7 @@ end
 -- ==========================================
 -- THIRD PERSON CAMERA CONTROLLER
 -- ==========================================
-local function applyThirdPerson()
+function applyThirdPerson()
     local cam = Workspace.CurrentCamera
     local char = player.Character
     local hum = char and char:FindFirstChildOfClass("Humanoid")
@@ -580,12 +565,12 @@ local function applyThirdPerson()
     end
 end
 
-local function setThirdPersonEnabled(enabled)
+function setThirdPersonEnabled(enabled)
     thirdPersonEnabled = enabled
     applyThirdPerson()
 end
 
-local function refreshThirdPerson()
+function refreshThirdPerson()
     if thirdPersonEnabled then
         applyThirdPerson()
     end
@@ -594,7 +579,7 @@ end
 -- ==========================================
 -- LIGHTING & ATMOSPHERE FUNCTIONS
 -- ==========================================
-local function applyNightPreset(presetName)
+function applyNightPreset(presetName)
     local cfg = nightPresets[presetName]
     if not cfg then return end
     nightPreset = presetName
@@ -614,7 +599,7 @@ local function applyNightPreset(presetName)
     end
 end
 
-local function restoreLightingState()
+function restoreLightingState()
     pcall(function()
         Lighting.Brightness = defaultLighting.Brightness
         Lighting.ClockTime = defaultLighting.ClockTime
@@ -629,7 +614,7 @@ end
 -- ==========================================
 -- CLEANUP ROUTINES
 -- ==========================================
-local function clearActiveJumpCircle()
+function clearActiveJumpCircle()
     if not activeJumpCircleData then return end
     if activeJumpCircleData.Connections then
         for _, conn in ipairs(activeJumpCircleData.Connections) do
@@ -642,7 +627,7 @@ local function clearActiveJumpCircle()
     activeJumpCircleData = nil
 end
 
-local function cleanup()
+function cleanup()
     pcall(function() setThirdPersonEnabled(false) end)
     if player.Character then
         local hum = player.Character:FindFirstChildOfClass("Humanoid")
@@ -703,11 +688,6 @@ local function cleanup()
     screenEspCache = {}
     grenadePool = {}
     
-    for tool, conn in pairs(noRecoilToolConnections) do
-        pcall(function() conn:Disconnect() end)
-        noRecoilToolConnections[tool] = nil
-    end
-
     restoreLightingState()
 
     pcall(function() if targetGui:FindFirstChild("GestioScreenGui") then targetGui.GestioScreenGui:Destroy() end end)
@@ -719,96 +699,40 @@ end
 
 if genv then genv.GestioRunning = cleanup end
 
-local function bindTouch(btn, callback)
+function bindTouch(btn, callback)
     btn.Activated:Connect(callback)
-end
-
--- ==========================================
--- NO RECOIL INPUT / TOOL TRACKING
--- ==========================================
-local function markNoRecoilShot()
-    noRecoilLastShot = tick()
-    noRecoilActiveUntil = noRecoilLastShot + 0.18
-end
-
-local function bindNoRecoilTool(tool)
-    if not tool or not tool:IsA("Tool") or noRecoilToolConnections[tool] then return end
-    local ok, conn = pcall(function()
-        return tool.Activated:Connect(markNoRecoilShot)
-    end)
-    if ok and conn then
-        noRecoilToolConnections[tool] = conn
-    end
-end
-
-local function scanNoRecoilTools()
-    if not player then return end
-    pcall(function()
-        local backpack = player:FindFirstChildOfClass("Backpack")
-        if backpack then
-            for _, obj in ipairs(backpack:GetChildren()) do bindNoRecoilTool(obj) end
-        end
-        local char = player.Character
-        if char then
-            for _, obj in ipairs(char:GetChildren()) do bindNoRecoilTool(obj) end
-        end
-    end)
-end
-
-if player then
-    scanNoRecoilTools()
-    pcall(function()
-        local backpack = player:FindFirstChildOfClass("Backpack")
-        if backpack then
-            table.insert(connections, backpack.ChildAdded:Connect(function(obj)
-                if obj:IsA("Tool") then bindNoRecoilTool(obj) end
-            end))
-        end
-    end)
-    table.insert(connections, UserInputService.InputBegan:Connect(function(input, processed)
-        if not processed and input.UserInputType == Enum.UserInputType.MouseButton1 then
-            markNoRecoilShot()
-        end
-    end))
-    table.insert(connections, player.CharacterAdded:Connect(function(char)
-        task.wait(0.15)
-        scanNoRecoilTools()
-        table.insert(connections, char.ChildAdded:Connect(function(obj)
-            if obj:IsA("Tool") then bindNoRecoilTool(obj) end
-        end))
-    end))
 end
 
 -- ==========================================
 -- HUD OVERLAYS (FOV & WATERMARK)
 -- ==========================================
-local fovGui = Instance.new("ScreenGui")
+fovGui = Instance.new("ScreenGui")
 fovGui.Name = "GestioFovGui"
 fovGui.ResetOnSpawn = false
 fovGui.DisplayOrder = 9
 fovGui.IgnoreGuiInset = true
 fovGui.Parent = targetGui
 
-local fovFrame = Instance.new("Frame", fovGui)
+fovFrame = Instance.new("Frame", fovGui)
 fovFrame.AnchorPoint = Vector2.new(0.5, 0.5)
 fovFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
 fovFrame.BackgroundTransparency = 1
 fovFrame.BorderSizePixel = 0
 fovFrame.Visible = false
-local fovStroke = Instance.new("UIStroke", fovFrame)
+fovStroke = Instance.new("UIStroke", fovFrame)
 fovStroke.Color = currentTheme.Accent
 fovStroke.Thickness = 0.8
-local fovCorner = Instance.new("UICorner", fovFrame)
+fovCorner = Instance.new("UICorner", fovFrame)
 fovCorner.CornerRadius = UDim.new(1, 0)
 
-local watermarkGui = Instance.new("ScreenGui")
+watermarkGui = Instance.new("ScreenGui")
 watermarkGui.Name = "GestioWatermarkGui"
 watermarkGui.ResetOnSpawn = false
 watermarkGui.DisplayOrder = 20
 watermarkGui.IgnoreGuiInset = true
 watermarkGui.Parent = targetGui
 
-local wmCard = Instance.new("Frame", watermarkGui)
+wmCard = Instance.new("Frame", watermarkGui)
 wmCard.Position = UDim2.new(0, 14, 0, 14)
 wmCard.Size = UDim2.new(0, 0, 0, 22)
 wmCard.AutomaticSize = Enum.AutomaticSize.X
@@ -816,26 +740,26 @@ wmCard.BackgroundColor3 = currentTheme.Background
 wmCard.BorderSizePixel = 0
 Instance.new("UICorner", wmCard).CornerRadius = UDim.new(0, 5)
 
-local wmStroke = Instance.new("UIStroke", wmCard)
+wmStroke = Instance.new("UIStroke", wmCard)
 wmStroke.Color = currentTheme.Border
 wmStroke.Thickness = 1.0
 
-local wmPad = Instance.new("UIPadding", wmCard)
+wmPad = Instance.new("UIPadding", wmCard)
 wmPad.PaddingLeft = UDim.new(0, 8)
 wmPad.PaddingRight = UDim.new(0, 8)
 
-local wmLayout = Instance.new("UIListLayout", wmCard)
+wmLayout = Instance.new("UIListLayout", wmCard)
 wmLayout.FillDirection = Enum.FillDirection.Horizontal
 wmLayout.VerticalAlignment = Enum.VerticalAlignment.Center
 wmLayout.Padding = UDim.new(0, 5)
 
-local wmDot = Instance.new("Frame", wmCard)
+wmDot = Instance.new("Frame", wmCard)
 wmDot.Size = UDim2.new(0, 5, 0, 5)
 wmDot.BackgroundColor3 = currentTheme.Accent
 wmDot.BorderSizePixel = 0
 Instance.new("UICorner", wmDot).CornerRadius = UDim.new(1, 0)
 
-local wmTitle = Instance.new("TextLabel", wmCard)
+wmTitle = Instance.new("TextLabel", wmCard)
 wmTitle.AutomaticSize = Enum.AutomaticSize.X
 wmTitle.Size = UDim2.new(0, 0, 1, 0)
 wmTitle.BackgroundTransparency = 1
@@ -844,12 +768,12 @@ wmTitle.TextColor3 = currentTheme.Accent
 wmTitle.TextSize = 9
 wmTitle.Font = Enum.Font.GothamBold
 
-local wmDivider = Instance.new("Frame", wmCard)
+wmDivider = Instance.new("Frame", wmCard)
 wmDivider.Size = UDim2.new(0, 1, 0, 10)
 wmDivider.BackgroundColor3 = currentTheme.Border
 wmDivider.BorderSizePixel = 0
 
-local wmMetrics = Instance.new("TextLabel", wmCard)
+wmMetrics = Instance.new("TextLabel", wmCard)
 wmMetrics.AutomaticSize = Enum.AutomaticSize.X
 wmMetrics.Size = UDim2.new(0, 0, 1, 0)
 wmMetrics.BackgroundTransparency = 1
@@ -858,13 +782,13 @@ wmMetrics.TextColor3 = currentTheme.TextSecondary
 wmMetrics.TextSize = 8.5
 wmMetrics.Font = Enum.Font.GothamBold
 
-local fpsCounter = 0
-local lastFpsUpdate = tick()
+fpsCounter = 0
+lastFpsUpdate = tick()
 
 -- ==========================================
 -- FACTION CHECK & HEALTH CHECK LOGIC
 -- ==========================================
-local function isAlly(plr)
+function isAlly(plr)
     if not plr or plr == player then return false end
     if plr.Team and player.Team then
         return plr.Team == player.Team
@@ -878,13 +802,13 @@ local function isAlly(plr)
     return false
 end
 
-local function isTargetEnemy(plr, char)
+function isTargetEnemy(plr, char)
     if not plr or plr == player then return false end
     if char and char == player.Character then return false end
     return not isAlly(plr)
 end
 
-local function getTargetHitbox(char)
+function getTargetHitbox(char)
     if not char then return nil end
     if bodyAimOnly then
         return char:FindFirstChild("UpperTorso") or char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso")
@@ -898,7 +822,7 @@ local function getTargetHitbox(char)
     end
 end
 
-local function isEntityAlive(char, hum)
+function isEntityAlive(char, hum)
     if not char or not char.Parent or not char:IsDescendantOf(Workspace) then 
         return false 
     end
@@ -929,11 +853,11 @@ end
 -- ==========================================
 -- VISIBILITY CHECK SYSTEM
 -- ==========================================
-local wallRayParams = RaycastParams.new()
+wallRayParams = RaycastParams.new()
 wallRayParams.FilterType = Enum.RaycastFilterType.Exclude
 wallRayParams.IgnoreWater = true
 
-local function isVisibleThroughWalls(targetPart, targetChar)
+function isVisibleThroughWalls(targetPart, targetChar)
     if not camera or not targetPart or not targetChar then return false end
     local myChar = player.Character
     wallRayParams.FilterDescendantsInstances = {myChar, camera}
@@ -951,7 +875,7 @@ end
 -- ==========================================
 -- JUMP CIRCLE RENDER ENGINE
 -- ==========================================
-local function buildJumpRing(segmentCount, radius, thickness)
+function buildJumpRing(segmentCount, radius, thickness)
     local container = Instance.new("Folder")
     container.Name = "JumpCircleContainer"
 
@@ -983,7 +907,7 @@ local function buildJumpRing(segmentCount, radius, thickness)
     return container, segments
 end
 
-local function updateJumpRingLayout(segments, centerPosition, radius)
+function updateJumpRingLayout(segments, centerPosition, radius)
     local n = #segments
     for i, seg in ipairs(segments) do
         local angle = seg.Angle
@@ -998,7 +922,7 @@ local function updateJumpRingLayout(segments, centerPosition, radius)
     end
 end
 
-local function spawnJumpRipple(position)
+function spawnJumpRipple(position)
     if not jumpCircleEnabled then return end
     task.spawn(function()
         local rippleFolder, segments = buildJumpRing(jumpCircleSegmentCount, jumpCircleRadius, 0.3)
@@ -1034,7 +958,7 @@ local function spawnJumpRipple(position)
     end)
 end
 
-local function initJumpCircleForCharacter(char)
+function initJumpCircleForCharacter(char)
     clearActiveJumpCircle()
     if not jumpCircleEnabled or not char then return end
 
@@ -1120,11 +1044,11 @@ end
 -- ==========================================
 -- GRENADE TRAJECTORY CALCULATION ENGINE
 -- ==========================================
-local grenadeRayParams = RaycastParams.new()
+grenadeRayParams = RaycastParams.new()
 grenadeRayParams.FilterType = Enum.RaycastFilterType.Exclude
 grenadeRayParams.IgnoreWater = true
 
-local function isEntityCharacter(inst)
+function isEntityCharacter(inst)
     for _, p in ipairs(Players:GetPlayers()) do
         if p.Character and inst:IsDescendantOf(p.Character) then
             return true
@@ -1133,7 +1057,7 @@ local function isEntityCharacter(inst)
     return false
 end
 
-local function getOrCreateGrenadeUI(nadeInstance)
+function getOrCreateGrenadeUI(nadeInstance)
     if grenadePool[nadeInstance] then return grenadePool[nadeInstance] end
 
     local tag = Instance.new("Frame", grenadeContainer)
@@ -1187,7 +1111,7 @@ local function getOrCreateGrenadeUI(nadeInstance)
     return data
 end
 
-local function renderGrenadeOverlays()
+function renderGrenadeOverlays()
     if not grenadeEspEnabled then
         for _, v in pairs(grenadePool) do
             v.Tag.Visible = false
@@ -1336,11 +1260,11 @@ end
 -- ==========================================
 -- TARGET SELECTION & AIMBOT MATHEMATICS
 -- ==========================================
-local visRayParams = RaycastParams.new()
+visRayParams = RaycastParams.new()
 visRayParams.FilterType = Enum.RaycastFilterType.Exclude
 visRayParams.IgnoreWater = true
 
-local function isTargetVisible(originPos, targetPart, targetChar)
+function isTargetVisible(originPos, targetPart, targetChar)
     if not visibleCheck then return true end
     local myChar = player.Character
     visRayParams.FilterDescendantsInstances = {myChar, camera}
@@ -1352,7 +1276,7 @@ local function isTargetVisible(originPos, targetPart, targetChar)
     return false
 end
 
-local function getClosestTarget()
+function getClosestTarget()
     if not camera then 
         camera = Workspace.CurrentCamera 
         if not camera then return nil end
@@ -1407,11 +1331,11 @@ end
 -- ==========================================
 -- TRIGGERBOT PROCESSING LOGIC
 -- ==========================================
-local triggerRayParams = RaycastParams.new()
+triggerRayParams = RaycastParams.new()
 triggerRayParams.FilterType = Enum.RaycastFilterType.Exclude
 triggerRayParams.IgnoreWater = true
 
-local function runMobileTriggerbot()
+function runMobileTriggerbot()
     if not triggerbotEnabled then return end
     local now = tick()
     if (now - lastTriggerTick) < triggerbotDelay then return end
@@ -1455,7 +1379,7 @@ end
 -- ==========================================
 -- 2D ESP COMPONENT CACHE FACTORY
 -- ==========================================
-local function getOrCreateScreenEsp(plr)
+function getOrCreateScreenEsp(plr)
     if screenEspCache[plr] then return screenEspCache[plr] end
 
     local box = Instance.new("Frame", overlayContainer)
@@ -1579,7 +1503,7 @@ end))
 -- ==========================================
 -- TACTICAL ESP SCREEN RENDER LOOP
 -- ==========================================
-local function renderTacticalOverlay()
+function renderTacticalOverlay()
     local camPos = camera.CFrame.Position
     local allPlayers = Players:GetPlayers()
 
@@ -1766,7 +1690,7 @@ end
 -- ==========================================
 -- 3D ESP ATTACHMENT PIPELINE
 -- ==========================================
-local function attachEspToPlayer(plr)
+function attachEspToPlayer(plr)
     if plr == player then return end
 
     local holder = Instance.new("Folder")
@@ -1864,6 +1788,11 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         end
     end
 
+    if rcsEnabled and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then
+        local rcsComp = (rcsStrength / 100) * 0.005
+        camera.CFrame = camera.CFrame * CFrame.Angles(rcsComp * rcsPitchFactor, 0, 0)
+    end
+
     -- Tracking is toggle-based in the mobile UI. The old build never assigned
     -- isAiming, so the entire aiming branch could remain disabled forever.
     isAiming = aimbotEnabled
@@ -1912,24 +1841,6 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         end
     else
         lockedTarget = nil
-    end
-
-    -- Apply recoil compensation AFTER aimbot so target tracking and recoil
-    -- control do not overwrite each other in the same frame.
-    if noRecoilEnabled and tick() <= noRecoilActiveUntil then
-        local now = tick()
-        local elapsed = math.max(0.001, now - noRecoilLastShot)
-        local shotFactor = math.clamp(elapsed / noRecoilShotInterval, 0.35, 1.35)
-        local strength = math.clamp(noRecoilStrength / 100, 0, 2)
-        local alpha = 1 - math.clamp(noRecoilSmoothing, 0, 0.95)
-        local pitch = 0.005 * strength * noRecoilPitch * shotFactor
-        local yaw = 0.0025 * strength * noRecoilYaw * shotFactor
-
-        camera.CFrame = camera.CFrame * CFrame.Angles(
-            pitch * alpha,
-            yaw * alpha,
-            0
-        )
     end
 
     if butterflyKnifeEnabled then
@@ -2066,11 +1977,11 @@ end))
 -- ==========================================
 -- RAYCAST GROUND CHECK
 -- ==========================================
-local groundRayParams = RaycastParams.new()
+groundRayParams = RaycastParams.new()
 groundRayParams.FilterType = Enum.RaycastFilterType.Exclude
 groundRayParams.IgnoreWater = true
 
-local function isPlayerGrounded(char, hrp)
+function isPlayerGrounded(char, hrp)
     groundRayParams.FilterDescendantsInstances = {char, camera}
     local origin = hrp.Position
     local direction = Vector3.new(0, -3.2, 0)
@@ -2081,7 +1992,7 @@ end
 -- ==========================================
 -- MOBILE INPUT TOUCH HOOK & SLIDE BUTTON
 -- ==========================================
-local function captureDefaultHipHeight(char)
+function captureDefaultHipHeight(char)
     local hum = char and char:FindFirstChildOfClass("Humanoid")
     if hum and hum.Parent then
         defaultHipHeight = hum.HipHeight
@@ -2089,7 +2000,7 @@ local function captureDefaultHipHeight(char)
     end
 end
 
-local function restoreDefaultHipHeight()
+function restoreDefaultHipHeight()
     local char = player.Character
     local hum = char and char:FindFirstChildOfClass("Humanoid")
     if hum then
@@ -2100,7 +2011,7 @@ end
 local mobileSlideDragging = false
 local mobileSlideToggleActive = false
 
-local function positionMobileSlideButton(jumpBtn)
+function positionMobileSlideButton(jumpBtn)
     if not mobileSlideBtn or not jumpBtn then return end
     mobileSlideBtn.Position = UDim2.new(
         jumpBtn.Position.X.Scale,
@@ -2110,7 +2021,7 @@ local function positionMobileSlideButton(jumpBtn)
     )
 end
 
-local function updateMobileSlideIndicator()
+function updateMobileSlideIndicator()
     if not mobileSlideBtn then return end
 
     local stroke = mobileSlideBtn:FindFirstChild("GestioSlideStroke")
@@ -2133,7 +2044,7 @@ local function updateMobileSlideIndicator()
     end
 end
 
-local function updateMobileSlideVisibility()
+function updateMobileSlideVisibility()
     if mobileSlideBtn then
         mobileSlideBtn.Visible = slideEnabled and UserInputService.TouchEnabled
 
@@ -2146,7 +2057,7 @@ local function updateMobileSlideVisibility()
     end
 end
 
-local function triggerMobileSlideStart()
+function triggerMobileSlideStart()
     if not slideEnabled then return false end
 
     local char = player.Character
@@ -2168,7 +2079,7 @@ local function triggerMobileSlideStart()
     return true
 end
 
-local function triggerMobileSlideEnd()
+function triggerMobileSlideEnd()
     isSliding = false
     currentSlideVel = Vector3.zero
 
@@ -2179,7 +2090,7 @@ local function triggerMobileSlideEnd()
     end
 end
 
-local function toggleMobileSlide()
+function toggleMobileSlide()
     if not slideEnabled then return end
 
     if mobileSlideToggleActive then
@@ -2194,7 +2105,7 @@ local function toggleMobileSlide()
     updateMobileSlideIndicator()
 end
 
-local function createMobileSlideButton()
+function createMobileSlideButton()
     if mobileSlideBtn then
         updateMobileSlideVisibility()
         return
@@ -2266,7 +2177,7 @@ local function createMobileSlideButton()
     updateMobileSlideIndicator()
 end
 
-local function hookMobileJumpButton()
+function hookMobileJumpButton()
     task.spawn(function()
         local pGui = player:WaitForChild("PlayerGui", 5)
         if not pGui then return end
@@ -2311,7 +2222,7 @@ end
 createMobileSlideButton()
 hookMobileJumpButton()
 
-local function hookCharacterWeapons(char)
+function hookCharacterWeapons(char)
     if not char then return end
     char.ChildAdded:Connect(function(child)
         if child:IsA("Tool") then
@@ -2509,7 +2420,7 @@ end))
 -- ==========================================
 -- UI SCOPE FIX & DYNAMIC LAYOUT CALCULATION
 -- ==========================================
-local function setAntiAfkEnabled(enabled)
+function setAntiAfkEnabled(enabled)
     antiAfkEnabled = enabled
     if antiAfkConnection then
         pcall(function() antiAfkConnection:Disconnect() end)
@@ -2527,7 +2438,7 @@ local function setAntiAfkEnabled(enabled)
     end)
 end
 
-local function buildGestioUI()
+function buildGestioUI()
 setAntiAfkEnabled(antiAfkEnabled)
 
 -- ==========================================
@@ -2582,7 +2493,7 @@ masterLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 masterLayout.VerticalAlignment = Enum.VerticalAlignment.Center
 masterLayout.Padding = UDim.new(0, 6)
 
-local function toggleMenu() 
+function toggleMenu() 
     masterFrame.Visible = not masterFrame.Visible 
 end
 
@@ -2677,7 +2588,7 @@ logoBtn.ZIndex = 7
 logoBtn.LayoutOrder = 1
 bindTouch(logoBtn, toggleMenu)
 
-local function createNavBtn(order, txt)
+function createNavBtn(order, txt)
     local b = Instance.new("TextButton", sidebar)
     b.Size = UDim2.new(0.88, 0, 0, 19)
     b.BackgroundColor3 = currentTheme.Sidebar
@@ -2701,7 +2612,7 @@ local setsBtn = createNavBtn(8, "SETTINGS")
 cBtn.BackgroundColor3 = currentTheme.CardBg
 cBtn.TextColor3 = currentTheme.Accent
 
-local function makePageContainer()
+function makePageContainer()
     local c = Instance.new("ScrollingFrame", mainFrame)
     c.Size = UDim2.new(1, -84, 1, -12)
     c.Position = UDim2.new(0, 80, 0, 6)
@@ -2725,7 +2636,7 @@ local function makePageContainer()
     return c
 end
 
-local function makeCategorySection(page, title, layoutOrder, cardCount)
+function makeCategorySection(page, title, layoutOrder, cardCount)
     local count = cardCount or 4
     local rows = math.ceil(count / 4)
     local gridHeight = rows * 64
@@ -2769,7 +2680,7 @@ local micsPage = makePageContainer()
 local setsPage = makePageContainer()
 cPage.Visible = true
 
-local function switch(tab)
+function switch(tab)
     cPage.Visible = (tab == "C")
     mPage.Visible = (tab == "M")
     ePage.Visible = (tab == "E")
@@ -2852,7 +2763,7 @@ insContent.ScrollBarThickness = 2
 insContent.CanvasSize = UDim2.new(0, 0, 0, 650)
 insContent.ZIndex = 6
 
-local function addInspectorSlider(y, txt, min, max, cur, isFloat, onChange)
+function addInspectorSlider(y, txt, min, max, cur, isFloat, onChange)
     local lbl = Instance.new("TextLabel", insContent)
     lbl.Size = UDim2.new(0.86, 0, 0, 12)
     lbl.Position = UDim2.new(0.07, 0, 0, y)
@@ -2914,7 +2825,7 @@ local function addInspectorSlider(y, txt, min, max, cur, isFloat, onChange)
     table.insert(connections, trInChanged)
 end
 
-local function addInspectorToggle(y, txt, default, onToggle)
+function addInspectorToggle(y, txt, default, onToggle)
     local f = Instance.new("Frame", insContent)
     f.Size = UDim2.new(0.86, 0, 0, 20)
     f.Position = UDim2.new(0.07, 0, 0, y)
@@ -2957,7 +2868,7 @@ local function addInspectorToggle(y, txt, default, onToggle)
     bindTouch(btn, executeToggle)
 end
 
-local function addInspectorChoice(y, txt, choices, currentChoice, onSelect)
+function addInspectorChoice(y, txt, choices, currentChoice, onSelect)
     local row = Instance.new("Frame", insContent)
     row.Size = UDim2.new(0.86, 0, 0, 28)
     row.Position = UDim2.new(0.07, 0, 0, y)
@@ -3073,7 +2984,7 @@ end
 -- ==========================================
 -- DETAILED INSPECTOR ROUTING
 -- ==========================================
-local function openInspectorFor(moduleName)
+function openInspectorFor(moduleName)
     insHeader.Text = moduleName
     for _, child in pairs(insContent:GetChildren()) do child:Destroy() end
 
@@ -3222,7 +3133,7 @@ end
 -- ==========================================
 -- CARD GENERATOR COMPONENT
 -- ==========================================
-local function addCard(parent, name, defaultState, onToggle)
+function addCard(parent, name, defaultState, onToggle)
     local card = Instance.new("Frame", parent)
     card.Size = UDim2.new(0, 58, 0, 58)
     card.BackgroundColor3 = currentTheme.CardBg
@@ -3296,7 +3207,6 @@ addCard(cAimSection, "Tracking", aimbotEnabled, function(v)
     end
 end)
 addCard(cAimSection, "RCS", rcsEnabled, function(v) rcsEnabled = v end)
-addCard(cAimSection, "No Recoil", noRecoilEnabled, function(v) noRecoilEnabled = v end)
 addCard(cAimSection, "Trigger Assistant", triggerbotEnabled, function(v) triggerbotEnabled = v end)
 addCard(cRageSection, "Anti-Aim", antiAimEnabled, function(v) antiAimEnabled = v end)
 
