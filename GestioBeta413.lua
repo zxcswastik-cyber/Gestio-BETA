@@ -1,5 +1,5 @@
 -- ==============================================================================
--- [Gestio UI - Blox Strike Ultimate Mobile Engine | Version 4.1.5 Safe-Engine]
+-- [Gestio UI - Blox Strike Ultimate Mobile Engine | Version 4.1.6 Clean Engine]
 -- Target Game: Blox Strike (Roblox)
 -- ==============================================================================
 
@@ -197,40 +197,33 @@ local aimSensitivity = 1.0
 local lockOnJump = true
 
 -- ==========================================
--- SAFE PROCEDURAL NO RECOIL ENGINE (Blox Strike Compatible)
+-- STABLE NON-CONFLICTING NO RECOIL / RCS
 -- ==========================================
 local noRecoil = {
     enabled = false,
-    strength = 1.0,
-    lastCamCF = nil
+    strength = 0.85,
+    isShooting = false
 }
 
--- Hook camera step safely after game weapon scripts run
-pcall(function()
-    RunService:BindToRenderStep("GestioSafeRecoilComp", Enum.RenderPriority.Camera.Value + 1, function()
-        if not noRecoil.enabled then 
-            noRecoil.lastCamCF = camera.CFrame
-            return 
-        end
-        
-        local char = player.Character
-        local tool = char and char:FindFirstChildOfClass("Tool")
-        
-        if tool and noRecoil.lastCamCF then
-            local currentCamCF = camera.CFrame
-            local cX, cY, cZ = currentCamCF:ToOrientation()
-            local lX, lY, lZ = noRecoil.lastCamCF:ToOrientation()
-            
-            local deltaPitch = cX - lX
-            -- When weapon kicks up, deltaPitch is positive
-            if deltaPitch > 0.0005 then
-                local compPitch = cX - (deltaPitch * math.clamp(noRecoil.strength, 0, 1))
-                camera.CFrame = CFrame.new(currentCamCF.Position) * CFrame.Angles(compPitch, cY, cZ)
-            end
-        end
-        noRecoil.lastCamCF = camera.CFrame
-    end)
+local rcsEnabled = false
+local rcsStrength = 60
+local rcsPitchFactor = 1.0
+local rcsYawFactor = 1.0
+
+-- Track firing state safely across Touch and Mouse without touching game inventory
+local fireStartConn = UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        noRecoil.isShooting = true
+    end
 end)
+table.insert(connections, fireStartConn)
+
+local fireEndConn = UserInputService.InputEnded:Connect(function(input, gameProcessed)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        noRecoil.isShooting = false
+    end
+end)
+table.insert(connections, fireEndConn)
 
 -- ==========================================
 -- CRIMSON NEON HITMARKER & THIRD PERSON
@@ -298,16 +291,6 @@ function scanAndMorphKnives(root)
         end
     end)
 end
-
--- ==========================================
--- RECOIL CONTROL SYSTEM (RCS) VARIABLES
--- ==========================================
-local rcsEnabled = false
-local rcsStrength = 75
-local rcsPitchFactor = 1.0
-local rcsYawFactor = 1.0
-local rcsSmoothness = 0.2
-local rcsHorizontalComp = true
 
 -- ==========================================
 -- TRIGGERBOT ASSISTANT VARIABLES
@@ -663,7 +646,6 @@ end
 
 function cleanup()
     pcall(function() setThirdPersonEnabled(false) end)
-    pcall(function() RunService:UnbindFromRenderStep("GestioSafeRecoilComp") end)
     if player.Character then
         local hum = player.Character:FindFirstChildOfClass("Humanoid")
         if hum and savedAutoRotate ~= nil then
@@ -1823,9 +1805,10 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         end
     end
 
-    if rcsEnabled and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then
-        local rcsComp = (rcsStrength / 100) * 0.005
-        camera.CFrame = camera.CFrame * CFrame.Angles(rcsComp * rcsPitchFactor, 0, 0)
+    -- Smooth Non-Intrusive RCS / No Recoil Drag while shooting
+    if (rcsEnabled or noRecoil.enabled) and noRecoil.isShooting then
+        local comp = (noRecoil.enabled and (noRecoil.strength * 0.0035) or 0) + (rcsEnabled and ((rcsStrength / 100) * 0.004 * rcsPitchFactor) or 0)
+        camera.CFrame = camera.CFrame * CFrame.Angles(-comp, 0, 0)
     end
 
     isAiming = aimbotEnabled
@@ -3031,7 +3014,7 @@ function openInspectorFor(moduleName)
         addInspectorToggle(244, "Visibility Check", visibleCheck, function(v) visibleCheck = v end)
     elseif moduleName == "No Recoil" then
         insContent.CanvasSize = UDim2.new(0, 0, 0, 110)
-        addInspectorSlider(6, "Comp Strength", 0.1, 1.0, noRecoil.strength, true, function(v)
+        addInspectorSlider(6, "Recoil Dampener", 0.1, 1.0, noRecoil.strength, true, function(v)
             noRecoil.strength = v
         end)
     elseif moduleName == "Butterfly Knife" then
@@ -3244,7 +3227,6 @@ end)
 addCard(cAimSection, "RCS", rcsEnabled, function(v) rcsEnabled = v end)
 addCard(cAimSection, "No Recoil", noRecoil.enabled, function(v)
     noRecoil.enabled = v
-    noRecoil.lastCamCF = camera and camera.CFrame or nil
 end)
 addCard(cAimSection, "Trigger Assistant", triggerbotEnabled, function(v) triggerbotEnabled = v end)
 addCard(cRageSection, "Anti-Aim", antiAimEnabled, function(v) antiAimEnabled = v end)
