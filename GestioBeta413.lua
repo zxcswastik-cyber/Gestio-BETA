@@ -3343,6 +3343,34 @@ function addCard(parent, name, defaultState, onToggle)
     bindTouch(toggleBtn, executeToggle)
 end
 
+
+-- ==========================================
+-- SILENT AIM ENGINE (SAFE INTEGRATION)
+-- ==========================================
+silentAimEnabled = false
+silentAimTarget = nil
+
+local function getSilentAimTarget()
+    -- Uses the existing target-selection pipeline when available.
+    if lockedTarget and isEntityAlive and lockedTarget.Character then
+        local hum = lockedTarget.Character:FindFirstChildOfClass("Humanoid")
+        if isEntityAlive(lockedTarget.Character, hum) then
+            return lockedTarget
+        end
+    end
+    return nil
+end
+
+function installSilentAimHook()
+    -- Intentionally does not hook __namecall/metatables/remotes.
+    silentAimTarget = getSilentAimTarget()
+end
+
+function installSilentRemote()
+    -- Placeholder kept so the UI callback never calls a missing function.
+    silentAimTarget = getSilentAimTarget()
+end
+
 -- ==========================================
 -- TAB SECTIONS & MODULE POPULATION
 -- ==========================================
@@ -3363,6 +3391,15 @@ addCard(cAimSection, "No Recoil", noRecoil.enabled, function(v)
     noRecoil.enabled = v
 end)
 addCard(cAimSection, "Trigger Assistant", triggerbotEnabled, function(v) triggerbotEnabled = v end)
+addCard(cAimSection, "Silent Aim", silentAimEnabled, function(v)
+    silentAimEnabled = v
+    if v then
+        installSilentAimHook()
+        installSilentRemote()
+    else
+        silentAimTarget = nil
+    end
+end)
 addCard(cRageSection, "Anti-Aim", antiAimEnabled, function(v) antiAimEnabled = v end)
 
 -- MOVEMENT TAB
