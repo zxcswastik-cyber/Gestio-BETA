@@ -13,16 +13,16 @@ end)
 -- ==========================================
 -- SYSTEM SERVICES IMPORT
 -- ==========================================
-Players = game:GetService("Players")
-RunService = game:GetService("RunService")
-TweenService = game:GetService("TweenService")
-UserInputService = game:GetService("UserInputService")
-CoreGui = game:GetService("CoreGui")
-Lighting = game:GetService("Lighting")
-Workspace = game:GetService("Workspace")
-Stats = game:GetService("Stats")
-ReplicatedStorage = game:GetService("ReplicatedStorage")
-VirtualInputManager = nil
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
+local Lighting = game:GetService("Lighting")
+local Workspace = game:GetService("Workspace")
+local Stats = game:GetService("Stats")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local VirtualInputManager = nil
 pcall(function()
     VirtualInputManager = game:GetService("VirtualInputManager")
 end)
@@ -30,7 +30,7 @@ end)
 -- ==========================================
 -- CLIENT ENVIRONMENT VALIDATION
 -- ==========================================
-player = Players.LocalPlayer
+local player = Players.LocalPlayer
 if not player then
     local startWait = tick()
     while not player and (tick() - startWait) < 5 do
@@ -42,7 +42,7 @@ if not player then
     end
 end
 
-camera = Workspace.CurrentCamera or Workspace:FindFirstChildOfClass("Camera")
+local camera = Workspace.CurrentCamera or Workspace:FindFirstChildOfClass("Camera")
 
 function getSafeGui()
     local success, result = pcall(function()
@@ -63,7 +63,7 @@ function getSafeGui()
     return nil
 end
 
-targetGui = getSafeGui()
+local targetGui = getSafeGui()
 if not targetGui and player then
     pcall(function() targetGui = player:WaitForChild("PlayerGui", 5) end)
 end
@@ -71,29 +71,29 @@ if not targetGui then
     warn("[Gestio] GUI initialization failed: no valid GUI parent")
     return
 end
-connections = {}
-activeEspHolders = {}
-screenEspCache = {}
-activeTracersCache = {}
-activeHeadDotsCache = {}
-mobileSlideInputActive = false
-mobileSlideInput = nil
-mobileJumpHookedButton = nil
-mobileJumpConnections = {}
-skinScanAccumulator = 0
-savedAutoRotate = nil
-hitmarkerSerial = 0
-antiAfkEnabled = true
-antiAfkConnection = nil
+local connections = {}
+local activeEspHolders = {}
+local screenEspCache = {}
+local activeTracersCache = {}
+local activeHeadDotsCache = {}
+local mobileSlideInputActive = false
+local mobileSlideInput = nil
+local mobileJumpHookedButton = nil
+local mobileJumpConnections = {}
+local skinScanAccumulator = 0
+local savedAutoRotate = nil
+local hitmarkerSerial = 0
+local antiAfkEnabled = true
+local antiAfkConnection = nil
 
-genv = (type(getgenv) == "function") and getgenv() or nil
+local genv = (type(getgenv) == "function") and getgenv() or nil
 if genv and not genv.GestioSavedPos then
     genv.GestioSavedPos = {
         OpenBtn = UDim2.new(0.5, -45, 0, 15),
         MainFrame = UDim2.new(0.5, 0, 0.5, 0)
     }
 end
-savedPos = (genv and genv.GestioSavedPos) or {
+local savedPos = (genv and genv.GestioSavedPos) or {
     OpenBtn = UDim2.new(0.5, -45, 0, 15),
     MainFrame = UDim2.new(0.5, 0, 0.5, 0)
 }
@@ -101,7 +101,7 @@ savedPos = (genv and genv.GestioSavedPos) or {
 -- ==========================================
 -- EXTENDED THEME & PALETTE SYSTEM
 -- ==========================================
-themeLibrary = {
+local themeLibrary = {
     ["Charcoal Crimson"] = {
         Name = "Charcoal Crimson",
         Background = Color3.fromRGB(24, 25, 28),
@@ -170,52 +170,52 @@ themeLibrary = {
     }
 }
 
-currentTheme = themeLibrary["Charcoal Crimson"]
+local currentTheme = themeLibrary["Charcoal Crimson"]
 
 -- ==========================================
 -- COMBAT ENGINE STATE VARIABLES
 -- ==========================================
-aimbotEnabled = false
-aimbotSpeed = 35.0
-aimbotSmoothness = 0.15
-aimFov = 160
-showFovCircle = true
-snapAimMode = false
-isAiming = false
-lockedTarget = nil
-aimboneIndex = 1
-targetSwitchDelay = 0.05
-shotDelay = 0.0
-hitChance = 85
-minDamage = 15
-bodyAimOnly = false
-autoWallCheck = false
-predictionEnabled = true
-predictionFactor = 0.135
-visibleCheck = false
-aimSensitivity = 1.0
-lockOnJump = true
+local aimbotEnabled = false
+local aimbotSpeed = 35.0
+local aimbotSmoothness = 0.15
+local aimFov = 160
+local showFovCircle = true
+local snapAimMode = false
+local isAiming = false
+local lockedTarget = nil
+local aimboneIndex = 1
+local targetSwitchDelay = 0.05
+local shotDelay = 0.0
+local hitChance = 85
+local minDamage = 15
+local bodyAimOnly = false
+local autoWallCheck = false
+local predictionEnabled = true
+local predictionFactor = 0.135
+local visibleCheck = false
+local aimSensitivity = 1.0
+local lockOnJump = true
 
 -- ==========================================
 -- CRIMSON NEON HITMARKER & THIRD PERSON
 -- ==========================================
-hitmarkerEnabled = false
-hitmarkerDuration = 0.28
-hitmarkerSize = 13
-hitmarkerThickness = 2
-hitmarkerGlow = true
-hitmarkerLastHealth = {}
-hitmarkerBusy = false
-thirdPersonEnabled = false
-thirdPersonDistance = 12
-thirdPersonHeight = 1.5
-thirdPersonPreviousOffset = nil
+local hitmarkerEnabled = false
+local hitmarkerDuration = 0.28
+local hitmarkerSize = 13
+local hitmarkerThickness = 2
+local hitmarkerGlow = true
+local hitmarkerLastHealth = {}
+local hitmarkerBusy = false
+local thirdPersonEnabled = false
+local thirdPersonDistance = 12
+local thirdPersonHeight = 1.5
+local thirdPersonPreviousOffset = nil
 
 -- ==========================================
 -- SKINS & WEAPON MODS ENGINE
 -- ==========================================
-butterflyKnifeEnabled = false
-butterflySkin = "Fade"
+local butterflyKnifeEnabled = false
+local butterflySkin = "Fade"
 
 function hookBloxStrikeModules()
     pcall(function()
@@ -266,166 +266,149 @@ end
 -- ==========================================
 -- RECOIL CONTROL SYSTEM (RCS) VARIABLES
 -- ==========================================
-rcsEnabled = false
-rcsStrength = 75
-rcsPitchFactor = 1.0
-rcsYawFactor = 1.0
-rcsSmoothness = 0.2
-rcsHorizontalComp = true
-rcsBurstOnly = false
-rcsRandomize = true
+local rcsEnabled = false
+local rcsStrength = 75
+local rcsPitchFactor = 1.0
+local rcsYawFactor = 1.0
+local rcsSmoothness = 0.2
+local rcsHorizontalComp = true
+local rcsBurstOnly = false
+local rcsRandomize = true
 
 -- ==========================================
--- NO RECOIL (CAMERA STABILIZER)
+-- NO RECOIL (COMPACT / SAFE INTEGRATION)
 -- ==========================================
+-- Kept intentionally small so the working injection architecture remains intact.
 noRecoilEnabled = false
 noRecoilStrength = 1.0
-noRecoilWindow = 0.12
-noRecoilSmoothness = 0.65
+noRecoilWindow = 0.10
 noRecoilLastShot = 0
 noRecoilReference = nil
-noRecoilConnections = {}
-noRecoilHookedTools = {}
+noRecoilToolConnections = {}
 
-function markNoRecoilShot()
+function noRecoilMarkShot()
     if not noRecoilEnabled then return end
     local cam = Workspace.CurrentCamera or camera
     if cam then
         noRecoilReference = cam.CFrame
-        noRecoilLastShot = tick()
+        noRecoilLastShot = os.clock()
     end
 end
 
-function hookNoRecoilTool(tool)
-    if not tool or not tool:IsA("Tool") or noRecoilHookedTools[tool] then return end
-    noRecoilHookedTools[tool] = true
-    local conn = tool.Activated:Connect(markNoRecoilShot)
-    noRecoilConnections[tool] = conn
+function noRecoilHookTool(tool)
+    if not tool or not tool:IsA("Tool") or noRecoilToolConnections[tool] then return end
+    local conn = tool.Activated:Connect(noRecoilMarkShot)
+    noRecoilToolConnections[tool] = conn
     table.insert(connections, conn)
-    tool.AncestryChanged:Connect(function(_, parent)
-        if parent == nil then
-            noRecoilHookedTools[tool] = nil
-            noRecoilConnections[tool] = nil
-        end
-    end)
 end
 
-function hookNoRecoilCharacter(char)
+function noRecoilHookCharacter(char)
     if not char then return end
     for _, obj in ipairs(char:GetChildren()) do
-        if obj:IsA("Tool") then hookNoRecoilTool(obj) end
+        if obj:IsA("Tool") then noRecoilHookTool(obj) end
     end
-    char.ChildAdded:Connect(function(obj)
-        if obj:IsA("Tool") then hookNoRecoilTool(obj) end
+    local conn = char.ChildAdded:Connect(function(obj)
+        if obj:IsA("Tool") then noRecoilHookTool(obj) end
     end)
+    table.insert(connections, conn)
 end
 
-function hookNoRecoilBackpack()
-    local backpack = player and player:FindFirstChildOfClass("Backpack")
-    if not backpack then return end
-    for _, obj in ipairs(backpack:GetChildren()) do
-        if obj:IsA("Tool") then hookNoRecoilTool(obj) end
-    end
-    backpack.ChildAdded:Connect(function(obj)
-        if obj:IsA("Tool") then hookNoRecoilTool(obj) end
-    end)
-end
 
 -- ==========================================
 -- TRIGGERBOT ASSISTANT VARIABLES
 -- ==========================================
-triggerbotEnabled = false
-triggerbotDelay = 0.02
-triggerbotHeadOnly = false
-triggerbotMobileAutoFire = true
-lastTriggerTick = 0
+local triggerbotEnabled = false
+local triggerbotDelay = 0.02
+local triggerbotHeadOnly = false
+local triggerbotMobileAutoFire = true
+local lastTriggerTick = 0
 
 -- ==========================================
 -- RAGE & ANTI-AIM (SPINBOT) VARIABLES
 -- ==========================================
-antiAimEnabled = false
-spinSpeed = 50
-currentSpinAngle = 0
-antiAimYawMode = "Spin"
+local antiAimEnabled = false
+local spinSpeed = 50
+local currentSpinAngle = 0
+local antiAimYawMode = "Spin"
 
 -- ==========================================
 -- MOVEMENT, BHOP & SLIDE VARIABLES
 -- ==========================================
-bunnyHopEnabled = false
-bhopAutoJump = false
-bhopAirStrafe = true
-bhopSpeedBoost = 1.35
-bhopJumpPower = 52
-isMobileJumpHeld = false
-lastMoveDirection = Vector3.zero
+local bunnyHopEnabled = false
+local bhopAutoJump = false
+local bhopAirStrafe = true
+local bhopSpeedBoost = 1.35
+local bhopJumpPower = 52
+local isMobileJumpHeld = false
+local lastMoveDirection = Vector3.zero
 
-slideEnabled = false
-isSliding = false
-slideSpeedBoost = 1.8
-slideFriction = 0.94
-slideMinSpeed = 16
-currentSlideVel = Vector3.zero
-defaultHipHeight = 2.0
-defaultHipHeightCaptured = false
+local slideEnabled = false
+local isSliding = false
+local slideSpeedBoost = 1.8
+local slideFriction = 0.94
+local slideMinSpeed = 16
+local currentSlideVel = Vector3.zero
+local defaultHipHeight = 2.0
+local defaultHipHeightCaptured = false
 
-speedEnabled = false
-walkMultiplier = 2.0
+local speedEnabled = false
+local walkMultiplier = 2.0
 
-flightEnabled = false
-flightSpeed = 50
+local flightEnabled = false
+local flightSpeed = 50
 
 -- ==========================================
 -- VISUALS & ESP CONFIGURATION VARIABLES
 -- ==========================================
-nametagsEnabled = false
-espMaxDist = 3000
-espShowDistance = true
-espShowHealth = true
-espTextSize = 8.5
-tagTransparency = 0.25
-tagBgColor = Color3.fromRGB(16, 17, 20)
-tagOffsetY = 2.6
-tagShowWeapon = true
+local nametagsEnabled = false
+local espMaxDist = 3000
+local espShowDistance = true
+local espShowHealth = true
+local espTextSize = 8.5
+local tagTransparency = 0.25
+local tagBgColor = Color3.fromRGB(16, 17, 20)
+local tagOffsetY = 2.6
+local tagShowWeapon = true
 
-boxEspEnabled = false
-cornerBoxEnabled = false
-boxThickness = 1.0
-healthBarEnabled = true
+local boxEspEnabled = false
+local cornerBoxEnabled = false
+local boxThickness = 1.0
+local healthBarEnabled = true
 
-highlightEnabled = false
-headDotEnabled = false
-tracersEnabled = false
+local highlightEnabled = false
+local headDotEnabled = false
+local tracersEnabled = false
 
-grenadeEspEnabled = false
-showGrenadePath = true
-showMolotovRadius = true
-showSmokeRadius = true
-grenadeMaxDist = 1500
+local grenadeEspEnabled = false
+local showGrenadePath = true
+local showMolotovRadius = true
+local showSmokeRadius = true
+local grenadeMaxDist = 1500
 
 -- ==========================================
 -- JUMP CIRCLE CONFIGURATION VARIABLES
 -- ==========================================
-jumpCircleEnabled = false
-jumpCircleStyle = "GradientWave"
-jumpCircleSegmentCount = 32
-jumpCircleRadius = 3.5
-jumpCircleHeightOffset = -2.8
-activeJumpCircleData = nil
+local jumpCircleEnabled = false
+local jumpCircleStyle = "GradientWave"
+local jumpCircleSegmentCount = 32
+local jumpCircleRadius = 3.5
+local jumpCircleHeightOffset = -2.8
+local activeJumpCircleData = nil
 
 -- ==========================================
 -- ENVIRONMENT & LIGHTING VARIABLES
 -- ==========================================
-antiFlashEnabled = true
-fullBrightEnabled = false
-removeFogEnabled = true
+local antiFlashEnabled = true
+local fullBrightEnabled = false
+local removeFogEnabled = true
 
-nightModeEnabled = false
-nightPreset = "Midnight"
-nightClockTime = 0.0
-nightBrightness = 0.2
-nightOutdoorAmbient = Color3.fromRGB(25, 25, 40)
+local nightModeEnabled = false
+local nightPreset = "Midnight"
+local nightClockTime = 0.0
+local nightBrightness = 0.2
+local nightOutdoorAmbient = Color3.fromRGB(25, 25, 40)
 
-nightPresets = {
+local nightPresets = {
     ["Midnight"] = {
         ClockTime = 0.0,
         Brightness = 0.2,
@@ -470,7 +453,7 @@ nightPresets = {
     }
 }
 
-defaultLighting = {
+local defaultLighting = {
     Brightness = Lighting.Brightness,
     ClockTime = Lighting.ClockTime,
     GlobalShadows = Lighting.GlobalShadows,
@@ -505,14 +488,14 @@ mobileSlideBtn = nil
 -- ==========================================
 -- CRIMSON NEON HITMARKER UI
 -- ==========================================
-hitmarkerGui = Instance.new("ScreenGui")
+local hitmarkerGui = Instance.new("ScreenGui")
 hitmarkerGui.Name = "GestioHitmarkerGui"
 hitmarkerGui.ResetOnSpawn = false
 hitmarkerGui.IgnoreGuiInset = true
 hitmarkerGui.DisplayOrder = 60
 hitmarkerGui.Parent = mainContainer
 
-hitmarkerCenter = Instance.new("Frame")
+local hitmarkerCenter = Instance.new("Frame")
 hitmarkerCenter.Name = "Center"
 hitmarkerCenter.AnchorPoint = Vector2.new(0.5, 0.5)
 hitmarkerCenter.Position = UDim2.new(0.5, 0, 0.5, 0)
@@ -521,7 +504,7 @@ hitmarkerCenter.BackgroundTransparency = 1
 hitmarkerCenter.Visible = false
 hitmarkerCenter.Parent = hitmarkerGui
 
-hitmarkerLines = {}
+local hitmarkerLines = {}
 for i, rotation in ipairs({45, -45, 135, -135}) do
     local line = Instance.new("Frame")
     line.Name = "Line" .. i
@@ -1812,15 +1795,6 @@ for _, v in pairs(Players:GetPlayers()) do attachEspToPlayer(v) end
 table.insert(connections, Players.PlayerAdded:Connect(attachEspToPlayer))
 
 -- ==========================================
--- NO RECOIL TOOL HOOKS
--- ==========================================
-hookNoRecoilBackpack()
-if player.Character then hookNoRecoilCharacter(player.Character) end
-table.insert(connections, player.CharacterAdded:Connect(function(char)
-    task.defer(function() hookNoRecoilCharacter(char) end)
-end))
-
--- ==========================================
 -- MAIN ENGINE RENDER LOOP
 -- ==========================================
 table.insert(connections, RunService.RenderStepped:Connect(function(dt)
@@ -1856,6 +1830,17 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     if rcsEnabled and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then
         local rcsComp = (rcsStrength / 100) * 0.005
         camera.CFrame = camera.CFrame * CFrame.Angles(rcsComp * rcsPitchFactor, 0, 0)
+    end
+
+    -- No Recoil is deliberately applied after tracking/RCS so it does not fight Aimbot.
+    if noRecoilEnabled and noRecoilReference then
+        local age = os.clock() - noRecoilLastShot
+        if age <= noRecoilWindow then
+            local alpha = math.clamp(noRecoilStrength * (1 - age / math.max(noRecoilWindow, 0.01)), 0.05, 1)
+            camera.CFrame = camera.CFrame:Lerp(noRecoilReference, alpha)
+        else
+            noRecoilReference = nil
+        end
     end
 
     -- Tracking is toggle-based in the mobile UI. The old build never assigned
@@ -1906,29 +1891,6 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         end
     else
         lockedTarget = nil
-    end
-
-    -- No Recoil runs AFTER tracking so it never overwrites the aimbot's
-    -- final camera direction. When tracking is enabled, stabilize toward the
-    -- current target aim point; otherwise return toward the pre-shot camera.
-    if noRecoilEnabled and noRecoilReference and (tick() - noRecoilLastShot) <= noRecoilWindow then
-        local elapsed = tick() - noRecoilLastShot
-        local t = math.clamp((elapsed / math.max(noRecoilWindow, 0.01)) * noRecoilStrength, 0, 1)
-        local targetCFrame = noRecoilReference
-
-        if aimbotEnabled and isAiming and lockedTarget and lockedTarget.Part and lockedTarget.Part.Parent then
-            local aimPos = lockedTarget.Part.Position
-            if predictionEnabled then
-                local velocity = lockedTarget.Part.AssemblyLinearVelocity
-                if velocity then aimPos += velocity * predictionFactor end
-            end
-            targetCFrame = CFrame.lookAt(camera.CFrame.Position, aimPos)
-        end
-
-        local alpha = math.clamp((1 - noRecoilSmoothness) * (1 - t) + 0.08, 0.03, 0.35)
-        camera.CFrame = camera.CFrame:Lerp(targetCFrame, alpha)
-    elseif noRecoilReference and (tick() - noRecoilLastShot) > noRecoilWindow then
-        noRecoilReference = nil
     end
 
     if butterflyKnifeEnabled then
@@ -2096,8 +2058,8 @@ function restoreDefaultHipHeight()
     end
 end
 
-mobileSlideDragging = false
-mobileSlideToggleActive = false
+local mobileSlideDragging = false
+local mobileSlideToggleActive = false
 
 function positionMobileSlideButton(jumpBtn)
     if not mobileSlideBtn or not jumpBtn then return end
@@ -2353,12 +2315,21 @@ if player.Character then
     hookCharacterWeapons(player.Character)
 end
 
-jumpReqConn = UserInputService.JumpRequest:Connect(function()
+if player.Character then
+    noRecoilHookCharacter(player.Character)
+end
+
+table.insert(connections, player.CharacterAdded:Connect(function(char)
+    noRecoilHookCharacter(char)
+end))
+
+
+local jumpReqConn = UserInputService.JumpRequest:Connect(function()
     isMobileJumpHeld = true
 end)
 table.insert(connections, jumpReqConn)
 
-inBeganConn = UserInputService.InputBegan:Connect(function(input, processed)
+local inBeganConn = UserInputService.InputBegan:Connect(function(input, processed)
     if input.KeyCode == Enum.KeyCode.Space then
         isMobileJumpHeld = true
     end
@@ -2378,7 +2349,7 @@ inBeganConn = UserInputService.InputBegan:Connect(function(input, processed)
 end)
 table.insert(connections, inBeganConn)
 
-inEndedConn = UserInputService.InputEnded:Connect(function(input, processed)
+local inEndedConn = UserInputService.InputEnded:Connect(function(input, processed)
     if input.KeyCode == Enum.KeyCode.Space then
         isMobileJumpHeld = false
     end
@@ -2532,14 +2503,14 @@ setAntiAfkEnabled(antiAfkEnabled)
 -- ==========================================
 -- FLOATING UI LAUNCHER
 -- ==========================================
-toggleGui = Instance.new("ScreenGui")
+local toggleGui = Instance.new("ScreenGui")
 toggleGui.Name = "GestioToggleGui"
 toggleGui.ResetOnSpawn = false
 toggleGui.DisplayOrder = 100
 toggleGui.IgnoreGuiInset = true
 toggleGui.Parent = targetGui
 
-openBtn = Instance.new("TextButton", toggleGui)
+local openBtn = Instance.new("TextButton", toggleGui)
 openBtn.Size = UDim2.new(0, 85, 0, 30)
 openBtn.Position = savedPos.OpenBtn
 openBtn.BackgroundColor3 = currentTheme.Background
@@ -2551,31 +2522,31 @@ openBtn.Active = true
 openBtn.AutoButtonColor = false
 openBtn.ZIndex = 100
 Instance.new("UICorner", openBtn).CornerRadius = UDim.new(0, 6)
-openStroke = Instance.new("UIStroke", openBtn)
+local openStroke = Instance.new("UIStroke", openBtn)
 openStroke.Color = currentTheme.Border
 
 -- ==========================================
 -- MASTER VIEWPORT WINDOW
 -- ==========================================
-screenGui = Instance.new("ScreenGui")
+local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "GestioScreenGui"
 screenGui.ResetOnSpawn = false
 screenGui.DisplayOrder = 50
 screenGui.IgnoreGuiInset = true
 screenGui.Parent = targetGui
 
-masterFrame = Instance.new("Frame", screenGui)
+local masterFrame = Instance.new("Frame", screenGui)
 masterFrame.AnchorPoint = Vector2.new(0.5, 0.5)
 masterFrame.Size = UDim2.new(0.90, 0, 0.82, 0)
 masterFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
 masterFrame.BackgroundTransparency = 1
 masterFrame.Visible = true
 
-sizeConstraint = Instance.new("UISizeConstraint", masterFrame)
+local sizeConstraint = Instance.new("UISizeConstraint", masterFrame)
 sizeConstraint.MaxSize = Vector2.new(740, 320)
 sizeConstraint.MinSize = Vector2.new(300, 200)
 
-masterLayout = Instance.new("UIListLayout", masterFrame)
+local masterLayout = Instance.new("UIListLayout", masterFrame)
 masterLayout.FillDirection = Enum.FillDirection.Horizontal
 masterLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 masterLayout.VerticalAlignment = Enum.VerticalAlignment.Center
@@ -2585,8 +2556,8 @@ function toggleMenu()
     masterFrame.Visible = not masterFrame.Visible 
 end
 
-btnDrag, btnStartPos, btnInputStart = false, nil, nil
-bInBegan = openBtn.InputBegan:Connect(function(input)
+local btnDrag, btnStartPos, btnInputStart = false, nil, nil
+local bInBegan = openBtn.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         btnDrag = true
         btnStartPos = openBtn.Position
@@ -2595,7 +2566,7 @@ bInBegan = openBtn.InputBegan:Connect(function(input)
 end)
 table.insert(connections, bInBegan)
 
-bInChanged = UserInputService.InputChanged:Connect(function(input)
+local bInChanged = UserInputService.InputChanged:Connect(function(input)
     if btnDrag and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
         local delta = input.Position - btnInputStart
         local newPos = UDim2.new(btnStartPos.X.Scale, btnStartPos.X.Offset + delta.X, btnStartPos.Y.Scale, btnStartPos.Y.Offset + delta.Y)
@@ -2606,7 +2577,7 @@ bInChanged = UserInputService.InputChanged:Connect(function(input)
 end)
 table.insert(connections, bInChanged)
 
-bInEnded = UserInputService.InputEnded:Connect(function(input)
+local bInEnded = UserInputService.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         if btnDrag then
             btnDrag = false
@@ -2618,20 +2589,20 @@ bInEnded = UserInputService.InputEnded:Connect(function(input)
 end)
 table.insert(connections, bInEnded)
 
-mainFrame = Instance.new("Frame", masterFrame)
+local mainFrame = Instance.new("Frame", masterFrame)
 mainFrame.Size = UDim2.new(0.58, 0, 1, 0)
 mainFrame.BackgroundColor3 = currentTheme.Background
 mainFrame.BorderSizePixel = 0
 mainFrame.ZIndex = 5
 Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 8)
-mainStroke = Instance.new("UIStroke", mainFrame)
+local mainStroke = Instance.new("UIStroke", mainFrame)
 mainStroke.Color = currentTheme.Border
 
-bgGridFolder = Instance.new("Folder", mainFrame)
+local bgGridFolder = Instance.new("Folder", mainFrame)
 bgGridFolder.Name = "GestioBackgroundGrid"
 
-gridRows = 12
-gridCols = 22
+local gridRows = 12
+local gridCols = 22
 for r = 0, gridRows - 1 do
     for c = 0, gridCols - 1 do
         local square = Instance.new("Frame", bgGridFolder)
@@ -2645,7 +2616,7 @@ for r = 0, gridRows - 1 do
     end
 end
 
-sidebar = Instance.new("ScrollingFrame", mainFrame)
+local sidebar = Instance.new("ScrollingFrame", mainFrame)
 sidebar.Size = UDim2.new(0, 75, 1, -8)
 sidebar.Position = UDim2.new(0, 4, 0, 4)
 sidebar.BackgroundColor3 = currentTheme.Sidebar
@@ -2655,17 +2626,17 @@ sidebar.ScrollBarThickness = 0
 sidebar.CanvasSize = UDim2.new(0, 0, 0, 250)
 Instance.new("UICorner", sidebar).CornerRadius = UDim.new(0, 8)
 
-sbLayout = Instance.new("UIListLayout", sidebar)
+local sbLayout = Instance.new("UIListLayout", sidebar)
 sbLayout.FillDirection = Enum.FillDirection.Vertical
 sbLayout.SortOrder = Enum.SortOrder.LayoutOrder
 sbLayout.Padding = UDim.new(0, 3)
 sbLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
-sbPad = Instance.new("UIPadding", sidebar)
+local sbPad = Instance.new("UIPadding", sidebar)
 sbPad.PaddingTop = UDim.new(0, 4)
 sbPad.PaddingBottom = UDim.new(0, 4)
 
-logoBtn = Instance.new("TextButton", sidebar)
+local logoBtn = Instance.new("TextButton", sidebar)
 logoBtn.Size = UDim2.new(0.9, 0, 0, 24)
 logoBtn.BackgroundTransparency = 1
 logoBtn.Text = "Gestio"
@@ -2690,13 +2661,13 @@ function createNavBtn(order, txt)
     return b
 end
 
-cBtn = createNavBtn(2, "COMBAT")
-mBtn = createNavBtn(3, "MOVEMENT")
-eBtn = createNavBtn(4, "ESP")
-sBtn = createNavBtn(5, "SKINS")
-envBtn = createNavBtn(6, "ENV")
-micsBtn = createNavBtn(7, "MICS")
-setsBtn = createNavBtn(8, "SETTINGS")
+local cBtn = createNavBtn(2, "COMBAT")
+local mBtn = createNavBtn(3, "MOVEMENT")
+local eBtn = createNavBtn(4, "ESP")
+local sBtn = createNavBtn(5, "SKINS")
+local envBtn = createNavBtn(6, "ENV")
+local micsBtn = createNavBtn(7, "MICS")
+local setsBtn = createNavBtn(8, "SETTINGS")
 cBtn.BackgroundColor3 = currentTheme.CardBg
 cBtn.TextColor3 = currentTheme.Accent
 
@@ -2759,13 +2730,13 @@ function makeCategorySection(page, title, layoutOrder, cardCount)
     return gridFrame
 end
 
-cPage = makePageContainer()
-mPage = makePageContainer()
-ePage = makePageContainer()
-sPage = makePageContainer()
-envPage = makePageContainer()
-micsPage = makePageContainer()
-setsPage = makePageContainer()
+local cPage = makePageContainer()
+local mPage = makePageContainer()
+local ePage = makePageContainer()
+local sPage = makePageContainer()
+local envPage = makePageContainer()
+local micsPage = makePageContainer()
+local setsPage = makePageContainer()
 cPage.Visible = true
 
 function switch(tab)
@@ -2796,16 +2767,16 @@ bindTouch(setsBtn, function() switch("SETS") end)
 -- ==========================================
 -- RIGHT INSPECTOR FRAMEWORK
 -- ==========================================
-inspectorPanel = Instance.new("Frame", masterFrame)
+local inspectorPanel = Instance.new("Frame", masterFrame)
 inspectorPanel.Size = UDim2.new(0.40, 0, 1, 0)
 inspectorPanel.BackgroundColor3 = currentTheme.Background
 inspectorPanel.BorderSizePixel = 0
 inspectorPanel.ZIndex = 5
 Instance.new("UICorner", inspectorPanel).CornerRadius = UDim.new(0, 8)
-insStroke = Instance.new("UIStroke", inspectorPanel)
+local insStroke = Instance.new("UIStroke", inspectorPanel)
 insStroke.Color = currentTheme.Border
 
-insGridFolder = Instance.new("Folder", inspectorPanel)
+local insGridFolder = Instance.new("Folder", inspectorPanel)
 insGridFolder.Name = "GestioInspectorGrid"
 for r = 0, gridRows - 1 do
     for c = 0, 12 do
@@ -2820,7 +2791,7 @@ for r = 0, gridRows - 1 do
     end
 end
 
-insHeader = Instance.new("TextLabel", inspectorPanel)
+local insHeader = Instance.new("TextLabel", inspectorPanel)
 insHeader.Size = UDim2.new(1, -38, 0, 26)
 insHeader.Position = UDim2.new(0, 10, 0, 4)
 insHeader.BackgroundTransparency = 1
@@ -2831,7 +2802,7 @@ insHeader.Font = Enum.Font.GothamBold
 insHeader.TextXAlignment = Enum.TextXAlignment.Left
 insHeader.ZIndex = 6
 
-closeBtn = Instance.new("TextButton", inspectorPanel)
+local closeBtn = Instance.new("TextButton", inspectorPanel)
 closeBtn.Size = UDim2.new(0, 18, 0, 18)
 closeBtn.Position = UDim2.new(1, -22, 0, 6)
 closeBtn.BackgroundColor3 = currentTheme.CardBg
@@ -2843,7 +2814,7 @@ closeBtn.ZIndex = 7
 Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 4)
 bindTouch(closeBtn, toggleMenu)
 
-insContent = Instance.new("ScrollingFrame", inspectorPanel)
+local insContent = Instance.new("ScrollingFrame", inspectorPanel)
 insContent.Size = UDim2.new(1, 0, 1, -32)
 insContent.Position = UDim2.new(0, 0, 0, 30)
 insContent.BackgroundTransparency = 1
@@ -3194,10 +3165,9 @@ function openInspectorFor(moduleName)
             if nightModeEnabled then Lighting.ClockTime = v end
         end)
     elseif moduleName == "No Recoil" then
-        insContent.CanvasSize = UDim2.new(0, 0, 0, 180)
+        insContent.CanvasSize = UDim2.new(0, 0, 0, 120)
         addInspectorSlider(6, "Strength", 0.1, 1.0, noRecoilStrength, true, function(v) noRecoilStrength = v end)
-        addInspectorSlider(38, "Window", 0.04, 0.25, noRecoilWindow, true, function(v) noRecoilWindow = v end)
-        addInspectorSlider(70, "Smoothness", 0.0, 0.95, noRecoilSmoothness, true, function(v) noRecoilSmoothness = v end)
+        addInspectorSlider(38, "Window", 0.04, 0.20, noRecoilWindow, true, function(v) noRecoilWindow = v end)
     elseif moduleName == "RCS" then
         insContent.CanvasSize = UDim2.new(0, 0, 0, 240)
         addInspectorSlider(6, "RCS Strength", 10, 100, rcsStrength, false, function(v) rcsStrength = v end)
@@ -3289,8 +3259,8 @@ end
 -- ==========================================
 
 -- COMBAT TAB
-cAimSection = makeCategorySection(cPage, "Aim & Ballistics", 1, 3)
-cRageSection = makeCategorySection(cPage, "HVH & Anti-Aim", 2, 1)
+local cAimSection = makeCategorySection(cPage, "Aim & Ballistics", 1, 3)
+local cRageSection = makeCategorySection(cPage, "HVH & Anti-Aim", 2, 1)
 
 addCard(cAimSection, "Tracking", aimbotEnabled, function(v)
     aimbotEnabled = v
@@ -3300,13 +3270,16 @@ addCard(cAimSection, "Tracking", aimbotEnabled, function(v)
     end
 end)
 addCard(cAimSection, "RCS", rcsEnabled, function(v) rcsEnabled = v end)
-addCard(cAimSection, "No Recoil", noRecoilEnabled, function(v) noRecoilEnabled = v end)
+addCard(cAimSection, "No Recoil", noRecoilEnabled, function(v)
+    noRecoilEnabled = v
+    if not v then noRecoilReference = nil end
+end)
 addCard(cAimSection, "Trigger Assistant", triggerbotEnabled, function(v) triggerbotEnabled = v end)
 addCard(cRageSection, "Anti-Aim", antiAimEnabled, function(v) antiAimEnabled = v end)
 
 -- MOVEMENT TAB
-mHopSection = makeCategorySection(mPage, "Bhop Mechanics", 1, 1)
-mBoostSection = makeCategorySection(mPage, "Physics Modifications", 2, 3)
+local mHopSection = makeCategorySection(mPage, "Bhop Mechanics", 1, 1)
+local mBoostSection = makeCategorySection(mPage, "Physics Modifications", 2, 3)
 
 addCard(mHopSection, "Bhop Engine", bunnyHopEnabled, function(v) bunnyHopEnabled = v end)
 addCard(mBoostSection, "Slide", slideEnabled, function(v) 
@@ -3317,8 +3290,8 @@ addCard(mBoostSection, "Speed Boost", speedEnabled, function(v) speedEnabled = v
 addCard(mBoostSection, "Flight", flightEnabled, function(v) flightEnabled = v end)
 
 -- ESP TAB
-ePlayerSection = makeCategorySection(ePage, "Player Visuals", 1, 6)
-eWorldSection = makeCategorySection(ePage, "World & Projectiles", 2, 2)
+local ePlayerSection = makeCategorySection(ePage, "Player Visuals", 1, 6)
+local eWorldSection = makeCategorySection(ePage, "World & Projectiles", 2, 2)
 
 addCard(ePlayerSection, "Nametags", nametagsEnabled, function(v) nametagsEnabled = v end)
 addCard(ePlayerSection, "Highlight", highlightEnabled, function(v) highlightEnabled = v end)
@@ -3344,7 +3317,7 @@ addCard(eWorldSection, "Jump Circle", jumpCircleEnabled, function(v)
 end)
 
 -- SKINS TAB (Skinchanger)
-sKnifeSection = makeCategorySection(sPage, "Melee Weapons", 1, 1)
+local sKnifeSection = makeCategorySection(sPage, "Melee Weapons", 1, 1)
 addCard(sKnifeSection, "Butterfly Knife", butterflyKnifeEnabled, function(v)
     butterflyKnifeEnabled = v
     if v then
@@ -3355,7 +3328,7 @@ addCard(sKnifeSection, "Butterfly Knife", butterflyKnifeEnabled, function(v)
 end)
 
 -- WORLD CHANGER / ENVIRONMENT TAB
-envLightSection = makeCategorySection(envPage, "Atmosphere & World", 1, 4)
+local envLightSection = makeCategorySection(envPage, "Atmosphere & World", 1, 4)
 addCard(envLightSection, "World Changer", nightModeEnabled, function(v)
     nightModeEnabled = v
     if v then
@@ -3379,7 +3352,7 @@ addCard(envLightSection, "No Fog", removeFogEnabled, function(v)
 end)
 
 -- MISC TAB
-miscGeneralSection = makeCategorySection(micsPage, "Utilities", 1, 2)
+local miscGeneralSection = makeCategorySection(micsPage, "Utilities", 1, 2)
 addCard(miscGeneralSection, "Third Person", thirdPersonEnabled, function(v)
     setThirdPersonEnabled(v)
 end)
@@ -3388,8 +3361,11 @@ addCard(miscGeneralSection, "Anti-AFK", antiAfkEnabled, function(v)
 end)
 
 -- SETTINGS TAB
-setsGeneralSection = makeCategorySection(setsPage, "Configuration", 1, 1)
+local setsGeneralSection = makeCategorySection(setsPage, "Configuration", 1, 1)
 addCard(setsGeneralSection, "Theme", true, function(v) end)
 
-openInspectorFor("T
-Показана только часть файла из-за его большого размера
+openInspectorFor("Tracking")
+
+end
+
+buildGestioUI()
