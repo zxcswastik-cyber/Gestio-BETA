@@ -276,6 +276,21 @@ local rcsBurstOnly = false
 local rcsRandomize = true
 
 -- ==========================================
+-- NO RECOIL ENGINE
+-- Runs after the aimbot camera update so recoil compensation is not
+-- immediately overwritten by target tracking.
+-- ==========================================
+local noRecoilEnabled = false
+local noRecoilStrength = 100
+local noRecoilPitch = 1.0
+local noRecoilYaw = 0.0
+local noRecoilSmoothing = 0.35
+local noRecoilActiveUntil = 0
+local noRecoilLastShot = 0
+local noRecoilShotInterval = 0.065
+local noRecoilToolConnections = {}
+
+-- ==========================================
 -- TRIGGERBOT ASSISTANT VARIABLES
 -- ==========================================
 local triggerbotEnabled = false
@@ -688,6 +703,11 @@ local function cleanup()
     screenEspCache = {}
     grenadePool = {}
     
+    for tool, conn in pairs(noRecoilToolConnections) do
+        pcall(function() conn:Disconnect() end)
+        noRecoilToolConnections[tool] = nil
+    end
+
     restoreLightingState()
 
     pcall(function() if targetGui:FindFirstChild("GestioScreenGui") then targetGui.GestioScreenGui:Destroy() end end)
@@ -701,6 +721,62 @@ if genv then genv.GestioRunning = cleanup end
 
 local function bindTouch(btn, callback)
     btn.Activated:Connect(callback)
+end
+
+-- ==========================================
+-- NO RECOIL INPUT / TOOL TRACKING
+-- ==========================================
+local function markNoRecoilShot()
+    noRecoilLastShot = tick()
+    noRecoilActiveUntil = noRecoilLastShot + 0.18
+end
+
+local function bindNoRecoilTool(tool)
+    if not tool or not tool:IsA("Tool") or noRecoilToolConnections[tool] then return end
+    local ok, conn = pcall(function()
+        return tool.Activated:Connect(markNoRecoilShot)
+    end)
+    if ok and conn then
+        noRecoilToolConnections[tool] = conn
+    end
+end
+
+local function scanNoRecoilTools()
+    if not player then return end
+    pcall(function()
+        local backpack = player:FindFirstChildOfClass("Backpack")
+        if backpack then
+            for _, obj in ipairs(backpack:GetChildren()) do bindNoRecoilTool(obj) end
+        end
+        local char = player.Character
+        if char then
+            for _, obj in ipairs(char:GetChildren()) do bindNoRecoilTool(obj) end
+        end
+    end)
+end
+
+if player then
+    scanNoRecoilTools()
+    pcall(function()
+        local backpack = player:FindFirstChildOfClass("Backpack")
+        if backpack then
+            table.insert(connections, backpack.ChildAdded:Connect(function(obj)
+                if obj:IsA("Tool") then bindNoRecoilTool(obj) end
+            end))
+        end
+    end)
+    table.insert(connections, UserInputService.InputBegan:Connect(function(input, processed)
+        if not processed and input.UserInputType == Enum.UserInputType.MouseButton1 then
+            markNoRecoilShot()
+        end
+    end))
+    table.insert(connections, player.CharacterAdded:Connect(function(char)
+        task.wait(0.15)
+        scanNoRecoilTools()
+        table.insert(connections, char.ChildAdded:Connect(function(obj)
+            if obj:IsA("Tool") then bindNoRecoilTool(obj) end
+        end))
+    end))
 end
 
 -- ==========================================
@@ -1788,11 +1864,6 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         end
     end
 
-    if rcsEnabled and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then
-        local rcsComp = (rcsStrength / 100) * 0.005
-        camera.CFrame = camera.CFrame * CFrame.Angles(rcsComp * rcsPitchFactor, 0, 0)
-    end
-
     -- Tracking is toggle-based in the mobile UI. The old build never assigned
     -- isAiming, so the entire aiming branch could remain disabled forever.
     isAiming = aimbotEnabled
@@ -1841,6 +1912,24 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         end
     else
         lockedTarget = nil
+    end
+
+    -- Apply recoil compensation AFTER aimbot so target tracking and recoil
+    -- control do not overwrite each other in the same frame.
+    if noRecoilEnabled and tick() <= noRecoilActiveUntil then
+        local now = tick()
+        local elapsed = math.max(0.001, now - noRecoilLastShot)
+        local shotFactor = math.clamp(elapsed / noRecoilShotInterval, 0.35, 1.35)
+        local strength = math.clamp(noRecoilStrength / 100, 0, 2)
+        local alpha = 1 - math.clamp(noRecoilSmoothing, 0, 0.95)
+        local pitch = 0.005 * strength * noRecoilPitch * shotFactor
+        local yaw = 0.0025 * strength * noRecoilYaw * shotFactor
+
+        camera.CFrame = camera.CFrame * CFrame.Angles(
+            pitch * alpha,
+            yaw * alpha,
+            0
+        )
     end
 
     if butterflyKnifeEnabled then
@@ -3207,6 +3296,7 @@ addCard(cAimSection, "Tracking", aimbotEnabled, function(v)
     end
 end)
 addCard(cAimSection, "RCS", rcsEnabled, function(v) rcsEnabled = v end)
+addCard(cAimSection, "No Recoil", noRecoilEnabled, function(v) noRecoilEnabled = v end)
 addCard(cAimSection, "Trigger Assistant", triggerbotEnabled, function(v) triggerbotEnabled = v end)
 addCard(cRageSection, "Anti-Aim", antiAimEnabled, function(v) antiAimEnabled = v end)
 
