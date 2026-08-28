@@ -275,44 +275,17 @@ local rcsHorizontalComp = true
 local rcsBurstOnly = false
 local rcsRandomize = true
 
--- ==========================================
--- NO RECOIL (COMPACT / SAFE INTEGRATION)
--- ==========================================
--- Kept intentionally small so the working injection architecture remains intact.
-noRecoilEnabled = false
-noRecoilStrength = 1.0
-noRecoilWindow = 0.10
-noRecoilLastShot = 0
-noRecoilReference = nil
-noRecoilToolConnections = {}
-
-function noRecoilMarkShot()
-    if not noRecoilEnabled then return end
-    local cam = Workspace.CurrentCamera or camera
-    if cam then
-        noRecoilReference = cam.CFrame
-        noRecoilLastShot = os.clock()
-    end
-end
-
-function noRecoilHookTool(tool)
-    if not tool or not tool:IsA("Tool") or noRecoilToolConnections[tool] then return end
-    local conn = tool.Activated:Connect(noRecoilMarkShot)
-    noRecoilToolConnections[tool] = conn
-    table.insert(connections, conn)
-end
-
-function noRecoilHookCharacter(char)
-    if not char then return end
-    for _, obj in ipairs(char:GetChildren()) do
-        if obj:IsA("Tool") then noRecoilHookTool(obj) end
-    end
-    local conn = char.ChildAdded:Connect(function(obj)
-        if obj:IsA("Tool") then noRecoilHookTool(obj) end
-    end)
-    table.insert(connections, conn)
-end
-
+-- Compact No Recoil state. Kept as one table so the injection-safe register
+-- layout of the working build is preserved.
+local noRecoil = {
+    enabled = false,
+    strength = 1.0,
+    window = 0.14,
+    activeUntil = 0,
+    baseline = nil,
+    tool = nil,
+    toolConn = nil
+}
 
 -- ==========================================
 -- TRIGGERBOT ASSISTANT VARIABLES
@@ -1832,17 +1805,6 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         camera.CFrame = camera.CFrame * CFrame.Angles(rcsComp * rcsPitchFactor, 0, 0)
     end
 
-    -- No Recoil is deliberately applied after tracking/RCS so it does not fight Aimbot.
-    if noRecoilEnabled and noRecoilReference then
-        local age = os.clock() - noRecoilLastShot
-        if age <= noRecoilWindow then
-            local alpha = math.clamp(noRecoilStrength * (1 - age / math.max(noRecoilWindow, 0.01)), 0.05, 1)
-            camera.CFrame = camera.CFrame:Lerp(noRecoilReference, alpha)
-        else
-            noRecoilReference = nil
-        end
-    end
-
     -- Tracking is toggle-based in the mobile UI. The old build never assigned
     -- isAiming, so the entire aiming branch could remain disabled forever.
     isAiming = aimbotEnabled
@@ -1891,6 +1853,40 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         end
     else
         lockedTarget = nil
+    end
+
+    -- NO RECOIL: this is intentionally after the Aimbot block.
+    -- We keep the previous post-aim camera orientation as the reference and
+    -- correct only the pitch introduced during the short shot window.
+    if noRecoil.enabled then
+        local char = player and player.Character
+        local equipped = char and char:FindFirstChildOfClass("Tool")
+        if equipped and equipped ~= noRecoil.tool then
+            if noRecoil.toolConn then pcall(function() noRecoil.toolConn:Disconnect() end) end
+            noRecoil.tool = equipped
+            noRecoil.toolConn = equipped.Activated:Connect(function()
+                noRecoil.activeUntil = os.clock() + math.max(0.04, noRecoil.window)
+            end)
+            table.insert(connections, noRecoil.toolConn)
+        elseif not equipped then
+            noRecoil.tool = nil
+        end
+
+        if noRecoil.activeUntil > 0 and os.clock() < noRecoil.activeUntil and noRecoil.baseline then
+            local bx = select(1, noRecoil.baseline:ToOrientation())
+            local cx, cy, cz = camera.CFrame:ToOrientation()
+            local strength = math.clamp(noRecoil.strength, 0, 1)
+            local pitch = cx + (bx - cx) * strength
+            camera.CFrame = CFrame.new(camera.CFrame.Position) * CFrame.Angles(pitch, cy, cz)
+        else
+            noRecoil.activeUntil = 0
+        end
+
+        -- Save the post-aim orientation for the next frame/shot.
+        noRecoil.baseline = camera.CFrame
+    else
+        noRecoil.activeUntil = 0
+        noRecoil.baseline = camera.CFrame
     end
 
     if butterflyKnifeEnabled then
@@ -2314,15 +2310,6 @@ if player.Character then
     captureDefaultHipHeight(player.Character)
     hookCharacterWeapons(player.Character)
 end
-
-if player.Character then
-    noRecoilHookCharacter(player.Character)
-end
-
-table.insert(connections, player.CharacterAdded:Connect(function(char)
-    noRecoilHookCharacter(char)
-end))
-
 
 local jumpReqConn = UserInputService.JumpRequest:Connect(function()
     isMobileJumpHeld = true
@@ -3164,10 +3151,6 @@ function openInspectorFor(moduleName)
             nightClockTime = v 
             if nightModeEnabled then Lighting.ClockTime = v end
         end)
-    elseif moduleName == "No Recoil" then
-        insContent.CanvasSize = UDim2.new(0, 0, 0, 120)
-        addInspectorSlider(6, "Strength", 0.1, 1.0, noRecoilStrength, true, function(v) noRecoilStrength = v end)
-        addInspectorSlider(38, "Window", 0.04, 0.20, noRecoilWindow, true, function(v) noRecoilWindow = v end)
     elseif moduleName == "RCS" then
         insContent.CanvasSize = UDim2.new(0, 0, 0, 240)
         addInspectorSlider(6, "RCS Strength", 10, 100, rcsStrength, false, function(v) rcsStrength = v end)
@@ -3270,9 +3253,10 @@ addCard(cAimSection, "Tracking", aimbotEnabled, function(v)
     end
 end)
 addCard(cAimSection, "RCS", rcsEnabled, function(v) rcsEnabled = v end)
-addCard(cAimSection, "No Recoil", noRecoilEnabled, function(v)
-    noRecoilEnabled = v
-    if not v then noRecoilReference = nil end
+addCard(cAimSection, "No Recoil", noRecoil.enabled, function(v)
+    noRecoil.enabled = v
+    noRecoil.activeUntil = 0
+    noRecoil.baseline = camera and camera.CFrame or nil
 end)
 addCard(cAimSection, "Trigger Assistant", triggerbotEnabled, function(v) triggerbotEnabled = v end)
 addCard(cRageSection, "Anti-Aim", antiAimEnabled, function(v) antiAimEnabled = v end)
