@@ -1,5 +1,5 @@
 -- ==============================================================================
--- [Gestio UI - Blox Strike Ultimate Mobile Engine | Version 4.1.6 Clean Engine]
+-- [Gestio UI - Blox Strike Ultimate Mobile Engine | Version 4.1.7 Vibrant Chams]
 -- Target Game: Blox Strike (Roblox)
 -- ==============================================================================
 
@@ -210,20 +210,34 @@ local rcsStrength = 60
 local rcsPitchFactor = 1.0
 local rcsYawFactor = 1.0
 
--- Track firing state safely across Touch and Mouse without touching game inventory
-local fireStartConn = UserInputService.InputBegan:Connect(function(input, gameProcessed)
+local fireStartConn = UserInputService.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         noRecoil.isShooting = true
     end
 end)
 table.insert(connections, fireStartConn)
 
-local fireEndConn = UserInputService.InputEnded:Connect(function(input, gameProcessed)
+local fireEndConn = UserInputService.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         noRecoil.isShooting = false
     end
 end)
 table.insert(connections, fireEndConn)
+
+-- ==========================================
+-- VIBRANT CHAMS CONFIGURATION
+-- ==========================================
+local chamsEnabled = false
+local chamsTeamCheck = true
+local chamsShowTeammates = false
+local chamsOcclusion = true
+local chamsFillTransparency = 0.45
+local chamsOutlineTransparency = 0.10
+
+local chamsColorVisible = Color3.fromRGB(255, 45, 85)
+local chamsColorHidden = Color3.fromRGB(130, 40, 220)
+local chamsColorAlly = Color3.fromRGB(0, 230, 255)
+local chamsOutlineColor = Color3.fromRGB(255, 255, 255)
 
 -- ==========================================
 -- CRIMSON NEON HITMARKER & THIRD PERSON
@@ -353,7 +367,6 @@ local cornerBoxEnabled = false
 local boxThickness = 1.0
 local healthBarEnabled = true
 
-local highlightEnabled = false
 local headDotEnabled = false
 local tracersEnabled = false
 
@@ -806,7 +819,9 @@ lastFpsUpdate = tick()
 -- FACTION CHECK & HEALTH CHECK LOGIC
 -- ==========================================
 function isAlly(plr)
-    if not plr or plr == player then return false end
+    if not plr or plr == player then return true end
+    if not chamsTeamCheck then return false end
+    
     if plr.Team and player.Team then
         return plr.Team == player.Team
     end
@@ -1705,7 +1720,7 @@ function renderTacticalOverlay()
 end
 
 -- ==========================================
--- 3D ESP ATTACHMENT PIPELINE
+-- 3D ESP & VIBRANT CHAMS ATTACHMENT PIPELINE
 -- ==========================================
 function attachEspToPlayer(plr)
     if plr == player then return end
@@ -1733,12 +1748,12 @@ function attachEspToPlayer(plr)
     tracerLine.Visible = false
 
     local hl = Instance.new("Highlight")
-    hl.Name = "GestioHighlight_" .. plr.Name
-    hl.FillTransparency = 0.45
-    hl.OutlineTransparency = 0.0
+    hl.Name = "GestioChams_" .. plr.Name
+    hl.FillTransparency = chamsFillTransparency
+    hl.OutlineTransparency = chamsOutlineTransparency
     hl.Enabled = false
-    hl.FillColor = currentTheme.Enemy_Fill
-    hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+    hl.FillColor = chamsColorVisible
+    hl.OutlineColor = chamsOutlineColor
     hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
     hl.Parent = holder
 
@@ -1766,7 +1781,14 @@ function attachEspToPlayer(plr)
 
     if plr.Character then setupCharacter(plr.Character) end
     local charConn = plr.CharacterAdded:Connect(setupCharacter)
+    local charRemConn = plr.CharacterRemoving:Connect(function()
+        if hl then
+            hl.Adornee = nil
+            hl.Enabled = false
+        end
+    end)
     table.insert(connections, charConn)
+    table.insert(connections, charRemConn)
 end
 
 for _, v in pairs(Players:GetPlayers()) do attachEspToPlayer(v) end
@@ -1872,52 +1894,80 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     renderTacticalOverlay()
     renderGrenadeOverlays()
 
+    -- 3D ESP & Vibrant Chams Multi-Stage Render Loop
     for plr, data in pairs(activeEspHolders) do
         local char = plr.Character
         local hum = char and char:FindFirstChildOfClass("Humanoid")
         local rootPart = char and (char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso"))
         local head = char and char:FindFirstChild("Head")
         
-        local isEnemy = isTargetEnemy(plr, char)
+        local ally = isAlly(plr)
         local isAlive = isEntityAlive(char, hum)
         local dist = rootPart and (rootPart.Position - localPos).Magnitude or 9999
 
-        if char and isEnemy and isAlive and (dist <= espMaxDist) then
+        if char and isAlive and (dist <= espMaxDist) then
             local isVisible = isVisibleThroughWalls(head or rootPart, char)
-            local activeAccent = isVisible and currentTheme.Enemy_Accent or currentTheme.Enemy_Hidden
-            local activeHighlight = isVisible and currentTheme.Enemy_Fill or currentTheme.Enemy_Hidden
+            
+            -- Chams Rendering Logic
+            if chamsEnabled then
+                if ally and not chamsShowTeammates then
+                    data.Highlight.Enabled = false
+                else
+                    data.Highlight.Enabled = true
+                    if data.Highlight.Adornee ~= char then
+                        data.Highlight.Adornee = char
+                    end
+                    
+                    data.Highlight.FillTransparency = chamsFillTransparency
+                    data.Highlight.OutlineTransparency = chamsOutlineTransparency
+                    data.Highlight.OutlineColor = chamsOutlineColor
 
-            if data.Highlight.Adornee ~= char then
-                data.Highlight.Adornee = char
+                    if ally then
+                        data.Highlight.FillColor = chamsColorAlly
+                    else
+                        if chamsOcclusion then
+                            data.Highlight.FillColor = isVisible and chamsColorVisible or chamsColorHidden
+                        else
+                            data.Highlight.FillColor = chamsColorVisible
+                        end
+                    end
+                end
+            else
+                data.Highlight.Enabled = false
             end
-            if head and data.HeadDot.Adornee ~= head then
-                data.HeadDot.Adornee = head
-            end
 
-            data.Highlight.FillColor = activeHighlight
-            data.Highlight.Enabled = highlightEnabled
+            -- Enemy Dot & Tracers
+            if not ally then
+                local activeAccent = isVisible and currentTheme.Enemy_Accent or currentTheme.Enemy_Hidden
+                
+                if head and data.HeadDot.Adornee ~= head then
+                    data.HeadDot.Adornee = head
+                end
+                data.DotFrame.BackgroundColor3 = activeAccent
+                data.HeadDot.Enabled = headDotEnabled
 
-            data.DotFrame.BackgroundColor3 = activeAccent
-            data.HeadDot.Enabled = headDotEnabled
+                if tracersEnabled and rootPart then
+                    local scrPos, onScreen = camera:WorldToViewportPoint(rootPart.Position)
+                    if onScreen and scrPos.Z > 0 then
+                        local origin = Vector2.new(camera.ViewportSize.X * 0.5, camera.ViewportSize.Y)
+                        local dest = Vector2.new(scrPos.X, scrPos.Y)
+                        local lineDist = (dest - origin).Magnitude
+                        local center = (origin + dest) * 0.5
+                        local angle = math.deg(math.atan2(dest.Y - origin.Y, dest.X - origin.X))
 
-            if tracersEnabled and rootPart then
-                local scrPos, onScreen = camera:WorldToViewportPoint(rootPart.Position)
-                if onScreen and scrPos.Z > 0 then
-                    local origin = Vector2.new(camera.ViewportSize.X * 0.5, camera.ViewportSize.Y)
-                    local dest = Vector2.new(scrPos.X, scrPos.Y)
-                    local lineDist = (dest - origin).Magnitude
-                    local center = (origin + dest) * 0.5
-                    local angle = math.deg(math.atan2(dest.Y - origin.Y, dest.X - origin.X))
-
-                    data.Tracer.BackgroundColor3 = activeAccent
-                    data.Tracer.Size = UDim2.new(0, lineDist, 0, 1.5)
-                    data.Tracer.Position = UDim2.new(0, center.X, 0, center.Y)
-                    data.Tracer.Rotation = angle
-                    data.Tracer.Visible = true
+                        data.Tracer.BackgroundColor3 = activeAccent
+                        data.Tracer.Size = UDim2.new(0, lineDist, 0, 1.5)
+                        data.Tracer.Position = UDim2.new(0, center.X, 0, center.Y)
+                        data.Tracer.Rotation = angle
+                        data.Tracer.Visible = true
+                    else
+                        data.Tracer.Visible = false
+                    end
                 else
                     data.Tracer.Visible = false
                 end
             else
+                data.HeadDot.Enabled = false
                 data.Tracer.Visible = false
             end
         else
@@ -3012,6 +3062,13 @@ function openInspectorFor(moduleName)
         addInspectorToggle(192, "Prediction", predictionEnabled, function(v) predictionEnabled = v end)
         addInspectorToggle(218, "Show FOV Circle", showFovCircle, function(v) showFovCircle = v end)
         addInspectorToggle(244, "Visibility Check", visibleCheck, function(v) visibleCheck = v end)
+    elseif moduleName == "Chams" then
+        insContent.CanvasSize = UDim2.new(0, 0, 0, 240)
+        addInspectorSlider(6, "Fill Alpha", 0.0, 1.0, chamsFillTransparency, true, function(v) chamsFillTransparency = v end)
+        addInspectorSlider(38, "Outline Alpha", 0.0, 1.0, chamsOutlineTransparency, true, function(v) chamsOutlineTransparency = v end)
+        addInspectorToggle(76, "Team Check", chamsTeamCheck, function(v) chamsTeamCheck = v end)
+        addInspectorToggle(102, "Show Teammates", chamsShowTeammates, function(v) chamsShowTeammates = v end)
+        addInspectorToggle(128, "Occlusion Color (Walls)", chamsOcclusion, function(v) chamsOcclusion = v end)
     elseif moduleName == "No Recoil" then
         insContent.CanvasSize = UDim2.new(0, 0, 0, 110)
         addInspectorSlider(6, "Recoil Dampener", 0.1, 1.0, noRecoil.strength, true, function(v)
@@ -3248,7 +3305,7 @@ local ePlayerSection = makeCategorySection(ePage, "Player Visuals", 1, 6)
 local eWorldSection = makeCategorySection(ePage, "World & Projectiles", 2, 2)
 
 addCard(ePlayerSection, "Nametags", nametagsEnabled, function(v) nametagsEnabled = v end)
-addCard(ePlayerSection, "Highlight", highlightEnabled, function(v) highlightEnabled = v end)
+addCard(ePlayerSection, "Chams", chamsEnabled, function(v) chamsEnabled = v end)
 addCard(ePlayerSection, "Box Overlay", boxEspEnabled, function(v) boxEspEnabled = v end)
 addCard(ePlayerSection, "Head Dot", headDotEnabled, function(v) headDotEnabled = v end)
 addCard(ePlayerSection, "Snaplines", tracersEnabled, function(v) tracersEnabled = v end)
