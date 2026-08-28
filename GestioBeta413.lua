@@ -1,6 +1,6 @@
 -- ==============================================================================
--- [Gestio UI - Blox Strike Ultimate Mobile Engine | Version 4.1.3]
--- Architecture: Uncompressed Extended Pipeline
+-- [Gestio UI - Blox Strike Ultimate Mobile Engine | Version 4.1.4 Extended]
+-- Architecture: Uncompressed Extended Pipeline + Memory/Metamethod Engine
 -- Target Game: Blox Strike (Roblox)
 -- ==============================================================================
 
@@ -71,6 +71,7 @@ if not targetGui then
     warn("[Gestio] GUI initialization failed: no valid GUI parent")
     return
 end
+
 local connections = {}
 local activeEspHolders = {}
 local screenEspCache = {}
@@ -170,7 +171,6 @@ local themeLibrary = {
     }
 }
 
--- Add nebula preset to theme if needed or keep lighting presets
 local currentTheme = themeLibrary["Charcoal Crimson"]
 
 -- ==========================================
@@ -196,6 +196,88 @@ local predictionFactor = 0.135
 local visibleCheck = false
 local aimSensitivity = 1.0
 local lockOnJump = true
+
+-- ==========================================
+-- MEMORY / GC / HOOK ENGINE FOR NO RECOIL & SPREAD
+-- ==========================================
+local memoryRecoilEngine = {
+    enabled = false,
+    noSpread = true,
+    lastPatchTime = 0,
+    originalValues = {},
+    monitoredTables = {}
+}
+
+function patchWeaponMemory()
+    if not memoryRecoilEngine.enabled then return end
+    pcall(function()
+        if getgc then
+            for _, obj in ipairs(getgc(true)) do
+                if type(obj) == "table" then
+                    -- Recoil & Spread fields commonly used in Blox Strike weapon frameworks
+                    local isWeaponTable = rawget(obj, "Recoil") ~= nil or rawget(obj, "recoil") ~= nil or rawget(obj, "Spread") ~= nil or rawget(obj, "spread") ~= nil or rawget(obj, "Inaccuracy") ~= nil
+                    if isWeaponTable then
+                        if not memoryRecoilEngine.originalValues[obj] then
+                            memoryRecoilEngine.originalValues[obj] = {
+                                Recoil = rawget(obj, "Recoil"),
+                                recoil = rawget(obj, "recoil"),
+                                Spread = rawget(obj, "Spread"),
+                                spread = rawget(obj, "spread"),
+                                RecoilMin = rawget(obj, "RecoilMin"),
+                                RecoilMax = rawget(obj, "RecoilMax"),
+                                CameraKick = rawget(obj, "CameraKick"),
+                                CameraShake = rawget(obj, "CameraShake"),
+                                Inaccuracy = rawget(obj, "Inaccuracy"),
+                                Punch = rawget(obj, "Punch"),
+                                Shake = rawget(obj, "Shake")
+                            }
+                        end
+
+                        -- Direct memory wipe
+                        if rawget(obj, "Recoil") ~= nil then obj.Recoil = 0 end
+                        if rawget(obj, "recoil") ~= nil then obj.recoil = 0 end
+                        if rawget(obj, "RecoilMin") ~= nil then obj.RecoilMin = 0 end
+                        if rawget(obj, "RecoilMax") ~= nil then obj.RecoilMax = 0 end
+                        if rawget(obj, "CameraKick") ~= nil then obj.CameraKick = 0 end
+                        if rawget(obj, "CameraShake") ~= nil then obj.CameraShake = 0 end
+                        if rawget(obj, "Punch") ~= nil then obj.Punch = Vector3.zero end
+                        if rawget(obj, "Shake") ~= nil then obj.Shake = 0 end
+
+                        if memoryRecoilEngine.noSpread then
+                            if rawget(obj, "Spread") ~= nil then obj.Spread = 0 end
+                            if rawget(obj, "spread") ~= nil then obj.spread = 0 end
+                            if rawget(obj, "Inaccuracy") ~= nil then obj.Inaccuracy = 0 end
+                        end
+                    end
+
+                    -- Spring controllers check
+                    if rawget(obj, "Position") ~= nil and rawget(obj, "Velocity") ~= nil and rawget(obj, "Target") ~= nil and rawget(obj, "Spring") ~= nil then
+                        if type(obj.Position) == "Vector3" or type(obj.Position) == "number" then
+                            obj.Velocity = type(obj.Velocity) == "Vector3" and Vector3.zero or 0
+                            obj.Position = type(obj.Position) == "Vector3" and Vector3.zero or 0
+                            obj.Target = type(obj.Target) == "Vector3" and Vector3.zero or 0
+                        end
+                    end
+                end
+            end
+        end
+    end)
+end
+
+function restoreWeaponMemory()
+    pcall(function()
+        for obj, orig in pairs(memoryRecoilEngine.originalValues) do
+            if type(obj) == "table" then
+                for k, v in pairs(orig) do
+                    if v ~= nil then
+                        pcall(function() obj[k] = v end)
+                    end
+                end
+            end
+        end
+        memoryRecoilEngine.originalValues = {}
+    end)
+end
 
 -- ==========================================
 -- CRIMSON NEON HITMARKER & THIRD PERSON
@@ -265,7 +347,7 @@ function scanAndMorphKnives(root)
 end
 
 -- ==========================================
--- RECOIL CONTROL SYSTEM (RCS) & NO RECOIL VARIABLES
+-- RECOIL CONTROL SYSTEM (RCS) VARIABLES
 -- ==========================================
 local rcsEnabled = false
 local rcsStrength = 75
@@ -273,16 +355,6 @@ local rcsPitchFactor = 1.0
 local rcsYawFactor = 1.0
 local rcsSmoothness = 0.2
 local rcsHorizontalComp = true
-local rcsBurstOnly = false
-local rcsRandomize = true
-
--- Redesigned No Recoil state for Blox Strike mobile & PC
-local noRecoil = {
-    enabled = false,
-    strength = 1.0,
-    isFiring = false,
-    lastNonRecoilCFrame = nil
-}
 
 -- ==========================================
 -- TRIGGERBOT ASSISTANT VARIABLES
@@ -638,6 +710,7 @@ end
 
 function cleanup()
     pcall(function() setThirdPersonEnabled(false) end)
+    restoreWeaponMemory()
     if player.Character then
         local hum = player.Character:FindFirstChildOfClass("Humanoid")
         if hum and savedAutoRotate ~= nil then
@@ -1847,19 +1920,12 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         lockedTarget = nil
     end
 
-    -- ==========================================
-    -- NO RECOIL ENGINE (Blox Strike Mobile/Desktop Fixed)
-    -- ==========================================
-    if noRecoil.enabled and noRecoil.isFiring and noRecoil.lastNonRecoilCFrame then
-        local currentPitch, currentYaw, currentRoll = camera.CFrame:ToOrientation()
-        local basePitch, baseYaw, _ = noRecoil.lastNonRecoilCFrame:ToOrientation()
-
-        local strength = math.clamp(noRecoil.strength, 0, 1)
-        local compensatedPitch = currentPitch + (basePitch - currentPitch) * strength
-
-        camera.CFrame = CFrame.new(camera.CFrame.Position) * CFrame.Angles(compensatedPitch, currentYaw, currentRoll)
-    elseif not noRecoil.isFiring then
-        noRecoil.lastNonRecoilCFrame = camera.CFrame
+    -- Continuous Memory Patching for Weapon Recoil & Spread
+    if memoryRecoilEngine.enabled then
+        if (os.clock() - memoryRecoilEngine.lastPatchTime) > 0.35 then
+            memoryRecoilEngine.lastPatchTime = os.clock()
+            patchWeaponMemory()
+        end
     end
 
     if butterflyKnifeEnabled then
@@ -2246,6 +2312,9 @@ function hookCharacterWeapons(char)
     char.ChildAdded:Connect(function(child)
         if child:IsA("Tool") then
             scanAndMorphKnives(child)
+            if memoryRecoilEngine.enabled then
+                task.delay(0.1, patchWeaponMemory)
+            end
         end
     end)
     for _, tool in ipairs(char:GetChildren()) do
@@ -2277,6 +2346,9 @@ table.insert(connections, player.CharacterAdded:Connect(function(char)
     end
     hookMobileJumpButton()
     hookCharacterWeapons(char)
+    if memoryRecoilEngine.enabled then
+        task.delay(0.3, patchWeaponMemory)
+    end
 end))
 
 if player.Character then
@@ -2289,7 +2361,6 @@ local jumpReqConn = UserInputService.JumpRequest:Connect(function()
 end)
 table.insert(connections, jumpReqConn)
 
--- Universal Input Listeners for Jump, Slide, and No Recoil Trigger
 local inBeganConn = UserInputService.InputBegan:Connect(function(input, processed)
     if input.KeyCode == Enum.KeyCode.Space then
         isMobileJumpHeld = true
@@ -2307,17 +2378,6 @@ local inBeganConn = UserInputService.InputBegan:Connect(function(input, processe
             hum.HipHeight = defaultHipHeight * 0.4
         end
     end
-
-    if noRecoil.enabled then
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            local myChar = player.Character
-            local tool = myChar and myChar:FindFirstChildOfClass("Tool")
-            if tool then
-                noRecoil.isFiring = true
-                noRecoil.lastNonRecoilCFrame = camera.CFrame
-            end
-        end
-    end
 end)
 table.insert(connections, inBeganConn)
 
@@ -2329,11 +2389,6 @@ local inEndedConn = UserInputService.InputEnded:Connect(function(input, processe
         isSliding = false
         currentSlideVel = Vector3.zero
         restoreDefaultHipHeight()
-    end
-
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        noRecoil.isFiring = false
-        noRecoil.lastNonRecoilCFrame = nil
     end
 end)
 table.insert(connections, inEndedConn)
@@ -3036,9 +3091,13 @@ function openInspectorFor(moduleName)
         addInspectorToggle(218, "Show FOV Circle", showFovCircle, function(v) showFovCircle = v end)
         addInspectorToggle(244, "Visibility Check", visibleCheck, function(v) visibleCheck = v end)
     elseif moduleName == "No Recoil" then
-        insContent.CanvasSize = UDim2.new(0, 0, 0, 120)
-        addInspectorSlider(6, "Strength", 0.1, 1.0, noRecoil.strength, true, function(v)
-            noRecoil.strength = v
+        insContent.CanvasSize = UDim2.new(0, 0, 0, 110)
+        addInspectorToggle(6, "No Spread (Zero Spread)", memoryRecoilEngine.noSpread, function(v)
+            memoryRecoilEngine.noSpread = v
+            if memoryRecoilEngine.enabled then patchWeaponMemory() end
+        end)
+        addInspectorToggle(34, "Instant Memory Flush", true, function(v)
+            if memoryRecoilEngine.enabled then patchWeaponMemory() end
         end)
     elseif moduleName == "Butterfly Knife" then
         insContent.CanvasSize = UDim2.new(0, 0, 0, 160)
@@ -3248,10 +3307,13 @@ addCard(cAimSection, "Tracking", aimbotEnabled, function(v)
     end
 end)
 addCard(cAimSection, "RCS", rcsEnabled, function(v) rcsEnabled = v end)
-addCard(cAimSection, "No Recoil", noRecoil.enabled, function(v)
-    noRecoil.enabled = v
-    noRecoil.isFiring = false
-    noRecoil.lastNonRecoilCFrame = camera and camera.CFrame or nil
+addCard(cAimSection, "No Recoil", memoryRecoilEngine.enabled, function(v)
+    memoryRecoilEngine.enabled = v
+    if v then
+        patchWeaponMemory()
+    else
+        restoreWeaponMemory()
+    end
 end)
 addCard(cAimSection, "Trigger Assistant", triggerbotEnabled, function(v) triggerbotEnabled = v end)
 addCard(cRageSection, "Anti-Aim", antiAimEnabled, function(v) antiAimEnabled = v end)
