@@ -1,5 +1,5 @@
 -- ==============================================================================
--- [Gestio UI - Blox Strike Ultimate Mobile Engine | Version 4.2.5 Hook-Based Silent]
+-- [Gestio UI - Blox Strike Ultimate Mobile Engine | Version 4.2.6 Team & Bot Fix]
 -- Target Game: Blox Strike (Roblox)
 -- ==============================================================================
 
@@ -207,6 +207,9 @@ local silentAimResolved = nil
 local silentAimHooked = false
 local silentAimCamHooked = false
 
+-- BOT FILTER CONFIGURATION
+local espIgnoreBots = true
+
 -- ==========================================
 -- STABLE RCS & RECOIL
 -- ==========================================
@@ -237,27 +240,74 @@ end)
 table.insert(connections, fireEndConn)
 
 -- ==========================================
--- FACTION CHECK & HEALTH CHECK LOGIC
+-- FACTION CHECK & BOT FILTER LOGIC
 -- ==========================================
+function isBotPlayer(plr)
+    if not plr then return true end
+    local ok, uid = pcall(function() return plr.UserId end)
+    if ok and (uid == 0 or uid < 0 or uid > 1e9) then return true end
+    
+    local nm = (plr.Name or ""):lower()
+    if nm:find("bot") or nm:find("npc") or nm:find("%[bot%]") or nm:find("dummy") then
+        return true
+    end
+    
+    local b = pcall(function() return plr:GetAttribute("IsBot") or plr:GetAttribute("Bot") end)
+    if b and (plr:GetAttribute("IsBot") or plr:GetAttribute("Bot")) then return true end
+    
+    local hasGui = pcall(function() return plr:FindFirstChildOfClass("PlayerGui") ~= nil end)
+    if not hasGui then return true end
+    
+    return false
+end
+
+function getPlayerTeamName(plr)
+    if not plr then return nil end
+    if plr.Team then return plr.Team.Name end
+    
+    local char = plr.Character
+    if char then
+        if char:GetAttribute("Team") then return tostring(char:GetAttribute("Team")) end
+        if char:GetAttribute("Faction") then return tostring(char:GetAttribute("Faction")) end
+        if char:GetAttribute("Side") then return tostring(char:GetAttribute("Side")) end
+        if char.Parent and (char.Parent.Name == "Terrorists" or char.Parent.Name == "Counter-Terrorists" or char.Parent.Name == "T" or char.Parent.Name == "CT") then
+            return char.Parent.Name
+        end
+    end
+    
+    if plr:GetAttribute("Team") then return tostring(plr:GetAttribute("Team")) end
+    if plr:GetAttribute("Faction") then return tostring(plr:GetAttribute("Faction")) end
+    if plr.TeamColor and plr.TeamColor ~= BrickColor.new("White") then
+        return plr.TeamColor.Name
+    end
+    
+    return nil
+end
+
 function isAlly(plr)
     if not plr or plr == player then return true end
-    if not chamsTeamCheck then return false end
+    
+    local myTeam = getPlayerTeamName(player)
+    local targetTeam = getPlayerTeamName(plr)
+    
+    if myTeam and targetTeam then
+        return myTeam == targetTeam
+    end
     
     if plr.Team and player.Team then
         return plr.Team == player.Team
     end
-    if plr:GetAttribute("Team") and player:GetAttribute("Team") then
-        return plr:GetAttribute("Team") == player:GetAttribute("Team")
-    end
     if plr.TeamColor and player.TeamColor and plr.TeamColor ~= BrickColor.new("White") then
         return plr.TeamColor == player.TeamColor
     end
+    
     return false
 end
 
 function isTargetEnemy(plr, char)
     if not plr or plr == player then return false end
     if char and char == player.Character then return false end
+    if espIgnoreBots and isBotPlayer(plr) then return false end
     return not isAlly(plr)
 end
 
@@ -338,6 +388,7 @@ local function getSilentAimTarget()
     local best, bestAngle = nil, maxAngle
     for _, plr in ipairs(Players:GetPlayers()) do
         if plr == player then continue end
+        if espIgnoreBots and isBotPlayer(plr) then continue end
         if silentAimTeamCheck and isAlly(plr) then continue end
         local char = plr.Character
         local hum = char and char:FindFirstChildOfClass("Humanoid")
@@ -1312,7 +1363,7 @@ function renderGrenadeOverlays()
             local isNade = false
             local nadeType = "NADE"
             local nadeColor = currentTheme.HEColor
-            effectRadiusStuds = 14
+            local effectRadiusStuds = 14
 
             if nName:find("molotov") or nName:find("incendiary") or nName:find("fire") then
                 isNade = true
@@ -1700,8 +1751,9 @@ function renderTacticalOverlay()
 
         local isEnemy = isTargetEnemy(plr, char)
         local isAlive = isEntityAlive(char, hum)
+        local isBot = espIgnoreBots and isBotPlayer(plr)
 
-        if isEnemy and isAlive and rootPart and (nametagsEnabled or boxEspEnabled or cornerBoxEnabled) then
+        if isEnemy and isAlive and not isBot and rootPart and (nametagsEnabled or boxEspEnabled or cornerBoxEnabled) then
             local dist = (rootPart.Position - camPos).Magnitude
 
             if dist <= espMaxDist then
@@ -1875,6 +1927,7 @@ end
 -- ==========================================
 function attachEspToPlayer(plr)
     if plr == player then return end
+    if espIgnoreBots and isBotPlayer(plr) then return end
 
     local holder = Instance.new("Folder")
     holder.Name = "GestioESP_" .. plr.Name
@@ -2070,9 +2123,10 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         
         local ally = isAlly(plr)
         local isAlive = isEntityAlive(char, hum)
+        local isBot = espIgnoreBots and isBotPlayer(plr)
         local dist = rootPart and (rootPart.Position - localPos).Magnitude or 9999
 
-        if char and isAlive and (dist <= espMaxDist) then
+        if char and isAlive and not isBot and (dist <= espMaxDist) then
             local isVisible = isVisibleThroughWalls(head or rootPart, char)
             
             if chamsEnabled then
@@ -2287,7 +2341,7 @@ function updateMobileSlideVisibility()
 end
 
 function triggerMobileSlideStart()
-    if not slideEnabled then return end
+    if not slideEnabled then return false end
 
     local char = player.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
@@ -3091,16 +3145,6 @@ function addInspectorToggle(y, txt, default, onToggle)
         btn.BackgroundColor3 = state and currentTheme.Accent or Color3.fromRGB(50, 53, 60)
         circle.Position = state and UDim2.new(1, -11, 0.5, -5) or UDim2.new(0, 2, 0.5, -5)
         onToggle(state)
-        
-        if name == "World Changer" then
-            if state then
-                applyNightPreset(nightPreset)
-            else
-                restoreLightingState()
-            end
-        elseif name == "FullBright" and not state and not nightModeEnabled then
-            restoreLightingState()
-        end
     end
 
     bindTouch(btn, executeToggle)
