@@ -1,7 +1,7 @@
--- ==============================================
--- [Gestio UI - Blox Strike Ultimate Mobile Engine | Version 4.2.1 Continuous Morph Engine + Silent Aim]
+-- ==============================================================================
+-- [Gestio UI - Blox Strike Ultimate Mobile Engine | Version 4.2.2 Full Monolith]
 -- Target Game: Blox Strike (Roblox)
--- ==============================================
+-- ==============================================================================
 
 pcall(function()
     if getgenv and getgenv().GestioRunning then
@@ -196,7 +196,7 @@ local visibleCheck = false
 local aimSensitivity = 1.0
 local lockOnJump = true
 
--- Silent Aim Integration State
+-- SILENT AIM STATE
 local silentAimEnabled = false
 local silentAimFov = 120
 local silentAimTeamCheck = true
@@ -208,7 +208,7 @@ local silentAimHooked = false
 local silentAimMouse = player and player:GetMouse() or nil
 
 -- ==========================================
--- STABLE NON-CONFLICTING NO RECOIL / RCS
+-- STABLE RCS & RECOIL
 -- ==========================================
 local noRecoil = {
     enabled = false,
@@ -237,7 +237,7 @@ end)
 table.insert(connections, fireEndConn)
 
 -- ==========================================
--- VIBRANT CHAMS CONFIGURATION (GRAY OCCLUDED)
+-- VIBRANT CHAMS CONFIGURATION
 -- ==========================================
 local chamsEnabled = false
 local chamsTeamCheck = true
@@ -267,7 +267,7 @@ local thirdPersonHeight = 1.5
 local thirdPersonPreviousOffset = nil
 
 -- ==========================================
--- SKINS & WEAPON MODS ENGINE (CONTINUOUS SKINCHANGER)
+-- SKINS & WEAPON MODS ENGINE
 -- ==========================================
 local skinChangerEnabled = false
 local selectedKnifeType = "Butterfly Knife"
@@ -384,7 +384,7 @@ local triggerbotMobileAutoFire = true
 local lastTriggerTick = 0
 
 -- ==========================================
--- RAGE & ANTI-AIM (SPINBOT) VARIABLES
+-- RAGE & ANTI-AIM VARIABLES
 -- ==========================================
 local antiAimEnabled = false
 local spinSpeed = 50
@@ -392,7 +392,7 @@ local currentSpinAngle = 0
 local antiAimYawMode = "Spin"
 
 -- ==========================================
--- MOVEMENT, BHOP & SLIDE VARIABLES
+-- MOVEMENT VARIABLES
 -- ==========================================
 local bunnyHopEnabled = false
 local bhopAutoJump = false
@@ -418,7 +418,7 @@ local flightEnabled = false
 local flightSpeed = 50
 
 -- ==========================================
--- VISUALS & ESP CONFIGURATION VARIABLES
+-- VISUALS CONFIGURATION
 -- ==========================================
 local nametagsEnabled = false
 local espMaxDist = 3000
@@ -445,7 +445,7 @@ local showSmokeRadius = true
 local grenadeMaxDist = 1500
 
 -- ==========================================
--- JUMP CIRCLE CONFIGURATION VARIABLES
+-- JUMP CIRCLE VARIABLES
 -- ==========================================
 local jumpCircleEnabled = false
 local jumpCircleStyle = "GradientWave"
@@ -455,7 +455,7 @@ local jumpCircleHeightOffset = -2.8
 local activeJumpCircleData = nil
 
 -- ==========================================
--- ENVIRONMENT & LIGHTING VARIABLES
+-- ENVIRONMENT VARIABLES
 -- ==========================================
 local antiFlashEnabled = true
 local fullBrightEnabled = false
@@ -973,7 +973,7 @@ function isVisibleThroughWalls(targetPart, targetChar)
 end
 
 -- ==========================================
--- SILENT AIM TARGETING & RESOLVER LOGIC
+-- ADVANCED SILENT AIM ENGINE (NAMECALL + GC)
 -- ==========================================
 function getSilentAimTarget()
     local cam = Workspace.CurrentCamera or camera
@@ -1010,29 +1010,63 @@ end
 function setupSilentAim()
     if silentAimHooked then return end
     if not silentAimMouse and player then
-        silentAimMouse = player:GetMouse()
+        pcall(function() silentAimMouse = player:GetMouse() end)
     end
-    if not silentAimMouse then return end
 
     local ok, err = pcall(function()
         if not hookmetamethod then return end
+
+        local oldNamecall
+        oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
+            local method = getnamecallmethod()
+            local args = {...}
+
+            if silentAimEnabled and silentAimResolved and not (checkcaller and checkcaller()) then
+                -- Перехват лучевой баллистики оружия в Blox Strike
+                if method == "Raycast" and self == Workspace then
+                    local origin = args[1]
+                    local targetPos = silentAimResolved.Position
+                    args[2] = (targetPos - origin).Unit * 1000
+                    return oldNamecall(self, table.unpack(args))
+                end
+
+                if (method == "FindPartOnRay" or method == "FindPartOnRayWithIgnoreList" or method == "FindPartOnRayWithWhitelist") and self == Workspace then
+                    local currentRay = args[1]
+                    if typeof(currentRay) == "Ray" then
+                        local origin = currentRay.Origin
+                        local targetPos = silentAimResolved.Position
+                        args[1] = Ray.new(origin, (targetPos - origin).Unit * 1000)
+                        return oldNamecall(self, table.unpack(args))
+                    end
+                end
+            end
+
+            return oldNamecall(self, ...)
+        end)
+
         local oldIndex
-        oldIndex = hookmetamethod(silentAimMouse, "__index", function(self, key)
-            if silentAimEnabled and silentAimResolved and (key == "Hit" or key == "UnitRay") then
-                local currentCam = Workspace.CurrentCamera or camera
-                local camPos = currentCam and currentCam.CFrame.Position or Vector3.zero
-                if key == "Hit" then
-                    return CFrame.new(camPos, silentAimResolved.Position)
-                elseif key == "UnitRay" then
-                    return Ray.new(camPos, (silentAimResolved.Position - camPos).Unit)
+        oldIndex = hookmetamethod(game, "__index", function(self, key)
+            if silentAimEnabled and silentAimResolved and not (checkcaller and checkcaller()) then
+                if typeof(self) == "Instance" and self:IsA("Mouse") then
+                    local currentCam = Workspace.CurrentCamera or camera
+                    local camPos = currentCam and currentCam.CFrame.Position or Vector3.zero
+                    if key == "Hit" then
+                        return CFrame.new(camPos, silentAimResolved.Position)
+                    elseif key == "UnitRay" then
+                        return Ray.new(camPos, (silentAimResolved.Position - camPos).Unit)
+                    elseif key == "Target" then
+                        return silentAimResolved
+                    end
                 end
             end
             return oldIndex(self, key)
         end)
+
         silentAimHooked = true
     end)
-    if not ok then 
-        warn("[Gestio] Silent Aim hook failed: " .. tostring(err)) 
+
+    if not ok then
+        warn("[Gestio] Advanced Silent Aim hook failed: " .. tostring(err))
     end
 end
 
@@ -1852,7 +1886,7 @@ function renderTacticalOverlay()
 end
 
 -- ==========================================
--- 3D ESP & VIBRANT CHAMS ATTACHMENT PIPELINE
+-- 3D ESP & VIBRANT CHAMS PIPELINE
 -- ==========================================
 function attachEspToPlayer(plr)
     if plr == player then return end
@@ -1959,7 +1993,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         end
     end
 
-    -- Silent Aim Target Resolution
+    -- Silent Aim Target Dynamic Resolver
     if silentAimEnabled then
         local tgt = getSilentAimTarget()
         if tgt and (math.random(1, 100) <= silentAimHitChance) then
@@ -1971,7 +2005,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         silentAimResolved = nil
     end
 
-    -- Smooth Non-Intrusive RCS / No Recoil Drag while shooting
+    -- Recoil & RCS Compensation
     if (rcsEnabled or noRecoil.enabled) and noRecoil.isShooting then
         local comp = (noRecoil.enabled and (noRecoil.strength * 0.0035) or 0) + (rcsEnabled and ((rcsStrength / 100) * 0.004 * rcsPitchFactor) or 0)
         camera.CFrame = camera.CFrame * CFrame.Angles(-comp, 0, 0)
@@ -2042,7 +2076,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     renderTacticalOverlay()
     renderGrenadeOverlays()
 
-    -- 3D ESP & Vibrant Chams Multi-Stage Render Loop
+    -- 3D ESP & Vibrant Chams Rendering
     for plr, data in pairs(activeEspHolders) do
         local char = plr.Character
         local hum = char and char:FindFirstChildOfClass("Humanoid")
@@ -2056,7 +2090,6 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         if char and isAlive and (dist <= espMaxDist) then
             local isVisible = isVisibleThroughWalls(head or rootPart, char)
             
-            -- Chams Rendering Logic
             if chamsEnabled then
                 if ally and not chamsShowTeammates then
                     data.Highlight.Enabled = false
@@ -2084,7 +2117,6 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
                 data.Highlight.Enabled = false
             end
 
-            -- Enemy Dot & Tracers
             if not ally then
                 local activeAccent = isVisible and currentTheme.Enemy_Accent or currentTheme.Enemy_Hidden
                 
@@ -2514,7 +2546,7 @@ end)
 table.insert(connections, inEndedConn)
 
 -- ==========================================
--- HITMARKER TARGET HEALTH MONITOR (ALL ENEMIES)
+-- HITMARKER TARGET HEALTH MONITOR
 -- ==========================================
 table.insert(connections, RunService.Heartbeat:Connect(function()
     if not hitmarkerEnabled then
