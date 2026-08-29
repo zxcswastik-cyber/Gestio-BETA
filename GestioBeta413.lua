@@ -1,5 +1,5 @@
 -- ==============================================================================
--- [Gestio UI - Blox Strike Ultimate Mobile Engine | Version 4.2.6 Team & Bot Fix]
+-- [Gestio UI - Blox Strike Ultimate Mobile Engine | Version 4.2.7 ESP Fix]
 -- Target Game: Blox Strike (Roblox)
 -- ==============================================================================
 
@@ -207,8 +207,9 @@ local silentAimResolved = nil
 local silentAimHooked = false
 local silentAimCamHooked = false
 
--- BOT FILTER CONFIGURATION
-local espIgnoreBots = true
+-- ESP FILTERS & VISIBILITY
+local espShowTeammates = false
+local espIgnoreBots = false
 
 -- ==========================================
 -- STABLE RCS & RECOIL
@@ -240,36 +241,27 @@ end)
 table.insert(connections, fireEndConn)
 
 -- ==========================================
--- FACTION CHECK & BOT FILTER LOGIC
+-- FACTION CHECK & ROBUST BOT FILTER
 -- ==========================================
 function isBotPlayer(plr)
     if not plr then return true end
     local ok, uid = pcall(function() return plr.UserId end)
-    if ok and (uid == 0 or uid < 0 or uid > 1e9) then return true end
+    if ok and (uid == 0 or uid < 0) then return true end
     
-    local nm = (plr.Name or ""):lower()
-    if nm:find("bot") or nm:find("npc") or nm:find("%[bot%]") or nm:find("dummy") then
-        return true
-    end
-    
-    local b = pcall(function() return plr:GetAttribute("IsBot") or plr:GetAttribute("Bot") end)
-    if b and (plr:GetAttribute("IsBot") or plr:GetAttribute("Bot")) then return true end
-    
-    local hasGui = pcall(function() return plr:FindFirstChildOfClass("PlayerGui") ~= nil end)
-    if not hasGui then return true end
+    local b = pcall(function() return plr:GetAttribute("IsBot") end)
+    if b and plr:GetAttribute("IsBot") == true then return true end
     
     return false
 end
 
 function getPlayerTeamName(plr)
     if not plr then return nil end
-    if plr.Team then return plr.Team.Name end
+    if plr.Team and plr.Team.Name ~= "" then return plr.Team.Name end
     
     local char = plr.Character
     if char then
         if char:GetAttribute("Team") then return tostring(char:GetAttribute("Team")) end
         if char:GetAttribute("Faction") then return tostring(char:GetAttribute("Faction")) end
-        if char:GetAttribute("Side") then return tostring(char:GetAttribute("Side")) end
         if char.Parent and (char.Parent.Name == "Terrorists" or char.Parent.Name == "Counter-Terrorists" or char.Parent.Name == "T" or char.Parent.Name == "CT") then
             return char.Parent.Name
         end
@@ -277,6 +269,7 @@ function getPlayerTeamName(plr)
     
     if plr:GetAttribute("Team") then return tostring(plr:GetAttribute("Team")) end
     if plr:GetAttribute("Faction") then return tostring(plr:GetAttribute("Faction")) end
+    
     if plr.TeamColor and plr.TeamColor ~= BrickColor.new("White") then
         return plr.TeamColor.Name
     end
@@ -290,13 +283,14 @@ function isAlly(plr)
     local myTeam = getPlayerTeamName(player)
     local targetTeam = getPlayerTeamName(plr)
     
-    if myTeam and targetTeam then
+    if myTeam and targetTeam and myTeam ~= "" and targetTeam ~= "" then
         return myTeam == targetTeam
     end
     
     if plr.Team and player.Team then
         return plr.Team == player.Team
     end
+    
     if plr.TeamColor and player.TeamColor and plr.TeamColor ~= BrickColor.new("White") then
         return plr.TeamColor == player.TeamColor
     end
@@ -1749,16 +1743,24 @@ function renderTacticalOverlay()
         local rootPart = char and (char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso"))
         local head = char and char:FindFirstChild("Head")
 
-        local isEnemy = isTargetEnemy(plr, char)
+        local ally = isAlly(plr)
+        local isEnemy = not ally
         local isAlive = isEntityAlive(char, hum)
         local isBot = espIgnoreBots and isBotPlayer(plr)
 
-        if isEnemy and isAlive and not isBot and rootPart and (nametagsEnabled or boxEspEnabled or cornerBoxEnabled) then
+        local shouldRender = (isEnemy or espShowTeammates) and isAlive and not isBot and rootPart and (nametagsEnabled or boxEspEnabled or cornerBoxEnabled)
+
+        if shouldRender then
             local dist = (rootPart.Position - camPos).Magnitude
 
             if dist <= espMaxDist then
                 local isVisible = isVisibleThroughWalls(head or rootPart, char)
-                local sideColor = isVisible and currentTheme.Enemy_Accent or currentTheme.Enemy_Hidden
+                local sideColor
+                if ally then
+                    sideColor = currentTheme.HealthHigh
+                else
+                    sideColor = isVisible and currentTheme.Enemy_Accent or currentTheme.Enemy_Hidden
+                end
 
                 local headOffset = head and Vector3.new(0, 0.6, 0) or Vector3.new(0, 2.0, 0)
                 local topWorld = (head and head.Position or rootPart.Position) + headOffset
@@ -1927,7 +1929,6 @@ end
 -- ==========================================
 function attachEspToPlayer(plr)
     if plr == player then return end
-    if espIgnoreBots and isBotPlayer(plr) then return end
 
     local holder = Instance.new("Folder")
     holder.Name = "GestioESP_" .. plr.Name
@@ -2031,7 +2032,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         end
     end
 
-    -- Silent Aim: resolve target once per frame (zero-lag)
+    -- Silent Aim: resolve target once per frame
     if silentAimEnabled then
         setupSilentAimHooks()
         if math.random(1, 100) <= silentAimHitChance then
@@ -2156,8 +2157,13 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
                 data.Highlight.Enabled = false
             end
 
-            if not ally then
-                local activeAccent = isVisible and currentTheme.Enemy_Accent or currentTheme.Enemy_Hidden
+            if not ally or espShowTeammates then
+                local activeAccent
+                if ally then
+                    activeAccent = currentTheme.HealthHigh
+                else
+                    activeAccent = isVisible and currentTheme.Enemy_Accent or currentTheme.Enemy_Hidden
+                end
                 
                 if head and data.HeadDot.Adornee ~= head then
                     data.HeadDot.Adornee = head
@@ -2165,7 +2171,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
                 data.DotFrame.BackgroundColor3 = activeAccent
                 data.HeadDot.Enabled = headDotEnabled
 
-                if tracersEnabled and rootPart then
+                if tracersEnabled and rootPart and not ally then
                     local scrPos, onScreen = camera:WorldToViewportPoint(rootPart.Position)
                     if onScreen and scrPos.Z > 0 then
                         local origin = Vector2.new(camera.ViewportSize.X * 0.5, camera.ViewportSize.Y)
@@ -2341,7 +2347,7 @@ function updateMobileSlideVisibility()
 end
 
 function triggerMobileSlideStart()
-    if not slideEnabled then return false end
+    if not slideEnabled then return end
 
     local char = player.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
@@ -3398,19 +3404,21 @@ function openInspectorFor(moduleName)
         addInspectorToggle(76, "Auto Jump (Always)", bhopAutoJump, function(v) bhopAutoJump = v end)
         addInspectorToggle(102, "Air Strafe", bhopAirStrafe, function(v) bhopAirStrafe = v end)
     elseif moduleName == "Nametags" then
-        insContent.CanvasSize = UDim2.new(0, 0, 0, 340)
+        insContent.CanvasSize = UDim2.new(0, 0, 0, 380)
         addInspectorSlider(6, "Max Distance", 100, 5000, espMaxDist, false, function(v) espMaxDist = v end)
         addInspectorSlider(38, "Text Size", 8, 20, espTextSize, false, function(v) espTextSize = v end)
         addInspectorSlider(70, "Transparency", 0.0, 0.9, tagTransparency, true, function(v) tagTransparency = v end)
         addInspectorToggle(108, "Show Distance", espShowDistance, function(v) espShowDistance = v end)
         addInspectorToggle(134, "Show Health", espShowHealth, function(v) espShowHealth = v end)
         addInspectorToggle(160, "Show Weapon", tagShowWeapon, function(v) tagShowWeapon = v end)
+        addInspectorToggle(186, "Show Teammates", espShowTeammates, function(v) espShowTeammates = v end)
     elseif moduleName == "Box Overlay" then
-        insContent.CanvasSize = UDim2.new(0, 0, 0, 200)
+        insContent.CanvasSize = UDim2.new(0, 0, 0, 240)
         addInspectorSlider(6, "Max Distance", 100, 5000, espMaxDist, false, function(v) espMaxDist = v end)
         addInspectorSlider(38, "Thickness", 1.0, 3.0, boxThickness, true, function(v) boxThickness = v end)
         addInspectorToggle(76, "Corner Box", cornerBoxEnabled, function(v) cornerBoxEnabled = v end)
         addInspectorToggle(108, "Health Bar", healthBarEnabled, function(v) healthBarEnabled = v end)
+        addInspectorToggle(134, "Show Teammates", espShowTeammates, function(v) espShowTeammates = v end)
     elseif moduleName == "World Changer" then
         insContent.CanvasSize = UDim2.new(0, 0, 0, 330)
         addInspectorChoice(6, "World Preset", {"Midnight", "Nebula", "DeepBlood", "CyberPurple", "EmeraldNight", "PitchBlack"}, nightPreset, function(selected)
