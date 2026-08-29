@@ -1,7 +1,7 @@
--- ==============================================================================
--- [Gestio UI - Blox Strike Ultimate Mobile Engine | Version 4.2.1 Continuous Morph Engine]
+-- ==============================================
+-- [Gestio UI - Blox Strike Ultimate Mobile Engine | Version 4.2.1 Continuous Morph Engine + Silent Aim]
 -- Target Game: Blox Strike (Roblox)
--- ==============================================================================
+-- ==============================================
 
 pcall(function()
     if getgenv and getgenv().GestioRunning then
@@ -196,6 +196,17 @@ local visibleCheck = false
 local aimSensitivity = 1.0
 local lockOnJump = true
 
+-- Silent Aim Integration State
+local silentAimEnabled = false
+local silentAimFov = 120
+local silentAimTeamCheck = true
+local silentAimVisibleCheck = false
+local silentAimHitChance = 100
+local silentAimAimHead = true
+local silentAimResolved = nil
+local silentAimHooked = false
+local silentAimMouse = player and player:GetMouse() or nil
+
 -- ==========================================
 -- STABLE NON-CONFLICTING NO RECOIL / RCS
 -- ==========================================
@@ -209,6 +220,7 @@ local rcsEnabled = false
 local rcsStrength = 60
 local rcsPitchFactor = 1.0
 local rcsYawFactor = 1.0
+local rcsHorizontalComp = false
 
 local fireStartConn = UserInputService.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -234,10 +246,10 @@ local chamsOcclusion = true
 local chamsFillTransparency = 0.45
 local chamsOutlineTransparency = 0.10
 
-local chamsColorVisible = Color3.fromRGB(255, 45, 85)       -- Малиновый неон (виден)
-local chamsColorHidden = Color3.fromRGB(110, 115, 125)      -- Матовый серый (за стеной)
-local chamsColorAlly = Color3.fromRGB(0, 230, 255)          -- Кибер-бирюзовый (союзники)
-local chamsOutlineColor = Color3.fromRGB(240, 240, 245)     -- Контур
+local chamsColorVisible = Color3.fromRGB(255, 45, 85)
+local chamsColorHidden = Color3.fromRGB(110, 115, 125)
+local chamsColorAlly = Color3.fromRGB(0, 230, 255)
+local chamsOutlineColor = Color3.fromRGB(240, 240, 245)
 
 -- ==========================================
 -- CRIMSON NEON HITMARKER & THIRD PERSON
@@ -958,6 +970,70 @@ function isVisibleThroughWalls(targetPart, targetChar)
         end
     end
     return false
+end
+
+-- ==========================================
+-- SILENT AIM TARGETING & RESOLVER LOGIC
+-- ==========================================
+function getSilentAimTarget()
+    local cam = Workspace.CurrentCamera or camera
+    if not cam then return nil end
+    local camPos = cam.CFrame.Position
+    local camLook = cam.CFrame.LookVector
+    local maxAngle = math.rad(silentAimFov / 2)
+    local best, bestAngle = nil, maxAngle
+
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr == player then continue end
+        if silentAimTeamCheck and isAlly(plr) then continue end
+        local char = plr.Character
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        if not isEntityAlive(char, hum) then continue end
+
+        local part = char:FindFirstChild(silentAimAimHead and "Head" or "HumanoidRootPart") or char:FindFirstChild("Torso")
+        if not part or not part:IsA("BasePart") then continue end
+
+        if silentAimVisibleCheck and not isVisibleThroughWalls(part, char) then
+            continue
+        end
+
+        local dir = (part.Position - camPos).Unit
+        local angle = math.acos(math.clamp(camLook:Dot(dir), -1, 1))
+        if angle < bestAngle then
+            bestAngle = angle
+            best = part
+        end
+    end
+    return best
+end
+
+function setupSilentAim()
+    if silentAimHooked then return end
+    if not silentAimMouse and player then
+        silentAimMouse = player:GetMouse()
+    end
+    if not silentAimMouse then return end
+
+    local ok, err = pcall(function()
+        if not hookmetamethod then return end
+        local oldIndex
+        oldIndex = hookmetamethod(silentAimMouse, "__index", function(self, key)
+            if silentAimEnabled and silentAimResolved and (key == "Hit" or key == "UnitRay") then
+                local currentCam = Workspace.CurrentCamera or camera
+                local camPos = currentCam and currentCam.CFrame.Position or Vector3.zero
+                if key == "Hit" then
+                    return CFrame.new(camPos, silentAimResolved.Position)
+                elseif key == "UnitRay" then
+                    return Ray.new(camPos, (silentAimResolved.Position - camPos).Unit)
+                end
+            end
+            return oldIndex(self, key)
+        end)
+        silentAimHooked = true
+    end)
+    if not ok then 
+        warn("[Gestio] Silent Aim hook failed: " .. tostring(err)) 
+    end
 end
 
 -- ==========================================
@@ -1883,6 +1959,18 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         end
     end
 
+    -- Silent Aim Target Resolution
+    if silentAimEnabled then
+        local tgt = getSilentAimTarget()
+        if tgt and (math.random(1, 100) <= silentAimHitChance) then
+            silentAimResolved = tgt
+        else
+            silentAimResolved = nil
+        end
+    else
+        silentAimResolved = nil
+    end
+
     -- Smooth Non-Intrusive RCS / No Recoil Drag while shooting
     if (rcsEnabled or noRecoil.enabled) and noRecoil.isShooting then
         local comp = (noRecoil.enabled and (noRecoil.strength * 0.0035) or 0) + (rcsEnabled and ((rcsStrength / 100) * 0.004 * rcsPitchFactor) or 0)
@@ -1934,7 +2022,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         lockedTarget = nil
     end
 
-    -- Continuous Morph Scan Pipeline (Re-morph viewmodels as they equip)
+    -- Continuous Morph Scan Pipeline
     if skinChangerEnabled then
         skinScanAccumulator += dt
         if skinScanAccumulator >= 0.30 then
@@ -3121,6 +3209,13 @@ function openInspectorFor(moduleName)
         addInspectorToggle(192, "Prediction", predictionEnabled, function(v) predictionEnabled = v end)
         addInspectorToggle(218, "Show FOV Circle", showFovCircle, function(v) showFovCircle = v end)
         addInspectorToggle(244, "Visibility Check", visibleCheck, function(v) visibleCheck = v end)
+    elseif moduleName == "Silent Aim" then
+        insContent.CanvasSize = UDim2.new(0, 0, 0, 200)
+        addInspectorSlider(6, "FOV", 10, 360, silentAimFov, false, function(v) silentAimFov = v end)
+        addInspectorSlider(38, "Hit Chance", 1, 100, silentAimHitChance, false, function(v) silentAimHitChance = v end)
+        addInspectorToggle(70, "Team Check", silentAimTeamCheck, function(v) silentAimTeamCheck = v end)
+        addInspectorToggle(96, "Visible Check", silentAimVisibleCheck, function(v) silentAimVisibleCheck = v end)
+        addInspectorToggle(122, "Aim Head", silentAimAimHead, function(v) silentAimAimHead = v end)
     elseif moduleName == "Chams" then
         insContent.CanvasSize = UDim2.new(0, 0, 0, 240)
         addInspectorSlider(6, "Fill Alpha", 0.0, 1.0, chamsFillTransparency, true, function(v) chamsFillTransparency = v end)
@@ -3343,40 +3438,12 @@ function addCard(parent, name, defaultState, onToggle)
     bindTouch(toggleBtn, executeToggle)
 end
 
-
--- ==========================================
--- SILENT AIM ENGINE (SAFE INTEGRATION)
--- ==========================================
-silentAimEnabled = false
-silentAimTarget = nil
-
-local function getSilentAimTarget()
-    -- Uses the existing target-selection pipeline when available.
-    if lockedTarget and isEntityAlive and lockedTarget.Character then
-        local hum = lockedTarget.Character:FindFirstChildOfClass("Humanoid")
-        if isEntityAlive(lockedTarget.Character, hum) then
-            return lockedTarget
-        end
-    end
-    return nil
-end
-
-function installSilentAimHook()
-    -- Intentionally does not hook __namecall/metatables/remotes.
-    silentAimTarget = getSilentAimTarget()
-end
-
-function installSilentRemote()
-    -- Placeholder kept so the UI callback never calls a missing function.
-    silentAimTarget = getSilentAimTarget()
-end
-
 -- ==========================================
 -- TAB SECTIONS & MODULE POPULATION
 -- ==========================================
 
 -- COMBAT TAB
-local cAimSection = makeCategorySection(cPage, "Aim & Ballistics", 1, 3)
+local cAimSection = makeCategorySection(cPage, "Aim & Ballistics", 1, 5)
 local cRageSection = makeCategorySection(cPage, "HVH & Anti-Aim", 2, 1)
 
 addCard(cAimSection, "Tracking", aimbotEnabled, function(v)
@@ -3386,20 +3453,15 @@ addCard(cAimSection, "Tracking", aimbotEnabled, function(v)
         lockedTarget = nil
     end
 end)
+addCard(cAimSection, "Silent Aim", silentAimEnabled, function(v)
+    silentAimEnabled = v
+    if v then setupSilentAim() end
+end)
 addCard(cAimSection, "RCS", rcsEnabled, function(v) rcsEnabled = v end)
 addCard(cAimSection, "No Recoil", noRecoil.enabled, function(v)
     noRecoil.enabled = v
 end)
 addCard(cAimSection, "Trigger Assistant", triggerbotEnabled, function(v) triggerbotEnabled = v end)
-addCard(cAimSection, "Silent Aim", silentAimEnabled, function(v)
-    silentAimEnabled = v
-    if v then
-        installSilentAimHook()
-        installSilentRemote()
-    else
-        silentAimTarget = nil
-    end
-end)
 addCard(cRageSection, "Anti-Aim", antiAimEnabled, function(v) antiAimEnabled = v end)
 
 -- MOVEMENT TAB
