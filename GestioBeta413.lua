@@ -1,5 +1,5 @@
 -- ==============================================================================
--- [Gestio UI - Blox Strike Ultimate Mobile Engine | Version 4.2.1 Continuous Morph Engine]
+-- [Gestio UI - Blox Strike Ultimate Mobile Engine | Version 4.3.1 Clean Inject]
 -- Target Game: Blox Strike (Roblox)
 -- ==============================================================================
 
@@ -196,7 +196,7 @@ local visibleCheck = false
 local aimSensitivity = 1.0
 local lockOnJump = true
 
--- SILENT AIM VARIABLES
+-- SILENT AIM CONFIGURATION
 local silentAimEnabled = false
 local silentAimFov = 150
 local silentAimTeamCheck = true
@@ -205,7 +205,6 @@ local silentAimHitChance = 100
 local silentAimAimHead = true
 local silentAimResolved = nil
 local silentAimHooked = false
-local silentAimCamHooked = false
 local espIgnoreBots = true
 
 -- ==========================================
@@ -421,6 +420,7 @@ local flightSpeed = 50
 -- ==========================================
 -- VISUALS & ESP CONFIGURATION VARIABLES
 -- ==========================================
+local espShowTeammates = false
 local nametagsEnabled = false
 local espMaxDist = 3000
 local espShowDistance = true
@@ -3636,4 +3636,6 @@ openInspectorFor("Tracking")
 
 end
 
-buildGestioUI()
+task.spawn(function()
+    pcall(buildGestioUI)
+end)
