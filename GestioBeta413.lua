@@ -1,5 +1,5 @@
 -- ==============================================================================
--- [Gestio UI - Blox Strike Ultimate Mobile Engine | Version 4.2.3 Optimized Silent]
+-- [Gestio UI - Blox Strike Ultimate Mobile Engine | Version 4.2.4 Zero-Lag Silent]
 -- Target Game: Blox Strike (Roblox)
 -- ==============================================================================
 
@@ -196,18 +196,13 @@ local visibleCheck = false
 local aimSensitivity = 1.0
 local lockOnJump = true
 
--- SILENT AIM OPTIMIZED STATE
+-- ZERO-LAG SILENT SNAP STATE
 local silentAimEnabled = false
-local silentAimFov = 140
+local silentAimFov = 150
 local silentAimTeamCheck = true
 local silentAimVisibleCheck = false
 local silentAimHitChance = 100
 local silentAimAimHead = true
-local silentAimResolved = nil
-local silentAimHooked = false
-local silentAimExecuting = false
-local silentScanAccumulator = 0
-local silentAimMouse = player and player:GetMouse() or nil
 
 -- ==========================================
 -- STABLE RCS & RECOIL
@@ -224,9 +219,60 @@ local rcsPitchFactor = 1.0
 local rcsYawFactor = 1.0
 local rcsHorizontalComp = false
 
+-- ZERO-LAG SILENT SNAP TRIGGER
+function triggerSilentShot()
+    if not silentAimEnabled then return end
+    if math.random(1, 100) > silentAimHitChance then return end
+
+    local cam = Workspace.CurrentCamera or camera
+    if not cam then return end
+
+    local vp = cam.ViewportSize
+    local center = Vector2.new(vp.X * 0.5, vp.Y * 0.5)
+    local bestPart = nil
+    local shortestDist = silentAimFov
+
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= player then
+            if not (silentAimTeamCheck and isAlly(plr)) then
+                local char = plr.Character
+                local hum = char and char:FindFirstChildOfClass("Humanoid")
+                if isEntityAlive(char, hum) then
+                    local part = char:FindFirstChild(silentAimAimHead and "Head" or "HumanoidRootPart") or char:FindFirstChild("Torso")
+                    if part and part:IsA("BasePart") then
+                        local screenPos, onScreen = cam:WorldToViewportPoint(part.Position)
+                        if onScreen and screenPos.Z > 0 then
+                            local screenDist = (Vector2.new(screenPos.X, screenPos.Y) - center).Magnitude
+                            if screenDist <= shortestDist then
+                                if not silentAimVisibleCheck or isVisibleThroughWalls(part, char) then
+                                    shortestDist = screenDist
+                                    bestPart = part
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    if bestPart then
+        local originalCFrame = cam.CFrame
+        local aimPos = bestPart.Position
+        if predictionEnabled and bestPart.AssemblyLinearVelocity then
+            aimPos = aimPos + (bestPart.AssemblyLinearVelocity * 0.08)
+        end
+        cam.CFrame = CFrame.lookAt(cam.CFrame.Position, aimPos)
+        task.defer(function()
+            cam.CFrame = originalCFrame
+        end)
+    end
+end
+
 local fireStartConn = UserInputService.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         noRecoil.isShooting = true
+        triggerSilentShot()
     end
 end)
 table.insert(connections, fireStartConn)
@@ -966,112 +1012,13 @@ function isVisibleThroughWalls(targetPart, targetChar)
     local origin = camera.CFrame.Position
     local dir = targetPart.Position - origin
     
-    silentAimExecuting = true
     local hit = Workspace:Raycast(origin, dir, wallRayParams)
-    silentAimExecuting = false
-    
     if hit then
         if hit.Instance:IsDescendantOf(targetChar) or hit.Instance == targetPart then
             return true
         end
     end
     return false
-end
-
--- ==========================================
--- OPTIMIZED HIGH-PERFORMANCE SILENT AIM
--- ==========================================
-function getSilentAimTarget()
-    local cam = Workspace.CurrentCamera or camera
-    if not cam then return nil end
-    local vp = cam.ViewportSize
-    local center = Vector2.new(vp.X * 0.5, vp.Y * 0.5)
-    local bestPart = nil
-    local shortestDist = silentAimFov
-
-    for _, plr in ipairs(Players:GetPlayers()) do
-        if plr ~= player then
-            if not (silentAimTeamCheck and isAlly(plr)) then
-                local char = plr.Character
-                local hum = char and char:FindFirstChildOfClass("Humanoid")
-                if isEntityAlive(char, hum) then
-                    local part = char:FindFirstChild(silentAimAimHead and "Head" or "HumanoidRootPart") or char:FindFirstChild("Torso")
-                    if part and part:IsA("BasePart") then
-                        local screenPos, onScreen = cam:WorldToViewportPoint(part.Position)
-                        if onScreen and screenPos.Z > 0 then
-                            local screenDist = (Vector2.new(screenPos.X, screenPos.Y) - center).Magnitude
-                            if screenDist <= shortestDist then
-                                if not silentAimVisibleCheck or isVisibleThroughWalls(part, char) then
-                                    shortestDist = screenDist
-                                    bestPart = part
-                                end
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end
-    return bestPart
-end
-
-function setupSilentAim()
-    if silentAimHooked then return end
-
-    local ok, err = pcall(function()
-        if not hookmetamethod then return end
-
-        local oldNamecall
-        oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
-            local method = getnamecallmethod()
-            local args = {...}
-
-            if silentAimEnabled and silentAimResolved and not silentAimExecuting and not (checkcaller and checkcaller()) then
-                if method == "Raycast" and self == Workspace then
-                    local origin = args[1]
-                    local targetPos = silentAimResolved.Position
-                    args[2] = (targetPos - origin).Unit * 1000
-                    return oldNamecall(self, table.unpack(args))
-                end
-
-                if (method == "FindPartOnRay" or method == "FindPartOnRayWithIgnoreList" or method == "FindPartOnRayWithWhitelist") and self == Workspace then
-                    local currentRay = args[1]
-                    if typeof(currentRay) == "Ray" then
-                        local origin = currentRay.Origin
-                        local targetPos = silentAimResolved.Position
-                        args[1] = Ray.new(origin, (targetPos - origin).Unit * 1000)
-                        return oldNamecall(self, table.unpack(args))
-                    end
-                end
-            end
-
-            return oldNamecall(self, ...)
-        end)
-
-        local oldIndex
-        oldIndex = hookmetamethod(game, "__index", function(self, key)
-            if silentAimEnabled and silentAimResolved and not silentAimExecuting and not (checkcaller and checkcaller()) then
-                if typeof(self) == "Instance" and self:IsA("Mouse") then
-                    local currentCam = Workspace.CurrentCamera or camera
-                    local camPos = currentCam and currentCam.CFrame.Position or Vector3.zero
-                    if key == "Hit" then
-                        return CFrame.new(camPos, silentAimResolved.Position)
-                    elseif key == "UnitRay" then
-                        return Ray.new(camPos, (silentAimResolved.Position - camPos).Unit)
-                    elseif key == "Target" then
-                        return silentAimResolved
-                    end
-                end
-            end
-            return oldIndex(self, key)
-        end)
-
-        silentAimHooked = true
-    end)
-
-    if not ok then
-        warn("[Gestio] Silent Aim hook error: " .. tostring(err))
-    end
 end
 
 -- ==========================================
@@ -1472,10 +1419,7 @@ function isTargetVisible(originPos, targetPart, targetChar)
     visRayParams.FilterDescendantsInstances = {myChar, camera}
     local dir = targetPart.Position - originPos
     
-    silentAimExecuting = true
     local hit = Workspace:Raycast(originPos, dir, visRayParams)
-    silentAimExecuting = false
-    
     if hit and (hit.Instance:IsDescendantOf(targetChar) or hit.Instance == targetPart) then
         return true
     end
@@ -1550,10 +1494,7 @@ function runMobileTriggerbot()
     local ray = camera:ViewportPointToRay(vp.X * 0.5, vp.Y * 0.5)
     triggerRayParams.FilterDescendantsInstances = {player.Character, camera}
     
-    silentAimExecuting = true
     local res = Workspace:Raycast(ray.Origin, ray.Direction * 1000, triggerRayParams)
-    silentAimExecuting = false
-    
     if res and res.Instance then
         local hitChar = res.Instance.Parent
         local hitPlr = Players:GetPlayerFromCharacter(hitChar)
@@ -2004,23 +1945,6 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         end
     end
 
-    -- Throttled Lightweight Silent Aim Resolution
-    if silentAimEnabled then
-        silentScanAccumulator += dt
-        if silentScanAccumulator >= 0.05 then
-            silentScanAccumulator = 0
-            local tgt = getSilentAimTarget()
-            if tgt and (math.random(1, 100) <= silentAimHitChance) then
-                silentAimResolved = tgt
-            else
-                silentAimResolved = nil
-            end
-        end
-    else
-        silentScanAccumulator = 0
-        silentAimResolved = nil
-    end
-
     -- Recoil Compensation
     if (rcsEnabled or noRecoil.enabled) and noRecoil.isShooting then
         local comp = (noRecoil.enabled and (noRecoil.strength * 0.0035) or 0) + (rcsEnabled and ((rcsStrength / 100) * 0.004 * rcsPitchFactor) or 0)
@@ -2245,10 +2169,7 @@ function isPlayerGrounded(char, hrp)
     local origin = hrp.Position
     local direction = Vector3.new(0, -3.2, 0)
     
-    silentAimExecuting = true
     local hit = Workspace:Raycast(origin, direction, groundRayParams)
-    silentAimExecuting = false
-    
     return hit ~= nil
 end
 
@@ -3507,7 +3428,6 @@ addCard(cAimSection, "Tracking", aimbotEnabled, function(v)
 end)
 addCard(cAimSection, "Silent Aim", silentAimEnabled, function(v)
     silentAimEnabled = v
-    if v then setupSilentAim() end
 end)
 addCard(cAimSection, "RCS", rcsEnabled, function(v) rcsEnabled = v end)
 addCard(cAimSection, "No Recoil", noRecoil.enabled, function(v)
