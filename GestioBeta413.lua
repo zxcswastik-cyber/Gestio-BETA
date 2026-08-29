@@ -1,5 +1,5 @@
 -- ==============================================================================
--- [Gestio UI - Blox Strike Ultimate Mobile Engine | Version 4.2.2 Full Monolith]
+-- [Gestio UI - Blox Strike Ultimate Mobile Engine | Version 4.2.3 Optimized Silent]
 -- Target Game: Blox Strike (Roblox)
 -- ==============================================================================
 
@@ -196,15 +196,17 @@ local visibleCheck = false
 local aimSensitivity = 1.0
 local lockOnJump = true
 
--- SILENT AIM STATE
+-- SILENT AIM OPTIMIZED STATE
 local silentAimEnabled = false
-local silentAimFov = 120
+local silentAimFov = 140
 local silentAimTeamCheck = true
 local silentAimVisibleCheck = false
 local silentAimHitChance = 100
 local silentAimAimHead = true
 local silentAimResolved = nil
 local silentAimHooked = false
+local silentAimExecuting = false
+local silentScanAccumulator = 0
 local silentAimMouse = player and player:GetMouse() or nil
 
 -- ==========================================
@@ -963,7 +965,11 @@ function isVisibleThroughWalls(targetPart, targetChar)
     wallRayParams.FilterDescendantsInstances = {myChar, camera}
     local origin = camera.CFrame.Position
     local dir = targetPart.Position - origin
+    
+    silentAimExecuting = true
     local hit = Workspace:Raycast(origin, dir, wallRayParams)
+    silentAimExecuting = false
+    
     if hit then
         if hit.Instance:IsDescendantOf(targetChar) or hit.Instance == targetPart then
             return true
@@ -973,45 +979,44 @@ function isVisibleThroughWalls(targetPart, targetChar)
 end
 
 -- ==========================================
--- ADVANCED SILENT AIM ENGINE (NAMECALL + GC)
+-- OPTIMIZED HIGH-PERFORMANCE SILENT AIM
 -- ==========================================
 function getSilentAimTarget()
     local cam = Workspace.CurrentCamera or camera
     if not cam then return nil end
-    local camPos = cam.CFrame.Position
-    local camLook = cam.CFrame.LookVector
-    local maxAngle = math.rad(silentAimFov / 2)
-    local best, bestAngle = nil, maxAngle
+    local vp = cam.ViewportSize
+    local center = Vector2.new(vp.X * 0.5, vp.Y * 0.5)
+    local bestPart = nil
+    local shortestDist = silentAimFov
 
     for _, plr in ipairs(Players:GetPlayers()) do
-        if plr == player then continue end
-        if silentAimTeamCheck and isAlly(plr) then continue end
-        local char = plr.Character
-        local hum = char and char:FindFirstChildOfClass("Humanoid")
-        if not isEntityAlive(char, hum) then continue end
-
-        local part = char:FindFirstChild(silentAimAimHead and "Head" or "HumanoidRootPart") or char:FindFirstChild("Torso")
-        if not part or not part:IsA("BasePart") then continue end
-
-        if silentAimVisibleCheck and not isVisibleThroughWalls(part, char) then
-            continue
-        end
-
-        local dir = (part.Position - camPos).Unit
-        local angle = math.acos(math.clamp(camLook:Dot(dir), -1, 1))
-        if angle < bestAngle then
-            bestAngle = angle
-            best = part
+        if plr ~= player then
+            if not (silentAimTeamCheck and isAlly(plr)) then
+                local char = plr.Character
+                local hum = char and char:FindFirstChildOfClass("Humanoid")
+                if isEntityAlive(char, hum) then
+                    local part = char:FindFirstChild(silentAimAimHead and "Head" or "HumanoidRootPart") or char:FindFirstChild("Torso")
+                    if part and part:IsA("BasePart") then
+                        local screenPos, onScreen = cam:WorldToViewportPoint(part.Position)
+                        if onScreen and screenPos.Z > 0 then
+                            local screenDist = (Vector2.new(screenPos.X, screenPos.Y) - center).Magnitude
+                            if screenDist <= shortestDist then
+                                if not silentAimVisibleCheck or isVisibleThroughWalls(part, char) then
+                                    shortestDist = screenDist
+                                    bestPart = part
+                                end
+                            end
+                        end
+                    end
+                end
+            end
         end
     end
-    return best
+    return bestPart
 end
 
 function setupSilentAim()
     if silentAimHooked then return end
-    if not silentAimMouse and player then
-        pcall(function() silentAimMouse = player:GetMouse() end)
-    end
 
     local ok, err = pcall(function()
         if not hookmetamethod then return end
@@ -1021,8 +1026,7 @@ function setupSilentAim()
             local method = getnamecallmethod()
             local args = {...}
 
-            if silentAimEnabled and silentAimResolved and not (checkcaller and checkcaller()) then
-                -- Перехват лучевой баллистики оружия в Blox Strike
+            if silentAimEnabled and silentAimResolved and not silentAimExecuting and not (checkcaller and checkcaller()) then
                 if method == "Raycast" and self == Workspace then
                     local origin = args[1]
                     local targetPos = silentAimResolved.Position
@@ -1046,7 +1050,7 @@ function setupSilentAim()
 
         local oldIndex
         oldIndex = hookmetamethod(game, "__index", function(self, key)
-            if silentAimEnabled and silentAimResolved and not (checkcaller and checkcaller()) then
+            if silentAimEnabled and silentAimResolved and not silentAimExecuting and not (checkcaller and checkcaller()) then
                 if typeof(self) == "Instance" and self:IsA("Mouse") then
                     local currentCam = Workspace.CurrentCamera or camera
                     local camPos = currentCam and currentCam.CFrame.Position or Vector3.zero
@@ -1066,7 +1070,7 @@ function setupSilentAim()
     end)
 
     if not ok then
-        warn("[Gestio] Advanced Silent Aim hook failed: " .. tostring(err))
+        warn("[Gestio] Silent Aim hook error: " .. tostring(err))
     end
 end
 
@@ -1240,7 +1244,7 @@ if player.Character then
 end
 
 -- ==========================================
--- GRENADE TRAJECTORY CALCULATION ENGINE
+-- GRENADE TRAJECTORY ENGINE
 -- ==========================================
 grenadeRayParams = RaycastParams.new()
 grenadeRayParams.FilterType = Enum.RaycastFilterType.Exclude
@@ -1467,7 +1471,11 @@ function isTargetVisible(originPos, targetPart, targetChar)
     local myChar = player.Character
     visRayParams.FilterDescendantsInstances = {myChar, camera}
     local dir = targetPart.Position - originPos
+    
+    silentAimExecuting = true
     local hit = Workspace:Raycast(originPos, dir, visRayParams)
+    silentAimExecuting = false
+    
     if hit and (hit.Instance:IsDescendantOf(targetChar) or hit.Instance == targetPart) then
         return true
     end
@@ -1542,7 +1550,10 @@ function runMobileTriggerbot()
     local ray = camera:ViewportPointToRay(vp.X * 0.5, vp.Y * 0.5)
     triggerRayParams.FilterDescendantsInstances = {player.Character, camera}
     
+    silentAimExecuting = true
     local res = Workspace:Raycast(ray.Origin, ray.Direction * 1000, triggerRayParams)
+    silentAimExecuting = false
+    
     if res and res.Instance then
         local hitChar = res.Instance.Parent
         local hitPlr = Players:GetPlayerFromCharacter(hitChar)
@@ -1993,19 +2004,24 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         end
     end
 
-    -- Silent Aim Target Dynamic Resolver
+    -- Throttled Lightweight Silent Aim Resolution
     if silentAimEnabled then
-        local tgt = getSilentAimTarget()
-        if tgt and (math.random(1, 100) <= silentAimHitChance) then
-            silentAimResolved = tgt
-        else
-            silentAimResolved = nil
+        silentScanAccumulator += dt
+        if silentScanAccumulator >= 0.05 then
+            silentScanAccumulator = 0
+            local tgt = getSilentAimTarget()
+            if tgt and (math.random(1, 100) <= silentAimHitChance) then
+                silentAimResolved = tgt
+            else
+                silentAimResolved = nil
+            end
         end
     else
+        silentScanAccumulator = 0
         silentAimResolved = nil
     end
 
-    -- Recoil & RCS Compensation
+    -- Recoil Compensation
     if (rcsEnabled or noRecoil.enabled) and noRecoil.isShooting then
         local comp = (noRecoil.enabled and (noRecoil.strength * 0.0035) or 0) + (rcsEnabled and ((rcsStrength / 100) * 0.004 * rcsPitchFactor) or 0)
         camera.CFrame = camera.CFrame * CFrame.Angles(-comp, 0, 0)
@@ -2056,7 +2072,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         lockedTarget = nil
     end
 
-    -- Continuous Morph Scan Pipeline
+    -- Continuous Morph Scan
     if skinChangerEnabled then
         skinScanAccumulator += dt
         if skinScanAccumulator >= 0.30 then
@@ -2076,7 +2092,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     renderTacticalOverlay()
     renderGrenadeOverlays()
 
-    -- 3D ESP & Vibrant Chams Rendering
+    -- 3D Chams Rendering
     for plr, data in pairs(activeEspHolders) do
         local char = plr.Character
         local hum = char and char:FindFirstChildOfClass("Humanoid")
@@ -2228,7 +2244,11 @@ function isPlayerGrounded(char, hrp)
     groundRayParams.FilterDescendantsInstances = {char, camera}
     local origin = hrp.Position
     local direction = Vector3.new(0, -3.2, 0)
+    
+    silentAimExecuting = true
     local hit = Workspace:Raycast(origin, direction, groundRayParams)
+    silentAimExecuting = false
+    
     return hit ~= nil
 end
 
@@ -2301,7 +2321,7 @@ function updateMobileSlideVisibility()
 end
 
 function triggerMobileSlideStart()
-    if not slideEnabled then return false end
+    if not slideEnabled then return end
 
     local char = player.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
