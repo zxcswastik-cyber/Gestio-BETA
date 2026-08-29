@@ -1,5 +1,5 @@
 -- ==============================================================================
--- [Gestio UI - Blox Strike Ultimate Mobile Engine | Version 4.2.7 ESP Fix]
+-- [Gestio UI - Blox Strike Ultimate Mobile Engine | Version 4.2.8 True Silent]
 -- Target Game: Blox Strike (Roblox)
 -- ==============================================================================
 
@@ -196,7 +196,7 @@ local visibleCheck = false
 local aimSensitivity = 1.0
 local lockOnJump = true
 
--- SILENT AIM CONFIGURATION
+-- TRUE SILENT AIM STATE
 local silentAimEnabled = false
 local silentAimFov = 150
 local silentAimTeamCheck = true
@@ -205,9 +205,8 @@ local silentAimHitChance = 100
 local silentAimAimHead = true
 local silentAimResolved = nil
 local silentAimHooked = false
-local silentAimCamHooked = false
 
--- ESP FILTERS & VISIBILITY
+-- ESP & FILTERS
 local espShowTeammates = false
 local espIgnoreBots = false
 
@@ -241,16 +240,12 @@ end)
 table.insert(connections, fireEndConn)
 
 -- ==========================================
--- FACTION CHECK & ROBUST BOT FILTER
+-- FACTION CHECK & TEAM IDENTIFICATION
 -- ==========================================
 function isBotPlayer(plr)
     if not plr then return true end
     local ok, uid = pcall(function() return plr.UserId end)
     if ok and (uid == 0 or uid < 0) then return true end
-    
-    local b = pcall(function() return plr:GetAttribute("IsBot") end)
-    if b and plr:GetAttribute("IsBot") == true then return true end
-    
     return false
 end
 
@@ -371,733 +366,119 @@ function isVisibleThroughWalls(targetPart, targetChar)
 end
 
 -- ==========================================
--- ZERO-LAG SILENT AIM (HOOK-BASED, INVISIBLE)
+-- DYNAMIC VELOCITY COMPENSATOR (MOTION AIM)
 -- ==========================================
+local function getPredictedTargetPosition(targetPart)
+    if not targetPart then return Vector3.zero end
+    local targetPos = targetPart.Position
+    if not predictionEnabled then return targetPos end
+
+    local myChar = player.Character
+    local myHrp = myChar and myChar:FindFirstChild("HumanoidRootPart")
+    
+    local targetVel = targetPart.AssemblyLinearVelocity or Vector3.zero
+    local myVel = (myHrp and myHrp.AssemblyLinearVelocity) or Vector3.zero
+    
+    local relativeVelocity = targetVel - (myVel * 0.45)
+    return targetPos + (relativeVelocity * predictionFactor)
+end
+
 local function getSilentAimTarget()
     local cam = Workspace.CurrentCamera or camera
     if not cam then return nil end
-    local camPos = cam.CFrame.Position
-    local camLook = cam.CFrame.LookVector
-    local maxAngle = math.rad(silentAimFov)
-    local best, bestAngle = nil, maxAngle
+    local vp = cam.ViewportSize
+    local center = Vector2.new(vp.X * 0.5, vp.Y * 0.5)
+    local bestPart = nil
+    local shortestDist = silentAimFov
+
     for _, plr in ipairs(Players:GetPlayers()) do
-        if plr == player then continue end
-        if espIgnoreBots and isBotPlayer(plr) then continue end
-        if silentAimTeamCheck and isAlly(plr) then continue end
-        local char = plr.Character
-        local hum = char and char:FindFirstChildOfClass("Humanoid")
-        if not isEntityAlive(char, hum) then continue end
-        local part = char:FindFirstChild(silentAimAimHead and "Head" or "HumanoidRootPart")
-            or char:FindFirstChild("Torso")
-        if not part or not part:IsA("BasePart") then continue end
-        if silentAimVisibleCheck and not isVisibleThroughWalls(part, char) then continue end
-        local dir = (part.Position - camPos).Unit
-        local angle = math.acos(math.clamp(camLook:Dot(dir), -1, 1))
-        if angle < bestAngle then
-            bestAngle = angle
-            best = part
+        if plr ~= player then
+            if not (silentAimTeamCheck and isAlly(plr)) then
+                local char = plr.Character
+                local hum = char and char:FindFirstChildOfClass("Humanoid")
+                if isEntityAlive(char, hum) then
+                    local part = char:FindFirstChild(silentAimAimHead and "Head" or "HumanoidRootPart")
+                        or char:FindFirstChild("Torso")
+                        or char:FindFirstChild("UpperTorso")
+                    
+                    if part and part:IsA("BasePart") then
+                        local screenPos, onScreen = cam:WorldToViewportPoint(part.Position)
+                        if onScreen and screenPos.Z > 0 then
+                            local screenDist = (Vector2.new(screenPos.X, screenPos.Y) - center).Magnitude
+                            if screenDist <= shortestDist then
+                                if not silentAimVisibleCheck or isVisibleThroughWalls(part, char) then
+                                    shortestDist = screenDist
+                                    bestPart = part
+                                end
+                            end
+                        end
+                    end
+                end
+            end
         end
     end
-    return best
+    return bestPart
 end
 
-local function silentAimCamPosAim()
-    if not (silentAimEnabled and silentAimResolved) then return nil end
-    local cam = Workspace.CurrentCamera or camera
-    if not cam then return nil end
-    local camPos = cam.CFrame.Position
-    local aimPos = silentAimResolved.Position
-    if predictionEnabled and silentAimResolved.AssemblyLinearVelocity then
-        aimPos = aimPos + silentAimResolved.AssemblyLinearVelocity * predictionFactor
-    end
-    return camPos, aimPos
-end
-
-local function setupSilentAimHooks()
+local function setupTrueSilentAimHook()
     if silentAimHooked then return end
     pcall(function()
-        local mouse = player:GetMouse()
+        if not hookmetamethod then return end
+
+        local oldNamecall
+        oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
+            local method = getnamecallmethod()
+            local args = {...}
+
+            if silentAimEnabled and silentAimResolved and not (checkcaller and checkcaller()) then
+                if method == "Raycast" and self == Workspace then
+                    local origin = args[1]
+                    local targetPos = getPredictedTargetPosition(silentAimResolved)
+                    args[2] = (targetPos - origin).Unit * 1500
+                    return oldNamecall(self, table.unpack(args))
+                end
+
+                if (method == "FindPartOnRay" or method == "FindPartOnRayWithIgnoreList" or method == "FindPartOnRayWithWhitelist") and self == Workspace then
+                    local currentRay = args[1]
+                    if typeof(currentRay) == "Ray" then
+                        local origin = currentRay.Origin
+                        local targetPos = getPredictedTargetPosition(silentAimResolved)
+                        args[1] = Ray.new(origin, (targetPos - origin).Unit * 1500)
+                        return oldNamecall(self, table.unpack(args))
+                    end
+                end
+
+                if (method == "ViewportPointToRay" or method == "ScreenPointToRay") and self == (Workspace.CurrentCamera or camera) then
+                    local camPos = (Workspace.CurrentCamera or camera).CFrame.Position
+                    local targetPos = getPredictedTargetPosition(silentAimResolved)
+                    return Ray.new(camPos, (targetPos - camPos).Unit)
+                end
+            end
+
+            return oldNamecall(self, ...)
+        end)
+
         local oldIndex
-        oldIndex = hookmetamethod(mouse, "__index", function(self, key)
-            if silentAimEnabled and silentAimResolved and (key == "Hit" or key == "UnitRay") then
-                local camPos, aimPos = silentAimCamPosAim()
-                if camPos then
+        oldIndex = hookmetamethod(game, "__index", function(self, key)
+            if silentAimEnabled and silentAimResolved and not (checkcaller and checkcaller()) then
+                if typeof(self) == "Instance" and self:IsA("Mouse") then
+                    local camPos = (Workspace.CurrentCamera or camera).CFrame.Position
+                    local targetPos = getPredictedTargetPosition(silentAimResolved)
                     if key == "Hit" then
-                        return CFrame.new(camPos, aimPos)
-                    else
-                        return Ray.new(camPos, (aimPos - camPos).Unit)
+                        return CFrame.new(camPos, targetPos)
+                    elseif key == "UnitRay" then
+                        return Ray.new(camPos, (targetPos - camPos).Unit)
+                    elseif key == "Target" then
+                        return silentAimResolved
                     end
                 end
             end
             return oldIndex(self, key)
         end)
+
         silentAimHooked = true
     end)
-    if not silentAimCamHooked then
-        pcall(function()
-            local oldNamecall
-            oldNamecall = hookmetamethod(camera, "__namecall", function(self, ...)
-                local method = getnamecallmethod()
-                if silentAimEnabled and silentAimResolved and noRecoil.isShooting
-                    and (method == "ViewportPointToRay" or method == "ScreenPointToRay") then
-                    local camPos, aimPos = silentAimCamPosAim()
-                    if camPos then
-                        return Ray.new(camPos, (aimPos - camPos).Unit)
-                    end
-                end
-                return oldNamecall(self, ...)
-            end)
-            silentAimCamHooked = true
-        end)
-    end
 end
-
--- ==========================================
--- VIBRANT CHAMS CONFIGURATION
--- ==========================================
-local chamsEnabled = false
-local chamsTeamCheck = true
-local chamsShowTeammates = false
-local chamsOcclusion = true
-local chamsFillTransparency = 0.45
-local chamsOutlineTransparency = 0.10
-
-local chamsColorVisible = Color3.fromRGB(255, 45, 85)
-local chamsColorHidden = Color3.fromRGB(110, 115, 125)
-local chamsColorAlly = Color3.fromRGB(0, 230, 255)
-local chamsOutlineColor = Color3.fromRGB(240, 240, 245)
-
--- ==========================================
--- CRIMSON NEON HITMARKER & THIRD PERSON
--- ==========================================
-local hitmarkerEnabled = false
-local hitmarkerDuration = 0.28
-local hitmarkerSize = 13
-local hitmarkerThickness = 2
-local hitmarkerGlow = true
-local hitmarkerLastHealth = {}
-local hitmarkerBusy = false
-local thirdPersonEnabled = false
-local thirdPersonDistance = 12
-local thirdPersonHeight = 1.5
-local thirdPersonPreviousOffset = nil
-
--- ==========================================
--- SKINS & WEAPON MODS ENGINE
--- ==========================================
-local skinChangerEnabled = false
-local selectedKnifeType = "Butterfly Knife"
-local selectedSkin = "Fade"
-
-local knifeSkinCatalog = {
-    ["Butterfly Knife"] = {
-        ["Vanilla"] = "rbxassetid://4991206306",
-        ["Fade"]    = "rbxassetid://4991206411",
-        ["Doppler"] = "rbxassetid://4991206517",
-        ["Lore"]    = "rbxassetid://4991206622"
-    },
-    ["Karambit"] = {
-        ["Vanilla"] = "rbxassetid://4991206306",
-        ["Fade"]    = "rbxassetid://4991206411",
-        ["Doppler"] = "rbxassetid://4991206517",
-        ["Lore"]    = "rbxassetid://4991206622"
-    },
-    ["Bayonet"] = {
-        ["Vanilla"] = "rbxassetid://4991206306",
-        ["Fade"]    = "rbxassetid://4991206411",
-        ["Doppler"] = "rbxassetid://4991206517"
-    },
-    ["Shadow Daggers"] = {
-        ["Vanilla"] = "rbxassetid://4991206306",
-        ["Fade"]    = "rbxassetid://4991206411"
-    },
-    ["Huntsman"] = {
-        ["Vanilla"] = "rbxassetid://4991206306",
-        ["Doppler"] = "rbxassetid://4991206517"
-    }
-}
-
-local knifeTypeNames = {}
-for k in pairs(knifeSkinCatalog) do table.insert(knifeTypeNames, k) end
-table.sort(knifeTypeNames)
-
-local function getSkinTextureId()
-    local cat = knifeSkinCatalog[selectedKnifeType]
-    if cat and cat[selectedSkin] then
-        return cat[selectedSkin]
-    end
-    return "rbxassetid://4991206306"
-end
-
-local function hookBloxStrikeModules()
-    pcall(function()
-        if not getgc then return end
-        for _, v in ipairs(getgc(true)) do
-            if type(v) == "table" then
-                if rawget(v, "EquippedMelee") ~= nil then
-                    v.EquippedMelee = selectedKnifeType
-                end
-                if rawget(v, "MeleeSkin") ~= nil then
-                    v.MeleeSkin = selectedSkin
-                end
-                if rawget(v, "Knife") ~= nil and type(v.Knife) == "table" then
-                    v.Knife.Name = selectedKnifeType
-                    v.Knife.Skin = selectedSkin
-                end
-            end
-        end
-    end)
-end
-
-local function applyTextureToPart(child, textureId)
-    pcall(function()
-        if child:IsA("MeshPart") then
-            child.TextureID = textureId
-        elseif child:IsA("SpecialMesh") then
-            child.TextureId = textureId
-        end
-        local sa = child:FindFirstChildOfClass("SurfaceAppearance")
-        if sa then
-            pcall(function() sa.ColorMap = textureId end)
-        end
-    end)
-end
-
-local function isKnifeTarget(name)
-    name = (name or ""):lower()
-    return name:find("knife") or name:find("melee") or name:find("blade")
-        or name:find("karambit") or name:find("bayonet") or name:find("dagger")
-        or name:find("huntsman") or name:find("arms") or name:find("viewmodel")
-        or name:find("weapon")
-end
-
-local function scanAndMorphKnives(root)
-    if not skinChangerEnabled or not root then return end
-    local textureId = getSkinTextureId()
-    pcall(function()
-        for _, obj in ipairs(root:GetDescendants()) do
-            if isKnifeTarget(obj.Name) or isKnifeTarget(obj.ClassName) then
-                if obj:IsA("MeshPart") or obj:IsA("SpecialMesh") then
-                    applyTextureToPart(obj, textureId)
-                end
-                for _, child in ipairs(obj:GetDescendants()) do
-                    if child:IsA("MeshPart") or child:IsA("SpecialMesh") then
-                        applyTextureToPart(child, textureId)
-                    end
-                end
-            end
-        end
-    end)
-end
-
--- ==========================================
--- TRIGGERBOT ASSISTANT VARIABLES
--- ==========================================
-local triggerbotEnabled = false
-local triggerbotDelay = 0.02
-local triggerbotHeadOnly = false
-local triggerbotMobileAutoFire = true
-local lastTriggerTick = 0
-
--- ==========================================
--- RAGE & ANTI-AIM VARIABLES
--- ==========================================
-local antiAimEnabled = false
-local spinSpeed = 50
-local currentSpinAngle = 0
-local antiAimYawMode = "Spin"
-
--- ==========================================
--- MOVEMENT VARIABLES
--- ==========================================
-local bunnyHopEnabled = false
-local bhopAutoJump = false
-local bhopAirStrafe = true
-local bhopSpeedBoost = 1.35
-local bhopJumpPower = 52
-local isMobileJumpHeld = false
-local lastMoveDirection = Vector3.zero
-
-local slideEnabled = false
-local isSliding = false
-local slideSpeedBoost = 1.8
-local slideFriction = 0.94
-local slideMinSpeed = 16
-local currentSlideVel = Vector3.zero
-local defaultHipHeight = 2.0
-local defaultHipHeightCaptured = false
-
-local speedEnabled = false
-local walkMultiplier = 2.0
-
-local flightEnabled = false
-local flightSpeed = 50
-
--- ==========================================
--- VISUALS CONFIGURATION
--- ==========================================
-local nametagsEnabled = false
-local espMaxDist = 3000
-local espShowDistance = true
-local espShowHealth = true
-local espTextSize = 8.5
-local tagTransparency = 0.25
-local tagBgColor = Color3.fromRGB(16, 17, 20)
-local tagOffsetY = 2.6
-local tagShowWeapon = true
-
-local boxEspEnabled = false
-local cornerBoxEnabled = false
-local boxThickness = 1.0
-local healthBarEnabled = true
-
-local headDotEnabled = false
-local tracersEnabled = false
-
-local grenadeEspEnabled = false
-local showGrenadePath = true
-local showMolotovRadius = true
-local showSmokeRadius = true
-local grenadeMaxDist = 1500
-
--- ==========================================
--- JUMP CIRCLE VARIABLES
--- ==========================================
-local jumpCircleEnabled = false
-local jumpCircleStyle = "GradientWave"
-local jumpCircleSegmentCount = 32
-local jumpCircleRadius = 3.5
-local jumpCircleHeightOffset = -2.8
-local activeJumpCircleData = nil
-
--- ==========================================
--- ENVIRONMENT VARIABLES
--- ==========================================
-local antiFlashEnabled = true
-local fullBrightEnabled = false
-local removeFogEnabled = true
-
-local nightModeEnabled = false
-local nightPreset = "Midnight"
-local nightClockTime = 0.0
-local nightBrightness = 0.2
-local nightOutdoorAmbient = Color3.fromRGB(25, 25, 40)
-
-local nightPresets = {
-    ["Midnight"] = {
-        ClockTime = 0.0,
-        Brightness = 0.2,
-        OutdoorAmbient = Color3.fromRGB(25, 25, 40),
-        Ambient = Color3.fromRGB(15, 15, 25),
-        FogColor = Color3.fromRGB(10, 10, 20)
-    },
-    ["Nebula"] = {
-        ClockTime = 23.8,
-        Brightness = 0.3,
-        OutdoorAmbient = Color3.fromRGB(70, 25, 85),
-        Ambient = Color3.fromRGB(45, 15, 60),
-        FogColor = Color3.fromRGB(90, 30, 110)
-    },
-    ["DeepBlood"] = {
-        ClockTime = 0.0,
-        Brightness = 0.35,
-        OutdoorAmbient = Color3.fromRGB(75, 10, 15),
-        Ambient = Color3.fromRGB(45, 5, 10),
-        FogColor = Color3.fromRGB(35, 5, 8)
-    },
-    ["CyberPurple"] = {
-        ClockTime = 23.5,
-        Brightness = 0.3,
-        OutdoorAmbient = Color3.fromRGB(65, 15, 95),
-        Ambient = Color3.fromRGB(40, 10, 60),
-        FogColor = Color3.fromRGB(30, 8, 45)
-    },
-    ["EmeraldNight"] = {
-        ClockTime = 1.0,
-        Brightness = 0.25,
-        OutdoorAmbient = Color3.fromRGB(10, 55, 30),
-        Ambient = Color3.fromRGB(5, 35, 20),
-        FogColor = Color3.fromRGB(5, 25, 15)
-    },
-    ["PitchBlack"] = {
-        ClockTime = 0.0,
-        Brightness = 0.0,
-        OutdoorAmbient = Color3.fromRGB(0, 0, 0),
-        Ambient = Color3.fromRGB(0, 0, 0),
-        FogColor = Color3.fromRGB(0, 0, 0)
-    }
-}
-
-local defaultLighting = {
-    Brightness = Lighting.Brightness,
-    ClockTime = Lighting.ClockTime,
-    GlobalShadows = Lighting.GlobalShadows,
-    Ambient = Lighting.Ambient,
-    OutdoorAmbient = Lighting.OutdoorAmbient,
-    FogEnd = Lighting.FogEnd,
-    FogColor = Lighting.FogColor
-}
-
--- ==========================================
--- DISPLAY CONTAINERS SETUP
--- ==========================================
-mainContainer = Instance.new("ScreenGui")
-mainContainer.Name = "GestioMainContainer"
-mainContainer.ResetOnSpawn = false
-mainContainer.DisplayOrder = 10
-mainContainer.IgnoreGuiInset = true
-mainContainer.Parent = targetGui
-
-overlayContainer = Instance.new("Folder", mainContainer)
-overlayContainer.Name = "Gestio_2DOverlay"
-
-grenadeContainer = Instance.new("Folder", mainContainer)
-grenadeContainer.Name = "Gestio_GrenadeOverlay"
-
-jumpCircleFolder = Instance.new("Folder", Workspace)
-jumpCircleFolder.Name = "Gestio_JumpCircleWorld"
-
-grenadePool = {}
-mobileSlideBtn = nil
-
--- ==========================================
--- CRIMSON NEON HITMARKER UI
--- ==========================================
-local hitmarkerGui = Instance.new("ScreenGui")
-hitmarkerGui.Name = "GestioHitmarkerGui"
-hitmarkerGui.ResetOnSpawn = false
-hitmarkerGui.IgnoreGuiInset = true
-hitmarkerGui.DisplayOrder = 60
-hitmarkerGui.Parent = mainContainer
-
-local hitmarkerCenter = Instance.new("Frame")
-hitmarkerCenter.Name = "Center"
-hitmarkerCenter.AnchorPoint = Vector2.new(0.5, 0.5)
-hitmarkerCenter.Position = UDim2.new(0.5, 0, 0.5, 0)
-hitmarkerCenter.Size = UDim2.new(0, 0, 0, 0)
-hitmarkerCenter.BackgroundTransparency = 1
-hitmarkerCenter.Visible = false
-hitmarkerCenter.Parent = hitmarkerGui
-
-local hitmarkerLines = {}
-for i, rotation in ipairs({45, -45, 135, -135}) do
-    local line = Instance.new("Frame")
-    line.Name = "Line" .. i
-    line.AnchorPoint = Vector2.new(0.5, 0.5)
-    line.Size = UDim2.new(0, hitmarkerThickness, 0, hitmarkerSize)
-    line.BackgroundColor3 = currentTheme.Accent
-    line.BorderSizePixel = 0
-    line.BackgroundTransparency = 1
-    line.Rotation = rotation
-    line.Parent = hitmarkerCenter
-
-    local glow = Instance.new("UIStroke")
-    glow.Name = "NeonGlow"
-    glow.Color = currentTheme.Accent
-    glow.Thickness = hitmarkerGlow and 2.5 or 0
-    glow.Transparency = 1
-    glow.Parent = line
-
-    hitmarkerLines[i] = line
-end
-
-function refreshHitmarkerTheme()
-    for _, line in ipairs(hitmarkerLines) do
-        line.BackgroundColor3 = currentTheme.Accent
-        local glow = line:FindFirstChild("NeonGlow")
-        if glow then
-            glow.Color = currentTheme.Accent
-            glow.Thickness = hitmarkerGlow and 2.5 or 0
-        end
-    end
-end
-
-function showHitmarker()
-    if not hitmarkerEnabled then return end
-
-    hitmarkerSerial += 1
-    local serial = hitmarkerSerial
-    hitmarkerCenter.Visible = true
-
-    for _, line in ipairs(hitmarkerLines) do
-        line.BackgroundTransparency = 0
-        local glow = line:FindFirstChild("NeonGlow")
-        if glow then glow.Transparency = 0.05 end
-    end
-
-    local fadeInfo = TweenInfo.new(
-        math.max(0.05, hitmarkerDuration),
-        Enum.EasingStyle.Quad,
-        Enum.EasingDirection.Out
-    )
-
-    for _, line in ipairs(hitmarkerLines) do
-        TweenService:Create(line, fadeInfo, {
-            BackgroundTransparency = 1
-        }):Play()
-
-        local glow = line:FindFirstChild("NeonGlow")
-        if glow then
-            TweenService:Create(glow, fadeInfo, {Transparency = 1}):Play()
-        end
-    end
-
-    task.delay(math.max(0.05, hitmarkerDuration), function()
-        if serial == hitmarkerSerial then
-            hitmarkerCenter.Visible = false
-        end
-    end)
-end
-
-if genv then
-    genv.GestioShowHitmarker = showHitmarker
-end
-
--- ==========================================
--- THIRD PERSON CAMERA CONTROLLER
--- ==========================================
-function applyThirdPerson()
-    local cam = Workspace.CurrentCamera
-    local char = player.Character
-    local hum = char and char:FindFirstChildOfClass("Humanoid")
-    if not cam or not hum then return end
-
-    if thirdPersonEnabled then
-        if thirdPersonPreviousOffset == nil then
-            thirdPersonPreviousOffset = hum.CameraOffset
-        end
-        cam.CameraSubject = hum
-        cam.CameraType = Enum.CameraType.Custom
-        hum.CameraOffset = Vector3.new(0, thirdPersonHeight, -thirdPersonDistance)
-    else
-        if thirdPersonPreviousOffset ~= nil then
-            hum.CameraOffset = thirdPersonPreviousOffset
-            thirdPersonPreviousOffset = nil
-        else
-            hum.CameraOffset = Vector3.zero
-        end
-    end
-end
-
-function setThirdPersonEnabled(enabled)
-    thirdPersonEnabled = enabled
-    applyThirdPerson()
-end
-
-function refreshThirdPerson()
-    if thirdPersonEnabled then
-        applyThirdPerson()
-    end
-end
-
--- ==========================================
--- LIGHTING & ATMOSPHERE FUNCTIONS
--- ==========================================
-function applyNightPreset(presetName)
-    local cfg = nightPresets[presetName]
-    if not cfg then return end
-    nightPreset = presetName
-    nightClockTime = cfg.ClockTime
-    nightBrightness = cfg.Brightness
-    nightOutdoorAmbient = cfg.OutdoorAmbient
-    
-    if nightModeEnabled then
-        Lighting.ClockTime = cfg.ClockTime
-        Lighting.Brightness = cfg.Brightness
-        Lighting.OutdoorAmbient = cfg.OutdoorAmbient
-        Lighting.Ambient = cfg.Ambient
-        Lighting.GlobalShadows = true
-        if not removeFogEnabled then
-            Lighting.FogColor = cfg.FogColor
-        end
-    end
-end
-
-function restoreLightingState()
-    pcall(function()
-        Lighting.Brightness = defaultLighting.Brightness
-        Lighting.ClockTime = defaultLighting.ClockTime
-        Lighting.GlobalShadows = defaultLighting.GlobalShadows
-        Lighting.Ambient = defaultLighting.Ambient
-        Lighting.OutdoorAmbient = defaultLighting.OutdoorAmbient
-        Lighting.FogEnd = defaultLighting.FogEnd
-        Lighting.FogColor = defaultLighting.FogColor
-    end)
-end
-
--- ==========================================
--- CLEANUP ROUTINES
--- ==========================================
-function clearActiveJumpCircle()
-    if not activeJumpCircleData then return end
-    if activeJumpCircleData.Connections then
-        for _, conn in ipairs(activeJumpCircleData.Connections) do
-            pcall(function() conn:Disconnect() end)
-        end
-    end
-    if activeJumpCircleData.Container then
-        pcall(function() activeJumpCircleData.Container:Destroy() end)
-    end
-    activeJumpCircleData = nil
-end
-
-function cleanup()
-    pcall(function() setThirdPersonEnabled(false) end)
-    if player.Character then
-        local hum = player.Character:FindFirstChildOfClass("Humanoid")
-        if hum and savedAutoRotate ~= nil then
-            hum.AutoRotate = savedAutoRotate
-        end
-    end
-    savedAutoRotate = nil
-    hitmarkerSerial += 1
-    hitmarkerLastHealth = {}
-
-    for _, c in pairs(connections) do 
-        pcall(function() c:Disconnect() end) 
-    end
-    if antiAfkConnection then
-        pcall(function() antiAfkConnection:Disconnect() end)
-        antiAfkConnection = nil
-    end
-    for _, holder in pairs(activeEspHolders) do
-        pcall(function() holder.Holder:Destroy() end)
-    end
-    for _, esp in pairs(screenEspCache) do
-        pcall(function()
-            esp.Box:Destroy()
-            esp.TagCard:Destroy()
-            esp.HealthBarBg:Destroy()
-            for _, corner in pairs(esp.Corners) do
-                corner.H:Destroy()
-                corner.V:Destroy()
-            end
-        end)
-    end
-    for _, gUi in pairs(grenadePool) do
-        pcall(function()
-            gUi.Tag:Destroy()
-            gUi.RadiusCircle:Destroy()
-            for _, l in ipairs(gUi.Lines) do l:Destroy() end
-        end)
-    end
-    clearActiveJumpCircle()
-    pcall(function() jumpCircleFolder:Destroy() end)
-    pcall(function() hitmarkerGui:Destroy() end)
-    if genv then genv.GestioShowHitmarker = nil end
-    if mobileSlideBtn then
-        pcall(function() mobileSlideBtn:Destroy() end)
-        mobileSlideBtn = nil
-    end
-    mobileSlideInputActive = false
-    mobileSlideInput = nil
-    isSliding = false
-    currentSlideVel = Vector3.zero
-    for _, conn in ipairs(mobileJumpConnections) do
-        pcall(function() conn:Disconnect() end)
-    end
-    mobileJumpConnections = {}
-    mobileJumpHookedButton = nil
-    activeEspHolders = {}
-    screenEspCache = {}
-    grenadePool = {}
-    
-    restoreLightingState()
-
-    pcall(function() if targetGui:FindFirstChild("GestioScreenGui") then targetGui.GestioScreenGui:Destroy() end end)
-    pcall(function() if targetGui:FindFirstChild("GestioToggleGui") then targetGui.GestioToggleGui:Destroy() end end)
-    pcall(function() if targetGui:FindFirstChild("GestioFovGui") then targetGui.GestioFovGui:Destroy() end end)
-    pcall(function() if targetGui:FindFirstChild("GestioWatermarkGui") then targetGui.GestioWatermarkGui:Destroy() end end)
-    pcall(function() if targetGui:FindFirstChild("GestioMainContainer") then targetGui.GestioMainContainer:Destroy() end end)
-end
-
-if genv then genv.GestioRunning = cleanup end
-
-function bindTouch(btn, callback)
-    btn.Activated:Connect(callback)
-end
-
--- ==========================================
--- HUD OVERLAYS (FOV & WATERMARK)
--- ==========================================
-fovGui = Instance.new("ScreenGui")
-fovGui.Name = "GestioFovGui"
-fovGui.ResetOnSpawn = false
-fovGui.DisplayOrder = 9
-fovGui.IgnoreGuiInset = true
-fovGui.Parent = targetGui
-
-fovFrame = Instance.new("Frame", fovGui)
-fovFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-fovFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
-fovFrame.BackgroundTransparency = 1
-fovFrame.BorderSizePixel = 0
-fovFrame.Visible = false
-fovStroke = Instance.new("UIStroke", fovFrame)
-fovStroke.Color = currentTheme.Accent
-fovStroke.Thickness = 0.8
-fovCorner = Instance.new("UICorner", fovFrame)
-fovCorner.CornerRadius = UDim.new(1, 0)
-
-watermarkGui = Instance.new("ScreenGui")
-watermarkGui.Name = "GestioWatermarkGui"
-watermarkGui.ResetOnSpawn = false
-watermarkGui.DisplayOrder = 20
-watermarkGui.IgnoreGuiInset = true
-watermarkGui.Parent = targetGui
-
-wmCard = Instance.new("Frame", watermarkGui)
-wmCard.Position = UDim2.new(0, 14, 0, 14)
-wmCard.Size = UDim2.new(0, 0, 0, 22)
-wmCard.AutomaticSize = Enum.AutomaticSize.X
-wmCard.BackgroundColor3 = currentTheme.Background
-wmCard.BorderSizePixel = 0
-Instance.new("UICorner", wmCard).CornerRadius = UDim.new(0, 5)
-
-wmStroke = Instance.new("UIStroke", wmCard)
-wmStroke.Color = currentTheme.Border
-wmStroke.Thickness = 1.0
-
-wmPad = Instance.new("UIPadding", wmCard)
-wmPad.PaddingLeft = UDim.new(0, 8)
-wmPad.PaddingRight = UDim.new(0, 8)
-
-wmLayout = Instance.new("UIListLayout", wmCard)
-wmLayout.FillDirection = Enum.FillDirection.Horizontal
-wmLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-wmLayout.Padding = UDim.new(0, 5)
-
-wmDot = Instance.new("Frame", wmCard)
-wmDot.Size = UDim2.new(0, 5, 0, 5)
-wmDot.BackgroundColor3 = currentTheme.Accent
-wmDot.BorderSizePixel = 0
-Instance.new("UICorner", wmDot).CornerRadius = UDim.new(1, 0)
-
-wmTitle = Instance.new("TextLabel", wmCard)
-wmTitle.AutomaticSize = Enum.AutomaticSize.X
-wmTitle.Size = UDim2.new(0, 0, 1, 0)
-wmTitle.BackgroundTransparency = 1
-wmTitle.Text = "GESTIO"
-wmTitle.TextColor3 = currentTheme.Accent
-wmTitle.TextSize = 9
-wmTitle.Font = Enum.Font.GothamBold
-
-wmDivider = Instance.new("Frame", wmCard)
-wmDivider.Size = UDim2.new(0, 1, 0, 10)
-wmDivider.BackgroundColor3 = currentTheme.Border
-wmDivider.BorderSizePixel = 0
-
-wmMetrics = Instance.new("TextLabel", wmCard)
-wmMetrics.AutomaticSize = Enum.AutomaticSize.X
-wmMetrics.Size = UDim2.new(0, 0, 1, 0)
-wmMetrics.BackgroundTransparency = 1
-wmMetrics.Text = "FPS: 60 | PING: 0ms"
-wmMetrics.TextColor3 = currentTheme.TextSecondary
-wmMetrics.TextSize = 8.5
-wmMetrics.Font = Enum.Font.GothamBold
-
-fpsCounter = 0
-lastFpsUpdate = tick()
 
 -- ==========================================
 -- JUMP CIRCLE RENDER ENGINE
@@ -1485,7 +866,7 @@ function renderGrenadeOverlays()
 end
 
 -- ==========================================
--- TARGET SELECTION & AIMBOT MATHEMATICS
+-- AIMBOT SELECTION & SMOOTH MATHEMATICS
 -- ==========================================
 visRayParams = RaycastParams.new()
 visRayParams.FilterType = Enum.RaycastFilterType.Exclude
@@ -2024,17 +1405,17 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     end
 
     if fovFrame then
-        local isFovVisible = aimbotEnabled and showFovCircle
+        local isFovVisible = (aimbotEnabled or silentAimEnabled) and showFovCircle
         fovFrame.Visible = isFovVisible
         if isFovVisible then
-            local diameter = aimFov * 2
+            local diameter = (aimbotEnabled and aimFov or silentAimFov) * 2
             fovFrame.Size = UDim2.new(0, diameter, 0, diameter)
         end
     end
 
-    -- Silent Aim: resolve target once per frame
+    -- Silent Aim: Resolution & Hooking
     if silentAimEnabled then
-        setupSilentAimHooks()
+        setupTrueSilentAimHook()
         if math.random(1, 100) <= silentAimHitChance then
             silentAimResolved = getSilentAimTarget()
         else
@@ -2050,6 +1431,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         camera.CFrame = camera.CFrame * CFrame.Angles(-comp, 0, 0)
     end
 
+    -- Regular Tracking Aimbot (только если включен Tracking)
     isAiming = aimbotEnabled
 
     if aimbotEnabled and isAiming then
