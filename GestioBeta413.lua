@@ -1,5 +1,5 @@
 -- ==============================================================================
--- [Gestio UI - Blox Strike Ultimate Mobile Engine | Version 4.3.4 Production]
+-- [Gestio UI - Blox Strike Ultimate Mobile Engine | Version 4.2.5 Fixed]
 -- Target Game: Blox Strike (Roblox)
 -- ==============================================================================
 
@@ -30,43 +30,44 @@ end)
 -- CLIENT ENVIRONMENT VALIDATION
 -- ==========================================
 local player = Players.LocalPlayer
-local waitStart = tick()
-while not player and (tick() - waitStart) < 10 do
-    player = Players.LocalPlayer
-    task.wait(0.1)
-end
 if not player then
-    player = Players:GetPlayers()[1]
+    local startWait = tick()
+    while not player and (tick() - startWait) < 5 do
+        player = Players.LocalPlayer
+        task.wait(0.1)
+    end
+    if not player then
+        player = Players:GetPlayers()[1]
+    end
 end
 
 local camera = Workspace.CurrentCamera or Workspace:FindFirstChildOfClass("Camera")
 
-local function getSafeGui()
-    local res = nil
-    pcall(function()
-        if gethui then res = gethui() end
+function getSafeGui()
+    local success, result = pcall(function()
+        if gethui then
+            return gethui()
+        end
     end)
-    if res then return res end
-
-    pcall(function()
-        res = CoreGui
+    if success and result then return result end
+    
+    success, result = pcall(function()
+        return CoreGui
     end)
-    if res then return res end
-
+    if success and result then return result end
+    
     if player then
-        pcall(function()
-            res = player:WaitForChild("PlayerGui", 5) or player:FindFirstChildOfClass("PlayerGui")
-        end)
+        return player:WaitForChild("PlayerGui", 5) or player:FindFirstChildOfClass("PlayerGui")
     end
-    return res
+    return nil
 end
 
 local targetGui = getSafeGui()
 if not targetGui and player then
-    pcall(function() targetGui = player:WaitForChild("PlayerGui", 10) end)
+    pcall(function() targetGui = player:WaitForChild("PlayerGui", 5) end)
 end
 if not targetGui then
-    warn("[Gestio] Safe GUI fallback failed")
+    warn("[Gestio] GUI initialization failed: no valid GUI parent")
     return
 end
 
@@ -195,7 +196,7 @@ local visibleCheck = false
 local aimSensitivity = 1.0
 local lockOnJump = true
 
--- SILENT AIM STATE
+-- SILENT AIM CONFIGURATION
 local silentAimEnabled = false
 local silentAimFov = 150
 local silentAimTeamCheck = true
@@ -204,11 +205,11 @@ local silentAimHitChance = 100
 local silentAimAimHead = true
 local silentAimResolved = nil
 local silentAimHooked = false
+local silentAimCamHooked = false
 local espIgnoreBots = true
-local espShowTeammates = false
 
 -- ==========================================
--- STABLE NON-CONFLICTING NO RECOIL / RCS
+-- STABLE RCS & RECOIL
 -- ==========================================
 local noRecoil = {
     enabled = false,
@@ -237,7 +238,224 @@ end)
 table.insert(connections, fireEndConn)
 
 -- ==========================================
--- VIBRANT CHAMS CONFIGURATION (GRAY OCCLUDED)
+-- FACTION CHECK & HEALTH CHECK LOGIC
+-- ==========================================
+function isBotPlayer(plr)
+    if not plr then return true end
+    local ok, uid = pcall(function() return plr.UserId end)
+    if ok and (uid == 0 or uid < 0 or uid > 1e9) then return true end
+    local nm = (plr.Name or ""):lower()
+    if nm:find("bot") or nm:find("npc") or nm:find("dummy") or nm:find("%[bot%]") then return true end
+    local b = pcall(function() return plr:GetAttribute("IsBot") or plr:GetAttribute("Bot") end)
+    if b and (plr:GetAttribute("IsBot") or plr:GetAttribute("Bot")) then return true end
+    return false
+end
+
+function getPlayerTeamName(plr)
+    if not plr then return nil end
+    if plr.Team and plr.Team.Name ~= "" then return plr.Team.Name end
+    
+    local char = plr.Character
+    if char then
+        if char:GetAttribute("Team") then return tostring(char:GetAttribute("Team")) end
+        if char:GetAttribute("Faction") then return tostring(char:GetAttribute("Faction")) end
+        if char.Parent and (char.Parent.Name == "Terrorists" or char.Parent.Name == "Counter-Terrorists" or char.Parent.Name == "T" or char.Parent.Name == "CT") then
+            return char.Parent.Name
+        end
+    end
+    
+    if plr:GetAttribute("Team") then return tostring(plr:GetAttribute("Team")) end
+    if plr:GetAttribute("Faction") then return tostring(plr:GetAttribute("Faction")) end
+    
+    if plr.TeamColor and plr.TeamColor ~= BrickColor.new("White") then
+        return plr.TeamColor.Name
+    end
+    
+    return nil
+end
+
+function isAlly(plr)
+    if not plr or plr == player then return true end
+    
+    local myTeam = getPlayerTeamName(player)
+    local targetTeam = getPlayerTeamName(plr)
+    
+    if myTeam and targetTeam and myTeam ~= "" and targetTeam ~= "" then
+        return myTeam == targetTeam
+    end
+    
+    if plr.Team and player.Team then
+        return plr.Team == player.Team
+    end
+    
+    if plr.TeamColor and player.TeamColor and plr.TeamColor ~= BrickColor.new("White") then
+        return plr.TeamColor == player.TeamColor
+    end
+    
+    return false
+end
+
+function isTargetEnemy(plr, char)
+    if not plr or plr == player then return false end
+    if char and char == player.Character then return false end
+    if espIgnoreBots and isBotPlayer(plr) then return false end
+    return not isAlly(plr)
+end
+
+function getTargetHitbox(char)
+    if not char then return nil end
+    if bodyAimOnly then
+        return char:FindFirstChild("UpperTorso") or char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso")
+    end
+    if aimboneIndex == 1 then
+        return char:FindFirstChild("Head") or char:FindFirstChild("UpperTorso")
+    elseif aimboneIndex == 2 then
+        return char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso") or char:FindFirstChild("Head")
+    else
+        return char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("UpperTorso") or char:FindFirstChild("Head")
+    end
+end
+
+function isEntityAlive(char, hum)
+    if not char or not char.Parent or not char:IsDescendantOf(Workspace) then 
+        return false 
+    end
+    
+    if hum and hum.Parent then
+        local health = 100
+        pcall(function() health = hum.Health end)
+        if health <= 0 then 
+            return false 
+        end
+        
+        local state = nil
+        pcall(function() state = hum:GetState() end)
+        if state == Enum.HumanoidStateType.Dead then 
+            return false 
+        end
+    end
+
+    local root = char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso")
+    local head = char:FindFirstChild("Head")
+    if not root and not head then
+        return false
+    end
+
+    return true
+end
+
+-- ==========================================
+-- VISIBILITY CHECK SYSTEM
+-- ==========================================
+wallRayParams = RaycastParams.new()
+wallRayParams.FilterType = Enum.RaycastFilterType.Exclude
+wallRayParams.IgnoreWater = true
+
+function isVisibleThroughWalls(targetPart, targetChar)
+    if not camera or not targetPart or not targetChar then return false end
+    local myChar = player.Character
+    wallRayParams.FilterDescendantsInstances = {myChar, camera}
+    local origin = camera.CFrame.Position
+    local dir = targetPart.Position - origin
+    
+    local hit = Workspace:Raycast(origin, dir, wallRayParams)
+    if hit then
+        if hit.Instance:IsDescendantOf(targetChar) or hit.Instance == targetPart then
+            return true
+        end
+    end
+    return false
+end
+
+-- ==========================================
+-- ZERO-LAG SILENT AIM (HOOK-BASED, INVISIBLE)
+-- ==========================================
+local function getSilentAimTarget()
+    local cam = Workspace.CurrentCamera or camera
+    if not cam then return nil end
+    local camPos = cam.CFrame.Position
+    local camLook = cam.CFrame.LookVector
+    local maxAngle = math.rad(silentAimFov)
+    local best, bestAngle = nil, maxAngle
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr == player then continue end
+        if espIgnoreBots and isBotPlayer(plr) then continue end
+        if silentAimTeamCheck and isAlly(plr) then continue end
+        local char = plr.Character
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        if not isEntityAlive(char, hum) then continue end
+        local part = char:FindFirstChild(silentAimAimHead and "Head" or "HumanoidRootPart")
+            or char:FindFirstChild("Torso")
+        if not part or not part:IsA("BasePart") then continue end
+        if silentAimVisibleCheck and not isVisibleThroughWalls(part, char) then continue end
+        local dir = (part.Position - camPos).Unit
+        local angle = math.acos(math.clamp(camLook:Dot(dir), -1, 1))
+        if angle < bestAngle then
+            bestAngle = angle
+            best = part
+        end
+    end
+    return best
+end
+
+local function silentAimCamPosAim()
+    if not (silentAimEnabled and silentAimResolved) then return nil end
+    local cam = Workspace.CurrentCamera or camera
+    if not cam then return nil end
+    local camPos = cam.CFrame.Position
+    local aimPos = silentAimResolved.Position
+    if predictionEnabled and silentAimResolved.AssemblyLinearVelocity then
+        local myChar = player.Character
+        local myHrp = myChar and myChar:FindFirstChild("HumanoidRootPart")
+        local targetVel = silentAimResolved.AssemblyLinearVelocity or Vector3.zero
+        local myVel = (myHrp and myHrp.AssemblyLinearVelocity) or Vector3.zero
+        local relVel = targetVel - (myVel * 0.45)
+        aimPos = aimPos + relVel * predictionFactor
+    end
+    return camPos, aimPos
+end
+
+local function setupSilentAimHooks()
+    if silentAimHooked then return end
+    pcall(function()
+        local mouse = player:GetMouse()
+        local oldIndex
+        oldIndex = hookmetamethod(mouse, "__index", function(self, key)
+            if silentAimEnabled and silentAimResolved and not (type(checkcaller) == "function" and checkcaller()) and (key == "Hit" or key == "UnitRay") then
+                local camPos, aimPos = silentAimCamPosAim()
+                if camPos then
+                    if key == "Hit" then
+                        return CFrame.new(camPos, aimPos)
+                    else
+                        return Ray.new(camPos, (aimPos - camPos).Unit)
+                    end
+                end
+            end
+            return oldIndex(self, key)
+        end)
+        silentAimHooked = true
+    end)
+    if not silentAimCamHooked then
+        pcall(function()
+            local oldNamecall
+            oldNamecall = hookmetamethod(camera, "__namecall", function(self, ...)
+                local method = getnamecallmethod()
+                if silentAimEnabled and silentAimResolved and noRecoil.isShooting and not (type(checkcaller) == "function" and checkcaller())
+                    and (method == "ViewportPointToRay" or method == "ScreenPointToRay") then
+                    local camPos, aimPos = silentAimCamPosAim()
+                    if camPos then
+                        return Ray.new(camPos, (aimPos - camPos).Unit)
+                    end
+                end
+                return oldNamecall(self, ...)
+            end)
+            silentAimCamHooked = true
+        end)
+    end
+end
+
+-- ==========================================
+-- VIBRANT CHAMS CONFIGURATION
 -- ==========================================
 local chamsEnabled = false
 local chamsTeamCheck = true
@@ -267,7 +485,7 @@ local thirdPersonHeight = 1.5
 local thirdPersonPreviousOffset = nil
 
 -- ==========================================
--- SKINS & WEAPON MODS ENGINE (CONTINUOUS SKINCHANGER)
+-- SKINS & WEAPON MODS ENGINE
 -- ==========================================
 local skinChangerEnabled = false
 local selectedKnifeType = "Butterfly Knife"
@@ -384,7 +602,7 @@ local triggerbotMobileAutoFire = true
 local lastTriggerTick = 0
 
 -- ==========================================
--- RAGE & ANTI-AIM (SPINBOT) VARIABLES
+-- RAGE & ANTI-AIM VARIABLES
 -- ==========================================
 local antiAimEnabled = false
 local spinSpeed = 50
@@ -392,7 +610,7 @@ local currentSpinAngle = 0
 local antiAimYawMode = "Spin"
 
 -- ==========================================
--- MOVEMENT, BHOP & SLIDE VARIABLES
+-- MOVEMENT VARIABLES
 -- ==========================================
 local bunnyHopEnabled = false
 local bhopAutoJump = false
@@ -418,7 +636,7 @@ local flightEnabled = false
 local flightSpeed = 50
 
 -- ==========================================
--- VISUALS & ESP CONFIGURATION VARIABLES
+-- VISUALS CONFIGURATION
 -- ==========================================
 local nametagsEnabled = false
 local espMaxDist = 3000
@@ -445,7 +663,7 @@ local showSmokeRadius = true
 local grenadeMaxDist = 1500
 
 -- ==========================================
--- JUMP CIRCLE CONFIGURATION VARIABLES
+-- JUMP CIRCLE VARIABLES
 -- ==========================================
 local jumpCircleEnabled = false
 local jumpCircleStyle = "GradientWave"
@@ -455,7 +673,7 @@ local jumpCircleHeightOffset = -2.8
 local activeJumpCircleData = nil
 
 -- ==========================================
--- ENVIRONMENT & LIGHTING VARIABLES
+-- ENVIRONMENT VARIABLES
 -- ==========================================
 local antiFlashEnabled = true
 local fullBrightEnabled = false
@@ -525,24 +743,24 @@ local defaultLighting = {
 -- ==========================================
 -- DISPLAY CONTAINERS SETUP
 -- ==========================================
-local mainContainer = Instance.new("ScreenGui")
+mainContainer = Instance.new("ScreenGui")
 mainContainer.Name = "GestioMainContainer"
 mainContainer.ResetOnSpawn = false
 mainContainer.DisplayOrder = 10
 mainContainer.IgnoreGuiInset = true
 mainContainer.Parent = targetGui
 
-local overlayContainer = Instance.new("Folder", mainContainer)
+overlayContainer = Instance.new("Folder", mainContainer)
 overlayContainer.Name = "Gestio_2DOverlay"
 
-local grenadeContainer = Instance.new("Folder", mainContainer)
+grenadeContainer = Instance.new("Folder", mainContainer)
 grenadeContainer.Name = "Gestio_GrenadeOverlay"
 
-local jumpCircleFolder = Instance.new("Folder", Workspace)
+jumpCircleFolder = Instance.new("Folder", Workspace)
 jumpCircleFolder.Name = "Gestio_JumpCircleWorld"
 
-local grenadePool = {}
-local mobileSlideBtn = nil
+grenadePool = {}
+mobileSlideBtn = nil
 
 -- ==========================================
 -- CRIMSON NEON HITMARKER UI
@@ -585,7 +803,7 @@ for i, rotation in ipairs({45, -45, 135, -135}) do
     hitmarkerLines[i] = line
 end
 
-local function refreshHitmarkerTheme()
+function refreshHitmarkerTheme()
     for _, line in ipairs(hitmarkerLines) do
         line.BackgroundColor3 = currentTheme.Accent
         local glow = line:FindFirstChild("NeonGlow")
@@ -596,7 +814,7 @@ local function refreshHitmarkerTheme()
     end
 end
 
-local function showHitmarker()
+function showHitmarker()
     if not hitmarkerEnabled then return end
 
     hitmarkerSerial += 1
@@ -640,7 +858,7 @@ end
 -- ==========================================
 -- THIRD PERSON CAMERA CONTROLLER
 -- ==========================================
-local function applyThirdPerson()
+function applyThirdPerson()
     local cam = Workspace.CurrentCamera
     local char = player.Character
     local hum = char and char:FindFirstChildOfClass("Humanoid")
@@ -663,12 +881,12 @@ local function applyThirdPerson()
     end
 end
 
-local function setThirdPersonEnabled(enabled)
+function setThirdPersonEnabled(enabled)
     thirdPersonEnabled = enabled
     applyThirdPerson()
 end
 
-local function refreshThirdPerson()
+function refreshThirdPerson()
     if thirdPersonEnabled then
         applyThirdPerson()
     end
@@ -677,7 +895,7 @@ end
 -- ==========================================
 -- LIGHTING & ATMOSPHERE FUNCTIONS
 -- ==========================================
-local function applyNightPreset(presetName)
+function applyNightPreset(presetName)
     local cfg = nightPresets[presetName]
     if not cfg then return end
     nightPreset = presetName
@@ -697,7 +915,7 @@ local function applyNightPreset(presetName)
     end
 end
 
-local function restoreLightingState()
+function restoreLightingState()
     pcall(function()
         Lighting.Brightness = defaultLighting.Brightness
         Lighting.ClockTime = defaultLighting.ClockTime
@@ -712,7 +930,7 @@ end
 -- ==========================================
 -- CLEANUP ROUTINES
 -- ==========================================
-local function clearActiveJumpCircle()
+function clearActiveJumpCircle()
     if not activeJumpCircleData then return end
     if activeJumpCircleData.Connections then
         for _, conn in ipairs(activeJumpCircleData.Connections) do
@@ -725,7 +943,7 @@ local function clearActiveJumpCircle()
     activeJumpCircleData = nil
 end
 
-local function cleanup()
+function cleanup()
     pcall(function() setThirdPersonEnabled(false) end)
     if player.Character then
         local hum = player.Character:FindFirstChildOfClass("Humanoid")
@@ -795,40 +1013,42 @@ local function cleanup()
     pcall(function() if targetGui:FindFirstChild("GestioMainContainer") then targetGui.GestioMainContainer:Destroy() end end)
 end
 
-local function bindTouch(btn, callback)
+if genv then genv.GestioRunning = cleanup end
+
+function bindTouch(btn, callback)
     btn.Activated:Connect(callback)
 end
 
 -- ==========================================
 -- HUD OVERLAYS (FOV & WATERMARK)
 -- ==========================================
-local fovGui = Instance.new("ScreenGui")
+fovGui = Instance.new("ScreenGui")
 fovGui.Name = "GestioFovGui"
 fovGui.ResetOnSpawn = false
 fovGui.DisplayOrder = 9
 fovGui.IgnoreGuiInset = true
 fovGui.Parent = targetGui
 
-local fovFrame = Instance.new("Frame", fovGui)
+fovFrame = Instance.new("Frame", fovGui)
 fovFrame.AnchorPoint = Vector2.new(0.5, 0.5)
 fovFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
 fovFrame.BackgroundTransparency = 1
 fovFrame.BorderSizePixel = 0
 fovFrame.Visible = false
-local fovStroke = Instance.new("UIStroke", fovFrame)
+fovStroke = Instance.new("UIStroke", fovFrame)
 fovStroke.Color = currentTheme.Accent
 fovStroke.Thickness = 0.8
-local fovCorner = Instance.new("UICorner", fovFrame)
+fovCorner = Instance.new("UICorner", fovFrame)
 fovCorner.CornerRadius = UDim.new(1, 0)
 
-local watermarkGui = Instance.new("ScreenGui")
+watermarkGui = Instance.new("ScreenGui")
 watermarkGui.Name = "GestioWatermarkGui"
 watermarkGui.ResetOnSpawn = false
 watermarkGui.DisplayOrder = 20
 watermarkGui.IgnoreGuiInset = true
 watermarkGui.Parent = targetGui
 
-local wmCard = Instance.new("Frame", watermarkGui)
+wmCard = Instance.new("Frame", watermarkGui)
 wmCard.Position = UDim2.new(0, 14, 0, 14)
 wmCard.Size = UDim2.new(0, 0, 0, 22)
 wmCard.AutomaticSize = Enum.AutomaticSize.X
@@ -836,26 +1056,26 @@ wmCard.BackgroundColor3 = currentTheme.Background
 wmCard.BorderSizePixel = 0
 Instance.new("UICorner", wmCard).CornerRadius = UDim.new(0, 5)
 
-local wmStroke = Instance.new("UIStroke", wmCard)
+wmStroke = Instance.new("UIStroke", wmCard)
 wmStroke.Color = currentTheme.Border
 wmStroke.Thickness = 1.0
 
-local wmPad = Instance.new("UIPadding", wmCard)
+wmPad = Instance.new("UIPadding", wmCard)
 wmPad.PaddingLeft = UDim.new(0, 8)
 wmPad.PaddingRight = UDim.new(0, 8)
 
-local wmLayout = Instance.new("UIListLayout", wmCard)
+wmLayout = Instance.new("UIListLayout", wmCard)
 wmLayout.FillDirection = Enum.FillDirection.Horizontal
 wmLayout.VerticalAlignment = Enum.VerticalAlignment.Center
 wmLayout.Padding = UDim.new(0, 5)
 
-local wmDot = Instance.new("Frame", wmCard)
+wmDot = Instance.new("Frame", wmCard)
 wmDot.Size = UDim2.new(0, 5, 0, 5)
 wmDot.BackgroundColor3 = currentTheme.Accent
 wmDot.BorderSizePixel = 0
 Instance.new("UICorner", wmDot).CornerRadius = UDim.new(1, 0)
 
-local wmTitle = Instance.new("TextLabel", wmCard)
+wmTitle = Instance.new("TextLabel", wmCard)
 wmTitle.AutomaticSize = Enum.AutomaticSize.X
 wmTitle.Size = UDim2.new(0, 0, 1, 0)
 wmTitle.BackgroundTransparency = 1
@@ -864,12 +1084,12 @@ wmTitle.TextColor3 = currentTheme.Accent
 wmTitle.TextSize = 9
 wmTitle.Font = Enum.Font.GothamBold
 
-local wmDivider = Instance.new("Frame", wmCard)
+wmDivider = Instance.new("Frame", wmCard)
 wmDivider.Size = UDim2.new(0, 1, 0, 10)
 wmDivider.BackgroundColor3 = currentTheme.Border
 wmDivider.BorderSizePixel = 0
 
-local wmMetrics = Instance.new("TextLabel", wmCard)
+wmMetrics = Instance.new("TextLabel", wmCard)
 wmMetrics.AutomaticSize = Enum.AutomaticSize.X
 wmMetrics.Size = UDim2.new(0, 0, 1, 0)
 wmMetrics.BackgroundTransparency = 1
@@ -878,142 +1098,13 @@ wmMetrics.TextColor3 = currentTheme.TextSecondary
 wmMetrics.TextSize = 8.5
 wmMetrics.Font = Enum.Font.GothamBold
 
-local fpsCounter = 0
-local lastFpsUpdate = tick()
-
--- ==========================================
--- FACTION CHECK & BOT FILTER LOGIC
--- ==========================================
-local function isBotPlayer(plr)
-    if not plr then return true end
-    local ok, uid = pcall(function() return plr.UserId end)
-    if ok and (uid == 0 or uid < 0 or uid > 1e9) then return true end
-    local nm = (plr.Name or ""):lower()
-    if nm:find("bot") or nm:find("npc") or nm:find("dummy") or nm:find("%[bot%]") then return true end
-    local b = pcall(function() return plr:GetAttribute("IsBot") or plr:GetAttribute("Bot") end)
-    if b and (plr:GetAttribute("IsBot") or plr:GetAttribute("Bot")) then return true end
-    return false
-end
-
-local function getPlayerTeamName(plr)
-    if not plr then return nil end
-    if plr.Team and plr.Team.Name ~= "" then return plr.Team.Name end
-    
-    local char = plr.Character
-    if char then
-        if char:GetAttribute("Team") then return tostring(char:GetAttribute("Team")) end
-        if char:GetAttribute("Faction") then return tostring(char:GetAttribute("Faction")) end
-        if char.Parent and (char.Parent.Name == "Terrorists" or char.Parent.Name == "Counter-Terrorists" or char.Parent.Name == "T" or char.Parent.Name == "CT") then
-            return char.Parent.Name
-        end
-    end
-    
-    if plr:GetAttribute("Team") then return tostring(plr:GetAttribute("Team")) end
-    if plr:GetAttribute("Faction") then return tostring(plr:GetAttribute("Faction")) end
-    
-    if plr.TeamColor and plr.TeamColor ~= BrickColor.new("White") then
-        return plr.TeamColor.Name
-    end
-    
-    return nil
-end
-
-local function isAlly(plr)
-    if not plr or plr == player then return true end
-    
-    local myTeam = getPlayerTeamName(player)
-    local targetTeam = getPlayerTeamName(plr)
-    
-    if myTeam and targetTeam and myTeam ~= "" and targetTeam ~= "" then
-        return myTeam == targetTeam
-    end
-    
-    if plr.Team and player.Team then
-        return plr.Team == player.Team
-    end
-    
-    if plr.TeamColor and player.TeamColor and plr.TeamColor ~= BrickColor.new("White") then
-        return plr.TeamColor == player.TeamColor
-    end
-    
-    return false
-end
-
-local function isTargetEnemy(plr, char)
-    if not plr or plr == player then return false end
-    if char and char == player.Character then return false end
-    if espIgnoreBots and isBotPlayer(plr) then return false end
-    return not isAlly(plr)
-end
-
-local function getTargetHitbox(char)
-    if not char then return nil end
-    if bodyAimOnly then
-        return char:FindFirstChild("UpperTorso") or char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso")
-    end
-    if aimboneIndex == 1 then
-        return char:FindFirstChild("Head") or char:FindFirstChild("UpperTorso")
-    elseif aimboneIndex == 2 then
-        return char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso") or char:FindFirstChild("Head")
-    else
-        return char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("UpperTorso") or char:FindFirstChild("Head")
-    end
-end
-
-local function isEntityAlive(char, hum)
-    if not char or not char.Parent or not char:IsDescendantOf(Workspace) then 
-        return false 
-    end
-    
-    if hum and hum.Parent then
-        local health = 100
-        pcall(function() health = hum.Health end)
-        if health <= 0 then 
-            return false 
-        end
-        
-        local state = nil
-        pcall(function() state = hum:GetState() end)
-        if state == Enum.HumanoidStateType.Dead then 
-            return false 
-        end
-    end
-
-    local root = char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso")
-    local head = char:FindFirstChild("Head")
-    if not root and not head then
-        return false
-    end
-
-    return true
-end
-
--- ==========================================
--- VISIBILITY CHECK SYSTEM
--- ==========================================
-local wallRayParams = RaycastParams.new()
-wallRayParams.FilterType = Enum.RaycastFilterType.Exclude
-wallRayParams.IgnoreWater = true
-
-local function isVisibleThroughWalls(targetPart, targetChar)
-    if not camera or not targetPart or not targetChar then return false end
-    local myChar = player.Character
-    wallRayParams.FilterDescendantsInstances = {myChar, camera}
-    local origin = camera.CFrame.Position
-    local dir = targetPart.Position - origin
-    local hit = Workspace:Raycast(origin, dir, wallRayParams)
-    if hit then
-        if hit.Instance:IsDescendantOf(targetChar) or hit.Instance == targetPart then
-            return true
-        end
-    end
-    return false
-end
+fpsCounter = 0
+lastFpsUpdate = tick()
 
 -- ==========================================
 -- JUMP CIRCLE RENDER ENGINE
 -- ==========================================
-local function buildJumpRing(segmentCount, radius, thickness)
+function buildJumpRing(segmentCount, radius, thickness)
     local container = Instance.new("Folder")
     container.Name = "JumpCircleContainer"
 
@@ -1045,7 +1136,7 @@ local function buildJumpRing(segmentCount, radius, thickness)
     return container, segments
 end
 
-local function updateJumpRingLayout(segments, centerPosition, radius)
+function updateJumpRingLayout(segments, centerPosition, radius)
     local n = #segments
     for i, seg in ipairs(segments) do
         local angle = seg.Angle
@@ -1060,7 +1151,7 @@ local function updateJumpRingLayout(segments, centerPosition, radius)
     end
 end
 
-local function spawnJumpRipple(position)
+function spawnJumpRipple(position)
     if not jumpCircleEnabled then return end
     task.spawn(function()
         local rippleFolder, segments = buildJumpRing(jumpCircleSegmentCount, jumpCircleRadius, 0.3)
@@ -1096,7 +1187,7 @@ local function spawnJumpRipple(position)
     end)
 end
 
-local function initJumpCircleForCharacter(char)
+function initJumpCircleForCharacter(char)
     clearActiveJumpCircle()
     if not jumpCircleEnabled or not char then return end
 
@@ -1170,9 +1261,7 @@ local function initJumpCircleForCharacter(char)
     table.insert(circleData.Connections, stateConn)
 end
 
-table.insert(connections, player.CharacterAdded:Connect(function(char)
-    initJumpCircleForCharacter(char)
-end))
+table.insert(connections, player.CharacterAdded:Connect(initJumpCircleForCharacter))
 table.insert(connections, player.CharacterRemoving:Connect(clearActiveJumpCircle))
 
 if player.Character then
@@ -1182,13 +1271,13 @@ if player.Character then
 end
 
 -- ==========================================
--- GRENADE TRAJECTORY CALCULATION ENGINE
+-- GRENADE TRAJECTORY ENGINE
 -- ==========================================
-local grenadeRayParams = RaycastParams.new()
+grenadeRayParams = RaycastParams.new()
 grenadeRayParams.FilterType = Enum.RaycastFilterType.Exclude
 grenadeRayParams.IgnoreWater = true
 
-local function isEntityCharacter(inst)
+function isEntityCharacter(inst)
     for _, p in ipairs(Players:GetPlayers()) do
         if p.Character and inst:IsDescendantOf(p.Character) then
             return true
@@ -1197,7 +1286,7 @@ local function isEntityCharacter(inst)
     return false
 end
 
-local function getOrCreateGrenadeUI(nadeInstance)
+function getOrCreateGrenadeUI(nadeInstance)
     if grenadePool[nadeInstance] then return grenadePool[nadeInstance] end
 
     local tag = Instance.new("Frame", grenadeContainer)
@@ -1251,7 +1340,7 @@ local function getOrCreateGrenadeUI(nadeInstance)
     return data
 end
 
-local function renderGrenadeOverlays()
+function renderGrenadeOverlays()
     if not grenadeEspEnabled then
         for _, v in pairs(grenadePool) do
             v.Tag.Visible = false
@@ -1400,11 +1489,24 @@ end
 -- ==========================================
 -- TARGET SELECTION & AIMBOT MATHEMATICS
 -- ==========================================
-local visRayParams = RaycastParams.new()
+visRayParams = RaycastParams.new()
 visRayParams.FilterType = Enum.RaycastFilterType.Exclude
 visRayParams.IgnoreWater = true
 
-local function getClosestTarget()
+function isTargetVisible(originPos, targetPart, targetChar)
+    if not visibleCheck then return true end
+    local myChar = player.Character
+    visRayParams.FilterDescendantsInstances = {myChar, camera}
+    local dir = targetPart.Position - originPos
+    
+    local hit = Workspace:Raycast(originPos, dir, visRayParams)
+    if hit and (hit.Instance:IsDescendantOf(targetChar) or hit.Instance == targetPart) then
+        return true
+    end
+    return false
+end
+
+function getClosestTarget()
     if not camera then 
         camera = Workspace.CurrentCamera 
         if not camera then return nil end
@@ -1434,7 +1536,7 @@ local function getClosestTarget()
                     if onScreen and screenPos.Z > 0 then
                         local screenDist = (Vector2.new(screenPos.X, screenPos.Y) - screenCenter).Magnitude
                         if screenDist <= closestDist then
-                            if isVisibleThroughWalls(targetPart, char) then
+                            if isTargetVisible(camPos, targetPart, char) then
                                 closestDist = screenDist
                                 closestTarget = {
                                     Player = plr,
@@ -1459,11 +1561,11 @@ end
 -- ==========================================
 -- TRIGGERBOT PROCESSING LOGIC
 -- ==========================================
-local triggerRayParams = RaycastParams.new()
+triggerRayParams = RaycastParams.new()
 triggerRayParams.FilterType = Enum.RaycastFilterType.Exclude
 triggerRayParams.IgnoreWater = true
 
-local function runMobileTriggerbot()
+function runMobileTriggerbot()
     if not triggerbotEnabled then return end
     local now = tick()
     if (now - lastTriggerTick) < triggerbotDelay then return end
@@ -1505,122 +1607,9 @@ local function runMobileTriggerbot()
 end
 
 -- ==========================================
--- SILENT AIM BALLISTICS & RESOLVER
--- ==========================================
-local function getPredictedSilentPosition(targetPart)
-    if not targetPart then return Vector3.zero end
-    local targetPos = targetPart.Position
-    if not predictionEnabled then return targetPos end
-
-    local myChar = player.Character
-    local myHrp = myChar and myChar:FindFirstChild("HumanoidRootPart")
-    
-    local targetVel = targetPart.AssemblyLinearVelocity or Vector3.zero
-    local myVel = (myHrp and myHrp.AssemblyLinearVelocity) or Vector3.zero
-    
-    local relativeVelocity = targetVel - (myVel * 0.45)
-    return targetPos + (relativeVelocity * predictionFactor)
-end
-
-local function getSilentAimTarget()
-    local cam = Workspace.CurrentCamera or camera
-    if not cam then return nil end
-    local vp = cam.ViewportSize
-    local center = Vector2.new(vp.X * 0.5, vp.Y * 0.5)
-    local bestPart = nil
-    local shortestDist = silentAimFov
-
-    for _, plr in ipairs(Players:GetPlayers()) do
-        if plr ~= player and not (silentAimTeamCheck and isAlly(plr)) and not (espIgnoreBots and isBotPlayer(plr)) then
-            local char = plr.Character
-            local hum = char and char:FindFirstChildOfClass("Humanoid")
-            if isEntityAlive(char, hum) then
-                local part = char:FindFirstChild(silentAimAimHead and "Head" or "HumanoidRootPart")
-                    or char:FindFirstChild("Torso")
-                    or char:FindFirstChild("UpperTorso")
-                
-                if part and part:IsA("BasePart") then
-                    local screenPos, onScreen = cam:WorldToViewportPoint(part.Position)
-                    if onScreen and screenPos.Z > 0 then
-                        local screenDist = (Vector2.new(screenPos.X, screenPos.Y) - center).Magnitude
-                        if screenDist <= shortestDist then
-                            if not silentAimVisibleCheck or isVisibleThroughWalls(part, char) then
-                                shortestDist = screenDist
-                                bestPart = part
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end
-    return bestPart
-end
-
-local function setupTrueSilentAimHook()
-    if silentAimHooked then return end
-    pcall(function()
-        if not hookmetamethod then return end
-
-        local oldNamecall
-        oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
-            local method = getnamecallmethod()
-            local args = {...}
-
-            if silentAimEnabled and silentAimResolved and not (type(checkcaller) == "function" and checkcaller()) then
-                if method == "Raycast" and self == Workspace then
-                    local origin = args[1]
-                    local targetPos = getPredictedSilentPosition(silentAimResolved)
-                    args[2] = (targetPos - origin).Unit * 1500
-                    return oldNamecall(self, table.unpack(args))
-                end
-
-                if (method == "FindPartOnRay" or method == "FindPartOnRayWithIgnoreList" or method == "FindPartOnRayWithWhitelist") and self == Workspace then
-                    local currentRay = args[1]
-                    if typeof(currentRay) == "Ray" then
-                        local origin = currentRay.Origin
-                        local targetPos = getPredictedSilentPosition(silentAimResolved)
-                        args[1] = Ray.new(origin, (targetPos - origin).Unit * 1500)
-                        return oldNamecall(self, table.unpack(args))
-                    end
-                end
-
-                if (method == "ViewportPointToRay" or method == "ScreenPointToRay") and self == (Workspace.CurrentCamera or camera) then
-                    local camPos = (Workspace.CurrentCamera or camera).CFrame.Position
-                    local targetPos = getPredictedSilentPosition(silentAimResolved)
-                    return Ray.new(camPos, (targetPos - camPos).Unit)
-                end
-            end
-
-            return oldNamecall(self, ...)
-        end)
-
-        local oldIndex
-        oldIndex = hookmetamethod(game, "__index", function(self, key)
-            if silentAimEnabled and silentAimResolved and not (type(checkcaller) == "function" and checkcaller()) then
-                if typeof(self) == "Instance" and self:IsA("Mouse") then
-                    local camPos = (Workspace.CurrentCamera or camera).CFrame.Position
-                    local targetPos = getPredictedSilentPosition(silentAimResolved)
-                    if key == "Hit" then
-                        return CFrame.new(camPos, targetPos)
-                    elseif key == "UnitRay" then
-                        return Ray.new(camPos, (targetPos - camPos).Unit)
-                    elseif key == "Target" then
-                        return silentAimResolved
-                    end
-                end
-            end
-            return oldIndex(self, key)
-        end)
-
-        silentAimHooked = true
-    end)
-end
-
--- ==========================================
 -- 2D ESP COMPONENT CACHE FACTORY
 -- ==========================================
-local function getOrCreateScreenEsp(plr)
+function getOrCreateScreenEsp(plr)
     if screenEspCache[plr] then return screenEspCache[plr] end
 
     local box = Instance.new("Frame", overlayContainer)
@@ -1744,7 +1733,7 @@ end))
 -- ==========================================
 -- TACTICAL ESP SCREEN RENDER LOOP
 -- ==========================================
-local function renderTacticalOverlay()
+function renderTacticalOverlay()
     local camPos = camera.CFrame.Position
     local allPlayers = Players:GetPlayers()
 
@@ -1756,19 +1745,15 @@ local function renderTacticalOverlay()
         local rootPart = char and (char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso"))
         local head = char and char:FindFirstChild("Head")
 
-        local ally = isAlly(plr)
-        local isEnemy = not ally
+        local isEnemy = isTargetEnemy(plr, char)
         local isAlive = isEntityAlive(char, hum)
-        local isBot = espIgnoreBots and isBotPlayer(plr)
 
-        local shouldRender = (isEnemy or espShowTeammates) and isAlive and not isBot and rootPart and (nametagsEnabled or boxEspEnabled or cornerBoxEnabled)
-
-        if shouldRender then
+        if isEnemy and isAlive and rootPart and (nametagsEnabled or boxEspEnabled or cornerBoxEnabled) then
             local dist = (rootPart.Position - camPos).Magnitude
 
             if dist <= espMaxDist then
                 local isVisible = isVisibleThroughWalls(head or rootPart, char)
-                local sideColor = ally and currentTheme.HealthHigh or (isVisible and currentTheme.Enemy_Accent or currentTheme.Enemy_Hidden)
+                local sideColor = isVisible and currentTheme.Enemy_Accent or currentTheme.Enemy_Hidden
 
                 local headOffset = head and Vector3.new(0, 0.6, 0) or Vector3.new(0, 2.0, 0)
                 local topWorld = (head and head.Position or rootPart.Position) + headOffset
@@ -1825,7 +1810,7 @@ local function renderTacticalOverlay()
                         esp.Corners[3].H.Visible = true
 
                         esp.Corners[3].V.Size = UDim2.new(0, thick, 0, lengthY)
-                        esp.Corners[3].V.Position = UDim2.new(0, boxPosX, 0, boxPosY + boxHeight - lengthY)
+                        esp.Corners[3].V.Position = UDim2.new(0, boxPosX + boxWidth - lengthX, 0, boxPosY + boxHeight - lengthY)
                         esp.Corners[3].V.Visible = true
 
                         esp.Corners[4].H.Size = UDim2.new(0, lengthX, 0, thick)
@@ -1933,9 +1918,9 @@ local function renderTacticalOverlay()
 end
 
 -- ==========================================
--- 3D ESP & VIBRANT CHAMS PIPELINE
+-- 3D ESP & VIBRANT CHAMS ATTACHMENT PIPELINE
 -- ==========================================
-local function attachEspToPlayer(plr)
+function attachEspToPlayer(plr)
     if plr == player then return end
 
     local holder = Instance.new("Folder")
@@ -2040,9 +2025,9 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         end
     end
 
-    -- Silent Aim: Resolve target once per frame
+    -- Silent Aim: resolve target once per frame (zero-lag)
     if silentAimEnabled then
-        setupTrueSilentAimHook()
+        setupSilentAimHooks()
         if math.random(1, 100) <= silentAimHitChance then
             silentAimResolved = getSilentAimTarget()
         else
@@ -2058,7 +2043,6 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         camera.CFrame = camera.CFrame * CFrame.Angles(-comp, 0, 0)
     end
 
-    -- Regular Tracking Aimbot
     isAiming = aimbotEnabled
 
     if aimbotEnabled and isAiming then
@@ -2133,10 +2117,9 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         
         local ally = isAlly(plr)
         local isAlive = isEntityAlive(char, hum)
-        local isBot = espIgnoreBots and isBotPlayer(plr)
         local dist = rootPart and (rootPart.Position - localPos).Magnitude or 9999
 
-        if char and isAlive and not isBot and (dist <= espMaxDist) then
+        if char and isAlive and (dist <= espMaxDist) then
             local isVisible = isVisibleThroughWalls(head or rootPart, char)
             
             if chamsEnabled then
@@ -2166,8 +2149,8 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
                 data.Highlight.Enabled = false
             end
 
-            if not ally or espShowTeammates then
-                local activeAccent = ally and currentTheme.HealthHigh or (isVisible and currentTheme.Enemy_Accent or currentTheme.Enemy_Hidden)
+            if not ally then
+                local activeAccent = isVisible and currentTheme.Enemy_Accent or currentTheme.Enemy_Hidden
                 
                 if head and data.HeadDot.Adornee ~= head then
                     data.HeadDot.Adornee = head
@@ -2175,7 +2158,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
                 data.DotFrame.BackgroundColor3 = activeAccent
                 data.HeadDot.Enabled = headDotEnabled
 
-                if tracersEnabled and rootPart and not ally then
+                if tracersEnabled and rootPart then
                     local scrPos, onScreen = camera:WorldToViewportPoint(rootPart.Position)
                     if onScreen and scrPos.Z > 0 then
                         local origin = Vector2.new(camera.ViewportSize.X * 0.5, camera.ViewportSize.Y)
@@ -2269,14 +2252,15 @@ end))
 -- ==========================================
 -- RAYCAST GROUND CHECK
 -- ==========================================
-local groundRayParams = RaycastParams.new()
+groundRayParams = RaycastParams.new()
 groundRayParams.FilterType = Enum.RaycastFilterType.Exclude
 groundRayParams.IgnoreWater = true
 
-local function isPlayerGrounded(char, hrp)
+function isPlayerGrounded(char, hrp)
     groundRayParams.FilterDescendantsInstances = {char, camera}
     local origin = hrp.Position
     local direction = Vector3.new(0, -3.2, 0)
+    
     local hit = Workspace:Raycast(origin, direction, groundRayParams)
     return hit ~= nil
 end
@@ -2284,7 +2268,7 @@ end
 -- ==========================================
 -- MOBILE INPUT TOUCH HOOK & SLIDE BUTTON
 -- ==========================================
-local function captureDefaultHipHeight(char)
+function captureDefaultHipHeight(char)
     local hum = char and char:FindFirstChildOfClass("Humanoid")
     if hum and hum.Parent then
         defaultHipHeight = hum.HipHeight
@@ -2292,7 +2276,7 @@ local function captureDefaultHipHeight(char)
     end
 end
 
-local function restoreDefaultHipHeight()
+function restoreDefaultHipHeight()
     local char = player.Character
     local hum = char and char:FindFirstChildOfClass("Humanoid")
     if hum then
@@ -2303,7 +2287,7 @@ end
 local mobileSlideDragging = false
 local mobileSlideToggleActive = false
 
-local function positionMobileSlideButton(jumpBtn)
+function positionMobileSlideButton(jumpBtn)
     if not mobileSlideBtn or not jumpBtn then return end
     mobileSlideBtn.Position = UDim2.new(
         jumpBtn.Position.X.Scale,
@@ -2313,7 +2297,7 @@ local function positionMobileSlideButton(jumpBtn)
     )
 end
 
-local function updateMobileSlideIndicator()
+function updateMobileSlideIndicator()
     if not mobileSlideBtn then return end
 
     local stroke = mobileSlideBtn:FindFirstChild("GestioSlideStroke")
@@ -2336,7 +2320,7 @@ local function updateMobileSlideIndicator()
     end
 end
 
-local function updateMobileSlideVisibility()
+function updateMobileSlideVisibility()
     if mobileSlideBtn then
         mobileSlideBtn.Visible = slideEnabled and UserInputService.TouchEnabled
 
@@ -2349,8 +2333,8 @@ local function updateMobileSlideVisibility()
     end
 end
 
-local function triggerMobileSlideStart()
-    if not slideEnabled then return false end
+function triggerMobileSlideStart()
+    if not slideEnabled then return end
 
     local char = player.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
@@ -2371,7 +2355,7 @@ local function triggerMobileSlideStart()
     return true
 end
 
-local function triggerMobileSlideEnd()
+function triggerMobileSlideEnd()
     isSliding = false
     currentSlideVel = Vector3.zero
 
@@ -2382,7 +2366,7 @@ local function triggerMobileSlideEnd()
     end
 end
 
-local function toggleMobileSlide()
+function toggleMobileSlide()
     if not slideEnabled then return end
 
     if mobileSlideToggleActive then
@@ -2397,7 +2381,7 @@ local function toggleMobileSlide()
     updateMobileSlideIndicator()
 end
 
-local function createMobileSlideButton()
+function createMobileSlideButton()
     if mobileSlideBtn then
         updateMobileSlideVisibility()
         return
@@ -2469,7 +2453,7 @@ local function createMobileSlideButton()
     updateMobileSlideIndicator()
 end
 
-local function hookMobileJumpButton()
+function hookMobileJumpButton()
     task.spawn(function()
         local pGui = player:WaitForChild("PlayerGui", 5)
         if not pGui then return end
@@ -2514,7 +2498,7 @@ end
 createMobileSlideButton()
 hookMobileJumpButton()
 
-local function hookCharacterWeapons(char)
+function hookCharacterWeapons(char)
     if not char then return end
     char.ChildAdded:Connect(function(child)
         if child:IsA("Tool") then
@@ -2595,7 +2579,7 @@ end)
 table.insert(connections, inEndedConn)
 
 -- ==========================================
--- HITMARKER TARGET HEALTH MONITOR (ALL ENEMIES)
+-- HITMARKER TARGET HEALTH MONITOR
 -- ==========================================
 table.insert(connections, RunService.Heartbeat:Connect(function()
     if not hitmarkerEnabled then
@@ -2711,7 +2695,7 @@ end))
 -- ==========================================
 -- UI SCOPE FIX & DYNAMIC LAYOUT CALCULATION
 -- ==========================================
-local function setAntiAfkEnabled(enabled)
+function setAntiAfkEnabled(enabled)
     antiAfkEnabled = enabled
     if antiAfkConnection then
         pcall(function() antiAfkConnection:Disconnect() end)
@@ -2730,903 +2714,909 @@ local function setAntiAfkEnabled(enabled)
 end
 
 function buildGestioUI()
-    setAntiAfkEnabled(antiAfkEnabled)
+setAntiAfkEnabled(antiAfkEnabled)
 
-    local toggleGui = Instance.new("ScreenGui")
-    toggleGui.Name = "GestioToggleGui"
-    toggleGui.ResetOnSpawn = false
-    toggleGui.DisplayOrder = 100
-    toggleGui.IgnoreGuiInset = true
-    toggleGui.Parent = targetGui
+-- ==========================================
+-- FLOATING UI LAUNCHER
+-- ==========================================
+local toggleGui = Instance.new("ScreenGui")
+toggleGui.Name = "GestioToggleGui"
+toggleGui.ResetOnSpawn = false
+toggleGui.DisplayOrder = 100
+toggleGui.IgnoreGuiInset = true
+toggleGui.Parent = targetGui
 
-    local openBtn = Instance.new("TextButton", toggleGui)
-    openBtn.Size = UDim2.new(0, 85, 0, 30)
-    openBtn.Position = savedPos.OpenBtn
-    openBtn.BackgroundColor3 = currentTheme.Background
-    openBtn.Text = "Gestio"
-    openBtn.TextColor3 = currentTheme.Accent
-    openBtn.TextSize = 11
-    openBtn.Font = Enum.Font.GothamBold
-    openBtn.Active = true
-    openBtn.AutoButtonColor = false
-    openBtn.ZIndex = 100
-    Instance.new("UICorner", openBtn).CornerRadius = UDim.new(0, 6)
-    local openStroke = Instance.new("UIStroke", openBtn)
-    openStroke.Color = currentTheme.Border
+local openBtn = Instance.new("TextButton", toggleGui)
+openBtn.Size = UDim2.new(0, 85, 0, 30)
+openBtn.Position = savedPos.OpenBtn
+openBtn.BackgroundColor3 = currentTheme.Background
+openBtn.Text = "Gestio"
+openBtn.TextColor3 = currentTheme.Accent
+openBtn.TextSize = 11
+openBtn.Font = Enum.Font.GothamBold
+openBtn.Active = true
+openBtn.AutoButtonColor = false
+openBtn.ZIndex = 100
+Instance.new("UICorner", openBtn).CornerRadius = UDim.new(0, 6)
+local openStroke = Instance.new("UIStroke", openBtn)
+openStroke.Color = currentTheme.Border
 
-    local screenGui = Instance.new("ScreenGui")
-    screenGui.Name = "GestioScreenGui"
-    screenGui.ResetOnSpawn = false
-    screenGui.DisplayOrder = 50
-    screenGui.IgnoreGuiInset = true
-    screenGui.Parent = targetGui
+-- ==========================================
+-- MASTER VIEWPORT WINDOW
+-- ==========================================
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "GestioScreenGui"
+screenGui.ResetOnSpawn = false
+screenGui.DisplayOrder = 50
+screenGui.IgnoreGuiInset = true
+screenGui.Parent = targetGui
 
-    local masterFrame = Instance.new("Frame", screenGui)
-    masterFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-    masterFrame.Size = UDim2.new(0.90, 0, 0.82, 0)
-    masterFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
-    masterFrame.BackgroundTransparency = 1
-    masterFrame.Visible = true
+local masterFrame = Instance.new("Frame", screenGui)
+masterFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+masterFrame.Size = UDim2.new(0.90, 0, 0.82, 0)
+masterFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+masterFrame.BackgroundTransparency = 1
+masterFrame.Visible = true
 
-    local sizeConstraint = Instance.new("UISizeConstraint", masterFrame)
-    sizeConstraint.MaxSize = Vector2.new(740, 320)
-    sizeConstraint.MinSize = Vector2.new(300, 200)
+local sizeConstraint = Instance.new("UISizeConstraint", masterFrame)
+sizeConstraint.MaxSize = Vector2.new(740, 320)
+sizeConstraint.MinSize = Vector2.new(300, 200)
 
-    local masterLayout = Instance.new("UIListLayout", masterFrame)
-    masterLayout.FillDirection = Enum.FillDirection.Horizontal
-    masterLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-    masterLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-    masterLayout.Padding = UDim.new(0, 6)
+local masterLayout = Instance.new("UIListLayout", masterFrame)
+masterLayout.FillDirection = Enum.FillDirection.Horizontal
+masterLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+masterLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+masterLayout.Padding = UDim.new(0, 6)
 
-    local function toggleMenu() 
-        masterFrame.Visible = not masterFrame.Visible 
+function toggleMenu() 
+    masterFrame.Visible = not masterFrame.Visible 
+end
+
+local btnDrag, btnStartPos, btnInputStart = false, nil, nil
+local bInBegan = openBtn.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        btnDrag = true
+        btnStartPos = openBtn.Position
+        btnInputStart = input.Position
+    end
+end)
+table.insert(connections, bInBegan)
+
+local bInChanged = UserInputService.InputChanged:Connect(function(input)
+    if btnDrag and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - btnInputStart
+        local newPos = UDim2.new(btnStartPos.X.Scale, btnStartPos.X.Offset + delta.X, btnStartPos.Y.Scale, btnStartPos.Y.Offset + delta.Y)
+        openBtn.Position = newPos
+        savedPos.OpenBtn = newPos
+        if genv then genv.GestioSavedPos.OpenBtn = newPos end
+    end
+end)
+table.insert(connections, bInChanged)
+
+local bInEnded = UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        if btnDrag then
+            btnDrag = false
+            if (input.Position - btnInputStart).Magnitude < 15 then 
+                toggleMenu() 
+            end
+        end
+    end
+end)
+table.insert(connections, bInEnded)
+
+local mainFrame = Instance.new("Frame", masterFrame)
+mainFrame.Size = UDim2.new(0.58, 0, 1, 0)
+mainFrame.BackgroundColor3 = currentTheme.Background
+mainFrame.BorderSizePixel = 0
+mainFrame.ZIndex = 5
+Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 8)
+local mainStroke = Instance.new("UIStroke", mainFrame)
+mainStroke.Color = currentTheme.Border
+
+local bgGridFolder = Instance.new("Folder", mainFrame)
+bgGridFolder.Name = "GestioBackgroundGrid"
+
+local gridRows = 12
+local gridCols = 22
+for r = 0, gridRows - 1 do
+    for c = 0, gridCols - 1 do
+        local square = Instance.new("Frame", bgGridFolder)
+        square.Size = UDim2.new(0, 20, 0, 20)
+        square.Position = UDim2.new(c / gridCols, 0, r / gridRows, 0)
+        square.BackgroundColor3 = currentTheme.Sidebar
+        square.BackgroundTransparency = 0.82
+        square.BorderSizePixel = 0
+        square.ZIndex = 5
+        Instance.new("UICorner", square).CornerRadius = UDim.new(0, 3)
+    end
+end
+
+local sidebar = Instance.new("ScrollingFrame", mainFrame)
+sidebar.Size = UDim2.new(0, 75, 1, -8)
+sidebar.Position = UDim2.new(0, 4, 0, 4)
+sidebar.BackgroundColor3 = currentTheme.Sidebar
+sidebar.BorderSizePixel = 0
+sidebar.ZIndex = 6
+sidebar.ScrollBarThickness = 0
+sidebar.CanvasSize = UDim2.new(0, 0, 0, 250)
+Instance.new("UICorner", sidebar).CornerRadius = UDim.new(0, 8)
+
+local sbLayout = Instance.new("UIListLayout", sidebar)
+sbLayout.FillDirection = Enum.FillDirection.Vertical
+sbLayout.SortOrder = Enum.SortOrder.LayoutOrder
+sbLayout.Padding = UDim.new(0, 3)
+sbLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+
+local sbPad = Instance.new("UIPadding", sidebar)
+sbPad.PaddingTop = UDim.new(0, 4)
+sbPad.PaddingBottom = UDim.new(0, 4)
+
+local logoBtn = Instance.new("TextButton", sidebar)
+logoBtn.Size = UDim2.new(0.9, 0, 0, 24)
+logoBtn.BackgroundTransparency = 1
+logoBtn.Text = "Gestio"
+logoBtn.TextColor3 = currentTheme.Accent
+logoBtn.TextSize = 11
+logoBtn.Font = Enum.Font.GothamBold
+logoBtn.ZIndex = 7
+logoBtn.LayoutOrder = 1
+bindTouch(logoBtn, toggleMenu)
+
+function createNavBtn(order, txt)
+    local b = Instance.new("TextButton", sidebar)
+    b.Size = UDim2.new(0.88, 0, 0, 19)
+    b.BackgroundColor3 = currentTheme.Sidebar
+    b.TextColor3 = currentTheme.TextSecondary
+    b.Text = txt
+    b.TextSize = 7.5
+    b.Font = Enum.Font.GothamBold
+    b.ZIndex = 7
+    b.LayoutOrder = order
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 4)
+    return b
+end
+
+local cBtn = createNavBtn(2, "COMBAT")
+local mBtn = createNavBtn(3, "MOVEMENT")
+local eBtn = createNavBtn(4, "ESP")
+local sBtn = createNavBtn(5, "SKINS")
+local envBtn = createNavBtn(6, "ENV")
+local micsBtn = createNavBtn(7, "MICS")
+local setsBtn = createNavBtn(8, "SETTINGS")
+cBtn.BackgroundColor3 = currentTheme.CardBg
+cBtn.TextColor3 = currentTheme.Accent
+
+function makePageContainer()
+    local c = Instance.new("ScrollingFrame", mainFrame)
+    c.Size = UDim2.new(1, -84, 1, -12)
+    c.Position = UDim2.new(0, 80, 0, 6)
+    c.BackgroundTransparency = 1
+    c.ScrollBarThickness = 2
+    c.CanvasSize = UDim2.new(0, 0, 0, 900)
+    c.Visible = false
+    c.ZIndex = 6
+
+    local list = Instance.new("UIListLayout", c)
+    list.FillDirection = Enum.FillDirection.Vertical
+    list.SortOrder = Enum.SortOrder.LayoutOrder
+    list.Padding = UDim.new(0, 10)
+
+    local pad = Instance.new("UIPadding", c)
+    pad.PaddingLeft = UDim.new(0, 4)
+    pad.PaddingRight = UDim.new(0, 6)
+    pad.PaddingTop = UDim.new(0, 4)
+    pad.PaddingBottom = UDim.new(0, 10)
+
+    return c
+end
+
+function makeCategorySection(page, title, layoutOrder, cardCount)
+    local count = cardCount or 4
+    local rows = math.ceil(count / 4)
+    local gridHeight = rows * 64
+    local totalHeight = 22 + gridHeight
+
+    local sectionContainer = Instance.new("Frame", page)
+    sectionContainer.Size = UDim2.new(1, 0, 0, totalHeight)
+    sectionContainer.BackgroundTransparency = 1
+    sectionContainer.LayoutOrder = layoutOrder or 1
+    sectionContainer.ZIndex = 6
+
+    local headerLabel = Instance.new("TextLabel", sectionContainer)
+    headerLabel.Size = UDim2.new(1, 0, 0, 18)
+    headerLabel.BackgroundTransparency = 1
+    headerLabel.Text = title:upper()
+    headerLabel.TextColor3 = currentTheme.Accent
+    headerLabel.TextSize = 8.5
+    headerLabel.Font = Enum.Font.GothamBold
+    headerLabel.TextXAlignment = Enum.TextXAlignment.Left
+    headerLabel.ZIndex = 7
+
+    local gridFrame = Instance.new("Frame", sectionContainer)
+    gridFrame.Size = UDim2.new(1, 0, 0, gridHeight)
+    gridFrame.Position = UDim2.new(0, 0, 0, 20)
+    gridFrame.BackgroundTransparency = 1
+    gridFrame.ZIndex = 6
+
+    local grid = Instance.new("UIGridLayout", gridFrame)
+    grid.CellSize = UDim2.new(0, 58, 0, 58)
+    grid.CellPadding = UDim2.new(0, 6, 0, 6)
+
+    return gridFrame
+end
+
+local cPage = makePageContainer()
+local mPage = makePageContainer()
+local ePage = makePageContainer()
+local sPage = makePageContainer()
+local envPage = makePageContainer()
+local micsPage = makePageContainer()
+local setsPage = makePageContainer()
+cPage.Visible = true
+
+function switch(tab)
+    cPage.Visible = (tab == "C")
+    mPage.Visible = (tab == "M")
+    ePage.Visible = (tab == "E")
+    sPage.Visible = (tab == "SKINS")
+    envPage.Visible = (tab == "ENV")
+    micsPage.Visible = (tab == "MICS")
+    setsPage.Visible = (tab == "SETS")
+
+    local btns = {{cBtn, "C"}, {mBtn, "M"}, {eBtn, "E"}, {sBtn, "SKINS"}, {envBtn, "ENV"}, {micsBtn, "MICS"}, {setsBtn, "SETS"}}
+    for _, item in ipairs(btns) do
+        local on = (item[2] == tab)
+        item[1].BackgroundColor3 = on and currentTheme.CardBg or currentTheme.Sidebar
+        item[1].TextColor3 = on and currentTheme.Accent or currentTheme.TextSecondary
+    end
+end
+
+bindTouch(cBtn, function() switch("C") end)
+bindTouch(mBtn, function() switch("M") end)
+bindTouch(eBtn, function() switch("E") end)
+bindTouch(sBtn, function() switch("SKINS") end)
+bindTouch(envBtn, function() switch("ENV") end)
+bindTouch(micsBtn, function() switch("MICS") end)
+bindTouch(setsBtn, function() switch("SETS") end)
+
+-- ==========================================
+-- RIGHT INSPECTOR FRAMEWORK
+-- ==========================================
+local inspectorPanel = Instance.new("Frame", masterFrame)
+inspectorPanel.Size = UDim2.new(0.40, 0, 1, 0)
+inspectorPanel.BackgroundColor3 = currentTheme.Background
+inspectorPanel.BorderSizePixel = 0
+inspectorPanel.ZIndex = 5
+Instance.new("UICorner", inspectorPanel).CornerRadius = UDim.new(0, 8)
+local insStroke = Instance.new("UIStroke", inspectorPanel)
+insStroke.Color = currentTheme.Border
+
+local insGridFolder = Instance.new("Folder", inspectorPanel)
+insGridFolder.Name = "GestioInspectorGrid"
+for r = 0, gridRows - 1 do
+    for c = 0, 12 do
+        local square = Instance.new("Frame", insGridFolder)
+        square.Size = UDim2.new(0, 20, 0, 20)
+        square.Position = UDim2.new(c / 12, 0, r / gridRows, 0)
+        square.BackgroundColor3 = currentTheme.Sidebar
+        square.BackgroundTransparency = 0.82
+        square.BorderSizePixel = 0
+        square.ZIndex = 5
+        Instance.new("UICorner", square).CornerRadius = UDim.new(0, 3)
+    end
+end
+
+local insHeader = Instance.new("TextLabel", inspectorPanel)
+insHeader.Size = UDim2.new(1, -38, 0, 26)
+insHeader.Position = UDim2.new(0, 10, 0, 4)
+insHeader.BackgroundTransparency = 1
+insHeader.Text = "Settings"
+insHeader.TextColor3 = currentTheme.TextPrimary
+insHeader.TextSize = 10
+insHeader.Font = Enum.Font.GothamBold
+insHeader.TextXAlignment = Enum.TextXAlignment.Left
+insHeader.ZIndex = 6
+
+local closeBtn = Instance.new("TextButton", inspectorPanel)
+closeBtn.Size = UDim2.new(0, 18, 0, 18)
+closeBtn.Position = UDim2.new(1, -22, 0, 6)
+closeBtn.BackgroundColor3 = currentTheme.CardBg
+closeBtn.Text = "X"
+closeBtn.TextColor3 = currentTheme.TextSecondary
+closeBtn.TextSize = 9
+closeBtn.Font = Enum.Font.GothamBold
+closeBtn.ZIndex = 7
+Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 4)
+bindTouch(closeBtn, toggleMenu)
+
+local insContent = Instance.new("ScrollingFrame", inspectorPanel)
+insContent.Size = UDim2.new(1, 0, 1, -32)
+insContent.Position = UDim2.new(0, 0, 0, 30)
+insContent.BackgroundTransparency = 1
+insContent.ScrollBarThickness = 2
+insContent.CanvasSize = UDim2.new(0, 0, 0, 650)
+insContent.ZIndex = 6
+
+function addInspectorSlider(y, txt, min, max, cur, isFloat, onChange)
+    local lbl = Instance.new("TextLabel", insContent)
+    lbl.Size = UDim2.new(0.86, 0, 0, 12)
+    lbl.Position = UDim2.new(0.07, 0, 0, y)
+    lbl.BackgroundTransparency = 1
+    lbl.TextColor3 = currentTheme.TextSecondary
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.TextSize = 8.5
+    lbl.Font = Enum.Font.GothamBold
+    lbl.ZIndex = 7
+    lbl.Text = isFloat and string.format("%s: %.2fx", txt, cur) or string.format("%s: %d", txt, cur)
+
+    local track = Instance.new("TextButton", insContent)
+    track.Size = UDim2.new(0.86, 0, 0, 6)
+    track.Position = UDim2.new(0.07, 0, 0, y + 14)
+    track.BackgroundColor3 = currentTheme.Border
+    track.Text = ""
+    track.AutoButtonColor = false
+    track.ZIndex = 7
+    Instance.new("UICorner", track).CornerRadius = UDim.new(1, 0)
+
+    local fill = Instance.new("Frame", track)
+    fill.Size = UDim2.new(math.clamp((cur - min) / (max - min), 0, 1), 0, 1, 0)
+    fill.BackgroundColor3 = currentTheme.Accent
+    fill.BorderSizePixel = 0
+    fill.ZIndex = 8
+    Instance.new("UICorner", fill).CornerRadius = UDim.new(1, 0)
+
+    local drag = false
+    local function update(input)
+        local pos = math.clamp(input.Position.X - track.AbsolutePosition.X, 0, track.AbsoluteSize.X)
+        local pct = pos / track.AbsoluteSize.X
+        local rawVal = min + (max - min) * pct
+        local val = isFloat and (math.floor(rawVal * 100) / 100) or math.floor(rawVal)
+        fill.Size = UDim2.new(pct, 0, 1, 0)
+        lbl.Text = isFloat and string.format("%s: %.2fx", txt, val) or string.format("%s: %d", txt, val)
+        onChange(val)
     end
 
-    local btnDrag, btnStartPos, btnInputStart = false, nil, nil
-    local bInBegan = openBtn.InputBegan:Connect(function(input)
+    local trInBegan = track.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            btnDrag = true
-            btnStartPos = openBtn.Position
-            btnInputStart = input.Position
+            drag = true 
+            update(input)
         end
     end)
-    table.insert(connections, bInBegan)
+    table.insert(connections, trInBegan)
 
-    local bInChanged = UserInputService.InputChanged:Connect(function(input)
-        if btnDrag and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-            local delta = input.Position - btnInputStart
-            local newPos = UDim2.new(btnStartPos.X.Scale, btnStartPos.X.Offset + delta.X, btnStartPos.Y.Scale, btnStartPos.Y.Offset + delta.Y)
-            openBtn.Position = newPos
-            savedPos.OpenBtn = newPos
-            if genv then genv.GestioSavedPos.OpenBtn = newPos end
-        end
-    end)
-    table.insert(connections, bInChanged)
-
-    local bInEnded = UserInputService.InputEnded:Connect(function(input)
+    local trInEnded = UserInputService.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            if btnDrag then
-                btnDrag = false
-                if (input.Position - btnInputStart).Magnitude < 15 then 
-                    toggleMenu() 
-                end
-            end
+            drag = false
         end
     end)
-    table.insert(connections, bInEnded)
+    table.insert(connections, trInEnded)
 
-    local mainFrame = Instance.new("Frame", masterFrame)
-    mainFrame.Size = UDim2.new(0.58, 0, 1, 0)
-    mainFrame.BackgroundColor3 = currentTheme.Background
-    mainFrame.BorderSizePixel = 0
-    mainFrame.ZIndex = 5
-    Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 8)
-    local mainStroke = Instance.new("UIStroke", mainFrame)
-    mainStroke.Color = currentTheme.Border
-
-    local bgGridFolder = Instance.new("Folder", mainFrame)
-    bgGridFolder.Name = "GestioBackgroundGrid"
-
-    local gridRows = 12
-    local gridCols = 22
-    for r = 0, gridRows - 1 do
-        for c = 0, gridCols - 1 do
-            local square = Instance.new("Frame", bgGridFolder)
-            square.Size = UDim2.new(0, 20, 0, 20)
-            square.Position = UDim2.new(c / gridCols, 0, r / gridRows, 0)
-            square.BackgroundColor3 = currentTheme.Sidebar
-            square.BackgroundTransparency = 0.82
-            square.BorderSizePixel = 0
-            square.ZIndex = 5
-            Instance.new("UICorner", square).CornerRadius = UDim.new(0, 3)
+    local trInChanged = UserInputService.InputChanged:Connect(function(input)
+        if drag and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            update(input)
         end
+    end)
+    table.insert(connections, trInChanged)
+end
+
+function addInspectorToggle(y, txt, default, onToggle)
+    local f = Instance.new("Frame", insContent)
+    f.Size = UDim2.new(0.86, 0, 0, 20)
+    f.Position = UDim2.new(0.07, 0, 0, y)
+    f.BackgroundTransparency = 1
+    f.ZIndex = 7
+
+    local t = Instance.new("TextLabel", f)
+    t.Size = UDim2.new(0.7, 0, 1, 0)
+    t.BackgroundTransparency = 1
+    t.Text = txt
+    t.TextColor3 = currentTheme.TextSecondary
+    t.TextXAlignment = Enum.TextXAlignment.Left
+    t.TextSize = 8.5
+    t.Font = Enum.Font.GothamBold
+    t.ZIndex = 7
+
+    local btn = Instance.new("TextButton", f)
+    btn.Size = UDim2.new(0, 26, 0, 14)
+    btn.Position = UDim2.new(1, -26, 0.5, -7)
+    btn.BackgroundColor3 = default and currentTheme.Accent or Color3.fromRGB(50, 53, 60)
+    btn.Text = ""
+    btn.ZIndex = 8
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(1, 0)
+
+    local circle = Instance.new("Frame", btn)
+    circle.Size = UDim2.new(0, 10, 0, 10)
+    circle.Position = default and UDim2.new(1, -11, 0.5, -5) or UDim2.new(0, 2, 0.5, -5)
+    circle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    circle.ZIndex = 9
+    Instance.new("UICorner", circle).CornerRadius = UDim.new(1, 0)
+
+    local state = default
+    local function executeToggle()
+        state = not state
+        btn.BackgroundColor3 = state and currentTheme.Accent or Color3.fromRGB(50, 53, 60)
+        circle.Position = state and UDim2.new(1, -11, 0.5, -5) or UDim2.new(0, 2, 0.5, -5)
+        onToggle(state)
     end
 
-    local sidebar = Instance.new("ScrollingFrame", mainFrame)
-    sidebar.Size = UDim2.new(0, 75, 1, -8)
-    sidebar.Position = UDim2.new(0, 4, 0, 4)
-    sidebar.BackgroundColor3 = currentTheme.Sidebar
-    sidebar.BorderSizePixel = 0
-    sidebar.ZIndex = 6
-    sidebar.ScrollBarThickness = 0
-    sidebar.CanvasSize = UDim2.new(0, 0, 0, 250)
-    Instance.new("UICorner", sidebar).CornerRadius = UDim.new(0, 8)
+    bindTouch(btn, executeToggle)
+end
 
-    local sbLayout = Instance.new("UIListLayout", sidebar)
-    sbLayout.FillDirection = Enum.FillDirection.Vertical
-    sbLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    sbLayout.Padding = UDim.new(0, 3)
-    sbLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+function addInspectorChoice(y, txt, choices, currentChoice, onSelect)
+    local row = Instance.new("Frame", insContent)
+    row.Size = UDim2.new(0.86, 0, 0, 28)
+    row.Position = UDim2.new(0.07, 0, 0, y)
+    row.BackgroundTransparency = 1
+    row.ZIndex = 20
 
-    local sbPad = Instance.new("UIPadding", sidebar)
-    sbPad.PaddingTop = UDim.new(0, 4)
-    sbPad.PaddingBottom = UDim.new(0, 4)
+    local lbl = Instance.new("TextLabel", row)
+    lbl.Size = UDim2.new(0.34, 0, 1, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = txt
+    lbl.TextColor3 = currentTheme.TextSecondary
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.TextSize = 8.5
+    lbl.Font = Enum.Font.GothamBold
+    lbl.ZIndex = 20
 
-    local logoBtn = Instance.new("TextButton", sidebar)
-    logoBtn.Size = UDim2.new(0.9, 0, 0, 24)
-    logoBtn.BackgroundTransparency = 1
-    logoBtn.Text = "Gestio"
-    logoBtn.TextColor3 = currentTheme.Accent
-    logoBtn.TextSize = 11
-    logoBtn.Font = Enum.Font.GothamBold
-    logoBtn.ZIndex = 7
-    logoBtn.LayoutOrder = 1
-    bindTouch(logoBtn, toggleMenu)
+    local dropdown = Instance.new("TextButton", row)
+    dropdown.Size = UDim2.new(0.66, 0, 0, 26)
+    dropdown.Position = UDim2.new(0.34, 0, 0.5, -13)
+    dropdown.BackgroundColor3 = currentTheme.CardBg
+    dropdown.BorderSizePixel = 0
+    dropdown.Text = ""
+    dropdown.AutoButtonColor = false
+    dropdown.ZIndex = 21
+    Instance.new("UICorner", dropdown).CornerRadius = UDim.new(0, 5)
 
-    local function createNavBtn(order, txt)
-        local b = Instance.new("TextButton", sidebar)
-        b.Size = UDim2.new(0.88, 0, 0, 19)
-        b.BackgroundColor3 = currentTheme.Sidebar
-        b.TextColor3 = currentTheme.TextSecondary
-        b.Text = txt
-        b.TextSize = 7.5
-        b.Font = Enum.Font.GothamBold
-        b.ZIndex = 7
-        b.LayoutOrder = order
-        Instance.new("UICorner", b).CornerRadius = UDim.new(0, 4)
-        return b
-    end
+    local stroke = Instance.new("UIStroke", dropdown)
+    stroke.Color = currentTheme.Border
+    stroke.Thickness = 1
 
-    local cBtn = createNavBtn(2, "COMBAT")
-    local mBtn = createNavBtn(3, "MOVEMENT")
-    local eBtn = createNavBtn(4, "ESP")
-    local sBtn = createNavBtn(5, "SKINS")
-    local envBtn = createNavBtn(6, "ENV")
-    local micsBtn = createNavBtn(7, "MICS")
-    local setsBtn = createNavBtn(8, "SETTINGS")
-    cBtn.BackgroundColor3 = currentTheme.CardBg
-    cBtn.TextColor3 = currentTheme.Accent
+    local selectedLabel = Instance.new("TextLabel", dropdown)
+    selectedLabel.Size = UDim2.new(1, -30, 1, 0)
+    selectedLabel.Position = UDim2.new(0, 10, 0, 0)
+    selectedLabel.BackgroundTransparency = 1
+    selectedLabel.Text = currentChoice
+    selectedLabel.TextColor3 = currentTheme.TextPrimary
+    selectedLabel.TextXAlignment = Enum.TextXAlignment.Left
+    selectedLabel.TextSize = 8
+    selectedLabel.Font = Enum.Font.GothamBold
+    selectedLabel.ZIndex = 22
 
-    local function makePageContainer()
-        local c = Instance.new("ScrollingFrame", mainFrame)
-        c.Size = UDim2.new(1, -84, 1, -12)
-        c.Position = UDim2.new(0, 80, 0, 6)
-        c.BackgroundTransparency = 1
-        c.ScrollBarThickness = 2
-        c.CanvasSize = UDim2.new(0, 0, 0, 900)
-        c.Visible = false
-        c.ZIndex = 6
+    local arrow = Instance.new("TextLabel", dropdown)
+    arrow.Size = UDim2.new(0, 22, 1, 0)
+    arrow.Position = UDim2.new(1, -24, 0, 0)
+    arrow.BackgroundTransparency = 1
+    arrow.Text = "▼"
+    arrow.TextColor3 = currentTheme.TextSecondary
+    arrow.TextSize = 8
+    arrow.Font = Enum.Font.GothamBold
+    arrow.ZIndex = 22
 
-        local list = Instance.new("UIListLayout", c)
-        list.FillDirection = Enum.FillDirection.Vertical
-        list.SortOrder = Enum.SortOrder.LayoutOrder
-        list.Padding = UDim.new(0, 10)
+    local list = Instance.new("Frame", insContent)
+    list.Name = "PresetDropdown"
+    list.Size = UDim2.new(0.5676, 0, 0, 0)
+    list.Position = UDim2.new(0.3624, 0, 0, y + 31)
+    list.BackgroundColor3 = currentTheme.CardBg
+    list.BorderSizePixel = 0
+    list.Visible = false
+    list.ZIndex = 100
+    list.ClipsDescendants = true
+    Instance.new("UICorner", list).CornerRadius = UDim.new(0, 5)
+    local listStroke = Instance.new("UIStroke", list)
+    listStroke.Color = currentTheme.Border
 
-        local pad = Instance.new("UIPadding", c)
-        pad.PaddingLeft = UDim.new(0, 4)
-        pad.PaddingRight = UDim.new(0, 6)
-        pad.PaddingTop = UDim.new(0, 4)
-        pad.PaddingBottom = UDim.new(0, 10)
+    local layout = Instance.new("UIListLayout", list)
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+    local open = false
+    local h = 25
 
-        return c
-    end
-
-    local function makeCategorySection(page, title, layoutOrder, cardCount)
-        local count = cardCount or 4
-        local rows = math.ceil(count / 4)
-        local gridHeight = rows * 64
-        local totalHeight = 22 + gridHeight
-
-        local sectionContainer = Instance.new("Frame", page)
-        sectionContainer.Size = UDim2.new(1, 0, 0, totalHeight)
-        sectionContainer.BackgroundTransparency = 1
-        sectionContainer.LayoutOrder = layoutOrder or 1
-        sectionContainer.ZIndex = 6
-
-        local headerLabel = Instance.new("TextLabel", sectionContainer)
-        headerLabel.Size = UDim2.new(1, 0, 0, 18)
-        headerLabel.BackgroundTransparency = 1
-        headerLabel.Text = title:upper()
-        headerLabel.TextColor3 = currentTheme.Accent
-        headerLabel.TextSize = 8.5
-        headerLabel.Font = Enum.Font.GothamBold
-        headerLabel.TextXAlignment = Enum.TextXAlignment.Left
-        headerLabel.ZIndex = 7
-
-        local gridFrame = Instance.new("Frame", sectionContainer)
-        gridFrame.Size = UDim2.new(1, 0, 0, gridHeight)
-        gridFrame.Position = UDim2.new(0, 0, 0, 20)
-        gridFrame.BackgroundTransparency = 1
-        gridFrame.ZIndex = 6
-
-        local grid = Instance.new("UIGridLayout", gridFrame)
-        grid.CellSize = UDim2.new(0, 58, 0, 58)
-        grid.CellPadding = UDim2.new(0, 6, 0, 6)
-
-        return gridFrame
-    end
-
-    local cPage = makePageContainer()
-    local mPage = makePageContainer()
-    local ePage = makePageContainer()
-    local sPage = makePageContainer()
-    local envPage = makePageContainer()
-    local micsPage = makePageContainer()
-    local setsPage = makePageContainer()
-    cPage.Visible = true
-
-    local function switch(tab)
-        cPage.Visible = (tab == "C")
-        mPage.Visible = (tab == "M")
-        ePage.Visible = (tab == "E")
-        sPage.Visible = (tab == "SKINS")
-        envPage.Visible = (tab == "ENV")
-        micsPage.Visible = (tab == "MICS")
-        setsPage.Visible = (tab == "SETS")
-
-        local btns = {{cBtn, "C"}, {mBtn, "M"}, {eBtn, "E"}, {sBtn, "SKINS"}, {envBtn, "ENV"}, {micsBtn, "MICS"}, {setsBtn, "SETS"}}
-        for _, item in ipairs(btns) do
-            local on = (item[2] == tab)
-            item[1].BackgroundColor3 = on and currentTheme.CardBg or currentTheme.Sidebar
-            item[1].TextColor3 = on and currentTheme.Accent or currentTheme.TextSecondary
-        end
-    end
-
-    bindTouch(cBtn, function() switch("C") end)
-    bindTouch(mBtn, function() switch("M") end)
-    bindTouch(eBtn, function() switch("E") end)
-    bindTouch(sBtn, function() switch("SKINS") end)
-    bindTouch(envBtn, function() switch("ENV") end)
-    bindTouch(micsBtn, function() switch("MICS") end)
-    bindTouch(setsBtn, function() switch("SETS") end)
-
-    local inspectorPanel = Instance.new("Frame", masterFrame)
-    inspectorPanel.Size = UDim2.new(0.40, 0, 1, 0)
-    inspectorPanel.BackgroundColor3 = currentTheme.Background
-    inspectorPanel.BorderSizePixel = 0
-    inspectorPanel.ZIndex = 5
-    Instance.new("UICorner", inspectorPanel).CornerRadius = UDim.new(0, 8)
-    local insStroke = Instance.new("UIStroke", inspectorPanel)
-    insStroke.Color = currentTheme.Border
-
-    local insGridFolder = Instance.new("Folder", inspectorPanel)
-    insGridFolder.Name = "GestioInspectorGrid"
-    for r = 0, gridRows - 1 do
-        for c = 0, 12 do
-            local square = Instance.new("Frame", insGridFolder)
-            square.Size = UDim2.new(0, 20, 0, 20)
-            square.Position = UDim2.new(c / 12, 0, r / gridRows, 0)
-            square.BackgroundColor3 = currentTheme.Sidebar
-            square.BackgroundTransparency = 0.82
-            square.BorderSizePixel = 0
-            square.ZIndex = 5
-            Instance.new("UICorner", square).CornerRadius = UDim.new(0, 3)
-        end
-    end
-
-    local insHeader = Instance.new("TextLabel", inspectorPanel)
-    insHeader.Size = UDim2.new(1, -38, 0, 26)
-    insHeader.Position = UDim2.new(0, 10, 0, 4)
-    insHeader.BackgroundTransparency = 1
-    insHeader.Text = "Settings"
-    insHeader.TextColor3 = currentTheme.TextPrimary
-    insHeader.TextSize = 10
-    insHeader.Font = Enum.Font.GothamBold
-    insHeader.TextXAlignment = Enum.TextXAlignment.Left
-    insHeader.ZIndex = 6
-
-    local closeBtn = Instance.new("TextButton", inspectorPanel)
-    closeBtn.Size = UDim2.new(0, 18, 0, 18)
-    closeBtn.Position = UDim2.new(1, -22, 0, 6)
-    closeBtn.BackgroundColor3 = currentTheme.CardBg
-    closeBtn.Text = "X"
-    closeBtn.TextColor3 = currentTheme.TextSecondary
-    closeBtn.TextSize = 9
-    closeBtn.Font = Enum.Font.GothamBold
-    closeBtn.ZIndex = 7
-    Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 4)
-    bindTouch(closeBtn, toggleMenu)
-
-    local insContent = Instance.new("ScrollingFrame", inspectorPanel)
-    insContent.Size = UDim2.new(1, 0, 1, -32)
-    insContent.Position = UDim2.new(0, 0, 0, 30)
-    insContent.BackgroundTransparency = 1
-    insContent.ScrollBarThickness = 2
-    insContent.CanvasSize = UDim2.new(0, 0, 0, 650)
-    insContent.ZIndex = 6
-
-    local function addInspectorSlider(y, txt, min, max, cur, isFloat, onChange)
-        local lbl = Instance.new("TextLabel", insContent)
-        lbl.Size = UDim2.new(0.86, 0, 0, 12)
-        lbl.Position = UDim2.new(0.07, 0, 0, y)
-        lbl.BackgroundTransparency = 1
-        lbl.TextColor3 = currentTheme.TextSecondary
-        lbl.TextXAlignment = Enum.TextXAlignment.Left
-        lbl.TextSize = 8.5
-        lbl.Font = Enum.Font.GothamBold
-        lbl.ZIndex = 7
-        lbl.Text = isFloat and string.format("%s: %.2fx", txt, cur) or string.format("%s: %d", txt, cur)
-
-        local track = Instance.new("TextButton", insContent)
-        track.Size = UDim2.new(0.86, 0, 0, 6)
-        track.Position = UDim2.new(0.07, 0, 0, y + 14)
-        track.BackgroundColor3 = currentTheme.Border
-        track.Text = ""
-        track.AutoButtonColor = false
-        track.ZIndex = 7
-        Instance.new("UICorner", track).CornerRadius = UDim.new(1, 0)
-
-        local fill = Instance.new("Frame", track)
-        fill.Size = UDim2.new(math.clamp((cur - min) / (max - min), 0, 1), 0, 1, 0)
-        fill.BackgroundColor3 = currentTheme.Accent
-        fill.BorderSizePixel = 0
-        fill.ZIndex = 8
-        Instance.new("UICorner", fill).CornerRadius = UDim.new(1, 0)
-
-        local drag = false
-        local function update(input)
-            local pos = math.clamp(input.Position.X - track.AbsolutePosition.X, 0, track.AbsoluteSize.X)
-            local pct = pos / track.AbsoluteSize.X
-            local rawVal = min + (max - min) * pct
-            local val = isFloat and (math.floor(rawVal * 100) / 100) or math.floor(rawVal)
-            fill.Size = UDim2.new(pct, 0, 1, 0)
-            lbl.Text = isFloat and string.format("%s: %.2fx", txt, val) or string.format("%s: %d", txt, val)
-            onChange(val)
-        end
-
-        local trInBegan = track.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                drag = true 
-                update(input)
-            end
-        end)
-        table.insert(connections, trInBegan)
-
-        local trInEnded = UserInputService.InputEnded:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                drag = false
-            end
-        end)
-        table.insert(connections, trInEnded)
-
-        local trInChanged = UserInputService.InputChanged:Connect(function(input)
-            if drag and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-                update(input)
-            end
-        end)
-        table.insert(connections, trInChanged)
-    end
-
-    local function addInspectorToggle(y, txt, default, onToggle)
-        local f = Instance.new("Frame", insContent)
-        f.Size = UDim2.new(0.86, 0, 0, 20)
-        f.Position = UDim2.new(0.07, 0, 0, y)
-        f.BackgroundTransparency = 1
-        f.ZIndex = 7
-
-        local t = Instance.new("TextLabel", f)
-        t.Size = UDim2.new(0.7, 0, 1, 0)
-        t.BackgroundTransparency = 1
-        t.Text = txt
-        t.TextColor3 = currentTheme.TextSecondary
-        t.TextXAlignment = Enum.TextXAlignment.Left
-        t.TextSize = 8.5
-        t.Font = Enum.Font.GothamBold
-        t.ZIndex = 7
-
-        local btn = Instance.new("TextButton", f)
-        btn.Size = UDim2.new(0, 26, 0, 14)
-        btn.Position = UDim2.new(1, -26, 0.5, -7)
-        btn.BackgroundColor3 = default and currentTheme.Accent or Color3.fromRGB(50, 53, 60)
-        btn.Text = ""
-        btn.ZIndex = 8
-        Instance.new("UICorner", btn).CornerRadius = UDim.new(1, 0)
-
-        local circle = Instance.new("Frame", btn)
-        circle.Size = UDim2.new(0, 10, 0, 10)
-        circle.Position = default and UDim2.new(1, -11, 0.5, -5) or UDim2.new(0, 2, 0.5, -5)
-        circle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        circle.ZIndex = 9
-        Instance.new("UICorner", circle).CornerRadius = UDim.new(1, 0)
-
-        local state = default
-        local function executeToggle()
-            state = not state
-            btn.BackgroundColor3 = state and currentTheme.Accent or Color3.fromRGB(50, 53, 60)
-            circle.Position = state and UDim2.new(1, -11, 0.5, -5) or UDim2.new(0, 2, 0.5, -5)
-            onToggle(state)
-        end
-
-        bindTouch(btn, executeToggle)
-    end
-
-    local function addInspectorChoice(y, txt, choices, currentChoice, onSelect)
-        local row = Instance.new("Frame", insContent)
-        row.Size = UDim2.new(0.86, 0, 0, 28)
-        row.Position = UDim2.new(0.07, 0, 0, y)
-        row.BackgroundTransparency = 1
-        row.ZIndex = 20
-
-        local lbl = Instance.new("TextLabel", row)
-        lbl.Size = UDim2.new(0.34, 0, 1, 0)
-        lbl.BackgroundTransparency = 1
-        lbl.Text = txt
-        lbl.TextColor3 = currentTheme.TextSecondary
-        lbl.TextXAlignment = Enum.TextXAlignment.Left
-        lbl.TextSize = 8.5
-        lbl.Font = Enum.Font.GothamBold
-        lbl.ZIndex = 20
-
-        local dropdown = Instance.new("TextButton", row)
-        dropdown.Size = UDim2.new(0.66, 0, 0, 26)
-        dropdown.Position = UDim2.new(0.34, 0, 0.5, -13)
-        dropdown.BackgroundColor3 = currentTheme.CardBg
-        dropdown.BorderSizePixel = 0
-        dropdown.Text = ""
-        dropdown.AutoButtonColor = false
-        dropdown.ZIndex = 21
-        Instance.new("UICorner", dropdown).CornerRadius = UDim.new(0, 5)
-
-        local stroke = Instance.new("UIStroke", dropdown)
-        stroke.Color = currentTheme.Border
-        stroke.Thickness = 1
-
-        local selectedLabel = Instance.new("TextLabel", dropdown)
-        selectedLabel.Size = UDim2.new(1, -30, 1, 0)
-        selectedLabel.Position = UDim2.new(0, 10, 0, 0)
-        selectedLabel.BackgroundTransparency = 1
-        selectedLabel.Text = currentChoice
-        selectedLabel.TextColor3 = currentTheme.TextPrimary
-        selectedLabel.TextXAlignment = Enum.TextXAlignment.Left
-        selectedLabel.TextSize = 8
-        selectedLabel.Font = Enum.Font.GothamBold
-        selectedLabel.ZIndex = 22
-
-        local arrow = Instance.new("TextLabel", dropdown)
-        arrow.Size = UDim2.new(0, 22, 1, 0)
-        arrow.Position = UDim2.new(1, -24, 0, 0)
-        arrow.BackgroundTransparency = 1
-        arrow.Text = "▼"
-        arrow.TextColor3 = currentTheme.TextSecondary
-        arrow.TextSize = 8
-        arrow.Font = Enum.Font.GothamBold
-        arrow.ZIndex = 22
-
-        local list = Instance.new("Frame", insContent)
-        list.Name = "PresetDropdown"
-        list.Size = UDim2.new(0.5676, 0, 0, 0)
-        list.Position = UDim2.new(0.3624, 0, 0, y + 31)
-        list.BackgroundColor3 = currentTheme.CardBg
-        list.BorderSizePixel = 0
+    local function close()
+        open = false
         list.Visible = false
-        list.ZIndex = 100
-        list.ClipsDescendants = true
-        Instance.new("UICorner", list).CornerRadius = UDim.new(0, 5)
-        local listStroke = Instance.new("UIStroke", list)
-        listStroke.Color = currentTheme.Border
-
-        local layout = Instance.new("UIListLayout", list)
-        layout.SortOrder = Enum.SortOrder.LayoutOrder
-        local open = false
-        local h = 25
-
-        local function close()
-            open = false
-            list.Visible = false
-            list.Size = UDim2.new(0.5676, 0, 0, 0)
-            arrow.Text = "▼"
-        end
-        local function toggle()
-            open = not open
-            list.Visible = open
-            list.Size = open and UDim2.new(0.5676, 0, 0, #choices*h+2) or UDim2.new(0.5676, 0, 0, 0)
-            arrow.Text = open and "▲" or "▼"
-        end
-
-        for i, choiceName in ipairs(choices) do
-            local option = Instance.new("TextButton", list)
-            option.LayoutOrder = i
-            option.Size = UDim2.new(1, -2, 0, h)
-            option.BackgroundColor3 = choiceName == currentChoice and currentTheme.Accent or currentTheme.CardBg
-            option.Text = choiceName
-            option.TextColor3 = choiceName == currentChoice and Color3.fromRGB(255,255,255) or currentTheme.TextSecondary
-            option.TextSize = 8
-            option.Font = Enum.Font.GothamBold
-            option.AutoButtonColor = false
-            option.ZIndex = 101
-            Instance.new("UICorner", option).CornerRadius = UDim.new(0,4)
-            bindTouch(option, function()
-                currentChoice = choiceName
-                selectedLabel.Text = choiceName
-                for _, child in ipairs(list:GetChildren()) do
-                    if child:IsA("TextButton") then
-                        child.BackgroundColor3 = currentTheme.CardBg
-                        child.TextColor3 = currentTheme.TextSecondary
-                    end
-                end
-                option.BackgroundColor3 = currentTheme.Accent
-                option.TextColor3 = Color3.fromRGB(255,255,255)
-                close()
-                onSelect(choiceName)
-            end)
-        end
-        bindTouch(dropdown, toggle)
+        list.Size = UDim2.new(0.5676, 0, 0, 0)
+        arrow.Text = "▼"
+    end
+    local function toggle()
+        open = not open
+        list.Visible = open
+        list.Size = open and UDim2.new(0.5676, 0, 0, #choices*h+2) or UDim2.new(0.5676, 0, 0, 0)
+        arrow.Text = open and "▲" or "▼"
     end
 
-    local function openInspectorFor(moduleName)
-        insHeader.Text = moduleName
-        for _, child in pairs(insContent:GetChildren()) do child:Destroy() end
-
-        if moduleName == "Tracking" then
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 580)
-            addInspectorSlider(6, "FOV Radius", 50, 400, aimFov, false, function(v) aimFov = v end)
-            addInspectorSlider(38, "Speed", 1.0, 50.0, aimbotSpeed, true, function(v) aimbotSpeed = v end)
-            addInspectorSlider(70, "Smoothness", 0.0, 0.95, aimbotSmoothness, true, function(v) aimbotSmoothness = v end)
-            addInspectorSlider(102, "Prediction Factor", 0.05, 0.3, predictionFactor, true, function(v) predictionFactor = v end)
-            addInspectorToggle(140, "Body Priority", bodyAimOnly, function(v) bodyAimOnly = v end)
-            addInspectorToggle(166, "Snap Lock Mode", snapAimMode, function(v) snapAimMode = v end)
-            addInspectorToggle(192, "Prediction", predictionEnabled, function(v) predictionEnabled = v end)
-            addInspectorToggle(218, "Show FOV Circle", showFovCircle, function(v) showFovCircle = v end)
-            addInspectorToggle(244, "Visibility Check", visibleCheck, function(v) visibleCheck = v end)
-        elseif moduleName == "Silent Aim" then
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 200)
-            addInspectorSlider(6, "FOV", 10, 360, silentAimFov, false, function(v) silentAimFov = v end)
-            addInspectorSlider(38, "Hit Chance", 1, 100, silentAimHitChance, false, function(v) silentAimHitChance = v end)
-            addInspectorToggle(70, "Team Check", silentAimTeamCheck, function(v) silentAimTeamCheck = v end)
-            addInspectorToggle(96, "Visible Check", silentAimVisibleCheck, function(v) silentAimVisibleCheck = v end)
-            addInspectorToggle(122, "Aim Head", silentAimAimHead, function(v) silentAimAimHead = v end)
-        elseif moduleName == "Chams" then
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 240)
-            addInspectorSlider(6, "Fill Alpha", 0.0, 1.0, chamsFillTransparency, true, function(v) chamsFillTransparency = v end)
-            addInspectorSlider(38, "Outline Alpha", 0.0, 1.0, chamsOutlineTransparency, true, function(v) chamsOutlineTransparency = v end)
-            addInspectorToggle(76, "Team Check", chamsTeamCheck, function(v) chamsTeamCheck = v end)
-            addInspectorToggle(102, "Show Teammates", chamsShowTeammates, function(v) chamsShowTeammates = v end)
-            addInspectorToggle(128, "Occlusion Color (Walls)", chamsOcclusion, function(v) chamsOcclusion = v end)
-        elseif moduleName == "No Recoil" then
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 110)
-            addInspectorSlider(6, "Recoil Dampener", 0.1, 1.0, noRecoil.strength, true, function(v)
-                noRecoil.strength = v
-            end)
-        elseif moduleName == "Knife Changer" then
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 200)
-            addInspectorChoice(6, "Knife Type", knifeTypeNames, selectedKnifeType, function(selected)
-                selectedKnifeType = selected
-                hookBloxStrikeModules()
-                scanAndMorphKnives(camera)
-                if player and player.Character then scanAndMorphKnives(player.Character) end
-                openInspectorFor("Knife Changer")
-            end)
-            
-            local availableSkins = {}
-            if knifeSkinCatalog[selectedKnifeType] then
-                for sName in pairs(knifeSkinCatalog[selectedKnifeType]) do
-                    table.insert(availableSkins, sName)
+    for i, choiceName in ipairs(choices) do
+        local option = Instance.new("TextButton", list)
+        option.LayoutOrder = i
+        option.Size = UDim2.new(1, -2, 0, h)
+        option.BackgroundColor3 = choiceName == currentChoice and currentTheme.Accent or currentTheme.CardBg
+        option.Text = choiceName
+        option.TextColor3 = choiceName == currentChoice and Color3.fromRGB(255,255,255) or currentTheme.TextSecondary
+        option.TextSize = 8
+        option.Font = Enum.Font.GothamBold
+        option.AutoButtonColor = false
+        option.ZIndex = 101
+        Instance.new("UICorner", option).CornerRadius = UDim.new(0,4)
+        bindTouch(option, function()
+            currentChoice = choiceName
+            selectedLabel.Text = choiceName
+            for _, child in ipairs(list:GetChildren()) do
+                if child:IsA("TextButton") then
+                    child.BackgroundColor3 = currentTheme.CardBg
+                    child.TextColor3 = currentTheme.TextSecondary
                 end
-                table.sort(availableSkins)
-            else
-                availableSkins = {"Vanilla", "Fade", "Doppler", "Lore"}
             end
-            
-            addInspectorChoice(44, "Skin Pattern", availableSkins, selectedSkin, function(selected)
-                selectedSkin = selected
-                hookBloxStrikeModules()
-                scanAndMorphKnives(camera)
-                if player and player.Character then scanAndMorphKnives(player.Character) end
-            end)
-            addInspectorToggle(86, "Auto Re-morph", true, function(v) end)
-        elseif moduleName == "Third Person" then
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 115)
-            addInspectorSlider(6, "Distance", 5, 25, thirdPersonDistance, false, function(v)
-                thirdPersonDistance = v
-                refreshThirdPerson()
-            end)
-            addInspectorSlider(38, "Height", -1, 5, thirdPersonHeight, false, function(v)
-                thirdPersonHeight = v
-                refreshThirdPerson()
-            end)
-        elseif moduleName == "Hitmarker" then
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 170)
-            addInspectorSlider(6, "Duration", 0.10, 0.60, hitmarkerDuration, true, function(v)
-                hitmarkerDuration = v
-            end)
-            addInspectorSlider(38, "Size", 8, 24, hitmarkerSize, false, function(v)
-                hitmarkerSize = v
-                for _, line in ipairs(hitmarkerLines) do
-                    line.Size = UDim2.new(0, hitmarkerThickness, 0, hitmarkerSize)
-                end
-            end)
-            addInspectorSlider(70, "Thickness", 1, 4, hitmarkerThickness, false, function(v)
-                hitmarkerThickness = v
-                for _, line in ipairs(hitmarkerLines) do
-                    line.Size = UDim2.new(0, hitmarkerThickness, 0, hitmarkerSize)
-                end
-            end)
-            addInspectorToggle(108, "Neon Glow", hitmarkerGlow, function(v)
-                hitmarkerGlow = v
-                for _, line in ipairs(hitmarkerLines) do
-                    local glow = line:FindFirstChild("NeonGlow")
-                    if glow then glow.Thickness = hitmarkerGlow and 2.5 or 0 end
-                end
-            end)
-        elseif moduleName == "Anti-Aim" then
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 100)
-            addInspectorSlider(6, "Spin Speed", 10, 150, spinSpeed, false, function(v) 
-                spinSpeed = v 
-            end)
-        elseif moduleName == "Slide" then
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 180)
-            addInspectorSlider(6, "Speed Boost", 1.2, 3.0, slideSpeedBoost, true, function(v) slideSpeedBoost = v end)
-            addInspectorSlider(38, "Friction", 0.85, 0.99, slideFriction, true, function(v) slideFriction = v end)
-            addInspectorSlider(70, "Min Speed Threshold", 8, 24, slideMinSpeed, false, function(v) slideMinSpeed = v end)
-        elseif moduleName == "Jump Circle" then
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 240)
-            addInspectorSlider(6, "Radius", 1.5, 8.0, jumpCircleRadius, true, function(v)
-                jumpCircleRadius = v
-                if player.Character then initJumpCircleForCharacter(player.Character) end
-            end)
-            addInspectorSlider(38, "Segments", 12, 48, jumpCircleSegmentCount, false, function(v)
-                jumpCircleSegmentCount = v
-                if player.Character then initJumpCircleForCharacter(player.Character) end
-            end)
-            addInspectorChoice(80, "Style", {"GradientWave", "ChromaPulse", "StaticNeon"}, jumpCircleStyle, function(v)
-                jumpCircleStyle = v
-                if player.Character then initJumpCircleForCharacter(player.Character) end
-            end)
-        elseif moduleName == "Grenade ESP" then
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 220)
-            addInspectorSlider(6, "Max Distance", 200, 3000, grenadeMaxDist, false, function(v) grenadeMaxDist = v end)
-            addInspectorToggle(42, "Trajectory Path", showGrenadePath, function(v) showGrenadePath = v end)
-            addInspectorToggle(70, "Molotov Radius", showMolotovRadius, function(v) showMolotovRadius = v end)
-            addInspectorToggle(98, "Smoke Radius", showSmokeRadius, function(v) showSmokeRadius = v end)
-        elseif moduleName == "Bhop Engine" then
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 200)
-            addInspectorSlider(6, "Jump Power", 30, 100, bhopJumpPower, false, function(v) bhopJumpPower = v end)
-            addInspectorSlider(38, "Speed Boost", 1.0, 3.0, bhopSpeedBoost, true, function(v) bhopSpeedBoost = v end)
-            addInspectorToggle(76, "Auto Jump (Always)", bhopAutoJump, function(v) bhopAutoJump = v end)
-            addInspectorToggle(102, "Air Strafe", bhopAirStrafe, function(v) bhopAirStrafe = v end)
-        elseif moduleName == "Nametags" then
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 380)
-            addInspectorSlider(6, "Max Distance", 100, 5000, espMaxDist, false, function(v) espMaxDist = v end)
-            addInspectorSlider(38, "Text Size", 8, 20, espTextSize, false, function(v) espTextSize = v end)
-            addInspectorSlider(70, "Transparency", 0.0, 0.9, tagTransparency, true, function(v) tagTransparency = v end)
-            addInspectorToggle(108, "Show Distance", espShowDistance, function(v) espShowDistance = v end)
-            addInspectorToggle(134, "Show Health", espShowHealth, function(v) espShowHealth = v end)
-            addInspectorToggle(160, "Show Weapon", tagShowWeapon, function(v) tagShowWeapon = v end)
-            addInspectorToggle(186, "Show Teammates", espShowTeammates, function(v) espShowTeammates = v end)
-        elseif moduleName == "Box Overlay" then
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 240)
-            addInspectorSlider(6, "Max Distance", 100, 5000, espMaxDist, false, function(v) espMaxDist = v end)
-            addInspectorSlider(38, "Thickness", 1.0, 3.0, boxThickness, true, function(v) boxThickness = v end)
-            addInspectorToggle(76, "Corner Box", cornerBoxEnabled, function(v) cornerBoxEnabled = v end)
-            addInspectorToggle(108, "Health Bar", healthBarEnabled, function(v) healthBarEnabled = v end)
-            addInspectorToggle(134, "Show Teammates", espShowTeammates, function(v) espShowTeammates = v end)
-        elseif moduleName == "World Changer" then
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 330)
-            addInspectorChoice(6, "World Preset", {"Midnight", "Nebula", "DeepBlood", "CyberPurple", "EmeraldNight", "PitchBlack"}, nightPreset, function(selected)
-                applyNightPreset(selected)
-            end)
-            addInspectorSlider(48, "Brightness", 0.0, 2.0, nightBrightness, true, function(v) 
-                nightBrightness = v 
-                if nightModeEnabled then Lighting.Brightness = v end
-            end)
-            addInspectorSlider(80, "Clock Time", 0.0, 24.0, nightClockTime, true, function(v) 
-                nightClockTime = v 
-                if nightModeEnabled then Lighting.ClockTime = v end
-            end)
-        elseif moduleName == "RCS" then
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 240)
-            addInspectorSlider(6, "RCS Strength", 10, 100, rcsStrength, false, function(v) rcsStrength = v end)
-            addInspectorSlider(38, "Pitch Factor", 0.1, 2.0, rcsPitchFactor, true, function(v) rcsPitchFactor = v end)
-            addInspectorSlider(70, "Yaw Factor", 0.1, 2.0, rcsYawFactor, true, function(v) rcsYawFactor = v end)
-            addInspectorToggle(108, "Horizontal Comp", rcsHorizontalComp, function(v) rcsHorizontalComp = v end)
-        elseif moduleName == "Trigger Assistant" then
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 150)
-            addInspectorSlider(6, "Trigger Delay", 0.0, 0.2, triggerbotDelay, true, function(v) triggerbotDelay = v end)
-            addInspectorToggle(44, "Head Only", triggerbotHeadOnly, function(v) triggerbotHeadOnly = v end)
-            addInspectorToggle(70, "Auto Trigger", triggerbotMobileAutoFire, function(v) triggerbotMobileAutoFire = v end)
-        else
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 50)
-            local lbl = Instance.new("TextLabel", insContent)
-            lbl.Size = UDim2.new(0.86, 0, 0, 30)
-            lbl.Position = UDim2.new(0.07, 0, 0, 6)
-            lbl.BackgroundTransparency = 1
-            lbl.Text = "Module active and synchronized."
-            lbl.TextColor3 = currentTheme.TextSecondary
-            lbl.TextSize = 8.5
-            lbl.TextWrapped = true
-            lbl.Font = Enum.Font.Gotham
-        end
+            option.BackgroundColor3 = currentTheme.Accent
+            option.TextColor3 = Color3.fromRGB(255,255,255)
+            close()
+            onSelect(choiceName)
+        end)
     end
+    bindTouch(dropdown, toggle)
+end
 
-    local function addCard(parent, name, defaultState, onToggle)
-        local card = Instance.new("Frame", parent)
-        card.Size = UDim2.new(0, 58, 0, 58)
-        card.BackgroundColor3 = currentTheme.CardBg
-        card.BorderSizePixel = 0
-        card.ZIndex = 7
-        Instance.new("UICorner", card).CornerRadius = UDim.new(0, 6)
-        local cardStroke = Instance.new("UIStroke", card)
-        cardStroke.Color = currentTheme.Border
+-- ==========================================
+-- DETAILED INSPECTOR ROUTING
+-- ==========================================
+function openInspectorFor(moduleName)
+    insHeader.Text = moduleName
+    for _, child in pairs(insContent:GetChildren()) do child:Destroy() end
 
-        local textBtn = Instance.new("TextButton", card)
-        textBtn.Size = UDim2.new(1, -4, 0, 24)
-        textBtn.Position = UDim2.new(0, 2, 0, 2)
-        textBtn.BackgroundTransparency = 1
-        textBtn.Text = name
-        textBtn.TextColor3 = currentTheme.TextPrimary
-        textBtn.TextSize = 7.5
-        textBtn.Font = Enum.Font.GothamBold
-        textBtn.TextWrapped = true
-        textBtn.ZIndex = 8
-        bindTouch(textBtn, function() openInspectorFor(name) end)
-
-        local toggleBtn = Instance.new("TextButton", card)
-        toggleBtn.Size = UDim2.new(0, 24, 0, 13)
-        toggleBtn.Position = UDim2.new(0.5, -12, 1, -16)
-        toggleBtn.BackgroundColor3 = defaultState and currentTheme.Accent or Color3.fromRGB(50, 53, 60)
-        toggleBtn.Text = ""
-        toggleBtn.ZIndex = 8
-        Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(1, 0)
-
-        local circle = Instance.new("Frame", toggleBtn)
-        circle.Size = UDim2.new(0, 9, 0, 9)
-        circle.Position = defaultState and UDim2.new(1, -10, 0.5, -4.5) or UDim2.new(0, 2, 0.5, -4.5)
-        circle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        circle.ZIndex = 9
-        Instance.new("UICorner", circle).CornerRadius = UDim.new(1, 0)
-
-        local state = defaultState
-        local function executeToggle()
-            state = not state
-            toggleBtn.BackgroundColor3 = state and currentTheme.Accent or Color3.fromRGB(50, 53, 60)
-            circle.Position = state and UDim2.new(1, -10, 0.5, -4.5) or UDim2.new(0, 2, 0.5, -4.5)
-            onToggle(state)
-            
-            if name == "World Changer" then
-                if state then
-                    applyNightPreset(nightPreset)
-                else
-                    restoreLightingState()
-                end
-            elseif name == "FullBright" and not state and not nightModeEnabled then
-                restoreLightingState()
-            end
-        end
-
-        bindTouch(toggleBtn, executeToggle)
-    end
-
-    -- COMBAT TAB
-    local cAimSection = makeCategorySection(cPage, "Aim & Ballistics", 1, 5)
-    local cRageSection = makeCategorySection(cPage, "HVH & Anti-Aim", 2, 1)
-
-    addCard(cAimSection, "Tracking", aimbotEnabled, function(v)
-        aimbotEnabled = v
-        isAiming = v
-        if not v then
-            lockedTarget = nil
-        end
-    end)
-    addCard(cAimSection, "Silent Aim", silentAimEnabled, function(v)
-        silentAimEnabled = v
-    end)
-    addCard(cAimSection, "RCS", rcsEnabled, function(v) rcsEnabled = v end)
-    addCard(cAimSection, "No Recoil", noRecoil.enabled, function(v)
-        noRecoil.enabled = v
-    end)
-    addCard(cAimSection, "Trigger Assistant", triggerbotEnabled, function(v) triggerbotEnabled = v end)
-    addCard(cRageSection, "Anti-Aim", antiAimEnabled, function(v) antiAimEnabled = v end)
-
-    -- MOVEMENT TAB
-    local mHopSection = makeCategorySection(mPage, "Bhop Mechanics", 1, 1)
-    local mBoostSection = makeCategorySection(mPage, "Physics Modifications", 2, 3)
-
-    addCard(mHopSection, "Bhop Engine", bunnyHopEnabled, function(v) bunnyHopEnabled = v end)
-    addCard(mBoostSection, "Slide", slideEnabled, function(v) 
-        slideEnabled = v 
-        updateMobileSlideVisibility()
-    end)
-    addCard(mBoostSection, "Speed Boost", speedEnabled, function(v) speedEnabled = v end)
-    addCard(mBoostSection, "Flight", flightEnabled, function(v) flightEnabled = v end)
-
-    -- ESP TAB
-    local ePlayerSection = makeCategorySection(ePage, "Player Visuals", 1, 6)
-    local eWorldSection = makeCategorySection(ePage, "World & Projectiles", 2, 2)
-
-    addCard(ePlayerSection, "Nametags", nametagsEnabled, function(v) nametagsEnabled = v end)
-    addCard(ePlayerSection, "Chams", chamsEnabled, function(v) chamsEnabled = v end)
-    addCard(ePlayerSection, "Box Overlay", boxEspEnabled, function(v) boxEspEnabled = v end)
-    addCard(ePlayerSection, "Head Dot", headDotEnabled, function(v) headDotEnabled = v end)
-    addCard(ePlayerSection, "Snaplines", tracersEnabled, function(v) tracersEnabled = v end)
-    addCard(ePlayerSection, "Hitmarker", hitmarkerEnabled, function(v)
-        hitmarkerEnabled = v
-        if not v then
-            hitmarkerCenter.Visible = false
-            hitmarkerBusy = false
-        end
-    end)
-
-    addCard(eWorldSection, "Grenade ESP", grenadeEspEnabled, function(v) grenadeEspEnabled = v end)
-    addCard(eWorldSection, "Jump Circle", jumpCircleEnabled, function(v) 
-        jumpCircleEnabled = v 
-        if v and player.Character then
-            initJumpCircleForCharacter(player.Character)
-        else
-            clearActiveJumpCircle()
-        end
-    end)
-
-    -- SKINS TAB
-    local sKnifeSection = makeCategorySection(sPage, "Melee Weapons", 1, 1)
-    addCard(sKnifeSection, "Knife Changer", skinChangerEnabled, function(v)
-        skinChangerEnabled = v
-        if v then
+    if moduleName == "Tracking" then
+        insContent.CanvasSize = UDim2.new(0, 0, 0, 580)
+        addInspectorSlider(6, "FOV Radius", 50, 400, aimFov, false, function(v) aimFov = v end)
+        addInspectorSlider(38, "Speed", 1.0, 50.0, aimbotSpeed, true, function(v) aimbotSpeed = v end)
+        addInspectorSlider(70, "Smoothness", 0.0, 0.95, aimbotSmoothness, true, function(v) aimbotSmoothness = v end)
+        addInspectorSlider(102, "Prediction Factor", 0.05, 0.3, predictionFactor, true, function(v) predictionFactor = v end)
+        addInspectorToggle(140, "Body Priority", bodyAimOnly, function(v) bodyAimOnly = v end)
+        addInspectorToggle(166, "Snap Lock Mode", snapAimMode, function(v) snapAimMode = v end)
+        addInspectorToggle(192, "Prediction", predictionEnabled, function(v) predictionEnabled = v end)
+        addInspectorToggle(218, "Show FOV Circle", showFovCircle, function(v) showFovCircle = v end)
+        addInspectorToggle(244, "Visibility Check", visibleCheck, function(v) visibleCheck = v end)
+    elseif moduleName == "Silent Aim" then
+        insContent.CanvasSize = UDim2.new(0, 0, 0, 200)
+        addInspectorSlider(6, "FOV", 10, 360, silentAimFov, false, function(v) silentAimFov = v end)
+        addInspectorSlider(38, "Hit Chance", 1, 100, silentAimHitChance, false, function(v) silentAimHitChance = v end)
+        addInspectorToggle(70, "Team Check", silentAimTeamCheck, function(v) silentAimTeamCheck = v end)
+        addInspectorToggle(96, "Visible Check", silentAimVisibleCheck, function(v) silentAimVisibleCheck = v end)
+        addInspectorToggle(122, "Aim Head", silentAimAimHead, function(v) silentAimAimHead = v end)
+    elseif moduleName == "Chams" then
+        insContent.CanvasSize = UDim2.new(0, 0, 0, 240)
+        addInspectorSlider(6, "Fill Alpha", 0.0, 1.0, chamsFillTransparency, true, function(v) chamsFillTransparency = v end)
+        addInspectorSlider(38, "Outline Alpha", 0.0, 1.0, chamsOutlineTransparency, true, function(v) chamsOutlineTransparency = v end)
+        addInspectorToggle(76, "Team Check", chamsTeamCheck, function(v) chamsTeamCheck = v end)
+        addInspectorToggle(102, "Show Teammates", chamsShowTeammates, function(v) chamsShowTeammates = v end)
+        addInspectorToggle(128, "Occlusion Color (Walls)", chamsOcclusion, function(v) chamsOcclusion = v end)
+    elseif moduleName == "No Recoil" then
+        insContent.CanvasSize = UDim2.new(0, 0, 0, 110)
+        addInspectorSlider(6, "Recoil Dampener", 0.1, 1.0, noRecoil.strength, true, function(v)
+            noRecoil.strength = v
+        end)
+    elseif moduleName == "Knife Changer" then
+        insContent.CanvasSize = UDim2.new(0, 0, 0, 200)
+        addInspectorChoice(6, "Knife Type", knifeTypeNames, selectedKnifeType, function(selected)
+            selectedKnifeType = selected
             hookBloxStrikeModules()
             scanAndMorphKnives(camera)
             if player and player.Character then scanAndMorphKnives(player.Character) end
+            openInspectorFor("Knife Changer")
+        end)
+        
+        local availableSkins = {}
+        if knifeSkinCatalog[selectedKnifeType] then
+            for sName in pairs(knifeSkinCatalog[selectedKnifeType]) do
+                table.insert(availableSkins, sName)
+            end
+            table.sort(availableSkins)
+        else
+            availableSkins = {"Vanilla", "Fade", "Doppler", "Lore"}
         end
-    end)
-
-    -- WORLD CHANGER / ENVIRONMENT TAB
-    local envLightSection = makeCategorySection(envPage, "Atmosphere & World", 1, 4)
-    addCard(envLightSection, "World Changer", nightModeEnabled, function(v)
-        nightModeEnabled = v
-        if v then
-            applyNightPreset(nightPreset)
-        elseif not fullBrightEnabled then
-            restoreLightingState()
-        end
-    end)
-    addCard(envLightSection, "FullBright", fullBrightEnabled, function(v)
-        fullBrightEnabled = v
-        if not v and not nightModeEnabled then
-            restoreLightingState()
-        end
-    end)
-    addCard(envLightSection, "Anti-Flash", antiFlashEnabled, function(v) antiFlashEnabled = v end)
-    addCard(envLightSection, "No Fog", removeFogEnabled, function(v)
-        removeFogEnabled = v
-        if not v then
-            Lighting.FogEnd = defaultLighting.FogEnd
-        end
-    end)
-
-    -- MISC TAB
-    local miscGeneralSection = makeCategorySection(micsPage, "Utilities", 1, 2)
-    addCard(miscGeneralSection, "Third Person", thirdPersonEnabled, function(v)
-        setThirdPersonEnabled(v)
-    end)
-    addCard(miscGeneralSection, "Anti-AFK", antiAfkEnabled, function(v)
-        setAntiAfkEnabled(v)
-    end)
-
-    -- SETTINGS TAB
-    local setsGeneralSection = makeCategorySection(setsPage, "Configuration", 1, 1)
-    addCard(setsGeneralSection, "Theme", true, function(v) end)
-
-    openInspectorFor("Tracking")
+        
+        addInspectorChoice(44, "Skin Pattern", availableSkins, selectedSkin, function(selected)
+            selectedSkin = selected
+            hookBloxStrikeModules()
+            scanAndMorphKnives(camera)
+            if player and player.Character then scanAndMorphKnives(player.Character) end
+        end)
+        addInspectorToggle(86, "Auto Re-morph", true, function(v) end)
+    elseif moduleName == "Third Person" then
+        insContent.CanvasSize = UDim2.new(0, 0, 0, 115)
+        addInspectorSlider(6, "Distance", 5, 25, thirdPersonDistance, false, function(v)
+            thirdPersonDistance = v
+            refreshThirdPerson()
+        end)
+        addInspectorSlider(38, "Height", -1, 5, thirdPersonHeight, false, function(v)
+            thirdPersonHeight = v
+            refreshThirdPerson()
+        end)
+    elseif moduleName == "Hitmarker" then
+        insContent.CanvasSize = UDim2.new(0, 0, 0, 170)
+        addInspectorSlider(6, "Duration", 0.10, 0.60, hitmarkerDuration, true, function(v)
+            hitmarkerDuration = v
+        end)
+        addInspectorSlider(38, "Size", 8, 24, hitmarkerSize, false, function(v)
+            hitmarkerSize = v
+            for _, line in ipairs(hitmarkerLines) do
+                line.Size = UDim2.new(0, hitmarkerThickness, 0, hitmarkerSize)
+            end
+        end)
+        addInspectorSlider(70, "Thickness", 1, 4, hitmarkerThickness, false, function(v)
+            hitmarkerThickness = v
+            for _, line in ipairs(hitmarkerLines) do
+                line.Size = UDim2.new(0, hitmarkerThickness, 0, hitmarkerSize)
+            end
+        end)
+        addInspectorToggle(108, "Neon Glow", hitmarkerGlow, function(v)
+            hitmarkerGlow = v
+            for _, line in ipairs(hitmarkerLines) do
+                local glow = line:FindFirstChild("NeonGlow")
+                if glow then glow.Thickness = hitmarkerGlow and 2.5 or 0 end
+            end
+        end)
+    elseif moduleName == "Anti-Aim" then
+        insContent.CanvasSize = UDim2.new(0, 0, 0, 100)
+        addInspectorSlider(6, "Spin Speed", 10, 150, spinSpeed, false, function(v) 
+            spinSpeed = v 
+        end)
+    elseif moduleName == "Slide" then
+        insContent.CanvasSize = UDim2.new(0, 0, 0, 180)
+        addInspectorSlider(6, "Speed Boost", 1.2, 3.0, slideSpeedBoost, true, function(v) slideSpeedBoost = v end)
+        addInspectorSlider(38, "Friction", 0.85, 0.99, slideFriction, true, function(v) slideFriction = v end)
+        addInspectorSlider(70, "Min Speed Threshold", 8, 24, slideMinSpeed, false, function(v) slideMinSpeed = v end)
+    elseif moduleName == "Jump Circle" then
+        insContent.CanvasSize = UDim2.new(0, 0, 0, 240)
+        addInspectorSlider(6, "Radius", 1.5, 8.0, jumpCircleRadius, true, function(v)
+            jumpCircleRadius = v
+            if player.Character then initJumpCircleForCharacter(player.Character) end
+        end)
+        addInspectorSlider(38, "Segments", 12, 48, jumpCircleSegmentCount, false, function(v)
+            jumpCircleSegmentCount = v
+            if player.Character then initJumpCircleForCharacter(player.Character) end
+        end)
+        addInspectorChoice(80, "Style", {"GradientWave", "ChromaPulse", "StaticNeon"}, jumpCircleStyle, function(v)
+            jumpCircleStyle = v
+            if player.Character then initJumpCircleForCharacter(player.Character) end
+        end)
+    elseif moduleName == "Grenade ESP" then
+        insContent.CanvasSize = UDim2.new(0, 0, 0, 220)
+        addInspectorSlider(6, "Max Distance", 200, 3000, grenadeMaxDist, false, function(v) grenadeMaxDist = v end)
+        addInspectorToggle(42, "Trajectory Path", showGrenadePath, function(v) showGrenadePath = v end)
+        addInspectorToggle(70, "Molotov Radius", showMolotovRadius, function(v) showMolotovRadius = v end)
+        addInspectorToggle(98, "Smoke Radius", showSmokeRadius, function(v) showSmokeRadius = v end)
+    elseif moduleName == "Bhop Engine" then
+        insContent.CanvasSize = UDim2.new(0, 0, 0, 200)
+        addInspectorSlider(6, "Jump Power", 30, 100, bhopJumpPower, false, function(v) bhopJumpPower = v end)
+        addInspectorSlider(38, "Speed Boost", 1.0, 3.0, bhopSpeedBoost, true, function(v) bhopSpeedBoost = v end)
+        addInspectorToggle(76, "Auto Jump (Always)", bhopAutoJump, function(v) bhopAutoJump = v end)
+        addInspectorToggle(102, "Air Strafe", bhopAirStrafe, function(v) bhopAirStrafe = v end)
+    elseif moduleName == "Nametags" then
+        insContent.CanvasSize = UDim2.new(0, 0, 0, 340)
+        addInspectorSlider(6, "Max Distance", 100, 5000, espMaxDist, false, function(v) espMaxDist = v end)
+        addInspectorSlider(38, "Text Size", 8, 20, espTextSize, false, function(v) espTextSize = v end)
+        addInspectorSlider(70, "Transparency", 0.0, 0.9, tagTransparency, true, function(v) tagTransparency = v end)
+        addInspectorToggle(108, "Show Distance", espShowDistance, function(v) espShowDistance = v end)
+        addInspectorToggle(134, "Show Health", espShowHealth, function(v) espShowHealth = v end)
+        addInspectorToggle(160, "Show Weapon", tagShowWeapon, function(v) tagShowWeapon = v end)
+    elseif moduleName == "Box Overlay" then
+        insContent.CanvasSize = UDim2.new(0, 0, 0, 200)
+        addInspectorSlider(6, "Max Distance", 100, 5000, espMaxDist, false, function(v) espMaxDist = v end)
+        addInspectorSlider(38, "Thickness", 1.0, 3.0, boxThickness, true, function(v) boxThickness = v end)
+        addInspectorToggle(76, "Corner Box", cornerBoxEnabled, function(v) cornerBoxEnabled = v end)
+        addInspectorToggle(108, "Health Bar", healthBarEnabled, function(v) healthBarEnabled = v end)
+    elseif moduleName == "World Changer" then
+        insContent.CanvasSize = UDim2.new(0, 0, 0, 330)
+        addInspectorChoice(6, "World Preset", {"Midnight", "Nebula", "DeepBlood", "CyberPurple", "EmeraldNight", "PitchBlack"}, nightPreset, function(selected)
+            applyNightPreset(selected)
+        end)
+        addInspectorSlider(48, "Brightness", 0.0, 2.0, nightBrightness, true, function(v) 
+            nightBrightness = v 
+            if nightModeEnabled then Lighting.Brightness = v end
+        end)
+        addInspectorSlider(80, "Clock Time", 0.0, 24.0, nightClockTime, true, function(v) 
+            nightClockTime = v 
+            if nightModeEnabled then Lighting.ClockTime = v end
+        end)
+    elseif moduleName == "RCS" then
+        insContent.CanvasSize = UDim2.new(0, 0, 0, 240)
+        addInspectorSlider(6, "RCS Strength", 10, 100, rcsStrength, false, function(v) rcsStrength = v end)
+        addInspectorSlider(38, "Pitch Factor", 0.1, 2.0, rcsPitchFactor, true, function(v) rcsPitchFactor = v end)
+        addInspectorSlider(70, "Yaw Factor", 0.1, 2.0, rcsYawFactor, true, function(v) rcsYawFactor = v end)
+        addInspectorToggle(108, "Horizontal Comp", rcsHorizontalComp, function(v) rcsHorizontalComp = v end)
+    elseif moduleName == "Trigger Assistant" then
+        insContent.CanvasSize = UDim2.new(0, 0, 0, 150)
+        addInspectorSlider(6, "Trigger Delay", 0.0, 0.2, triggerbotDelay, true, function(v) triggerbotDelay = v end)
+        addInspectorToggle(44, "Head Only", triggerbotHeadOnly, function(v) triggerbotHeadOnly = v end)
+        addInspectorToggle(70, "Auto Trigger", triggerbotMobileAutoFire, function(v) triggerbotMobileAutoFire = v end)
+    else
+        insContent.CanvasSize = UDim2.new(0, 0, 0, 50)
+        local lbl = Instance.new("TextLabel", insContent)
+        lbl.Size = UDim2.new(0.86, 0, 0, 30)
+        lbl.Position = UDim2.new(0.07, 0, 0, 6)
+        lbl.BackgroundTransparency = 1
+        lbl.Text = "Module active and synchronized."
+        lbl.TextColor3 = currentTheme.TextSecondary
+        lbl.TextSize = 8.5
+        lbl.TextWrapped = true
+        lbl.Font = Enum.Font.Gotham
+    end
 end
 
 -- ==========================================
--- BOOTSTRAPPER INVOCATION
+-- CARD GENERATOR COMPONENT
 -- ==========================================
-task.spawn(function()
-    local ok, err = pcall(buildGestioUI)
-    if not ok then
-        warn("[Gestio] UI build exception: " .. tostring(err))
+function addCard(parent, name, defaultState, onToggle)
+    local card = Instance.new("Frame", parent)
+    card.Size = UDim2.new(0, 58, 0, 58)
+    card.BackgroundColor3 = currentTheme.CardBg
+    card.BorderSizePixel = 0
+    card.ZIndex = 7
+    Instance.new("UICorner", card).CornerRadius = UDim.new(0, 6)
+    local cardStroke = Instance.new("UIStroke", card)
+    cardStroke.Color = currentTheme.Border
+
+    local textBtn = Instance.new("TextButton", card)
+    textBtn.Size = UDim2.new(1, -4, 0, 24)
+    textBtn.Position = UDim2.new(0, 2, 0, 2)
+    textBtn.BackgroundTransparency = 1
+    textBtn.Text = name
+    textBtn.TextColor3 = currentTheme.TextPrimary
+    textBtn.TextSize = 7.5
+    textBtn.Font = Enum.Font.GothamBold
+    textBtn.TextWrapped = true
+    textBtn.ZIndex = 8
+    bindTouch(textBtn, function() openInspectorFor(name) end)
+
+    local toggleBtn = Instance.new("TextButton", card)
+    toggleBtn.Size = UDim2.new(0, 24, 0, 13)
+    toggleBtn.Position = UDim2.new(0.5, -12, 1, -16)
+    toggleBtn.BackgroundColor3 = defaultState and currentTheme.Accent or Color3.fromRGB(50, 53, 60)
+    toggleBtn.Text = ""
+    toggleBtn.ZIndex = 8
+    Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(1, 0)
+
+    local circle = Instance.new("Frame", toggleBtn)
+    circle.Size = UDim2.new(0, 9, 0, 9)
+    circle.Position = defaultState and UDim2.new(1, -10, 0.5, -4.5) or UDim2.new(0, 2, 0.5, -4.5)
+    circle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    circle.ZIndex = 9
+    Instance.new("UICorner", circle).CornerRadius = UDim.new(1, 0)
+
+    local state = defaultState
+    local function executeToggle()
+        state = not state
+        toggleBtn.BackgroundColor3 = state and currentTheme.Accent or Color3.fromRGB(50, 53, 60)
+        circle.Position = state and UDim2.new(1, -10, 0.5, -4.5) or UDim2.new(0, 2, 0.5, -4.5)
+        onToggle(state)
+        
+        if name == "World Changer" then
+            if state then
+                applyNightPreset(nightPreset)
+            else
+                restoreLightingState()
+            end
+        elseif name == "FullBright" and not state and not nightModeEnabled then
+            restoreLightingState()
+        end
+    end
+
+    bindTouch(toggleBtn, executeToggle)
+end
+
+-- ==========================================
+-- TAB SECTIONS & MODULE POPULATION
+-- ==========================================
+
+-- COMBAT TAB
+local cAimSection = makeCategorySection(cPage, "Aim & Ballistics", 1, 5)
+local cRageSection = makeCategorySection(cPage, "HVH & Anti-Aim", 2, 1)
+
+addCard(cAimSection, "Tracking", aimbotEnabled, function(v)
+    aimbotEnabled = v
+    isAiming = v
+    if not v then
+        lockedTarget = nil
+    end
+end)
+addCard(cAimSection, "Silent Aim", silentAimEnabled, function(v)
+    silentAimEnabled = v
+end)
+addCard(cAimSection, "RCS", rcsEnabled, function(v) rcsEnabled = v end)
+addCard(cAimSection, "No Recoil", noRecoil.enabled, function(v)
+    noRecoil.enabled = v
+end)
+addCard(cAimSection, "Trigger Assistant", triggerbotEnabled, function(v) triggerbotEnabled = v end)
+addCard(cRageSection, "Anti-Aim", antiAimEnabled, function(v) antiAimEnabled = v end)
+
+-- MOVEMENT TAB
+local mHopSection = makeCategorySection(mPage, "Bhop Mechanics", 1, 1)
+local mBoostSection = makeCategorySection(mPage, "Physics Modifications", 2, 3)
+
+addCard(mHopSection, "Bhop Engine", bunnyHopEnabled, function(v) bunnyHopEnabled = v end)
+addCard(mBoostSection, "Slide", slideEnabled, function(v) 
+    slideEnabled = v 
+    updateMobileSlideVisibility()
+end)
+addCard(mBoostSection, "Speed Boost", speedEnabled, function(v) speedEnabled = v end)
+addCard(mBoostSection, "Flight", flightEnabled, function(v) flightEnabled = v end)
+
+-- ESP TAB
+local ePlayerSection = makeCategorySection(ePage, "Player Visuals", 1, 6)
+local eWorldSection = makeCategorySection(ePage, "World & Projectiles", 2, 2)
+
+addCard(ePlayerSection, "Nametags", nametagsEnabled, function(v) nametagsEnabled = v end)
+addCard(ePlayerSection, "Chams", chamsEnabled, function(v) chamsEnabled = v end)
+addCard(ePlayerSection, "Box Overlay", boxEspEnabled, function(v) boxEspEnabled = v end)
+addCard(ePlayerSection, "Head Dot", headDotEnabled, function(v) headDotEnabled = v end)
+addCard(ePlayerSection, "Snaplines", tracersEnabled, function(v) tracersEnabled = v end)
+addCard(ePlayerSection, "Hitmarker", hitmarkerEnabled, function(v)
+    hitmarkerEnabled = v
+    if not v then
+        hitmarkerCenter.Visible = false
+        hitmarkerBusy = false
     end
 end)
 
-if genv then
-    genv.GestioRunning = cleanup
+addCard(eWorldSection, "Grenade ESP", grenadeEspEnabled, function(v) grenadeEspEnabled = v end)
+addCard(eWorldSection, "Jump Circle", jumpCircleEnabled, function(v) 
+    jumpCircleEnabled = v 
+    if v and player.Character then
+        initJumpCircleForCharacter(player.Character)
+    else
+        clearActiveJumpCircle()
+    end
+end)
+
+-- SKINS TAB (Skinchanger)
+local sKnifeSection = makeCategorySection(sPage, "Melee Weapons", 1, 1)
+addCard(sKnifeSection, "Knife Changer", skinChangerEnabled, function(v)
+    skinChangerEnabled = v
+    if v then
+        hookBloxStrikeModules()
+        scanAndMorphKnives(camera)
+        if player and player.Character then scanAndMorphKnives(player.Character) end
+    end
+end)
+
+-- WORLD CHANGER / ENVIRONMENT TAB
+local envLightSection = makeCategorySection(envPage, "Atmosphere & World", 1, 4)
+addCard(envLightSection, "World Changer", nightModeEnabled, function(v)
+    nightModeEnabled = v
+    if v then
+        applyNightPreset(nightPreset)
+    elseif not fullBrightEnabled then
+        restoreLightingState()
+    end
+end)
+addCard(envLightSection, "FullBright", fullBrightEnabled, function(v)
+    fullBrightEnabled = v
+    if not v and not nightModeEnabled then
+        restoreLightingState()
+    end
+end)
+addCard(envLightSection, "Anti-Flash", antiFlashEnabled, function(v) antiFlashEnabled = v end)
+addCard(envLightSection, "No Fog", removeFogEnabled, function(v)
+    removeFogEnabled = v
+    if not v then
+        Lighting.FogEnd = defaultLighting.FogEnd
+    end
+end)
+
+-- MISC TAB
+local miscGeneralSection = makeCategorySection(micsPage, "Utilities", 1, 2)
+addCard(miscGeneralSection, "Third Person", thirdPersonEnabled, function(v)
+    setThirdPersonEnabled(v)
+end)
+addCard(miscGeneralSection, "Anti-AFK", antiAfkEnabled, function(v)
+    setAntiAfkEnabled(v)
+end)
+
+-- SETTINGS TAB
+local setsGeneralSection = makeCategorySection(setsPage, "Configuration", 1, 1)
+addCard(setsGeneralSection, "Theme", true, function(v) end)
+
+openInspectorFor("Tracking")
+
 end
+
+buildGestioUI()
