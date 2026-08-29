@@ -1,5 +1,5 @@
 -- ==============================================================================
--- [Gestio UI - Blox Strike Ultimate Mobile Engine | Version 4.3.1 Clean Inject]
+-- [Gestio UI - Blox Strike Ultimate Mobile Engine | Version 4.3.2 Production]
 -- Target Game: Blox Strike (Roblox)
 -- ==============================================================================
 
@@ -196,7 +196,7 @@ local visibleCheck = false
 local aimSensitivity = 1.0
 local lockOnJump = true
 
--- SILENT AIM CONFIGURATION
+-- SILENT AIM STATE
 local silentAimEnabled = false
 local silentAimFov = 150
 local silentAimTeamCheck = true
@@ -796,8 +796,6 @@ local function cleanup()
     pcall(function() if targetGui:FindFirstChild("GestioMainContainer") then targetGui.GestioMainContainer:Destroy() end end)
 end
 
-if genv then genv.GestioRunning = cleanup end
-
 local function bindTouch(btn, callback)
     btn.Activated:Connect(callback)
 end
@@ -890,7 +888,11 @@ local lastFpsUpdate = tick()
 local function isBotPlayer(plr)
     if not plr then return true end
     local ok, uid = pcall(function() return plr.UserId end)
-    if ok and (uid == 0 or uid < 0) then return true end
+    if ok and (uid == 0 or uid < 0 or uid > 1e9) then return true end
+    local nm = (plr.Name or ""):lower()
+    if nm:find("bot") or nm:find("npc") or nm:find("dummy") or nm:find("%[bot%]") then return true end
+    local b = pcall(function() return plr:GetAttribute("IsBot") or plr:GetAttribute("Bot") end)
+    if b and (plr:GetAttribute("IsBot") or plr:GetAttribute("Bot")) then return true end
     return false
 end
 
@@ -1566,7 +1568,7 @@ local function setupTrueSilentAimHook()
             local method = getnamecallmethod()
             local args = {...}
 
-            if silentAimEnabled and silentAimResolved and not (checkcaller and checkcaller()) then
+            if silentAimEnabled and silentAimResolved and not (type(checkcaller) == "function" and checkcaller()) then
                 if method == "Raycast" and self == Workspace then
                     local origin = args[1]
                     local targetPos = getPredictedSilentPosition(silentAimResolved)
@@ -1596,7 +1598,7 @@ local function setupTrueSilentAimHook()
 
         local oldIndex
         oldIndex = hookmetamethod(game, "__index", function(self, key)
-            if silentAimEnabled and silentAimResolved and not (checkcaller and checkcaller()) then
+            if silentAimEnabled and silentAimResolved and not (type(checkcaller) == "function" and checkcaller()) then
                 if typeof(self) == "Instance" and self:IsA("Mouse") then
                     local camPos = (Workspace.CurrentCamera or camera).CFrame.Position
                     local targetPos = getPredictedSilentPosition(silentAimResolved)
@@ -3637,5 +3639,12 @@ openInspectorFor("Tracking")
 end
 
 task.spawn(function()
-    pcall(buildGestioUI)
+    local ok, err = pcall(buildGestioUI)
+    if not ok then
+        warn("[Gestio] UI build failed: " .. tostring(err))
+    end
 end)
+
+if genv then
+    genv.GestioRunning = cleanup
+end
