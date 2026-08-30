@@ -1,5 +1,5 @@
 -- ==============================================================================
--- [Gestio UI - Blox Strike Ultimate Mobile Engine | Version 4.2.4 Zero-Lag Silent]
+-- [Gestio UI - Blox Strike Ultimate Mobile Engine | Version 4.2.5 Hook-Based Silent]
 -- Target Game: Blox Strike (Roblox)
 -- ==============================================================================
 
@@ -196,13 +196,16 @@ local visibleCheck = false
 local aimSensitivity = 1.0
 local lockOnJump = true
 
--- ZERO-LAG SILENT SNAP STATE
+-- SILENT AIM CONFIGURATION
 local silentAimEnabled = false
 local silentAimFov = 150
 local silentAimTeamCheck = true
 local silentAimVisibleCheck = false
 local silentAimHitChance = 100
 local silentAimAimHead = true
+local silentAimResolved = nil
+local silentAimHooked = false
+local silentAimCamHooked = false
 
 -- ==========================================
 -- STABLE RCS & RECOIL
@@ -219,60 +222,9 @@ local rcsPitchFactor = 1.0
 local rcsYawFactor = 1.0
 local rcsHorizontalComp = false
 
--- ZERO-LAG SILENT SNAP TRIGGER
-function triggerSilentShot()
-    if not silentAimEnabled then return end
-    if math.random(1, 100) > silentAimHitChance then return end
-
-    local cam = Workspace.CurrentCamera or camera
-    if not cam then return end
-
-    local vp = cam.ViewportSize
-    local center = Vector2.new(vp.X * 0.5, vp.Y * 0.5)
-    local bestPart = nil
-    local shortestDist = silentAimFov
-
-    for _, plr in ipairs(Players:GetPlayers()) do
-        if plr ~= player then
-            if not (silentAimTeamCheck and isAlly(plr)) then
-                local char = plr.Character
-                local hum = char and char:FindFirstChildOfClass("Humanoid")
-                if isEntityAlive(char, hum) then
-                    local part = char:FindFirstChild(silentAimAimHead and "Head" or "HumanoidRootPart") or char:FindFirstChild("Torso")
-                    if part and part:IsA("BasePart") then
-                        local screenPos, onScreen = cam:WorldToViewportPoint(part.Position)
-                        if onScreen and screenPos.Z > 0 then
-                            local screenDist = (Vector2.new(screenPos.X, screenPos.Y) - center).Magnitude
-                            if screenDist <= shortestDist then
-                                if not silentAimVisibleCheck or isVisibleThroughWalls(part, char) then
-                                    shortestDist = screenDist
-                                    bestPart = part
-                                end
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end
-
-    if bestPart then
-        local originalCFrame = cam.CFrame
-        local aimPos = bestPart.Position
-        if predictionEnabled and bestPart.AssemblyLinearVelocity then
-            aimPos = aimPos + (bestPart.AssemblyLinearVelocity * 0.08)
-        end
-        cam.CFrame = CFrame.lookAt(cam.CFrame.Position, aimPos)
-        task.defer(function()
-            cam.CFrame = originalCFrame
-        end)
-    end
-end
-
 local fireStartConn = UserInputService.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         noRecoil.isShooting = true
-        triggerSilentShot()
     end
 end)
 table.insert(connections, fireStartConn)
@@ -283,6 +235,177 @@ local fireEndConn = UserInputService.InputEnded:Connect(function(input)
     end
 end)
 table.insert(connections, fireEndConn)
+
+-- ==========================================
+-- FACTION CHECK & HEALTH CHECK LOGIC
+-- ==========================================
+function isAlly(plr)
+    if not plr or plr == player then return true end
+    if not chamsTeamCheck then return false end
+    
+    if plr.Team and player.Team then
+        return plr.Team == player.Team
+    end
+    if plr:GetAttribute("Team") and player:GetAttribute("Team") then
+        return plr:GetAttribute("Team") == player:GetAttribute("Team")
+    end
+    if plr.TeamColor and player.TeamColor and plr.TeamColor ~= BrickColor.new("White") then
+        return plr.TeamColor == player.TeamColor
+    end
+    return false
+end
+
+function isTargetEnemy(plr, char)
+    if not plr or plr == player then return false end
+    if char and char == player.Character then return false end
+    return not isAlly(plr)
+end
+
+function getTargetHitbox(char)
+    if not char then return nil end
+    if bodyAimOnly then
+        return char:FindFirstChild("UpperTorso") or char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso")
+    end
+    if aimboneIndex == 1 then
+        return char:FindFirstChild("Head") or char:FindFirstChild("UpperTorso")
+    elseif aimboneIndex == 2 then
+        return char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso") or char:FindFirstChild("Head")
+    else
+        return char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("UpperTorso") or char:FindFirstChild("Head")
+    end
+end
+
+function isEntityAlive(char, hum)
+    if not char or not char.Parent or not char:IsDescendantOf(Workspace) then 
+        return false 
+    end
+    
+    if hum and hum.Parent then
+        local health = 100
+        pcall(function() health = hum.Health end)
+        if health <= 0 then 
+            return false 
+        end
+        
+        local state = nil
+        pcall(function() state = hum:GetState() end)
+        if state == Enum.HumanoidStateType.Dead then 
+            return false 
+        end
+    end
+
+    local root = char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso")
+    local head = char:FindFirstChild("Head")
+    if not root and not head then
+        return false
+    end
+
+    return true
+end
+
+-- ==========================================
+-- VISIBILITY CHECK SYSTEM
+-- ==========================================
+wallRayParams = RaycastParams.new()
+wallRayParams.FilterType = Enum.RaycastFilterType.Exclude
+wallRayParams.IgnoreWater = true
+
+function isVisibleThroughWalls(targetPart, targetChar)
+    if not camera or not targetPart or not targetChar then return false end
+    local myChar = player.Character
+    wallRayParams.FilterDescendantsInstances = {myChar, camera}
+    local origin = camera.CFrame.Position
+    local dir = targetPart.Position - origin
+    
+    local hit = Workspace:Raycast(origin, dir, wallRayParams)
+    if hit then
+        if hit.Instance:IsDescendantOf(targetChar) or hit.Instance == targetPart then
+            return true
+        end
+    end
+    return false
+end
+
+-- ==========================================
+-- ZERO-LAG SILENT AIM (HOOK-BASED, INVISIBLE)
+-- ==========================================
+local function getSilentAimTarget()
+    local cam = Workspace.CurrentCamera or camera
+    if not cam then return nil end
+    local camPos = cam.CFrame.Position
+    local camLook = cam.CFrame.LookVector
+    local maxAngle = math.rad(silentAimFov)
+    local best, bestAngle = nil, maxAngle
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr == player then continue end
+        if silentAimTeamCheck and isAlly(plr) then continue end
+        local char = plr.Character
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        if not isEntityAlive(char, hum) then continue end
+        local part = char:FindFirstChild(silentAimAimHead and "Head" or "HumanoidRootPart")
+            or char:FindFirstChild("Torso")
+        if not part or not part:IsA("BasePart") then continue end
+        if silentAimVisibleCheck and not isVisibleThroughWalls(part, char) then continue end
+        local dir = (part.Position - camPos).Unit
+        local angle = math.acos(math.clamp(camLook:Dot(dir), -1, 1))
+        if angle < bestAngle then
+            bestAngle = angle
+            best = part
+        end
+    end
+    return best
+end
+
+local function silentAimCamPosAim()
+    if not (silentAimEnabled and silentAimResolved) then return nil end
+    local cam = Workspace.CurrentCamera or camera
+    if not cam then return nil end
+    local camPos = cam.CFrame.Position
+    local aimPos = silentAimResolved.Position
+    if predictionEnabled and silentAimResolved.AssemblyLinearVelocity then
+        aimPos = aimPos + silentAimResolved.AssemblyLinearVelocity * predictionFactor
+    end
+    return camPos, aimPos
+end
+
+local function setupSilentAimHooks()
+    if silentAimHooked then return end
+    pcall(function()
+        local mouse = player:GetMouse()
+        local oldIndex
+        oldIndex = hookmetamethod(mouse, "__index", function(self, key)
+            if silentAimEnabled and silentAimResolved and (key == "Hit" or key == "UnitRay") then
+                local camPos, aimPos = silentAimCamPosAim()
+                if camPos then
+                    if key == "Hit" then
+                        return CFrame.new(camPos, aimPos)
+                    else
+                        return Ray.new(camPos, (aimPos - camPos).Unit)
+                    end
+                end
+            end
+            return oldIndex(self, key)
+        end)
+        silentAimHooked = true
+    end)
+    if not silentAimCamHooked then
+        pcall(function()
+            local oldNamecall
+            oldNamecall = hookmetamethod(camera, "__namecall", function(self, ...)
+                local method = getnamecallmethod()
+                if silentAimEnabled and silentAimResolved and noRecoil.isShooting
+                    and (method == "ViewportPointToRay" or method == "ScreenPointToRay") then
+                    local camPos, aimPos = silentAimCamPosAim()
+                    if camPos then
+                        return Ray.new(camPos, (aimPos - camPos).Unit)
+                    end
+                end
+                return oldNamecall(self, ...)
+            end)
+            silentAimCamHooked = true
+        end)
+    end
+end
 
 -- ==========================================
 -- VIBRANT CHAMS CONFIGURATION
@@ -932,96 +1055,6 @@ fpsCounter = 0
 lastFpsUpdate = tick()
 
 -- ==========================================
--- FACTION CHECK & HEALTH CHECK LOGIC
--- ==========================================
-function isAlly(plr)
-    if not plr or plr == player then return true end
-    if not chamsTeamCheck then return false end
-    
-    if plr.Team and player.Team then
-        return plr.Team == player.Team
-    end
-    if plr:GetAttribute("Team") and player:GetAttribute("Team") then
-        return plr:GetAttribute("Team") == player:GetAttribute("Team")
-    end
-    if plr.TeamColor and player.TeamColor and plr.TeamColor ~= BrickColor.new("White") then
-        return plr.TeamColor == player.TeamColor
-    end
-    return false
-end
-
-function isTargetEnemy(plr, char)
-    if not plr or plr == player then return false end
-    if char and char == player.Character then return false end
-    return not isAlly(plr)
-end
-
-function getTargetHitbox(char)
-    if not char then return nil end
-    if bodyAimOnly then
-        return char:FindFirstChild("UpperTorso") or char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso")
-    end
-    if aimboneIndex == 1 then
-        return char:FindFirstChild("Head") or char:FindFirstChild("UpperTorso")
-    elseif aimboneIndex == 2 then
-        return char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso") or char:FindFirstChild("Head")
-    else
-        return char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("UpperTorso") or char:FindFirstChild("Head")
-    end
-end
-
-function isEntityAlive(char, hum)
-    if not char or not char.Parent or not char:IsDescendantOf(Workspace) then 
-        return false 
-    end
-    
-    if hum and hum.Parent then
-        local health = 100
-        pcall(function() health = hum.Health end)
-        if health <= 0 then 
-            return false 
-        end
-        
-        local state = nil
-        pcall(function() state = hum:GetState() end)
-        if state == Enum.HumanoidStateType.Dead then 
-            return false 
-        end
-    end
-
-    local root = char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso")
-    local head = char:FindFirstChild("Head")
-    if not root and not head then
-        return false
-    end
-
-    return true
-end
-
--- ==========================================
--- VISIBILITY CHECK SYSTEM
--- ==========================================
-wallRayParams = RaycastParams.new()
-wallRayParams.FilterType = Enum.RaycastFilterType.Exclude
-wallRayParams.IgnoreWater = true
-
-function isVisibleThroughWalls(targetPart, targetChar)
-    if not camera or not targetPart or not targetChar then return false end
-    local myChar = player.Character
-    wallRayParams.FilterDescendantsInstances = {myChar, camera}
-    local origin = camera.CFrame.Position
-    local dir = targetPart.Position - origin
-    
-    local hit = Workspace:Raycast(origin, dir, wallRayParams)
-    if hit then
-        if hit.Instance:IsDescendantOf(targetChar) or hit.Instance == targetPart then
-            return true
-        end
-    end
-    return false
-end
-
--- ==========================================
 -- JUMP CIRCLE RENDER ENGINE
 -- ==========================================
 function buildJumpRing(segmentCount, radius, thickness)
@@ -1279,7 +1312,7 @@ function renderGrenadeOverlays()
             local isNade = false
             local nadeType = "NADE"
             local nadeColor = currentTheme.HEColor
-            local effectRadiusStuds = 14
+            effectRadiusStuds = 14
 
             if nName:find("molotov") or nName:find("incendiary") or nName:find("fire") then
                 isNade = true
@@ -1945,6 +1978,18 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         end
     end
 
+    -- Silent Aim: resolve target once per frame (zero-lag)
+    if silentAimEnabled then
+        setupSilentAimHooks()
+        if math.random(1, 100) <= silentAimHitChance then
+            silentAimResolved = getSilentAimTarget()
+        else
+            silentAimResolved = nil
+        end
+    else
+        silentAimResolved = nil
+    end
+
     -- Recoil Compensation
     if (rcsEnabled or noRecoil.enabled) and noRecoil.isShooting then
         local comp = (noRecoil.enabled and (noRecoil.strength * 0.0035) or 0) + (rcsEnabled and ((rcsStrength / 100) * 0.004 * rcsPitchFactor) or 0)
@@ -2566,12 +2611,8 @@ table.insert(connections, RunService.Heartbeat:Connect(function(dt)
 
         if grounded and shouldJump then
             activeMode = "Bhop"
-            hum:ChangeState(Enum.HumanoidStateType.Jumping)
-            finalVelocity = Vector3.new(
-                currentVel.X,
-                bhopJumpPower,
-                currentVel.Z
-            )
+            hum.JumpPower = bhopJumpPower
+            hum.Jump = true
         elseif not grounded and bhopAirStrafe and currentMove.Magnitude > 0.05 then
             activeMode = "AutoStrafe"
             local targetSpeed = 16 * bhopSpeedBoost
@@ -3046,6 +3087,16 @@ function addInspectorToggle(y, txt, default, onToggle)
         btn.BackgroundColor3 = state and currentTheme.Accent or Color3.fromRGB(50, 53, 60)
         circle.Position = state and UDim2.new(1, -11, 0.5, -5) or UDim2.new(0, 2, 0.5, -5)
         onToggle(state)
+        
+        if name == "World Changer" then
+            if state then
+                applyNightPreset(nightPreset)
+            else
+                restoreLightingState()
+            end
+        elseif name == "FullBright" and not state and not nightModeEnabled then
+            restoreLightingState()
+        end
     end
 
     bindTouch(btn, executeToggle)
@@ -3330,201 +3381,5 @@ function openInspectorFor(moduleName)
         addInspectorSlider(6, "RCS Strength", 10, 100, rcsStrength, false, function(v) rcsStrength = v end)
         addInspectorSlider(38, "Pitch Factor", 0.1, 2.0, rcsPitchFactor, true, function(v) rcsPitchFactor = v end)
         addInspectorSlider(70, "Yaw Factor", 0.1, 2.0, rcsYawFactor, true, function(v) rcsYawFactor = v end)
-        addInspectorToggle(108, "Horizontal Comp", rcsHorizontalComp, function(v) rcsHorizontalComp = v end)
-    elseif moduleName == "Trigger Assistant" then
-        insContent.CanvasSize = UDim2.new(0, 0, 0, 150)
-        addInspectorSlider(6, "Trigger Delay", 0.0, 0.2, triggerbotDelay, true, function(v) triggerbotDelay = v end)
-        addInspectorToggle(44, "Head Only", triggerbotHeadOnly, function(v) triggerbotHeadOnly = v end)
-        addInspectorToggle(70, "Auto Trigger", triggerbotMobileAutoFire, function(v) triggerbotMobileAutoFire = v end)
-    else
-        insContent.CanvasSize = UDim2.new(0, 0, 0, 50)
-        local lbl = Instance.new("TextLabel", insContent)
-        lbl.Size = UDim2.new(0.86, 0, 0, 30)
-        lbl.Position = UDim2.new(0.07, 0, 0, 6)
-        lbl.BackgroundTransparency = 1
-        lbl.Text = "Module active and synchronized."
-        lbl.TextColor3 = currentTheme.TextSecondary
-        lbl.TextSize = 8.5
-        lbl.TextWrapped = true
-        lbl.Font = Enum.Font.Gotham
-    end
-end
-
--- ==========================================
--- CARD GENERATOR COMPONENT
--- ==========================================
-function addCard(parent, name, defaultState, onToggle)
-    local card = Instance.new("Frame", parent)
-    card.Size = UDim2.new(0, 58, 0, 58)
-    card.BackgroundColor3 = currentTheme.CardBg
-    card.BorderSizePixel = 0
-    card.ZIndex = 7
-    Instance.new("UICorner", card).CornerRadius = UDim.new(0, 6)
-    local cardStroke = Instance.new("UIStroke", card)
-    cardStroke.Color = currentTheme.Border
-
-    local textBtn = Instance.new("TextButton", card)
-    textBtn.Size = UDim2.new(1, -4, 0, 24)
-    textBtn.Position = UDim2.new(0, 2, 0, 2)
-    textBtn.BackgroundTransparency = 1
-    textBtn.Text = name
-    textBtn.TextColor3 = currentTheme.TextPrimary
-    textBtn.TextSize = 7.5
-    textBtn.Font = Enum.Font.GothamBold
-    textBtn.TextWrapped = true
-    textBtn.ZIndex = 8
-    bindTouch(textBtn, function() openInspectorFor(name) end)
-
-    local toggleBtn = Instance.new("TextButton", card)
-    toggleBtn.Size = UDim2.new(0, 24, 0, 13)
-    toggleBtn.Position = UDim2.new(0.5, -12, 1, -16)
-    toggleBtn.BackgroundColor3 = defaultState and currentTheme.Accent or Color3.fromRGB(50, 53, 60)
-    toggleBtn.Text = ""
-    toggleBtn.ZIndex = 8
-    Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(1, 0)
-
-    local circle = Instance.new("Frame", toggleBtn)
-    circle.Size = UDim2.new(0, 9, 0, 9)
-    circle.Position = defaultState and UDim2.new(1, -10, 0.5, -4.5) or UDim2.new(0, 2, 0.5, -4.5)
-    circle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    circle.ZIndex = 9
-    Instance.new("UICorner", circle).CornerRadius = UDim.new(1, 0)
-
-    local state = defaultState
-    local function executeToggle()
-        state = not state
-        toggleBtn.BackgroundColor3 = state and currentTheme.Accent or Color3.fromRGB(50, 53, 60)
-        circle.Position = state and UDim2.new(1, -10, 0.5, -4.5) or UDim2.new(0, 2, 0.5, -4.5)
-        onToggle(state)
-        
-        if name == "World Changer" then
-            if state then
-                applyNightPreset(nightPreset)
-            else
-                restoreLightingState()
-            end
-        elseif name == "FullBright" and not state and not nightModeEnabled then
-            restoreLightingState()
-        end
-    end
-
-    bindTouch(toggleBtn, executeToggle)
-end
-
--- ==========================================
--- TAB SECTIONS & MODULE POPULATION
--- ==========================================
-
--- COMBAT TAB
-local cAimSection = makeCategorySection(cPage, "Aim & Ballistics", 1, 5)
-local cRageSection = makeCategorySection(cPage, "HVH & Anti-Aim", 2, 1)
-
-addCard(cAimSection, "Tracking", aimbotEnabled, function(v)
-    aimbotEnabled = v
-    isAiming = v
-    if not v then
-        lockedTarget = nil
-    end
-end)
-addCard(cAimSection, "Silent Aim", silentAimEnabled, function(v)
-    silentAimEnabled = v
-end)
-addCard(cAimSection, "RCS", rcsEnabled, function(v) rcsEnabled = v end)
-addCard(cAimSection, "No Recoil", noRecoil.enabled, function(v)
-    noRecoil.enabled = v
-end)
-addCard(cAimSection, "Trigger Assistant", triggerbotEnabled, function(v) triggerbotEnabled = v end)
-addCard(cRageSection, "Anti-Aim", antiAimEnabled, function(v) antiAimEnabled = v end)
-
--- MOVEMENT TAB
-local mHopSection = makeCategorySection(mPage, "Bhop Mechanics", 1, 1)
-local mBoostSection = makeCategorySection(mPage, "Physics Modifications", 2, 3)
-
-addCard(mHopSection, "Bhop Engine", bunnyHopEnabled, function(v) bunnyHopEnabled = v end)
-addCard(mBoostSection, "Slide", slideEnabled, function(v) 
-    slideEnabled = v 
-    updateMobileSlideVisibility()
-end)
-addCard(mBoostSection, "Speed Boost", speedEnabled, function(v) speedEnabled = v end)
-addCard(mBoostSection, "Flight", flightEnabled, function(v) flightEnabled = v end)
-
--- ESP TAB
-local ePlayerSection = makeCategorySection(ePage, "Player Visuals", 1, 6)
-local eWorldSection = makeCategorySection(ePage, "World & Projectiles", 2, 2)
-
-addCard(ePlayerSection, "Nametags", nametagsEnabled, function(v) nametagsEnabled = v end)
-addCard(ePlayerSection, "Chams", chamsEnabled, function(v) chamsEnabled = v end)
-addCard(ePlayerSection, "Box Overlay", boxEspEnabled, function(v) boxEspEnabled = v end)
-addCard(ePlayerSection, "Head Dot", headDotEnabled, function(v) headDotEnabled = v end)
-addCard(ePlayerSection, "Snaplines", tracersEnabled, function(v) tracersEnabled = v end)
-addCard(ePlayerSection, "Hitmarker", hitmarkerEnabled, function(v)
-    hitmarkerEnabled = v
-    if not v then
-        hitmarkerCenter.Visible = false
-        hitmarkerBusy = false
-    end
-end)
-
-addCard(eWorldSection, "Grenade ESP", grenadeEspEnabled, function(v) grenadeEspEnabled = v end)
-addCard(eWorldSection, "Jump Circle", jumpCircleEnabled, function(v) 
-    jumpCircleEnabled = v 
-    if v and player.Character then
-        initJumpCircleForCharacter(player.Character)
-    else
-        clearActiveJumpCircle()
-    end
-end)
-
--- SKINS TAB (Skinchanger)
-local sKnifeSection = makeCategorySection(sPage, "Melee Weapons", 1, 1)
-addCard(sKnifeSection, "Knife Changer", skinChangerEnabled, function(v)
-    skinChangerEnabled = v
-    if v then
-        hookBloxStrikeModules()
-        scanAndMorphKnives(camera)
-        if player and player.Character then scanAndMorphKnives(player.Character) end
-    end
-end)
-
--- WORLD CHANGER / ENVIRONMENT TAB
-local envLightSection = makeCategorySection(envPage, "Atmosphere & World", 1, 4)
-addCard(envLightSection, "World Changer", nightModeEnabled, function(v)
-    nightModeEnabled = v
-    if v then
-        applyNightPreset(nightPreset)
-    elseif not fullBrightEnabled then
-        restoreLightingState()
-    end
-end)
-addCard(envLightSection, "FullBright", fullBrightEnabled, function(v)
-    fullBrightEnabled = v
-    if not v and not nightModeEnabled then
-        restoreLightingState()
-    end
-end)
-addCard(envLightSection, "Anti-Flash", antiFlashEnabled, function(v) antiFlashEnabled = v end)
-addCard(envLightSection, "No Fog", removeFogEnabled, function(v)
-    removeFogEnabled = v
-    if not v then
-        Lighting.FogEnd = defaultLighting.FogEnd
-    end
-end)
-
--- MISC TAB
-local miscGeneralSection = makeCategorySection(micsPage, "Utilities", 1, 2)
-addCard(miscGeneralSection, "Third Person", thirdPersonEnabled, function(v)
-    setThirdPersonEnabled(v)
-end)
-addCard(miscGeneralSection, "Anti-AFK", antiAfkEnabled, function(v)
-    setAntiAfkEnabled(v)
-end)
-
--- SETTINGS TAB
-local setsGeneralSection = makeCategorySection(setsPage, "Configuration", 1, 1)
-addCard(setsGeneralSection, "Theme", true, function(v) end)
-
-openInspectorFor("Tracking")
-
-end
-
-buildGestioUI()
+    
+Показана только часть файла из-за его большого размера
