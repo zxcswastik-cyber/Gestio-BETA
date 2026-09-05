@@ -284,7 +284,9 @@ local currentTheme = themeLibrary["Charcoal Crimson"]
 -- COMBAT ENGINE STATE VARIABLES
 -- ==========================================
 local isAiming = false
-local lockedTarget = nil
+local currentAimTarget = nil
+local lastTargetSwitchTick = 0
+local TARGET_HYSTERESIS_TIME = 0.12
 local aimboneIndex = 1
 local targetSwitchDelay = 0.05
 local shotDelay = 0.0
@@ -1444,7 +1446,7 @@ function renderGrenadeOverlays()
 end
 
 -- ==========================================
--- TARGET SELECTION & AIMBOT MATHEMATICS
+-- ADVANCED KINEMATIC AIM ENGINE (VECTOR FOV & HYSTERESIS)
 -- ==========================================
 local visRayParams = RaycastParams.new()
 visRayParams.FilterType = Enum.RaycastFilterType.Exclude
@@ -1463,17 +1465,62 @@ function isTargetVisible(originPos, targetPart, targetChar)
     return false
 end
 
-function getClosestTarget()
-    if not camera then 
-        camera = Workspace.CurrentCamera 
-        if not camera then return nil end
+local function getPingLatency()
+    local ping = 0.03
+    pcall(function()
+        local serverStats = Stats:FindFirstChild("Network") and Stats.Network:FindFirstChild("ServerStatsItem")
+        if serverStats and serverStats:FindFirstChild("Data Ping") then
+            ping = (serverStats["Data Ping"]:GetValue() / 1000)
+        end
+    end)
+    return ping
+end
+
+function getKinematicAimPosition(targetPart)
+    local rawPos = targetPart.Position
+    if not GestioConfig.predictionEnabled then
+        return rawPos
     end
 
-    local closestTarget = nil
-    local closestDist = GestioConfig.aimFov
-    local vp = camera.ViewportSize
-    local screenCenter = Vector2.new(vp.X * 0.5, vp.Y * 0.5)
-    local camPos = camera.CFrame.Position
+    local ping = getPingLatency()
+    local predDelta = (GestioConfig.predictionFactor * 0.5) + ping
+    local targetVel = targetPart.AssemblyLinearVelocity or Vector3.zero
+
+    local myChar = player.Character
+    local myHrp = myChar and myChar:FindFirstChild("HumanoidRootPart")
+    local myVel = (myHrp and myHrp.AssemblyLinearVelocity) or Vector3.zero
+    
+    local relativeVel = targetVel - (myVel * 0.15)
+    return rawPos + (relativeVel * predDelta)
+end
+
+function getClosestTarget()
+    local cam = Workspace.CurrentCamera or camera
+    if not cam then return nil end
+
+    local camCFrame = cam.CFrame
+    local camPos = camCFrame.Position
+    local camLook = camCFrame.LookVector
+    local maxAngleRad = math.rad(GestioConfig.aimFov * 0.5)
+
+    if currentAimTarget then
+        local cChar = currentAimTarget.Char
+        local cHum = currentAimTarget.Hum
+        local cPart = currentAimTarget.Part
+        if isEntityAlive(cChar, cHum) and cPart and cPart.Parent then
+            local predPos = getKinematicAimPosition(cPart)
+            local toTarget = (predPos - camPos).Unit
+            local angle = math.acos(math.clamp(camLook:Dot(toTarget), -1, 1))
+            
+            if angle <= (maxAngleRad * 1.15) and isTargetVisible(camPos, cPart, cChar) then
+                currentAimTarget.AimPosition = predPos
+                return currentAimTarget
+            end
+        end
+    end
+
+    local bestTarget = nil
+    local bestScore = math.huge
     local allPlayers = Players:GetPlayers()
 
     for i = 1, #allPlayers do
@@ -1482,28 +1529,26 @@ function getClosestTarget()
         if char and plr ~= player and isTargetEnemy(plr, char) then
             local hum = char:FindFirstChildOfClass("Humanoid")
             if isEntityAlive(char, hum) then
-                local targetPart = getTargetHitbox(char)
-                if targetPart then
-                    local calcPos = targetPart.Position
-                    local screenCalcPos = calcPos
-                    if GestioConfig.predictionEnabled and targetPart.AssemblyLinearVelocity then
-                        screenCalcPos = calcPos + (targetPart.AssemblyLinearVelocity * GestioConfig.predictionFactor)
-                    end
-                    local screenPos, onScreen = camera:WorldToViewportPoint(screenCalcPos)
-                    if onScreen and screenPos.Z > 0 then
-                        local screenDist = (Vector2.new(screenPos.X, screenPos.Y) - screenCenter).Magnitude
-                        if screenDist <= closestDist then
-                            if isTargetVisible(camPos, targetPart, char) then
-                                closestDist = screenDist
-                                closestTarget = {
+                local hitPart = getTargetHitbox(char)
+                if hitPart then
+                    local aimPos = getKinematicAimPosition(hitPart)
+                    local toTarget = (aimPos - camPos).Unit
+                    local angle = math.acos(math.clamp(camLook:Dot(toTarget), -1, 1))
+
+                    if angle <= maxAngleRad then
+                        if isTargetVisible(camPos, hitPart, char) then
+                            local dist = (aimPos - camPos).Magnitude
+                            local score = (angle * 0.7) + ((dist / 1000) * 0.3)
+                            if score < bestScore then
+                                bestScore = score
+                                bestTarget = {
                                     Player = plr,
                                     Char = char,
-                                    Part = targetPart,
+                                    Part = hitPart,
                                     Hum = hum,
-                                    Position = calcPos,
-                                    AimPosition = screenCalcPos,
-                                    ScreenPosition = Vector2.new(screenPos.X, screenPos.Y),
-                                    Distance = screenDist
+                                    Position = hitPart.Position,
+                                    AimPosition = aimPos,
+                                    AngularDelta = angle
                                 }
                             end
                         end
@@ -1512,7 +1557,15 @@ function getClosestTarget()
             end
         end
     end
-    return closestTarget
+
+    if bestTarget and (tick() - lastTargetSwitchTick > TARGET_HYSTERESIS_TIME) then
+        currentAimTarget = bestTarget
+        lastTargetSwitchTick = tick()
+    elseif not bestTarget then
+        currentAimTarget = nil
+    end
+
+    return currentAimTarget
 end
 
 -- ==========================================
@@ -1999,49 +2052,26 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         camera.CFrame = camera.CFrame * CFrame.Angles(-comp, 0, 0)
     end
 
-    isAiming = GestioConfig.aimbotEnabled
+    -- Advanced Kinematic Aim Execution Pipeline
+    if GestioConfig.aimbotEnabled then
+        local target = getClosestTarget()
+        if target and target.Part and target.Part.Parent then
+            local aimPos = getKinematicAimPosition(target.Part)
+            local currentCF = camera.CFrame
+            local desiredCF = CFrame.lookAt(currentCF.Position, aimPos)
 
-    if GestioConfig.aimbotEnabled and isAiming then
-        if not lockedTarget or not isEntityAlive(lockedTarget.Char, lockedTarget.Hum) then
-            lockedTarget = getClosestTarget()
-        else
-            local checkPos = lockedTarget.Position
-            if GestioConfig.predictionEnabled and lockedTarget.Part and lockedTarget.Part.Parent then
-                checkPos = lockedTarget.Part.Position
-                local velocity = lockedTarget.Part.AssemblyLinearVelocity
-                if velocity then
-                    checkPos += velocity * GestioConfig.predictionFactor
-                end
-            end
-            local scrPos, onScreen = camera:WorldToViewportPoint(checkPos)
-            local vp = camera.ViewportSize
-            local screenDist = (Vector2.new(scrPos.X, scrPos.Y) - Vector2.new(vp.X * 0.5, vp.Y * 0.5)).Magnitude
-            if not onScreen or scrPos.Z <= 0 or screenDist > GestioConfig.aimFov then
-                lockedTarget = getClosestTarget()
-            end
-        end
-
-        if lockedTarget and lockedTarget.Position then
-            local aimPos = lockedTarget.AimPosition or lockedTarget.Position
-            if GestioConfig.predictionEnabled and lockedTarget.Part and lockedTarget.Part.Parent then
-                aimPos = lockedTarget.Part.Position
-                if lockedTarget.Part.AssemblyLinearVelocity then
-                    aimPos += lockedTarget.Part.AssemblyLinearVelocity * GestioConfig.predictionFactor
-                end
-            end
-
-            local desired = CFrame.lookAt(camera.CFrame.Position, aimPos)
             if GestioConfig.snapAimMode then
-                camera.CFrame = desired
+                camera.CFrame = desiredCF
             else
-                local smooth = math.clamp(GestioConfig.aimbotSmoothness, 0, 0.98)
-                local speedAlpha = 1 - math.exp(-math.max(1, GestioConfig.aimbotSpeed) * dt)
-                local alpha = math.clamp(speedAlpha * (1 - smooth), 0.01, 1)
-                camera.CFrame = camera.CFrame:Lerp(desired, alpha)
+                local responsiveness = math.clamp(GestioConfig.aimbotSpeed, 1, 100)
+                local damping = 1 - math.clamp(GestioConfig.aimbotSmoothness, 0, 0.95)
+                local effectiveFactor = 1 - math.exp(-responsiveness * damping * dt)
+                
+                camera.CFrame = currentCF:Lerp(desiredCF, effectiveFactor)
             end
         end
     else
-        lockedTarget = nil
+        currentAimTarget = nil
     end
 
     -- Continuous Morph Scan
@@ -3135,7 +3165,7 @@ function buildGestioUI()
         arrow.Size = UDim2.new(0, 22, 1, 0)
         arrow.Position = UDim2.new(1, -24, 0, 0)
         arrow.BackgroundTransparency = 1
-        arrow.Text = "▼"
+        arrow.Text = "v"
         arrow.TextColor3 = currentTheme.TextSecondary
         arrow.TextSize = 8
         arrow.Font = Enum.Font.GothamBold
@@ -3163,13 +3193,13 @@ function buildGestioUI()
             open = false
             list.Visible = false
             list.Size = UDim2.new(0.5676, 0, 0, 0)
-            arrow.Text = "▼"
+            arrow.Text = "v"
         end
         local function toggle()
             open = not open
             list.Visible = open
             list.Size = open and UDim2.new(0.5676, 0, 0, #choices*h+2) or UDim2.new(0.5676, 0, 0, 0)
-            arrow.Text = open and "▲" or "▼"
+            arrow.Text = open and "^" or "v"
         end
 
         for i, choiceName in ipairs(choices) do
@@ -3426,7 +3456,7 @@ function buildGestioUI()
             setBtn.Size = UDim2.new(0, 14, 0, 14)
             setBtn.Position = UDim2.new(1, -16, 0, 2)
             setBtn.BackgroundTransparency = 1
-            setBtn.Text = "⚙"
+            setBtn.Text = "*"
             setBtn.TextColor3 = currentTheme.TextSecondary
             setBtn.TextSize = 8
             setBtn.Font = Enum.Font.GothamBold
