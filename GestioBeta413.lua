@@ -1,8 +1,3 @@
--- ==========================================
--- [Gestio UI - Blox Strike Ultimate Mobile Engine | Version 4.3.0 Config Ready]
--- Target Game: Blox Strike (Roblox)
--- ==========================================
-
 pcall(function()
     if getgenv and getgenv().GestioRunning then
         getgenv().GestioRunning()
@@ -93,7 +88,7 @@ local GestioConfig = {
     slideMinSpeed = 16,
 
     jumpCircleRadius = 3.5,
-    jumpCircleSegmentCount = 32,
+    jumpCircleSegmentCount = 48,
     jumpCircleStyle = "GradientWave",
 
     grenadeMaxDist = 1500,
@@ -193,6 +188,7 @@ local skinScanAccumulator = 0
 local savedAutoRotate = nil
 local hitmarkerSerial = 0
 local antiAfkConnection = nil
+local activeJumpCircleData = nil
 
 local genv = (type(getgenv) == "function") and getgenv() or nil
 if genv and not genv.GestioSavedPos then
@@ -288,13 +284,6 @@ local currentAimTarget = nil
 local lastTargetSwitchTick = 0
 local TARGET_HYSTERESIS_TIME = 0.12
 local aimboneIndex = 1
-local targetSwitchDelay = 0.05
-local shotDelay = 0.0
-local hitChance = 85
-local minDamage = 15
-local autoWallCheck = false
-local aimSensitivity = 1.0
-local lockOnJump = true
 
 local silentAimResolved = nil
 local silentAimHooked = false
@@ -306,8 +295,6 @@ local silentAimCamHooked = false
 local noRecoil = {
     isShooting = false
 }
-
-local rcsHorizontalComp = false
 
 local fireStartConn = UserInputService.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -414,7 +401,7 @@ function isVisibleThroughWalls(targetPart, targetChar)
 end
 
 -- ==========================================
--- ZERO-LAG SILENT AIM (HOOK-BASED, INVISIBLE)
+-- ZERO-LAG SILENT AIM
 -- ==========================================
 local function getSilentAimTarget()
     local cam = Workspace.CurrentCamera or camera
@@ -499,18 +486,14 @@ local function setupSilentAimHooks()
 end
 
 -- ==========================================
--- VIBRANT CHAMS COLORS
+-- CHAMS COLORS & HITMARKER VARS
 -- ==========================================
 local chamsColorVisible = Color3.fromRGB(255, 45, 85)
 local chamsColorHidden = Color3.fromRGB(110, 115, 125)
 local chamsColorAlly = Color3.fromRGB(0, 230, 255)
 local chamsOutlineColor = Color3.fromRGB(240, 240, 245)
 
--- ==========================================
--- CRIMSON NEON HITMARKER & THIRD PERSON
--- ==========================================
 local hitmarkerLastHealth = {}
-local hitmarkerBusy = false
 local thirdPersonPreviousOffset = nil
 
 -- ==========================================
@@ -618,22 +601,14 @@ local function scanAndMorphKnives(root)
 end
 
 -- ==========================================
--- TRIGGERBOT VARIABLES
+-- TRIGGERBOT & MOVEMENT STATE
 -- ==========================================
 local triggerbotDelay = 0.02
 local triggerbotHeadOnly = false
 local triggerbotMobileAutoFire = true
 local lastTriggerTick = 0
 
--- ==========================================
--- RAGE & ANTI-AIM VARIABLES
--- ==========================================
 local currentSpinAngle = 0
-local antiAimYawMode = "Spin"
-
--- ==========================================
--- MOVEMENT VARIABLES
--- ==========================================
 local isMobileJumpHeld = false
 local lastMoveDirection = Vector3.zero
 
@@ -887,8 +862,112 @@ function restoreLightingState()
 end
 
 -- ==========================================
--- CLEANUP ROUTINES
+-- JUMP CIRCLE RENDER ENGINE (GROUND CONTOUR)
 -- ==========================================
+local jumpRayParams = RaycastParams.new()
+jumpRayParams.FilterType = Enum.RaycastFilterType.Exclude
+jumpRayParams.IgnoreWater = true
+
+local function getGroundY(originPos, char)
+    jumpRayParams.FilterDescendantsInstances = {char, jumpCircleFolder, camera}
+    local cast = Workspace:Raycast(originPos + Vector3.new(0, 2, 0), Vector3.new(0, -15, 0), jumpRayParams)
+    if cast then
+        return cast.Position.Y + 0.04
+    end
+    return originPos.Y - 2.8
+end
+
+function buildJumpRing(segmentCount, radius, thickness, height)
+    local container = Instance.new("Folder")
+    container.Name = "JumpCircleContainer"
+
+    local segments = {}
+    local angleStep = (math.pi * 2) / segmentCount
+    local chordLength = 2 * radius * math.sin(angleStep / 2) + 0.03
+    local lineH = height or 0.03
+    local lineThick = thickness or 0.06
+
+    for i = 1, segmentCount do
+        local angle = (i - 1) * angleStep
+        local part = Instance.new("Part")
+        part.Name = "Seg_" .. i
+        part.Size = Vector3.new(lineThick, lineH, chordLength)
+        part.Anchored = true
+        part.CanCollide = false
+        part.CanQuery = false
+        part.CanTouch = false
+        part.CastShadow = false
+        part.Material = Enum.Material.Neon
+        part.Color = currentTheme.Accent
+        part.Transparency = 0
+        part.Parent = container
+
+        segments[i] = {
+            Part = part,
+            Angle = angle,
+            BaseChord = chordLength,
+            BaseThick = lineThick,
+            BaseHeight = lineH
+        }
+    end
+
+    return container, segments
+end
+
+function updateJumpRingLayout(segments, centerPosition, radius, thicknessMult)
+    local n = #segments
+    local tMult = thicknessMult or 1.0
+    for i, seg in ipairs(segments) do
+        local angle = seg.Angle
+        local nextAngle = angle + (math.pi * 2 / n)
+        local p1 = centerPosition + Vector3.new(math.cos(angle) * radius, 0, math.sin(angle) * radius)
+        local p2 = centerPosition + Vector3.new(math.cos(nextAngle) * radius, 0, math.sin(nextAngle) * radius)
+        local mid = (p1 + p2) * 0.5
+        local length = (p2 - p1).Magnitude + 0.02
+
+        if seg.Part and seg.Part.Parent then
+            seg.Part.Size = Vector3.new(seg.BaseThick * tMult, seg.BaseHeight, length)
+            seg.Part.CFrame = CFrame.lookAt(mid, p2)
+        end
+    end
+end
+
+function spawnJumpRipple(position)
+    if not GestioConfig.jumpCircleEnabled then return end
+    task.spawn(function()
+        local rippleFolder, segments = buildJumpRing(GestioConfig.jumpCircleSegmentCount, GestioConfig.jumpCircleRadius, 0.08, 0.04)
+        rippleFolder.Parent = jumpCircleFolder
+
+        local startT = os.clock()
+        local duration = 0.55
+        local maxR = GestioConfig.jumpCircleRadius * 2.2
+        local col1 = currentTheme.Accent
+        local col2 = Color3.fromRGB(255, 255, 255)
+
+        local rippleConn
+        rippleConn = RunService.RenderStepped:Connect(function()
+            local elapsed = os.clock() - startT
+            local alpha = elapsed / duration
+            if alpha >= 1 or not GestioConfig.jumpCircleEnabled then
+                if rippleConn then rippleConn:Disconnect() end
+                if rippleFolder then rippleFolder:Destroy() end
+                return
+            end
+
+            local eased = 1 - math.pow(1 - alpha, 3)
+            local curR = GestioConfig.jumpCircleRadius + (maxR - GestioConfig.jumpCircleRadius) * eased
+            updateJumpRingLayout(segments, position, curR, 1.0 - (alpha * 0.5))
+
+            for _, seg in ipairs(segments) do
+                if seg.Part and seg.Part.Parent then
+                    seg.Part.Transparency = alpha
+                    seg.Part.Color = col1:Lerp(col2, alpha)
+                end
+            end
+        end)
+    end)
+end
+
 function clearActiveJumpCircle()
     if not activeJumpCircleData then return end
     if activeJumpCircleData.Connections then
@@ -902,6 +981,103 @@ function clearActiveJumpCircle()
     activeJumpCircleData = nil
 end
 
+function initJumpCircleForCharacter(char)
+    clearActiveJumpCircle()
+    if not GestioConfig.jumpCircleEnabled or not char then return end
+
+    local hrp = char:WaitForChild("HumanoidRootPart", 4)
+    local hum = char:WaitForChild("Humanoid", 4)
+    if not hrp or not hum then return end
+
+    local container, segments = buildJumpRing(GestioConfig.jumpCircleSegmentCount, GestioConfig.jumpCircleRadius, 0.06, 0.03)
+    container.Parent = jumpCircleFolder
+
+    local circleData = {
+        Container = container,
+        Segments = segments,
+        HRP = hrp,
+        Humanoid = hum,
+        Connections = {}
+    }
+    activeJumpCircleData = circleData
+
+    local startClock = os.clock()
+    local pulse = 0
+    local pulseDir = 1
+
+    local loopConn = RunService.RenderStepped:Connect(function(dt)
+        if not GestioConfig.jumpCircleEnabled or not hrp or not hrp.Parent or not hum or not hum.Parent or hum.Health <= 0 then
+            clearActiveJumpCircle()
+            return
+        end
+
+        local elapsed = os.clock() - startClock
+
+        pulse = pulse + dt * 3.5 * pulseDir
+        if pulse > 1 then pulse = 1; pulseDir = -1 end
+        if pulse < 0 then pulse = 0; pulseDir = 1 end
+
+        local groundY = getGroundY(hrp.Position, char)
+        local groundCenter = Vector3.new(hrp.Position.X, groundY, hrp.Position.Z)
+
+        local pulseThickMult = 1.0 + (pulse * 0.45)
+        updateJumpRingLayout(segments, groundCenter, GestioConfig.jumpCircleRadius, pulseThickMult)
+
+        if GestioConfig.jumpCircleStyle == "GradientWave" then
+            local n = #segments
+            local spin = (elapsed * 3) % (math.pi * 2)
+            local c1 = currentTheme.Accent
+            local c2 = Color3.fromRGB(0, 230, 255)
+            for i, seg in ipairs(segments) do
+                local ratio = ((i / n) + spin) % 1
+                local wave = (math.sin(ratio * math.pi * 2) + 1) * 0.5
+                if seg.Part and seg.Part.Parent then
+                    seg.Part.Color = c1:Lerp(c2, wave)
+                    seg.Part.Transparency = 0.05 + (pulse * 0.25)
+                end
+            end
+        elseif GestioConfig.jumpCircleStyle == "ChromaPulse" then
+            local hue = (elapsed * 0.35) % 1
+            local col = Color3.fromHSV(hue, 0.85, 1)
+            for _, seg in ipairs(segments) do
+                if seg.Part and seg.Part.Parent then
+                    seg.Part.Color = col
+                    seg.Part.Transparency = 0.1 + (pulse * 0.3)
+                end
+            end
+        elseif GestioConfig.jumpCircleStyle == "StaticNeon" then
+            for _, seg in ipairs(segments) do
+                if seg.Part and seg.Part.Parent then
+                    seg.Part.Color = currentTheme.Accent
+                    seg.Part.Transparency = 0.05 + (pulse * 0.25)
+                end
+            end
+        end
+    end)
+    table.insert(circleData.Connections, loopConn)
+
+    local stateConn = hum.StateChanged:Connect(function(_, newState)
+        if newState == Enum.HumanoidStateType.Jumping then
+            local groundY = getGroundY(hrp.Position, char)
+            local footPos = Vector3.new(hrp.Position.X, groundY, hrp.Position.Z)
+            spawnJumpRipple(footPos)
+        end
+    end)
+    table.insert(circleData.Connections, stateConn)
+end
+
+table.insert(connections, player.CharacterAdded:Connect(initJumpCircleForCharacter))
+table.insert(connections, player.CharacterRemoving:Connect(clearActiveJumpCircle))
+
+if player.Character then
+    task.spawn(function()
+        initJumpCircleForCharacter(player.Character)
+    end)
+end
+
+-- ==========================================
+-- CLEANUP ROUTINES
+-- ==========================================
 function cleanup()
     pcall(function() setThirdPersonEnabled(false) end)
     if player.Character then
@@ -950,8 +1126,6 @@ function cleanup()
         pcall(function() mobileSlideBtn:Destroy() end)
         mobileSlideBtn = nil
     end
-    mobileSlideInputActive = false
-    mobileSlideInput = nil
     isSliding = false
     currentSlideVel = Vector3.zero
     for _, conn in ipairs(mobileJumpConnections) do
@@ -1059,175 +1233,6 @@ wmMetrics.Font = Enum.Font.GothamBold
 
 local fpsCounter = 0
 local lastFpsUpdate = tick()
-
--- ==========================================
--- JUMP CIRCLE RENDER ENGINE
--- ==========================================
-function buildJumpRing(segmentCount, radius, thickness)
-    local container = Instance.new("Folder")
-    container.Name = "JumpCircleContainer"
-
-    local segments = {}
-    local angleStep = (math.pi * 2) / segmentCount
-    local chordLength = 2 * radius * math.sin(angleStep / 2) + 0.15
-
-    for i = 1, segmentCount do
-        local angle = (i - 1) * angleStep
-        local part = Instance.new("Part")
-        part.Name = "Seg_" .. i
-        part.Size = Vector3.new(thickness or 0.25, thickness or 0.25, chordLength)
-        part.Anchored = true
-        part.CanCollide = false
-        part.CanQuery = false
-        part.CanTouch = false
-        part.CastShadow = false
-        part.Material = Enum.Material.Neon
-        part.Color = Color3.fromRGB(255, 255, 255)
-        part.Transparency = 0
-        part.Parent = container
-
-        segments[i] = {
-            Part = part,
-            Angle = angle
-        }
-    end
-
-    return container, segments
-end
-
-function updateJumpRingLayout(segments, centerPosition, radius)
-    local n = #segments
-    for i, seg in ipairs(segments) do
-        local angle = seg.Angle
-        local nextAngle = angle + (math.pi * 2 / n)
-        local p1 = centerPosition + Vector3.new(math.cos(angle) * radius, 0, math.sin(angle) * radius)
-        local p2 = centerPosition + Vector3.new(math.cos(nextAngle) * radius, 0, math.sin(nextAngle) * radius)
-        local mid = (p1 + p2) * 0.5
-
-        if seg.Part and seg.Part.Parent then
-            seg.Part.CFrame = CFrame.lookAt(mid, p2)
-        end
-    end
-end
-
-function spawnJumpRipple(position)
-    if not GestioConfig.jumpCircleEnabled then return end
-    task.spawn(function()
-        local rippleFolder, segments = buildJumpRing(GestioConfig.jumpCircleSegmentCount, GestioConfig.jumpCircleRadius, 0.3)
-        rippleFolder.Parent = jumpCircleFolder
-
-        local startT = os.clock()
-        local duration = 0.5
-        local maxR = GestioConfig.jumpCircleRadius * 2.5
-        local col1 = Color3.fromRGB(0, 240, 255)
-        local col2 = Color3.fromRGB(255, 0, 128)
-
-        local rippleConn
-        rippleConn = RunService.RenderStepped:Connect(function()
-            local elapsed = os.clock() - startT
-            local alpha = elapsed / duration
-            if alpha >= 1 or not GestioConfig.jumpCircleEnabled then
-                if rippleConn then rippleConn:Disconnect() end
-                if rippleFolder then rippleFolder:Destroy() end
-                return
-            end
-
-            local eased = 1 - (1 - alpha) * (1 - alpha)
-            local curR = GestioConfig.jumpCircleRadius + (maxR - GestioConfig.jumpCircleRadius) * eased
-            updateJumpRingLayout(segments, position, curR)
-
-            for i, seg in ipairs(segments) do
-                if seg.Part and seg.Part.Parent then
-                    seg.Part.Transparency = alpha
-                    seg.Part.Color = col1:Lerp(col2, alpha)
-                end
-            end
-        end)
-    end)
-end
-
-function initJumpCircleForCharacter(char)
-    clearActiveJumpCircle()
-    if not GestioConfig.jumpCircleEnabled or not char then return end
-
-    local hrp = char:WaitForChild("HumanoidRootPart", 4)
-    local hum = char:WaitForChild("Humanoid", 4)
-    if not hrp or not hum then return end
-
-    local container, segments = buildJumpRing(GestioConfig.jumpCircleSegmentCount, GestioConfig.jumpCircleRadius, 0.25)
-    container.Parent = jumpCircleFolder
-
-    local circleData = {
-        Container = container,
-        Segments = segments,
-        HRP = hrp,
-        Humanoid = hum,
-        Connections = {}
-    }
-    activeJumpCircleData = circleData
-
-    local startClock = os.clock()
-
-    local loopConn = RunService.RenderStepped:Connect(function(dt)
-        if not GestioConfig.jumpCircleEnabled or not hrp or not hrp.Parent or not hum or not hum.Parent or hum.Health <= 0 then
-            clearActiveJumpCircle()
-            return
-        end
-
-        local elapsed = os.clock() - startClock
-        local footPos = hrp.Position + Vector3.new(0, -2.8, 0)
-        updateJumpRingLayout(segments, footPos, GestioConfig.jumpCircleRadius)
-
-        if GestioConfig.jumpCircleStyle == "GradientWave" then
-            local n = #segments
-            local spin = (elapsed * 3) % (math.pi * 2)
-            local c1 = Color3.fromRGB(210, 45, 55)
-            local c2 = Color3.fromRGB(0, 200, 255)
-            for i, seg in ipairs(segments) do
-                local ratio = ((i / n) + spin) % 1
-                local wave = (math.sin(ratio * math.pi * 2) + 1) * 0.5
-                if seg.Part and seg.Part.Parent then
-                    seg.Part.Color = c1:Lerp(c2, wave)
-                    seg.Part.Transparency = 0.1 + (wave * 0.2)
-                end
-            end
-        elseif GestioConfig.jumpCircleStyle == "ChromaPulse" then
-            local hue = (elapsed * 0.4) % 1
-            local col = Color3.fromHSV(hue, 0.9, 1)
-            for _, seg in ipairs(segments) do
-                if seg.Part and seg.Part.Parent then
-                    seg.Part.Color = col
-                    seg.Part.Transparency = 0.15
-                end
-            end
-        elseif GestioConfig.jumpCircleStyle == "StaticNeon" then
-            for _, seg in ipairs(segments) do
-                if seg.Part and seg.Part.Parent then
-                    seg.Part.Color = currentTheme.Accent
-                    seg.Part.Transparency = 0.1
-                end
-            end
-        end
-    end)
-    table.insert(circleData.Connections, loopConn)
-
-    local stateConn = hum.StateChanged:Connect(function(_, newState)
-        if newState == Enum.HumanoidStateType.Jumping then
-            local footPos = hrp.Position + Vector3.new(0, -2.8, 0)
-            spawnJumpRipple(footPos)
-        end
-    end)
-    table.insert(circleData.Connections, stateConn)
-end
-
-table.insert(connections, player.CharacterAdded:Connect(initJumpCircleForCharacter))
-table.insert(connections, player.CharacterRemoving:Connect(clearActiveJumpCircle))
-
-if player.Character then
-    task.spawn(function()
-        initJumpCircleForCharacter(player.Character)
-    end)
-end
 
 -- ==========================================
 -- GRENADE TRAJECTORY ENGINE
@@ -1446,7 +1451,7 @@ function renderGrenadeOverlays()
 end
 
 -- ==========================================
--- ADVANCED KINEMATIC AIM ENGINE (VECTOR FOV & HYSTERESIS)
+-- ADVANCED KINEMATIC AIM ENGINE
 -- ==========================================
 local visRayParams = RaycastParams.new()
 visRayParams.FilterType = Enum.RaycastFilterType.Exclude
@@ -1651,13 +1656,6 @@ function getOrCreateScreenEsp(plr)
     healthBarFill.BackgroundColor3 = currentTheme.HealthHigh
     healthBarFill.BorderSizePixel = 0
     Instance.new("UICorner", healthBarFill).CornerRadius = UDim.new(0, 2)
-
-    local healthGradient = Instance.new("UIGradient", healthBarFill)
-    healthGradient.Rotation = 90
-    healthGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(180, 180, 180))
-    })
 
     local corners = {}
     for i = 1, 4 do
@@ -1928,7 +1926,7 @@ function renderTacticalOverlay()
 end
 
 -- ==========================================
--- 3D ESP & VIBRANT CHAMS PIPELINE
+-- 3D ESP & CHAMS PIPELINE
 -- ==========================================
 function attachEspToPlayer(plr)
     if plr == player then return end
@@ -1965,15 +1963,6 @@ function attachEspToPlayer(plr)
     hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
     hl.Parent = holder
 
-    local espData = {
-        Holder = holder,
-        HeadDot = dotBillboard,
-        DotFrame = dotFrame,
-        Tracer = tracerLine,
-        Highlight = hl
-    }
-    activeEspHolders[plr] = espData
-
     local function setupCharacter(char)
         if not char then return end
         task.spawn(function()
@@ -1997,6 +1986,14 @@ function attachEspToPlayer(plr)
     end)
     table.insert(connections, charConn)
     table.insert(connections, charRemConn)
+
+    activeEspHolders[plr] = {
+        Holder = holder,
+        HeadDot = dotBillboard,
+        DotFrame = dotFrame,
+        Tracer = tracerLine,
+        Highlight = hl
+    }
 end
 
 for _, v in pairs(Players:GetPlayers()) do attachEspToPlayer(v) end
@@ -2035,7 +2032,6 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         end
     end
 
-    -- Silent Aim: resolve target once per frame
     if GestioConfig.silentAimEnabled then
         if math.random(1, 100) <= GestioConfig.silentAimHitChance then
             silentAimResolved = getSilentAimTarget()
@@ -2046,13 +2042,11 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         silentAimResolved = nil
     end
 
-    -- Recoil Compensation
     if (GestioConfig.rcsEnabled or GestioConfig.noRecoilEnabled) and noRecoil.isShooting then
         local comp = (GestioConfig.noRecoilEnabled and (GestioConfig.recoilStrength * 0.0035) or 0) + (GestioConfig.rcsEnabled and ((GestioConfig.rcsStrength / 100) * 0.004 * GestioConfig.rcsPitchFactor) or 0)
         camera.CFrame = camera.CFrame * CFrame.Angles(-comp, 0, 0)
     end
 
-    -- Advanced Kinematic Aim Execution Pipeline
     if GestioConfig.aimbotEnabled then
         local target = getClosestTarget()
         if target and target.Part and target.Part.Parent then
@@ -2066,7 +2060,6 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
                 local responsiveness = math.clamp(GestioConfig.aimbotSpeed, 1, 100)
                 local damping = 1 - math.clamp(GestioConfig.aimbotSmoothness, 0, 0.95)
                 local effectiveFactor = 1 - math.exp(-responsiveness * damping * dt)
-                
                 camera.CFrame = currentCF:Lerp(desiredCF, effectiveFactor)
             end
         end
@@ -2074,7 +2067,6 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         currentAimTarget = nil
     end
 
-    -- Continuous Morph Scan
     if GestioConfig.skinChangerEnabled then
         skinScanAccumulator += dt
         if skinScanAccumulator >= 0.30 then
@@ -2094,7 +2086,6 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     renderTacticalOverlay()
     renderGrenadeOverlays()
 
-    -- 3D Chams Rendering
     for plr, data in pairs(activeEspHolders) do
         local char = plr.Character
         local hum = char and char:FindFirstChildOfClass("Humanoid")
@@ -2116,7 +2107,6 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
                     if data.Highlight.Adornee ~= char then
                         data.Highlight.Adornee = char
                     end
-                    
                     data.Highlight.FillTransparency = GestioConfig.chamsFillTransparency
                     data.Highlight.OutlineTransparency = GestioConfig.chamsOutlineTransparency
                     data.Highlight.OutlineColor = chamsOutlineColor
@@ -2124,11 +2114,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
                     if ally then
                         data.Highlight.FillColor = chamsColorAlly
                     else
-                        if GestioConfig.chamsOcclusion then
-                            data.Highlight.FillColor = isVisible and chamsColorVisible or chamsColorHidden
-                        else
-                            data.Highlight.FillColor = chamsColorVisible
-                        end
+                        data.Highlight.FillColor = GestioConfig.chamsOcclusion and (isVisible and chamsColorVisible or chamsColorHidden) or chamsColorVisible
                     end
                 end
             else
@@ -2172,12 +2158,8 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
             data.HeadDot.Enabled = false
             data.Highlight.Enabled = false
             data.Tracer.Visible = false
-            if data.Highlight.Adornee then
-                data.Highlight.Adornee = nil
-            end
-            if data.HeadDot.Adornee then
-                data.HeadDot.Adornee = nil
-            end
+            if data.Highlight.Adornee then data.Highlight.Adornee = nil end
+            if data.HeadDot.Adornee then data.HeadDot.Adornee = nil end
         end
     end
 
@@ -2236,7 +2218,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
 end))
 
 -- ==========================================
--- RAYCAST GROUND CHECK
+-- GROUND CHECK & MOBILE INPUT HOOKS
 -- ==========================================
 local groundRayParams = RaycastParams.new()
 groundRayParams.FilterType = Enum.RaycastFilterType.Exclude
@@ -2246,14 +2228,9 @@ function isPlayerGrounded(char, hrp)
     groundRayParams.FilterDescendantsInstances = {char, camera}
     local origin = hrp.Position
     local direction = Vector3.new(0, -3.2, 0)
-    
-    local hit = Workspace:Raycast(origin, direction, groundRayParams)
-    return hit ~= nil
+    return Workspace:Raycast(origin, direction, groundRayParams) ~= nil
 end
 
--- ==========================================
--- MOBILE INPUT TOUCH HOOK & SLIDE BUTTON
--- ==========================================
 function captureDefaultHipHeight(char)
     local hum = char and char:FindFirstChildOfClass("Humanoid")
     if hum and hum.Parent then
@@ -2285,7 +2262,6 @@ end
 
 function updateMobileSlideIndicator()
     if not mobileSlideBtn then return end
-
     local stroke = mobileSlideBtn:FindFirstChild("GestioSlideStroke")
     if mobileSlideToggleActive then
         mobileSlideBtn.BackgroundColor3 = currentTheme.Accent
@@ -2309,7 +2285,6 @@ end
 function updateMobileSlideVisibility()
     if mobileSlideBtn then
         mobileSlideBtn.Visible = GestioConfig.slideEnabled and UserInputService.TouchEnabled
-
         if not GestioConfig.slideEnabled then
             mobileSlideToggleActive = false
             isSliding = false
@@ -2321,20 +2296,12 @@ end
 
 function triggerMobileSlideStart()
     if not GestioConfig.slideEnabled then return end
-
     local char = player.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
     local hum = char and char:FindFirstChildOfClass("Humanoid")
+    if not (hrp and hum and isEntityAlive(char, hum) and isPlayerGrounded(char, hrp)) then return false end
 
-    if not (hrp and hum and isEntityAlive(char, hum) and isPlayerGrounded(char, hrp)) then
-        return false
-    end
-
-    local moveDir = hum.MoveDirection
-    if moveDir.Magnitude <= 0.1 then
-        moveDir = hrp.CFrame.LookVector
-    end
-
+    local moveDir = hum.MoveDirection.Magnitude > 0.1 and hum.MoveDirection or hrp.CFrame.LookVector
     currentSlideVel = moveDir * (16 * GestioConfig.slideSpeedBoost)
     isSliding = true
     hum.HipHeight = defaultHipHeight * 0.4
@@ -2344,17 +2311,11 @@ end
 function triggerMobileSlideEnd()
     isSliding = false
     currentSlideVel = Vector3.zero
-
-    local char = player.Character
-    local hum = char and char:FindFirstChildOfClass("Humanoid")
-    if hum then
-        hum.HipHeight = defaultHipHeightCaptured and defaultHipHeight or hum.HipHeight
-    end
+    restoreDefaultHipHeight()
 end
 
 function toggleMobileSlide()
     if not GestioConfig.slideEnabled then return end
-
     if mobileSlideToggleActive then
         mobileSlideToggleActive = false
         triggerMobileSlideEnd()
@@ -2363,7 +2324,6 @@ function toggleMobileSlide()
             mobileSlideToggleActive = true
         end
     end
-
     updateMobileSlideIndicator()
 end
 
@@ -2389,15 +2349,11 @@ function createMobileSlideButton()
     mobileSlideBtn.AutoButtonColor = false
     mobileSlideBtn.Parent = mainContainer
 
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(1, 0)
-    corner.Parent = mobileSlideBtn
-
-    local stroke = Instance.new("UIStroke")
+    Instance.new("UICorner", mobileSlideBtn).CornerRadius = UDim.new(1, 0)
+    local stroke = Instance.new("UIStroke", mobileSlideBtn)
     stroke.Name = "GestioSlideStroke"
     stroke.Color = currentTheme.Border
     stroke.Thickness = 1.2
-    stroke.Parent = mobileSlideBtn
 
     local tapConn = mobileSlideBtn.Activated:Connect(function()
         if mobileSlideDragging then
@@ -2408,8 +2364,7 @@ function createMobileSlideButton()
     end)
     table.insert(connections, tapConn)
 
-    local dragStart = nil
-    local buttonStart = nil
+    local dragStart, buttonStart = nil, nil
     local dragConn = mobileSlideBtn.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.Touch then
             dragStart = input.Position
@@ -2420,9 +2375,7 @@ function createMobileSlideButton()
     table.insert(connections, dragConn)
 
     local changedConn = mobileSlideBtn.InputChanged:Connect(function(input)
-        if input.UserInputType ~= Enum.UserInputType.Touch then return end
-        if not dragStart or not buttonStart then return end
-
+        if input.UserInputType ~= Enum.UserInputType.Touch or not dragStart or not buttonStart then return end
         local delta = input.Position - dragStart
         if math.abs(delta.X) > 10 or math.abs(delta.Y) > 10 then
             mobileSlideDragging = true
@@ -2455,9 +2408,7 @@ function hookMobileJumpButton()
             return
         end
 
-        for _, conn in ipairs(mobileJumpConnections) do
-            pcall(function() conn:Disconnect() end)
-        end
+        for _, conn in ipairs(mobileJumpConnections) do pcall(function() conn:Disconnect() end) end
         mobileJumpConnections = {}
         mobileJumpHookedButton = jumpBtn
 
@@ -2487,30 +2438,23 @@ hookMobileJumpButton()
 function hookCharacterWeapons(char)
     if not char then return end
     char.ChildAdded:Connect(function(child)
-        if child:IsA("Tool") then
-            scanAndMorphKnives(child)
-        end
+        if child:IsA("Tool") then scanAndMorphKnives(child) end
     end)
     for _, tool in ipairs(char:GetChildren()) do
-        if tool:IsA("Tool") then
-            scanAndMorphKnives(tool)
-        end
+        if tool:IsA("Tool") then scanAndMorphKnives(tool) end
     end
 end
 
 table.insert(connections, player.CharacterAdded:Connect(function(char)
     thirdPersonPreviousOffset = nil
     task.defer(function()
-        if GestioConfig.thirdPersonEnabled then
-            applyThirdPerson()
-        end
+        if GestioConfig.thirdPersonEnabled then applyThirdPerson() end
     end)
     mobileSlideToggleActive = false
     mobileSlideDragging = false
     isSliding = false
     currentSlideVel = Vector3.zero
     mobileSlideInputActive = false
-    mobileSlideInput = nil
     defaultHipHeightCaptured = false
     local hum = char:WaitForChild("Humanoid", 5)
     if hum then
@@ -2527,16 +2471,11 @@ if player.Character then
     hookCharacterWeapons(player.Character)
 end
 
-local jumpReqConn = UserInputService.JumpRequest:Connect(function()
-    isMobileJumpHeld = true
-end)
+local jumpReqConn = UserInputService.JumpRequest:Connect(function() isMobileJumpHeld = true end)
 table.insert(connections, jumpReqConn)
 
-local inBeganConn = UserInputService.InputBegan:Connect(function(input, processed)
-    if input.KeyCode == Enum.KeyCode.Space then
-        isMobileJumpHeld = true
-    end
-
+local inBeganConn = UserInputService.InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.Space then isMobileJumpHeld = true end
     if GestioConfig.slideEnabled and (input.KeyCode == Enum.KeyCode.C or input.KeyCode == Enum.KeyCode.LeftControl) then
         local char = player.Character
         local hrp = char and char:FindFirstChild("HumanoidRootPart")
@@ -2552,10 +2491,8 @@ local inBeganConn = UserInputService.InputBegan:Connect(function(input, processe
 end)
 table.insert(connections, inBeganConn)
 
-local inEndedConn = UserInputService.InputEnded:Connect(function(input, processed)
-    if input.KeyCode == Enum.KeyCode.Space then
-        isMobileJumpHeld = false
-    end
+local inEndedConn = UserInputService.InputEnded:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.Space then isMobileJumpHeld = false end
     if input.KeyCode == Enum.KeyCode.C or input.KeyCode == Enum.KeyCode.LeftControl then
         isSliding = false
         currentSlideVel = Vector3.zero
@@ -2565,7 +2502,7 @@ end)
 table.insert(connections, inEndedConn)
 
 -- ==========================================
--- HITMARKER MONITOR
+-- HITMARKER & PHYSICS HEARTBEAT
 -- ==========================================
 table.insert(connections, RunService.Heartbeat:Connect(function()
     if not GestioConfig.hitmarkerEnabled then
@@ -2592,9 +2529,6 @@ table.insert(connections, RunService.Heartbeat:Connect(function()
     end
 end))
 
--- ==========================================
--- UNIFIED PHYSICS & KINEMATICS HEARTBEAT
--- ==========================================
 table.insert(connections, RunService.Heartbeat:Connect(function(dt)
     local char = player.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
@@ -2602,34 +2536,21 @@ table.insert(connections, RunService.Heartbeat:Connect(function(dt)
     if not hrp or not hum or not isEntityAlive(char, hum) then return end
 
     local currentMove = hum.MoveDirection
-    if currentMove.Magnitude > 0.05 then
-        lastMoveDirection = currentMove
-    end
+    if currentMove.Magnitude > 0.05 then lastMoveDirection = currentMove end
 
     local currentVel = hrp.AssemblyLinearVelocity
     local finalVelocity = nil
     local activeMode = "Normal"
 
-    -- 1. FLIGHT
     if GestioConfig.flightEnabled then
         activeMode = "Flight"
-        local camLook = camera.CFrame.LookVector
-        finalVelocity = camLook * GestioConfig.flightSpeed
-    -- 2. SLIDE
+        finalVelocity = camera.CFrame.LookVector * GestioConfig.flightSpeed
     elseif GestioConfig.slideEnabled and isSliding then
-        local grounded = isPlayerGrounded(char, hrp)
-        if grounded and currentSlideVel.Magnitude > GestioConfig.slideMinSpeed then
+        if isPlayerGrounded(char, hrp) and currentSlideVel.Magnitude > GestioConfig.slideMinSpeed then
             activeMode = "Slide"
-            local frictionFactor = math.pow(
-                math.clamp(GestioConfig.slideFriction, 0, 1),
-                math.max(dt, 0) * 60
-            )
+            local frictionFactor = math.pow(math.clamp(GestioConfig.slideFriction, 0, 1), math.max(dt, 0) * 60)
             currentSlideVel = currentSlideVel * frictionFactor
-            finalVelocity = Vector3.new(
-                currentSlideVel.X,
-                currentVel.Y,
-                currentSlideVel.Z
-            )
+            finalVelocity = Vector3.new(currentSlideVel.X, currentVel.Y, currentSlideVel.Z)
         else
             isSliding = false
             currentSlideVel = Vector3.zero
@@ -2637,7 +2558,6 @@ table.insert(connections, RunService.Heartbeat:Connect(function(dt)
         end
     end
 
-    -- 3. BHOP + AUTO STRAFE
     if activeMode == "Normal" and GestioConfig.bunnyHopEnabled then
         local grounded = isPlayerGrounded(char, hrp) or hum.FloorMaterial ~= Enum.Material.Air
         local shouldJump = GestioConfig.bhopAutoJump or isMobileJumpHeld or hum.Jump
@@ -2650,28 +2570,17 @@ table.insert(connections, RunService.Heartbeat:Connect(function(dt)
             activeMode = "AutoStrafe"
             local targetSpeed = 16 * GestioConfig.bhopSpeedBoost
             local targetVel = currentMove * targetSpeed
-            finalVelocity = Vector3.new(
-                targetVel.X,
-                currentVel.Y,
-                targetVel.Z
-            )
+            finalVelocity = Vector3.new(targetVel.X, currentVel.Y, targetVel.Z)
         end
     end
 
-    -- 4. SPEED
     if activeMode == "Normal" and GestioConfig.speedEnabled and hum.MoveDirection.Magnitude > 0 then
         activeMode = "Speed"
         local targetVel = hum.MoveDirection * (16 * GestioConfig.walkMultiplier)
-        finalVelocity = Vector3.new(
-            targetVel.X,
-            currentVel.Y,
-            targetVel.Z
-        )
+        finalVelocity = Vector3.new(targetVel.X, currentVel.Y, targetVel.Z)
     end
 
-    if finalVelocity then
-        hrp.AssemblyLinearVelocity = finalVelocity
-    end
+    if finalVelocity then hrp.AssemblyLinearVelocity = finalVelocity end
 end))
 
 -- ==========================================
@@ -2698,7 +2607,6 @@ end
 function buildGestioUI()
     setAntiAfkEnabled(GestioConfig.antiAfkEnabled)
 
-    -- Floating Launcher
     local toggleGui = Instance.new("ScreenGui")
     toggleGui.Name = "GestioToggleGui"
     toggleGui.ResetOnSpawn = false
@@ -2721,7 +2629,6 @@ function buildGestioUI()
     local openStroke = Instance.new("UIStroke", openBtn)
     openStroke.Color = currentTheme.Border
 
-    -- Master GUI
     local screenGui = Instance.new("ScreenGui")
     screenGui.Name = "GestioScreenGui"
     screenGui.ResetOnSpawn = false
@@ -2958,7 +2865,6 @@ function buildGestioUI()
     bindTouch(micsBtn, function() switch("MICS") end)
     bindTouch(setsBtn, function() switch("SETS") end)
 
-    -- Inspector Panel
     local inspectorPanel = Instance.new("Frame", masterFrame)
     inspectorPanel.Size = UDim2.new(0.40, 0, 1, 0)
     inspectorPanel.BackgroundColor3 = currentTheme.Background
@@ -3343,7 +3249,7 @@ function buildGestioUI()
                 GestioConfig.jumpCircleRadius = v
                 if player.Character then initJumpCircleForCharacter(player.Character) end
             end)
-            addInspectorSlider(38, "Segments", 12, 48, GestioConfig.jumpCircleSegmentCount, false, function(v)
+            addInspectorSlider(38, "Segments", 12, 64, GestioConfig.jumpCircleSegmentCount, false, function(v)
                 GestioConfig.jumpCircleSegmentCount = v
                 if player.Character then initJumpCircleForCharacter(player.Character) end
             end)
@@ -3398,7 +3304,6 @@ function buildGestioUI()
         end
     end
 
-    -- Card Creator with Visual Sync
     local function createModuleCard(parentGrid, title, configKey, onToggle, hasSettings)
         local card = Instance.new("Frame", parentGrid)
         card.BackgroundColor3 = currentTheme.CardBg
@@ -3468,10 +3373,7 @@ function buildGestioUI()
         return card
     end
 
-    -- ==========================================
-    -- PAGE DEFINITIONS
-    -- ==========================================
-    -- COMBAT
+    -- PAGES SETUP
     local cGrid = makeCategorySection(cPage, "Aim Assistants", 1, 4)
     createModuleCard(cGrid, "Tracking", "aimbotEnabled", nil, true)
     createModuleCard(cGrid, "Silent Aim", "silentAimEnabled", nil, true)
@@ -3482,14 +3384,12 @@ function buildGestioUI()
     createModuleCard(cGrid2, "No Recoil", "noRecoilEnabled", nil, true)
     createModuleCard(cGrid2, "Anti-Aim", "antiAimEnabled", nil, true)
 
-    -- MOVEMENT
     local mGrid = makeCategorySection(mPage, "Locomotion", 1, 4)
     createModuleCard(mGrid, "Bhop Engine", "bunnyHopEnabled", nil, true)
     createModuleCard(mGrid, "Slide", "slideEnabled", function() updateMobileSlideVisibility() end, true)
     createModuleCard(mGrid, "Flight", "flightEnabled", nil, false)
     createModuleCard(mGrid, "Speed Boost", "speedEnabled", nil, false)
 
-    -- ESP
     local eGrid = makeCategorySection(ePage, "Visual Overlays", 1, 4)
     createModuleCard(eGrid, "Chams", "chamsEnabled", nil, true)
     createModuleCard(eGrid, "Nametags", "nametagsEnabled", nil, true)
@@ -3507,7 +3407,6 @@ function buildGestioUI()
         end
     end, true)
 
-    -- SKINS
     local sGrid = makeCategorySection(sPage, "Cosmetic Engine", 1, 1)
     createModuleCard(sGrid, "Knife Changer", "skinChangerEnabled", function(v)
         if v then
@@ -3518,7 +3417,6 @@ function buildGestioUI()
         end
     end, true)
 
-    -- ENVIRONMENT
     local envGrid = makeCategorySection(envPage, "Atmosphere", 1, 4)
     createModuleCard(envGrid, "World Changer", "nightModeEnabled", function(v)
         if v then applyNightPreset(GestioConfig.nightPreset) else restoreLightingState() end
@@ -3531,15 +3429,12 @@ function buildGestioUI()
     end, false)
     createModuleCard(envGrid, "Anti Flash", "antiFlashEnabled", nil, false)
 
-    -- MISC
     local micsGrid = makeCategorySection(micsPage, "Utilities", 1, 3)
     createModuleCard(micsGrid, "Hitmarker", "hitmarkerEnabled", nil, true)
     createModuleCard(micsGrid, "Third Person", "thirdPersonEnabled", function(v) setThirdPersonEnabled(v) end, true)
     createModuleCard(micsGrid, "Anti AFK", "antiAfkEnabled", function(v) setAntiAfkEnabled(v) end, false)
 
-    -- ==========================================
-    -- SETTINGS & IN-GAME CONFIG MANAGER
-    -- ==========================================
+    -- CONFIG & THEMES
     local cfgFolder = "GestioConfigs"
     pcall(function()
         if makefolder and not isfolder(cfgFolder) then
@@ -3579,7 +3474,6 @@ function buildGestioUI()
         refreshHitmarkerTheme()
     end)
 
-    -- Configs UI Layout
     local cfgSection = Instance.new("Frame", setsPage)
     cfgSection.Size = UDim2.new(1, 0, 0, 210)
     cfgSection.BackgroundTransparency = 1
@@ -3688,8 +3582,7 @@ function buildGestioUI()
     end
 
     local function saveConfig(name)
-        if name == "" then return end
-        if not writefile then return end
+        if name == "" or not writefile then return end
         local ok, data = pcall(function() return HttpService:JSONEncode(GestioConfig) end)
         if ok then
             writefile(cfgFolder .. "/" .. name .. ".json", data)
@@ -3698,17 +3591,14 @@ function buildGestioUI()
     end
 
     local function loadConfig(name)
-        if name == "" then return end
-        if not readfile then return end
+        if name == "" or not readfile then return end
         local ok, content = pcall(function() return readfile(cfgFolder .. "/" .. name .. ".json") end)
         if not ok then return end
         local ok2, data = pcall(function() return HttpService:JSONDecode(content) end)
         if ok2 and type(data) == "table" then
             for k, v in pairs(data) do
                 GestioConfig[k] = v
-                if UI_Bind_Registry[k] then
-                    UI_Bind_Registry[k](v)
-                end
+                if UI_Bind_Registry[k] then UI_Bind_Registry[k](v) end
             end
             updateMobileSlideVisibility()
             refreshThirdPerson()
@@ -3721,8 +3611,7 @@ function buildGestioUI()
     end
 
     local function deleteConfig(name)
-        if name == "" then return end
-        if not delfile then return end
+        if name == "" or not delfile then return end
         pcall(function() delfile(cfgFolder .. "/" .. name .. ".json") end)
         refreshConfigList()
     end
