@@ -157,21 +157,26 @@ end
 local camera = Workspace.CurrentCamera or Workspace:FindFirstChildOfClass("Camera")
 
 function getSafeGui()
-    local success, result = pcall(function()
-        if gethui then
+    -- Prefer PlayerGui: it is the most reliable parent during normal client startup.
+    if player then
+        local pg = player:FindFirstChildOfClass("PlayerGui")
+        if pg then return pg end
+        local ok, waited = pcall(function()
+            return player:WaitForChild("PlayerGui", 8)
+        end)
+        if ok and waited then return waited end
+    end
+
+    -- Executor-only GUI parents are fallback options, not the primary target.
+    local ok, result = pcall(function()
+        if type(gethui) == "function" then
             return gethui()
         end
     end)
-    if success and result then return result end
-    
-    success, result = pcall(function()
-        return CoreGui
-    end)
-    if success and result then return result end
-    
-    if player then
-        return player:WaitForChild("PlayerGui", 5) or player:FindFirstChildOfClass("PlayerGui")
-    end
+    if ok and result then return result end
+
+    ok, result = pcall(function() return CoreGui end)
+    if ok and result then return result end
     return nil
 end
 
@@ -4028,7 +4033,10 @@ local function safeBootStep(label, fn)
 end
 
 -- Keep optional hooks from preventing the menu from appearing.
-safeBootStep("UI bootstrap", buildGestioUI)
+local __uiBootOk = safeBootStep("UI bootstrap", buildGestioUI)
+if not __uiBootOk then
+    warn("[Gestio] UI bootstrap failed. TargetGui=" .. tostring(targetGui) .. "; Player=" .. tostring(player))
+end
 
 task.defer(function()
     safeBootStep("SilentAim hook bootstrap", setupSilentAimHooks)
