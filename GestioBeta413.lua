@@ -4017,8 +4017,32 @@ function buildGestioUI()
 end
 
 -- ==========================================
--- ENGINE LAUNCH
+-- ENGINE LAUNCH / SAFE BOOTSTRAP
 -- ==========================================
-setupSilentAimHooks()
-setupBloxStrikeShootHook()
-buildGestioUI()
+local function safeBootStep(label, fn)
+    local ok, err = xpcall(fn, function(e)
+        return debug and debug.traceback and debug.traceback(tostring(e), 2) or tostring(e)
+    end)
+    if not ok then warn("[Gestio] " .. label .. " failed: " .. tostring(err)) end
+    return ok
+end
+
+-- Keep optional hooks from preventing the menu from appearing.
+safeBootStep("UI bootstrap", buildGestioUI)
+
+task.defer(function()
+    safeBootStep("SilentAim hook bootstrap", setupSilentAimHooks)
+end)
+
+-- InventoryController can load after injection; retry in a bounded loop.
+task.spawn(function()
+    local deadline = os.clock() + 15
+    repeat
+        safeBootStep("Shoot hook bootstrap", setupBloxStrikeShootHook)
+        if bloxStrikeShootHooked then break end
+        task.wait(0.25)
+    until os.clock() >= deadline
+    if not bloxStrikeShootHooked then
+        warn("[Gestio] InventoryController.ShootWeapon was not found; shoot hook disabled.")
+    end
+end)
