@@ -43,7 +43,7 @@ local GestioConfig = {
     aimFov = 160,
     aimbotSpeed = 35.0,
     aimbotSmoothness = 0.15,
-    predictionFactor = 0.135,
+    predictionFactor = 0.165,
     bodyAimOnly = false,
     snapAimMode = false,
     showFovCircle = true,
@@ -54,12 +54,17 @@ local GestioConfig = {
     silentAimTeamCheck = true,
     silentAimVisibleCheck = false,
     silentAimAimHead = true,
+    -- Movement-aware prediction is applied by the silent-aim resolver.
     showSilentFovCircle = true,
 
     chamsFillTransparency = 0.45,
     chamsOutlineTransparency = 0.10,
     chamsTeamCheck = true,
     chamsShowTeammates = false,
+    nametagTeamCheck = true,
+    boxEspTeamCheck = true,
+    tracersTeamCheck = true,
+    headDotTeamCheck = true,
     chamsOcclusion = true,
 
     recoilStrength = 0.85,
@@ -336,6 +341,41 @@ function isTargetEnemy(plr, char)
     return not isAlly(plr)
 end
 
+-- Independent Team Check for each visual ESP module.
+-- This avoids one ESP module's setting affecting another.
+function isEspModuleAllowed(plr, moduleKey)
+    if not plr or plr == player then return false end
+
+    local checks = {
+        Chams = GestioConfig.chamsTeamCheck,
+        Nametags = GestioConfig.nametagTeamCheck,
+        Box = GestioConfig.boxEspTeamCheck,
+        Tracers = GestioConfig.tracersTeamCheck,
+        HeadDot = GestioConfig.headDotTeamCheck,
+    }
+
+    if checks[moduleKey] == false then
+        return true
+    end
+
+    if plr.Team and player.Team then
+        return plr.Team ~= player.Team
+    end
+
+    local pt = plr:GetAttribute("Team")
+    local mt = player:GetAttribute("Team")
+    if pt ~= nil and mt ~= nil then
+        return pt ~= mt
+    end
+
+    if plr.TeamColor and player.TeamColor then
+        return plr.TeamColor ~= player.TeamColor
+    end
+
+    -- If the game exposes no team information, keep the ESP visible.
+    return true
+end
+
 function getTargetHitbox(char)
     if not char then return nil end
     if GestioConfig.bodyAimOnly then
@@ -421,7 +461,12 @@ local function getSilentAimTarget()
             or char:FindFirstChild("Torso")
         if not part or not part:IsA("BasePart") then continue end
         if GestioConfig.silentAimVisibleCheck and not isVisibleThroughWalls(part, char) then continue end
-        local dir = (part.Position - camPos).Unit
+
+        -- Movement-aware target selection: score the predicted position rather
+        -- than the current head position. This keeps the selected target stable
+        -- while the target is strafing/jumping.
+        local predictedPos = getKinematicAimPosition(part)
+        local dir = (predictedPos - camPos).Unit
         local angle = math.acos(math.clamp(camLook:Dot(dir), -1, 1))
         if angle < bestAngle then
             bestAngle = angle
@@ -436,10 +481,30 @@ local function silentAimCamPosAim()
     local cam = Workspace.CurrentCamera or camera
     if not cam then return nil end
     local camPos = cam.CFrame.Position
-    local aimPos = silentAimResolved.Position
-    if GestioConfig.predictionEnabled and silentAimResolved.AssemblyLinearVelocity then
-        aimPos = aimPos + silentAimResolved.AssemblyLinearVelocity * GestioConfig.predictionFactor
+    local aimPos = getKinematicAimPosition(silentAimResolved)
+
+    -- Compensate for the shooter's own horizontal movement. Silent-aim
+    -- ray correction otherwise uses a world-space target lead and can miss
+    -- during strafing/jumping because the local camera is moving at the same time.
+    local myChar = player.Character
+    local myHrp = myChar and myChar:FindFirstChild("HumanoidRootPart")
+    local myVel = (myHrp and myHrp.AssemblyLinearVelocity) or Vector3.zero
+
+    if GestioConfig.predictionEnabled then
+        local horizontalMyVel = Vector3.new(myVel.X, 0, myVel.Z)
+        local horizontalTargetVel = Vector3.new(
+            silentAimResolved.AssemblyLinearVelocity.X,
+            0,
+            silentAimResolved.AssemblyLinearVelocity.Z
+        )
+
+        -- Keep vertical prediction from getKinematicAimPosition, but make
+        -- lateral lead relative to the shooter's movement.
+        local relativeLateral = horizontalTargetVel - horizontalMyVel
+        local lateralLead = relativeLateral * math.max(0, GestioConfig.predictionFactor * 0.35)
+        aimPos = aimPos + lateralLead
     end
+
     return camPos, aimPos
 end
 
@@ -1766,10 +1831,13 @@ function renderTacticalOverlay()
         local rootPart = char and (char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso"))
         local head = char and char:FindFirstChild("Head")
 
-        local isEnemy = isTargetEnemy(plr, char)
         local isAlive = isEntityAlive(char, hum)
+        local showNametag = GestioConfig.nametagsEnabled and isEspModuleAllowed(plr, "Nametags")
+        local showBox = GestioConfig.boxEspEnabled and isEspModuleAllowed(plr, "Box")
+        local showCornerBox = GestioConfig.cornerBoxEnabled and isEspModuleAllowed(plr, "Box")
+        local hasTacticalEsp = showNametag or showBox or showCornerBox
 
-        if isEnemy and isAlive and rootPart and (GestioConfig.nametagsEnabled or GestioConfig.boxEspEnabled or GestioConfig.cornerBoxEnabled) then
+        if isAlive and rootPart and hasTacticalEsp then
             local dist = (rootPart.Position - camPos).Magnitude
 
             if dist <= GestioConfig.espMaxDist then
@@ -1876,7 +1944,7 @@ function renderTacticalOverlay()
                         esp.HealthBarBg.Visible = false
                     end
 
-                    if GestioConfig.nametagsEnabled then
+                    if showNametag then
                         esp.TagCard.BackgroundTransparency = GestioConfig.tagTransparency
                         esp.TagCardStroke.Color = currentTheme.Border
                         esp.TagLabel.TextSize = GestioConfig.espTextSize
@@ -2150,9 +2218,9 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
                     data.HeadDot.Adornee = head
                 end
                 data.DotFrame.BackgroundColor3 = activeAccent
-                data.HeadDot.Enabled = GestioConfig.headDotEnabled
+                data.HeadDot.Enabled = GestioConfig.headDotEnabled and isEspModuleAllowed(plr, "HeadDot")
 
-                if GestioConfig.tracersEnabled and rootPart then
+                if GestioConfig.tracersEnabled and isEspModuleAllowed(plr, "Tracers") and rootPart then
                     local scrPos, onScreen = camera:WorldToViewportPoint(rootPart.Position)
                     if onScreen and scrPos.Z > 0 then
                         local origin = Vector2.new(camera.ViewportSize.X * 0.5, camera.ViewportSize.Y)
@@ -3297,11 +3365,13 @@ function buildGestioUI()
             addInspectorSlider(6, "Max Distance", 100, 5000, GestioConfig.espMaxDist, false, function(v) GestioConfig.espMaxDist = v end)
             addInspectorSlider(38, "Text Size", 8, 20, GestioConfig.espTextSize, false, function(v) GestioConfig.espTextSize = v end)
             addInspectorSlider(70, "Transparency", 0.0, 0.9, GestioConfig.tagTransparency, true, function(v) GestioConfig.tagTransparency = v end)
+            addInspectorToggle(102, "Team Check", GestioConfig.nametagTeamCheck, function(v) GestioConfig.nametagTeamCheck = v end)
             addInspectorToggle(108, "Show Distance", GestioConfig.espShowDistance, function(v) GestioConfig.espShowDistance = v end)
             addInspectorToggle(134, "Show Health", GestioConfig.espShowHealth, function(v) GestioConfig.espShowHealth = v end)
             addInspectorToggle(160, "Show Weapon", GestioConfig.tagShowWeapon, function(v) GestioConfig.tagShowWeapon = v end)
         elseif moduleName == "Box Overlay" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 200)
+            addInspectorToggle(76, "Team Check", GestioConfig.boxEspTeamCheck, function(v) GestioConfig.boxEspTeamCheck = v end)
             addInspectorSlider(6, "Max Distance", 100, 5000, GestioConfig.espMaxDist, false, function(v) GestioConfig.espMaxDist = v end)
             addInspectorSlider(38, "Thickness", 1.0, 3.0, GestioConfig.boxThickness, true, function(v) GestioConfig.boxThickness = v end)
             addInspectorToggle(76, "Corner Box", GestioConfig.cornerBoxEnabled, function(v) GestioConfig.cornerBoxEnabled = v end)
