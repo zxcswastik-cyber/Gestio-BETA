@@ -480,30 +480,11 @@ local function silentAimCamPosAim()
     if not (GestioConfig.silentAimEnabled and silentAimResolved) then return nil end
     local cam = Workspace.CurrentCamera or camera
     if not cam then return nil end
+
     local camPos = cam.CFrame.Position
+    -- Prediction and shooter-movement compensation are handled centrally
+    -- by getKinematicAimPosition. Do not apply a second lateral lead here.
     local aimPos = getKinematicAimPosition(silentAimResolved)
-
-    -- Compensate for the shooter's own horizontal movement. Silent-aim
-    -- ray correction otherwise uses a world-space target lead and can miss
-    -- during strafing/jumping because the local camera is moving at the same time.
-    local myChar = player.Character
-    local myHrp = myChar and myChar:FindFirstChild("HumanoidRootPart")
-    local myVel = (myHrp and myHrp.AssemblyLinearVelocity) or Vector3.zero
-
-    if GestioConfig.predictionEnabled then
-        local horizontalMyVel = Vector3.new(myVel.X, 0, myVel.Z)
-        local horizontalTargetVel = Vector3.new(
-            silentAimResolved.AssemblyLinearVelocity.X,
-            0,
-            silentAimResolved.AssemblyLinearVelocity.Z
-        )
-
-        -- Keep vertical prediction from getKinematicAimPosition, but make
-        -- lateral lead relative to the shooter's movement.
-        local relativeLateral = horizontalTargetVel - horizontalMyVel
-        local lateralLead = relativeLateral * math.max(0, GestioConfig.predictionFactor * 0.35)
-        aimPos = aimPos + lateralLead
-    end
 
     return camPos, aimPos
 end
@@ -1559,6 +1540,13 @@ local function getPingLatency()
     return ping
 end
 
+-- HumanoidRootPart reports reliable character velocity; welded body parts
+-- (especially Head) can report zero or stale AssemblyLinearVelocity.
+local function getRootPart(part)
+    local model = part and part:FindFirstAncestorOfClass("Model")
+    return model and model:FindFirstChild("HumanoidRootPart")
+end
+
 function getKinematicAimPosition(targetPart)
     local rawPos = targetPart.Position
     if not GestioConfig.predictionEnabled then
@@ -1567,13 +1555,22 @@ function getKinematicAimPosition(targetPart)
 
     local ping = getPingLatency()
     local predDelta = (GestioConfig.predictionFactor * 0.5) + ping
-    local targetVel = targetPart.AssemblyLinearVelocity or Vector3.zero
+
+    local targetHrp = getRootPart(targetPart)
+    local targetVel = (targetHrp and targetHrp.AssemblyLinearVelocity) or Vector3.zero
 
     local myChar = player.Character
     local myHrp = myChar and myChar:FindFirstChild("HumanoidRootPart")
     local myVel = (myHrp and myHrp.AssemblyLinearVelocity) or Vector3.zero
-    
-    local relativeVel = targetVel - (myVel * 0.15)
+
+    -- Horizontal prediction only. Constant-velocity Y prediction overshoots
+    -- during jumps/falls because vertical movement is affected by gravity.
+    local relativeVel = Vector3.new(
+        targetVel.X - (myVel.X * 0.15),
+        0,
+        targetVel.Z - (myVel.Z * 0.15)
+    )
+
     return rawPos + (relativeVel * predDelta)
 end
 
