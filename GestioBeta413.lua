@@ -66,6 +66,10 @@ local GestioConfig = {
     tracersTeamCheck = true,
     headDotTeamCheck = true,
     chamsOcclusion = true,
+    chamsRainbow = false,
+    chamsHealthColor = false,
+    chamsUseOutline = true,
+    chamsMaxDistance = 3000,
 
     recoilStrength = 0.85,
     noRecoilEnabled = false,
@@ -480,11 +484,30 @@ local function silentAimCamPosAim()
     if not (GestioConfig.silentAimEnabled and silentAimResolved) then return nil end
     local cam = Workspace.CurrentCamera or camera
     if not cam then return nil end
-
     local camPos = cam.CFrame.Position
-    -- Prediction and shooter-movement compensation are handled centrally
-    -- by getKinematicAimPosition. Do not apply a second lateral lead here.
     local aimPos = getKinematicAimPosition(silentAimResolved)
+
+    -- Compensate for the shooter's own horizontal movement. Silent-aim
+    -- ray correction otherwise uses a world-space target lead and can miss
+    -- during strafing/jumping because the local camera is moving at the same time.
+    local myChar = player.Character
+    local myHrp = myChar and myChar:FindFirstChild("HumanoidRootPart")
+    local myVel = (myHrp and myHrp.AssemblyLinearVelocity) or Vector3.zero
+
+    if GestioConfig.predictionEnabled then
+        local horizontalMyVel = Vector3.new(myVel.X, 0, myVel.Z)
+        local horizontalTargetVel = Vector3.new(
+            silentAimResolved.AssemblyLinearVelocity.X,
+            0,
+            silentAimResolved.AssemblyLinearVelocity.Z
+        )
+
+        -- Keep vertical prediction from getKinematicAimPosition, but make
+        -- lateral lead relative to the shooter's movement.
+        local relativeLateral = horizontalTargetVel - horizontalMyVel
+        local lateralLead = relativeLateral * math.max(0, GestioConfig.predictionFactor * 0.35)
+        aimPos = aimPos + lateralLead
+    end
 
     return camPos, aimPos
 end
@@ -539,6 +562,18 @@ local chamsColorVisible = Color3.fromRGB(255, 45, 85)
 local chamsColorHidden = Color3.fromRGB(110, 115, 125)
 local chamsColorAlly = Color3.fromRGB(0, 230, 255)
 local chamsOutlineColor = Color3.fromRGB(240, 240, 245)
+
+local function getChamsHealthColor(humanoid)
+    if not humanoid then return chamsColorVisible end
+    local maxHealth = math.max(humanoid.MaxHealth, 1)
+    local health = math.clamp(humanoid.Health / maxHealth, 0, 1)
+    -- Green at full HP -> yellow -> red at low HP.
+    return Color3.fromHSV(health * 0.33, 0.9, 1)
+end
+
+local function getChamsRainbowColor(offset)
+    return Color3.fromHSV((os.clock() * 0.18 + (offset or 0)) % 1, 0.85, 1)
+end
 
 local hitmarkerLastHealth = {}
 local thirdPersonPreviousOffset = nil
@@ -1540,13 +1575,6 @@ local function getPingLatency()
     return ping
 end
 
--- HumanoidRootPart reports reliable character velocity; welded body parts
--- (especially Head) can report zero or stale AssemblyLinearVelocity.
-local function getRootPart(part)
-    local model = part and part:FindFirstAncestorOfClass("Model")
-    return model and model:FindFirstChild("HumanoidRootPart")
-end
-
 function getKinematicAimPosition(targetPart)
     local rawPos = targetPart.Position
     if not GestioConfig.predictionEnabled then
@@ -1555,22 +1583,13 @@ function getKinematicAimPosition(targetPart)
 
     local ping = getPingLatency()
     local predDelta = (GestioConfig.predictionFactor * 0.5) + ping
-
-    local targetHrp = getRootPart(targetPart)
-    local targetVel = (targetHrp and targetHrp.AssemblyLinearVelocity) or Vector3.zero
+    local targetVel = targetPart.AssemblyLinearVelocity or Vector3.zero
 
     local myChar = player.Character
     local myHrp = myChar and myChar:FindFirstChild("HumanoidRootPart")
     local myVel = (myHrp and myHrp.AssemblyLinearVelocity) or Vector3.zero
-
-    -- Horizontal prediction only. Constant-velocity Y prediction overshoots
-    -- during jumps/falls because vertical movement is affected by gravity.
-    local relativeVel = Vector3.new(
-        targetVel.X - (myVel.X * 0.15),
-        0,
-        targetVel.Z - (myVel.Z * 0.15)
-    )
-
+    
+    local relativeVel = targetVel - (myVel * 0.15)
     return rawPos + (relativeVel * predDelta)
 end
 
@@ -2186,7 +2205,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         if char and isAlive and (dist <= GestioConfig.espMaxDist) then
             local isVisible = isVisibleThroughWalls(head or rootPart, char)
             
-            if GestioConfig.chamsEnabled then
+            if GestioConfig.chamsEnabled and dist <= GestioConfig.chamsMaxDistance then
                 if ally and not GestioConfig.chamsShowTeammates then
                     data.Highlight.Enabled = false
                 else
@@ -2194,12 +2213,16 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
                     if data.Highlight.Adornee ~= char then
                         data.Highlight.Adornee = char
                     end
-                    data.Highlight.FillTransparency = GestioConfig.chamsFillTransparency
-                    data.Highlight.OutlineTransparency = GestioConfig.chamsOutlineTransparency
-                    data.Highlight.OutlineColor = chamsOutlineColor
+                    data.Highlight.FillTransparency = math.clamp(GestioConfig.chamsFillTransparency, 0, 1)
+                    data.Highlight.OutlineTransparency = GestioConfig.chamsUseOutline and math.clamp(GestioConfig.chamsOutlineTransparency, 0, 1) or 1
+                    data.Highlight.OutlineColor = GestioConfig.chamsRainbow and getChamsRainbowColor(0.08) or chamsOutlineColor
 
-                    if ally then
+                    if GestioConfig.chamsRainbow then
+                        data.Highlight.FillColor = getChamsRainbowColor(ally and 0.48 or 0)
+                    elseif ally then
                         data.Highlight.FillColor = chamsColorAlly
+                    elseif GestioConfig.chamsHealthColor then
+                        data.Highlight.FillColor = getChamsHealthColor(hum)
                     else
                         data.Highlight.FillColor = GestioConfig.chamsOcclusion and (isVisible and chamsColorVisible or chamsColorHidden) or chamsColorVisible
                     end
@@ -3255,6 +3278,9 @@ function buildGestioUI()
             addInspectorToggle(76, "Team Check", GestioConfig.chamsTeamCheck, function(v) GestioConfig.chamsTeamCheck = v end)
             addInspectorToggle(102, "Show Teammates", GestioConfig.chamsShowTeammates, function(v) GestioConfig.chamsShowTeammates = v end)
             addInspectorToggle(128, "Occlusion Color (Walls)", GestioConfig.chamsOcclusion, function(v) GestioConfig.chamsOcclusion = v end)
+            addInspectorToggle(154, "Rainbow", GestioConfig.chamsRainbow, function(v) GestioConfig.chamsRainbow = v end)
+            addInspectorToggle(180, "Health Colors", GestioConfig.chamsHealthColor, function(v) GestioConfig.chamsHealthColor = v end)
+            addInspectorToggle(206, "Outline", GestioConfig.chamsUseOutline, function(v) GestioConfig.chamsUseOutline = v end)
         elseif moduleName == "No Recoil" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 110)
             addInspectorSlider(6, "Recoil Dampener", 0.1, 1.0, GestioConfig.recoilStrength, true, function(v)
