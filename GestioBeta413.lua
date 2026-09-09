@@ -471,8 +471,10 @@ local function getSilentAimTarget()
         -- Movement-aware target selection: score the predicted position rather
         -- than the current head position. This keeps the selected target stable
         -- while the target is strafing/jumping.
-        local predictedPos = getKinematicAimPosition(part)
-        local dir = (predictedPos - camPos).Unit
+        -- Select by the real current position. Prediction is only applied
+        -- after the target is locked, otherwise a strafing/jumping player can
+        -- be rejected from the FOV because the predicted point moved outside.
+        local dir = (part.Position - camPos).Unit
         local angle = math.acos(math.clamp(camLook:Dot(dir), -1, 1))
         if angle < bestAngle then
             bestAngle = angle
@@ -1564,12 +1566,12 @@ function getKinematicAimPosition(targetPart)
         return rawPos
     end
 
-    local ping = getPingLatency()
-    local predDelta = (GestioConfig.predictionFactor * 0.5) + ping
+    -- For Blox Strike the camera ray is generated at the moment of the shot.
+    -- Do not add ping directly to the lead: that makes the aim overshoot when
+    -- the player is moving and is especially noticeable during jumps.
+    local leadTime = math.clamp(GestioConfig.predictionFactor, 0, 0.30)
 
-    -- Welded body parts such as Head/Torso can report zero velocity.
-    -- Resolve movement from the target character's HumanoidRootPart instead.
-    local targetModel = targetPart:FindFirstAncestorOfType("Model")
+    local targetModel = targetPart:FindFirstAncestorOfClass("Model")
     local targetHrp = targetModel and targetModel:FindFirstChild("HumanoidRootPart")
     local targetVel = (targetHrp and targetHrp.AssemblyLinearVelocity) or Vector3.zero
 
@@ -1577,15 +1579,24 @@ function getKinematicAimPosition(targetPart)
     local myHrp = myChar and myChar:FindFirstChild("HumanoidRootPart")
     local myVel = (myHrp and myHrp.AssemblyLinearVelocity) or Vector3.zero
 
-    -- Horizontal lead ONLY. Keep the target's current Y coordinate so
-    -- vertical movement/jumps do not introduce a several-stud overshoot.
+    -- Use relative horizontal motion for strafing. Never predict Y: on a jump
+    -- the current head position is the correct vertical intercept for a
+    -- hitscan/camera-ray weapon, while predicting Y creates a large miss.
     local relativeVel = Vector3.new(
-        targetVel.X - (myVel.X * 0.15),
+        targetVel.X - (myVel.X * 0.10),
         0,
-        targetVel.Z - (myVel.Z * 0.15)
+        targetVel.Z - (myVel.Z * 0.10)
     )
 
-    return rawPos + (relativeVel * predDelta)
+    -- Clamp the horizontal lead so high velocity / high ping cannot throw the
+    -- ray several studs past a strafing target.
+    local lead = relativeVel * leadTime
+    local maxLead = 4.0
+    if lead.Magnitude > maxLead then
+        lead = lead.Unit * maxLead
+    end
+
+    return rawPos + lead
 end
 
 function getClosestTarget()
@@ -1862,7 +1873,10 @@ function renderTacticalOverlay()
                 local topScreen, topVisible = camera:WorldToViewportPoint(topWorld)
                 local bottomScreen, _ = camera:WorldToViewportPoint(bottomWorld)
 
-                if topVisible and topScreen.Z > 0 then
+                -- Use depth as the primary visibility condition. Requiring the
+                -- top point to be inside the viewport made the whole ESP disappear
+                -- when a character was partially off-screen.
+                if topScreen.Z > 0 and bottomScreen.Z > 0 then
                     local boxHeight = math.abs(bottomScreen.Y - topScreen.Y)
                     local boxWidth = boxHeight * 0.65
                     local boxPosX = topScreen.X - (boxWidth * 0.5)
@@ -2092,6 +2106,25 @@ for _, v in pairs(Players:GetPlayers()) do attachEspToPlayer(v) end
 table.insert(connections, Players.PlayerAdded:Connect(attachEspToPlayer))
 
 -- ==========================================
+-- DEDICATED ESP RENDER LOOP
+-- ==========================================
+-- Keep 2D ESP independent from the large combat/gameplay RenderStepped
+-- callback. A transient error in another module must not stop ESP updates.
+local espErrorLogged = false
+table.insert(connections, RunService.RenderStepped:Connect(function()
+    camera = Workspace.CurrentCamera or camera
+    if not camera or not overlayContainer or not overlayContainer.Parent then return end
+
+    local ok, err = pcall(renderTacticalOverlay)
+    if not ok and not espErrorLogged then
+        espErrorLogged = true
+        warn("[Gestio ESP] Render error: " .. tostring(err))
+    elseif ok then
+        espErrorLogged = false
+    end
+end))
+
+-- ==========================================
 -- MAIN ENGINE RENDER LOOP
 -- ==========================================
 table.insert(connections, RunService.RenderStepped:Connect(function(dt)
@@ -2184,7 +2217,6 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     end
 
     runMobileTriggerbot()
-    renderTacticalOverlay()
     renderGrenadeOverlays()
 
     for plr, data in pairs(activeEspHolders) do
