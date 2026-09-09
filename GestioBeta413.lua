@@ -2031,9 +2031,21 @@ function renderTacticalOverlay()
         local plr = allPlayers[i]
         local esp = getOrCreateScreenEsp(plr)
         local char = plr.Character
-        local hum = char and char:FindFirstChildOfClass("Humanoid")
-        local rootPart = char and (char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso"))
-        local head = char and char:FindFirstChild("Head")
+        
+        if not char or not char:IsDescendantOf(Workspace) then
+            esp.Box.Visible = false
+            esp.HealthBarBg.Visible = false
+            for _, corner in ipairs(esp.Corners) do
+                corner.H.Visible = false
+                corner.V.Visible = false
+            end
+            esp.TagCard.Visible = false
+            continue 
+        end
+
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        local rootPart = char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso")
+        local head = char:FindFirstChild("Head")
 
         local isEnemy = isTargetEnemy(plr, char)
         local isAlive = isEntityAlive(char, hum)
@@ -2411,7 +2423,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         local isAlive = isEntityAlive(char, hum)
         local dist = rootPart and (rootPart.Position - localPos).Magnitude or 9999
 
-        if char and isAlive and (dist <= GestioConfig.espMaxDist) then
+        if char and char:IsDescendantOf(Workspace) and isAlive and (dist <= GestioConfig.espMaxDist) then
             local isVisible = isVisibleThroughWalls(head or rootPart, char)
             
             if GestioConfig.chamsEnabled then
