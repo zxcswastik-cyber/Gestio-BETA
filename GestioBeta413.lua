@@ -186,7 +186,6 @@ if not targetGui and player then
 end
 if not targetGui then
     warn("[Gestio] GUI initialization failed: no valid GUI parent")
-    return
 end
 
 local connections = {}
