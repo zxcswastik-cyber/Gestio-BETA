@@ -61,6 +61,8 @@ local GestioConfig = {
     chamsOutlineTransparency = 0.10,
     chamsTeamCheck = true,
     chamsShowTeammates = false,
+    chamsMetallicChrome = false,   -- Metallic & Chrome style for chams
+    chamsChromeAlly = false,       -- apply chrome look to teammates too
     nametagTeamCheck = true,
     boxEspTeamCheck = true,
     tracersTeamCheck = true,
@@ -558,10 +560,10 @@ end
 -- ==========================================
 -- CHAMS COLORS & HITMARKER VARS
 -- ==========================================
-local chamsColorVisible = Color3.fromRGB(255, 45, 85)
-local chamsColorHidden = Color3.fromRGB(110, 115, 125)
-local chamsColorAlly = Color3.fromRGB(0, 230, 255)
-local chamsOutlineColor = Color3.fromRGB(240, 240, 245)
+local chamsColorVisible = Color3.fromRGB(228, 232, 238)   -- bright chrome
+local chamsColorHidden = Color3.fromRGB(92, 98, 108)       -- dark chrome (occluded)
+local chamsColorAlly = Color3.fromRGB(150, 205, 255)        -- chrome-blue ally
+local chamsOutlineColor = Color3.fromRGB(245, 247, 250)     -- chrome rim
 
 local function getChamsHealthColor(humanoid)
     if not humanoid then return chamsColorVisible end
@@ -2213,15 +2215,28 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
                     if data.Highlight.Adornee ~= char then
                         data.Highlight.Adornee = char
                     end
-                    data.Highlight.FillTransparency = math.clamp(GestioConfig.chamsFillTransparency, 0, 1)
-                    data.Highlight.OutlineTransparency = GestioConfig.chamsUseOutline and math.clamp(GestioConfig.chamsOutlineTransparency, 0, 1) or 1
-                    data.Highlight.OutlineColor = GestioConfig.chamsRainbow and getChamsRainbowColor(0.08) or chamsOutlineColor
+                    local chromeMode = GestioConfig.chamsMetallicChrome and (not ally or GestioConfig.chamsChromeAlly)
 
-                    if GestioConfig.chamsRainbow then
+                    -- Highlight has no FillMaterial/OutlineMaterial properties.
+                    -- Chrome is therefore emulated with a high-contrast metal palette
+                    -- and tighter alpha values while keeping the Highlight API valid.
+                    if chromeMode then
+                        data.Highlight.FillTransparency = math.min(math.clamp(GestioConfig.chamsFillTransparency, 0, 1), 0.30)
+                        data.Highlight.OutlineTransparency = GestioConfig.chamsUseOutline
+                            and math.min(math.clamp(GestioConfig.chamsOutlineTransparency, 0, 1), 0.20)
+                            or 1
+                        data.Highlight.OutlineColor = chamsOutlineColor
+                    else
+                        data.Highlight.FillTransparency = math.clamp(GestioConfig.chamsFillTransparency, 0, 1)
+                        data.Highlight.OutlineTransparency = GestioConfig.chamsUseOutline and math.clamp(GestioConfig.chamsOutlineTransparency, 0, 1) or 1
+                        data.Highlight.OutlineColor = GestioConfig.chamsRainbow and getChamsRainbowColor(0.08) or chamsOutlineColor
+                    end
+
+                    if GestioConfig.chamsRainbow and not chromeMode then
                         data.Highlight.FillColor = getChamsRainbowColor(ally and 0.48 or 0)
                     elseif ally then
-                        data.Highlight.FillColor = chamsColorAlly
-                    elseif GestioConfig.chamsHealthColor then
+                        data.Highlight.FillColor = chromeMode and chamsColorAlly or chamsColorAlly
+                    elseif GestioConfig.chamsHealthColor and not chromeMode then
                         data.Highlight.FillColor = getChamsHealthColor(hum)
                     else
                         data.Highlight.FillColor = GestioConfig.chamsOcclusion and (isVisible and chamsColorVisible or chamsColorHidden) or chamsColorVisible
@@ -3281,6 +3296,10 @@ function buildGestioUI()
             addInspectorToggle(154, "Rainbow", GestioConfig.chamsRainbow, function(v) GestioConfig.chamsRainbow = v end)
             addInspectorToggle(180, "Health Colors", GestioConfig.chamsHealthColor, function(v) GestioConfig.chamsHealthColor = v end)
             addInspectorToggle(206, "Outline", GestioConfig.chamsUseOutline, function(v) GestioConfig.chamsUseOutline = v end)
+            addInspectorToggle(232, "Metallic & Chrome", GestioConfig.chamsMetallicChrome, function(v)
+                GestioConfig.chamsMetallicChrome = v
+            end)
+            insContent.CanvasSize = UDim2.new(0, 0, 0, 270)
         elseif moduleName == "No Recoil" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 110)
             addInspectorSlider(6, "Recoil Dampener", 0.1, 1.0, GestioConfig.recoilStrength, true, function(v)
