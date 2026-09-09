@@ -301,7 +301,72 @@ local bloxStrikeShootHooked = false
 
 local function setupBloxStrikeShootHook()
     if bloxStrikeShootHooked then return end
-    if not ReplicatedStorage then return end
+    
+    pcall(function()
+        UserInputService.InputBegan:Connect(function(input, gameProcessed)
+            if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
+                local char = player.Character
+                local tool = char and char:FindFirstChildOfClass("Tool")
+                
+                if (GestioConfig.bulletTrailEnabled or GestioConfig.bulletFlashEnabled) and tool then
+                    local cam = Workspace.CurrentCamera or camera
+                    if not cam then return end
+                    
+                    local origin = cam.CFrame.Position
+                    local muzzle = tool:FindFirstChild("Muzzle") or tool:FindFirstChild("Handle")
+                    if muzzle and muzzle:IsA("BasePart") then
+                        origin = muzzle.Position
+                    end
+
+                    local rayParams = RaycastParams.new()
+                    rayParams.FilterType = Enum.RaycastFilterType.Exclude
+                    rayParams.FilterDescendantsInstances = {player.Character, camera}
+                    rayParams.IgnoreWater = true
+                    
+                    local hit = Workspace:Raycast(origin, cam.CFrame.LookVector * 500, rayParams)
+                    local bulletEnd = hit and hit.Position or (origin + cam.CFrame.LookVector * 500)
+                    local dist = (origin - bulletEnd).Magnitude
+
+                    if GestioConfig.bulletTrailEnabled then
+                        local trail = Instance.new("Part")
+                        trail.Anchored = true
+                        trail.CanCollide = false
+                        trail.CastShadow = false
+                        trail.Material = Enum.Material.Neon
+                        trail.Color = Color3.fromRGB(255, 20, 20)
+                        trail.Size = Vector3.new(0.08, 0.08, dist)
+                        trail.CFrame = CFrame.lookAt(origin, bulletEnd) * CFrame.new(0, 0, -dist / 2)
+                        trail.Parent = Workspace
+                        
+                        TweenService:Create(trail, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = Vector3.new(0, 0, dist), Transparency = 1}):Play()
+                        task.delay(0.15, function() pcall(function() trail:Destroy() end) end)
+                    end
+
+                    if GestioConfig.bulletFlashEnabled then
+                        local flash = Instance.new("Part")
+                        flash.Anchored = true
+                        flash.CanCollide = false
+                        flash.CastShadow = false
+                        flash.Material = Enum.Material.Neon
+                        flash.Color = Color3.fromRGB(255, 80, 80)
+                        flash.Shape = Enum.PartType.Ball
+                        flash.Size = Vector3.new(0.6, 0.6, 0.6)
+                        flash.CFrame = CFrame.new(bulletEnd)
+                        flash.Parent = Workspace
+                        
+                        local s = Instance.new("Sound")
+                        s.SoundId = "rbxassetid://9113089896"
+                        s.Volume = 0.2
+                        s.Parent = flash
+                        s:Play()
+
+                        TweenService:Create(flash, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = Vector3.new(0, 0, 0), Transparency = 1}):Play()
+                        task.delay(0.15, function() pcall(function() flash:Destroy() end) end)
+                    end
+                end
+            end
+        end)
+    end)
 
     pcall(function()
         local controllers = ReplicatedStorage:FindFirstChild("Controllers")
@@ -318,14 +383,23 @@ local function setupBloxStrikeShootHook()
 
         local originalShootWeapon = inventoryController.ShootWeapon
         inventoryController.ShootWeapon = function(self, data, ...)
-            -- 1. SILENT AIM LOGIC
-            if GestioConfig.silentAimEnabled and silentAimResolved and type(data) == "table" and type(data.Bullets) == "table" then
+            if GestioConfig.silentAimEnabled
+                and silentAimResolved
+                and type(data) == "table"
+                and type(data.Bullets) == "table" then
+
                 local camPos, aimPos = silentAimCamPosAim()
                 if camPos and aimPos then
                     for _, bullet in pairs(data.Bullets) do
                         if type(bullet) == "table" then
-                            local origin = bullet.Origin or bullet.StartingPoint or bullet.Position or camPos
-                            if typeof(origin) == "CFrame" then origin = origin.Position end
+                            local origin = bullet.Origin
+                                or bullet.StartingPoint
+                                or bullet.Position
+                                or camPos
+
+                            if typeof(origin) == "CFrame" then
+                                origin = origin.Position
+                            end
 
                             if typeof(origin) == "Vector3" then
                                 local delta = aimPos - origin
@@ -338,78 +412,6 @@ local function setupBloxStrikeShootHook()
                                     bullet.Wallbang = true
                                     bullet.IgnoreEnvironment = true
                                 end
-                            end
-                        end
-                    end
-                end
-            end
-
-            -- 2. VISUALS LOGIC (TRAILS & FLASHES)
-            if (GestioConfig.bulletTrailEnabled or GestioConfig.bulletFlashEnabled) and type(data) == "table" and type(data.Bullets) == "table" then
-                local camPos = (Workspace.CurrentCamera or camera).CFrame.Position
-                
-                for _, bullet in pairs(data.Bullets) do
-                    if type(bullet) == "table" then
-                        local origin = bullet.Origin or bullet.StartingPoint or bullet.Position or camPos
-                        if typeof(origin) == "CFrame" then origin = origin.Position end
-                        
-                        local dir = bullet.Direction
-                        if typeof(origin) == "Vector3" and typeof(dir) == "Vector3" then
-                            local dirUnit = dir.Magnitude > 0 and dir.Unit or (Workspace.CurrentCamera or camera).CFrame.LookVector
-                            
-                            local bulletEnd = origin + (dirUnit * 500)
-                            if not GestioConfig.wallbangEnabled then
-                                local rayParams = RaycastParams.new()
-                                rayParams.FilterType = Enum.RaycastFilterType.Exclude
-                                rayParams.FilterDescendantsInstances = {player.Character, camera}
-                                rayParams.IgnoreWater = true
-                                local hit = Workspace:Raycast(origin, dirUnit * 500, rayParams)
-                                if hit then
-                                    bulletEnd = hit.Position
-                                end
-                            end
-
-                            local dist = (origin - bulletEnd).Magnitude
-
-                            if GestioConfig.bulletTrailEnabled then
-                                local trail = Instance.new("Part")
-                                trail.Anchored = true
-                                trail.CanCollide = false
-                                trail.CastShadow = false
-                                trail.Material = Enum.Material.Neon
-                                trail.Color = Color3.fromRGB(255, 20, 20)
-                                trail.Size = Vector3.new(0.08, 0.08, dist)
-                                trail.CFrame = CFrame.lookAt(origin, bulletEnd) * CFrame.new(0, 0, -dist / 2)
-                                trail.Parent = Workspace
-                                
-                                local ts = TweenService
-                                ts:Create(trail, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = Vector3.new(0, 0, dist), Transparency = 1}):Play()
-                                
-                                task.delay(0.15, function() pcall(function() trail:Destroy() end) end)
-                            end
-
-                            if GestioConfig.bulletFlashEnabled then
-                                local flash = Instance.new("Part")
-                                flash.Anchored = true
-                                flash.CanCollide = false
-                                flash.CastShadow = false
-                                flash.Material = Enum.Material.Neon
-                                flash.Color = Color3.fromRGB(255, 80, 80)
-                                flash.Shape = Enum.PartType.Ball
-                                flash.Size = Vector3.new(0.6, 0.6, 0.6)
-                                flash.CFrame = CFrame.new(bulletEnd)
-                                flash.Parent = Workspace
-                                
-                                local s = Instance.new("Sound")
-                                s.SoundId = "rbxassetid://9113089896"
-                                s.Volume = 0.2
-                                s.Parent = flash
-                                s:Play()
-
-                                local ts = TweenService
-                                ts:Create(flash, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = Vector3.new(0, 0, 0), Transparency = 1}):Play()
-
-                                task.delay(0.15, function() pcall(function() flash:Destroy() end) end)
                             end
                         end
                     end
