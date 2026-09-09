@@ -18,6 +18,8 @@ local GestioConfig = {
     rcsEnabled = false,
     chamsEnabled = false,
     hitmarkerEnabled = false,
+    damageIndicatorEnabled = false, -- НОВАЯ ФУНКЦИЯ
+    killEffectEnabled = false,      -- НОВАЯ ФУНКЦИЯ
     thirdPersonEnabled = false,
     skinChangerEnabled = false,
     triggerbotEnabled = false,
@@ -627,56 +629,13 @@ local function setupSilentAimHooks()
             local oldNamecall
             oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
                 local method = getnamecallmethod()
-                local args = {...}
-
+                
                 if GestioConfig.silentAimEnabled and silentAimResolved and noRecoil.isShooting
                     and self == camera
                     and (method == "ViewportPointToRay" or method == "ScreenPointToRay") then
                     local camPos, aimPos = silentAimCamPosAim()
                     if camPos then
                         return Ray.new(camPos, (aimPos - camPos).Unit)
-                    end
-                end
-
-                if GestioConfig.pSilentEnabled and silentAimResolved and self == Workspace then
-                    local camPos, aimPos = silentAimCamPosAim()
-                    if aimPos then
-                        if method == "Raycast" then
-                            local origin = args[1]
-                            local originalDirection = args[2]
-                            if typeof(origin) == "Vector3" and typeof(originalDirection) == "Vector3" then
-                                local magnitude = originalDirection.Magnitude
-                                local delta = aimPos - origin
-                                if magnitude > 0 and delta.Magnitude > 0.001 then
-                                    args[2] = delta.Unit * magnitude
-                                    if GestioConfig.wallbangEnabled then
-                                        local wbParams = RaycastParams.new()
-                                        wbParams.FilterType = Enum.RaycastFilterType.Include
-                                        local charList = {}
-                                        for _, plr in ipairs(Players:GetPlayers()) do
-                                            if plr.Character then
-                                                table.insert(charList, plr.Character)
-                                            end
-                                        end
-                                        wbParams.FilterDescendantsInstances = charList
-                                        wbParams.IgnoreWater = true
-                                        args[3] = wbParams
-                                    end
-                                    return oldNamecall(self, unpack(args))
-                                end
-                            end
-                        elseif method == "FindPartOnRay"
-                            or method == "FindPartOnRayWithIgnoreList"
-                            or method == "FindPartOnRayWithWhitelist" then
-                            local oldRay = args[1]
-                            if typeof(oldRay) == "Ray" then
-                                local delta = aimPos - oldRay.Origin
-                                if delta.Magnitude > 0.001 then
-                                    args[1] = Ray.new(oldRay.Origin, delta.Unit * oldRay.Direction.Magnitude)
-                                    return oldNamecall(self, unpack(args))
-                                end
-                            end
-                        end
                     end
                 end
 
@@ -907,6 +866,77 @@ jumpCircleFolder.Name = "Gestio_JumpCircleWorld"
 
 local grenadePool = {}
 local mobileSlideBtn = nil
+
+-- ==========================================
+-- VISUAL COMBAT EFFECTS (DAMAGE & FEATHERS)
+-- ==========================================
+local function spawnDamageIndicator(part, damage)
+    if not GestioConfig.damageIndicatorEnabled or not part then return end
+    
+    local attach = Instance.new("Attachment")
+    attach.CFrame = CFrame.new(math.random(-15, 15)/10, math.random(0, 15)/10, math.random(-15, 15)/10)
+    attach.Parent = part
+    
+    local billboard = Instance.new("BillboardGui")
+    billboard.Size = UDim2.new(0, 60, 0, 40)
+    billboard.StudsOffset = Vector3.new(math.random(-10, 10)/10, 1.5, math.random(-10, 10)/10)
+    billboard.AlwaysOnTop = true
+    billboard.Adornee = attach
+    billboard.Parent = mainContainer
+    
+    local txt = Instance.new("TextLabel")
+    txt.Size = UDim2.new(1, 0, 1, 0)
+    txt.BackgroundTransparency = 1
+    txt.Text = "-" .. tostring(math.floor(damage))
+    txt.TextColor3 = Color3.fromRGB(255, 40, 40)
+    txt.TextScaled = true
+    txt.Font = Enum.Font.GothamBlack
+    txt.Parent = billboard
+    
+    local uiStroke = Instance.new("UIStroke")
+    uiStroke.Color = Color3.fromRGB(80, 0, 0)
+    uiStroke.Thickness = 2.0
+    uiStroke.Parent = txt
+
+    TweenService:Create(billboard, TweenInfo.new(0.8, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {StudsOffset = billboard.StudsOffset + Vector3.new(0, 3.5, 0)}):Play()
+    TweenService:Create(txt, TweenInfo.new(0.8, Enum.EasingStyle.Cubic, Enum.EasingDirection.In), {TextTransparency = 1}):Play()
+    TweenService:Create(uiStroke, TweenInfo.new(0.8, Enum.EasingStyle.Cubic, Enum.EasingDirection.In), {Transparency = 1}):Play()
+
+    task.delay(0.85, function()
+        pcall(function() 
+            billboard:Destroy()
+            attach:Destroy()
+        end)
+    end)
+end
+
+local function spawnFeatherKillEffect(position)
+    if not GestioConfig.killEffectEnabled then return end
+    
+    local featherCount = 14
+    for i = 1, featherCount do
+        local feather = Instance.new("Part")
+        feather.Size = Vector3.new(0.05, 0.7, 0.15)
+        feather.Material = Enum.Material.Neon
+        feather.Color = Color3.fromRGB(255, 20, 30)
+        feather.CanCollide = false
+        feather.Anchored = true
+        feather.CFrame = CFrame.new(position) * CFrame.Angles(math.random(-314, 314)/100, math.random(-314, 314)/100, math.random(-314, 314)/100)
+        feather.Parent = Workspace
+        
+        local dir = Vector3.new(math.random(-10, 10)/10, math.random(5, 15)/10, math.random(-10, 10)/10).Unit
+        local targetPos = position + (dir * math.random(4, 9))
+        local targetRot = feather.CFrame * CFrame.Angles(math.random(-5, 5), math.random(-5, 5), math.random(-5, 5))
+
+        local tInfo = TweenInfo.new(1.8, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+        TweenService:Create(feather, tInfo, {
+            CFrame = CFrame.new(targetPos) * targetRot.Rotation,
+            Transparency = 1
+        }):Play()
+
+        task.delay(1.8, function() pcall(function() feather:Destroy() end) end)
+    end
+end
 
 -- ==========================================
 -- HITMARKER UI
@@ -2828,7 +2858,7 @@ table.insert(connections, inEndedConn)
 -- HITMARKER & PHYSICS LOOP
 -- ==========================================
 table.insert(connections, RunService.Heartbeat:Connect(function()
-    if not GestioConfig.hitmarkerEnabled then
+    if not GestioConfig.hitmarkerEnabled and not GestioConfig.damageIndicatorEnabled and not GestioConfig.killEffectEnabled then
         hitmarkerLastHealth = {}
         return
     end
@@ -2843,7 +2873,21 @@ table.insert(connections, RunService.Heartbeat:Connect(function()
                 local previousHealth = hitmarkerLastHealth[hum]
 
                 if previousHealth and currentHealth < previousHealth and (previousHealth - currentHealth) > 0.01 then
-                    showHitmarker()
+                    local damageDealt = previousHealth - currentHealth
+                    
+                    if GestioConfig.hitmarkerEnabled then
+                        showHitmarker()
+                    end
+                    
+                    if GestioConfig.damageIndicatorEnabled then
+                        local dmgPart = char:FindFirstChild("Head") or char:FindFirstChild("HumanoidRootPart")
+                        if dmgPart then spawnDamageIndicator(dmgPart, damageDealt) end
+                    end
+                    
+                    if currentHealth <= 0.1 and GestioConfig.killEffectEnabled then
+                        local hrp = char:FindFirstChild("HumanoidRootPart")
+                        if hrp then spawnFeatherKillEffect(hrp.Position) end
+                    end
                 end
 
                 hitmarkerLastHealth[hum] = currentHealth
@@ -3751,9 +3795,11 @@ function buildGestioUI()
     createModuleCard(eGrid, "Box Overlay", "boxEspEnabled", nil, true)
     createModuleCard(eGrid, "Grenade ESP", "grenadeEspEnabled", nil, true)
 
-    local eGrid2 = makeCategorySection(ePage, "Indicators", 2, 3)
+    local eGrid2 = makeCategorySection(ePage, "Indicators", 2, 5)
     createModuleCard(eGrid2, "Tracers", "tracersEnabled", nil, false)
     createModuleCard(eGrid2, "Head Dot", "headDotEnabled", nil, false)
+    createModuleCard(eGrid2, "Damage Indicator", "damageIndicatorEnabled", nil, false)
+    createModuleCard(eGrid2, "Kill Effect", "killEffectEnabled", nil, false)
     createModuleCard(eGrid2, "Jump Circle", "jumpCircleEnabled", function(v)
         if v and player.Character then
             initJumpCircleForCharacter(player.Character)
