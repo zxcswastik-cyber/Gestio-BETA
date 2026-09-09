@@ -38,8 +38,12 @@ local GestioConfig = {
     fullBrightEnabled = false,
     removeFogEnabled = true,
     nightModeEnabled = false,
+    rageBotEnabled = false,
+    rageAutoFire = true,
 
     -- Sliders & Values
+    rageFov = 360,
+    rageTargetMode = "Distance",
     aimFov = 160,
     aimbotSpeed = 35.0,
     aimbotSmoothness = 0.15,
@@ -1726,6 +1730,55 @@ function getClosestTarget()
 end
 
 -- ==========================================
+-- RAGEBOT TARGETING ENGINE
+-- ==========================================
+function getRageTarget()
+    local cam = Workspace.CurrentCamera or camera
+    if not cam then return nil end
+    local camPos = cam.CFrame.Position
+
+    local bestTarget = nil
+    local bestScore = math.huge
+    local allPlayers = Players:GetPlayers()
+
+    for i = 1, #allPlayers do
+        local plr = allPlayers[i]
+        local char = plr.Character
+        if char and plr ~= player and isTargetEnemy(plr, char) then
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            if isEntityAlive(char, hum) then
+                local hitPart = getTargetHitbox(char)
+                if hitPart then
+                    if GestioConfig.wallbangEnabled or isVisibleThroughWalls(hitPart, char) then
+                        local aimPos = getKinematicAimPosition(hitPart)
+                        local score = math.huge
+                        
+                        if GestioConfig.rageTargetMode == "Distance" then
+                            score = (aimPos - camPos).Magnitude
+                        elseif GestioConfig.rageTargetMode == "Health" then
+                            score = hum.Health
+                        end
+
+                        if score < bestScore then
+                            bestScore = score
+                            bestTarget = {
+                                Player = plr,
+                                Char = char,
+                                Part = hitPart,
+                                Hum = hum,
+                                Position = hitPart.Position,
+                                AimPosition = aimPos
+                            }
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return bestTarget
+end
+
+-- ==========================================
 -- TRIGGERBOT PROCESSING LOGIC
 -- ==========================================
 local triggerRayParams = RaycastParams.new()
@@ -2208,7 +2261,28 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         camera.CFrame = camera.CFrame * CFrame.Angles(-comp, 0, 0)
     end
 
-    if GestioConfig.aimbotEnabled then
+    -- RAGEBOT & AIMBOT EXECUTION
+    if GestioConfig.rageBotEnabled then
+        local target = getRageTarget()
+        if target and target.Part and target.Part.Parent then
+            local aimPos = getKinematicAimPosition(target.Part)
+            -- Instant snap to target (No Smoothing)
+            camera.CFrame = CFrame.lookAt(camera.CFrame.Position, aimPos)
+            
+            -- AutoFire Logic
+            if GestioConfig.rageAutoFire and tick() - lastTriggerTick > triggerbotDelay then
+                lastTriggerTick = tick()
+                pcall(function()
+                    local vp = camera.ViewportSize
+                    if VirtualInputManager then
+                        VirtualInputManager:SendMouseButtonEvent(vp.X * 0.5, vp.Y * 0.5, 0, true, game, 0)
+                        task.wait(0.01)
+                        VirtualInputManager:SendMouseButtonEvent(vp.X * 0.5, vp.Y * 0.5, 0, false, game, 0)
+                    end
+                end)
+            end
+        end
+    elseif GestioConfig.aimbotEnabled then
         local target = getClosestTarget()
         if target and target.Part and target.Part.Parent then
             local aimPos = getKinematicAimPosition(target.Part)
@@ -2665,7 +2739,7 @@ end)
 table.insert(connections, inEndedConn)
 
 -- ==========================================
--- HITMARKER & PHYSICS HEARTBEAT
+-- HITMARKER & PHYSICS LOOP (UPDATED FOR BLOX STRIKE)
 -- ==========================================
 table.insert(connections, RunService.Heartbeat:Connect(function()
     if not GestioConfig.hitmarkerEnabled then
@@ -2692,13 +2766,27 @@ table.insert(connections, RunService.Heartbeat:Connect(function()
     end
 end))
 
-table.insert(connections, RunService.Heartbeat:Connect(function(dt)
+-- ИСПОЛЬЗУЕМ RENDERSTEPPED, ЧТОБЫ ПЕРЕБИТЬ ИГРОВОЙ КОНТРОЛЛЕР
+table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     local char = player.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
     local hum = char and char:FindFirstChildOfClass("Humanoid")
     if not hrp or not hum or not isEntityAlive(char, hum) then return end
 
-    local currentMove = hum.MoveDirection
+    -- КАСТОМНЫЙ РАСЧЕТ ВЕКТОРА ДВИЖЕНИЯ (ОБХОД BLOX STRIKE)
+    local moveDir = hum.MoveDirection
+    if moveDir.Magnitude < 0.05 then
+        local camCFrame = Workspace.CurrentCamera.CFrame
+        local kbDir = Vector3.zero
+        if UserInputService:IsKeyDown(Enum.KeyCode.W) then kbDir += camCFrame.LookVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.S) then kbDir -= camCFrame.LookVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.A) then kbDir -= camCFrame.RightVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.D) then kbDir += camCFrame.RightVector end
+        kbDir = Vector3.new(kbDir.X, 0, kbDir.Z)
+        if kbDir.Magnitude > 0 then moveDir = kbDir.Unit end
+    end
+
+    local currentMove = moveDir
     if currentMove.Magnitude > 0.05 then lastMoveDirection = currentMove end
 
     local currentVel = hrp.AssemblyLinearVelocity
@@ -2738,6 +2826,7 @@ table.insert(connections, RunService.Heartbeat:Connect(function(dt)
             
         elseif not grounded and GestioConfig.bhopAirStrafe and currentMove.Magnitude > 0.05 then
             activeMode = "AutoStrafe"
+            -- Принудительное ускорение
             local targetSpeed = 16 * GestioConfig.bhopSpeedBoost
             local targetVel = currentMove * targetSpeed
             
@@ -2746,13 +2835,15 @@ table.insert(connections, RunService.Heartbeat:Connect(function(dt)
         end
     end
 
-    if activeMode == "Normal" and GestioConfig.speedEnabled and hum.MoveDirection.Magnitude > 0 then
+    if activeMode == "Normal" and GestioConfig.speedEnabled and currentMove.Magnitude > 0 then
         activeMode = "Speed"
-        local targetVel = hum.MoveDirection * (16 * GestioConfig.walkMultiplier)
+        local targetVel = currentMove * (16 * GestioConfig.walkMultiplier)
         finalVelocity = Vector3.new(targetVel.X, currentVel.Y, targetVel.Z)
     end
 
-    if finalVelocity then hrp.AssemblyLinearVelocity = finalVelocity end
+    if finalVelocity then 
+        hrp.AssemblyLinearVelocity = finalVelocity 
+    end
 end))
 
 -- ==========================================
@@ -3335,6 +3426,11 @@ function buildGestioUI()
             addInspectorToggle(148, "Show Silent FOV", GestioConfig.showSilentFovCircle, function(v) GestioConfig.showSilentFovCircle = v end)
             addInspectorToggle(174, "pSilent (Raycast)", GestioConfig.pSilentEnabled, function(v) GestioConfig.pSilentEnabled = v end)
             addInspectorToggle(200, "Advanced Wallbang", GestioConfig.wallbangEnabled, function(v) GestioConfig.wallbangEnabled = v end)
+        elseif moduleName == "RageBot" then
+            insContent.CanvasSize = UDim2.new(0, 0, 0, 150)
+            addInspectorToggle(6, "Auto Fire", GestioConfig.rageAutoFire, function(v) GestioConfig.rageAutoFire = v end)
+            addInspectorChoice(38, "Target Mode", {"Distance", "Health"}, GestioConfig.rageTargetMode, function(v) GestioConfig.rageTargetMode = v end)
+            addInspectorSlider(76, "Rage FOV", 10, 360, GestioConfig.rageFov, false, function(v) GestioConfig.rageFov = v end)
         elseif moduleName == "Chams" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 240)
             addInspectorSlider(6, "Fill Alpha", 0.0, 1.0, GestioConfig.chamsFillTransparency, true, function(v) GestioConfig.chamsFillTransparency = v end)
@@ -3549,11 +3645,12 @@ function buildGestioUI()
     end
 
     -- PAGES SETUP
-    local cGrid = makeCategorySection(cPage, "Aim Assistants", 1, 4)
+    local cGrid = makeCategorySection(cPage, "Aim Assistants", 1, 5)
     createModuleCard(cGrid, "Tracking", "aimbotEnabled", nil, true)
     createModuleCard(cGrid, "Silent Aim", "silentAimEnabled", nil, true)
     createModuleCard(cGrid, "Triggerbot", "triggerbotEnabled", nil, false)
     createModuleCard(cGrid, "RCS", "rcsEnabled", nil, true)
+    createModuleCard(cGrid, "RageBot", "rageBotEnabled", nil, true)
 
     local cGrid2 = makeCategorySection(cPage, "Weapon Mechanics", 2, 2)
     createModuleCard(cGrid2, "No Recoil", "noRecoilEnabled", nil, true)
