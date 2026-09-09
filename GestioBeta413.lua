@@ -102,6 +102,8 @@ local GestioConfig = {
     showGrenadePath = true,
     showMolotovRadius = true,
     showSmokeRadius = true,
+    bulletTrailEnabled = true,   -- neon red bullet tracers
+    bulletFlashEnabled = true,   -- glow flash on impact
 
     espMaxDist = 3000,
     espTextSize = 8.5,
@@ -344,6 +346,48 @@ local function setupBloxStrikeShootHook()
                                     bullet.Penetration = 9999
                                     bullet.Wallbang = true
                                     bullet.IgnoreEnvironment = true
+                                end
+                                
+                                -- Neon red bullet trail + impact flash
+                                if GestioConfig.bulletTrailEnabled or GestioConfig.bulletFlashEnabled then
+                                    local bulletOrigin = typeof(origin) == "Vector3" and origin or camPos
+                                    local bulletEnd = bulletOrigin + (delta.Unit * 200)
+                                    local trailColor = Color3.fromRGB(255, 20, 20)
+
+                                    if GestioConfig.bulletTrailEnabled then
+                                        local trail = Instance.new("Part")
+                                        trail.Anchored = true
+                                        trail.CanCollide = false
+                                        trail.CastShadow = false
+                                        trail.Material = Enum.Material.Neon
+                                        trail.Color = trailColor
+                                        trail.Size = Vector3.new(0.12, 0.12, (bulletOrigin - bulletEnd).Magnitude)
+                                        trail.CFrame = CFrame.lookAt(bulletOrigin, bulletEnd) * CFrame.new(0, 0, -(bulletOrigin - bulletEnd).Magnitude / 2)
+                                        trail.Parent = Workspace
+                                        task.delay(0.12, function()
+                                            pcall(function() trail:Destroy() end)
+                                        end)
+                                    end
+
+                                    if GestioConfig.bulletFlashEnabled then
+                                        local flash = Instance.new("Part")
+                                        flash.Anchored = true
+                                        flash.CanCollide = false
+                                        flash.CastShadow = false
+                                        flash.Material = Enum.Material.Neon
+                                        flash.Color = Color3.fromRGB(255, 80, 80)
+                                        flash.Size = Vector3.new(0.5, 0.5, 0.5)
+                                        flash.CFrame = CFrame.new(bulletEnd)
+                                        flash.Parent = Workspace
+                                        local s = Instance.new("Sound")
+                                        s.SoundId = "rbxassetid://9113089896"
+                                        s.Volume = 0.3
+                                        s.Parent = flash
+                                        s:Play()
+                                        task.delay(0.15, function()
+                                            pcall(function() flash:Destroy() end)
+                                        end)
+                                    end
                                 end
                             end
                         end
@@ -1265,6 +1309,12 @@ function cleanup()
     clearActiveJumpCircle()
     pcall(function() jumpCircleFolder:Destroy() end)
     pcall(function() hitmarkerGui:Destroy() end)
+    
+    pcall(function()
+        if bulletTrail then bulletTrail:Destroy() end
+        if bulletFlash then bulletFlash:Destroy() end
+    end)
+    
     if genv then genv.GestioShowHitmarker = nil end
     if mobileSlideBtn then
         pcall(function() mobileSlideBtn:Destroy() end)
@@ -3678,6 +3728,10 @@ function buildGestioUI()
             clearActiveJumpCircle()
         end
     end, true)
+
+    local bGrid = makeCategorySection(ePage, "Bullet Effects", 3, 2)
+    createModuleCard(bGrid, "Bullet Trail", "bulletTrailEnabled", nil, true)
+    createModuleCard(bGrid, "Bullet Flash", "bulletFlashEnabled", nil, true)
 
     local sGrid = makeCategorySection(sPage, "Cosmetic Engine", 1, 1)
     createModuleCard(sGrid, "Knife Changer", "skinChangerEnabled", function(v)
