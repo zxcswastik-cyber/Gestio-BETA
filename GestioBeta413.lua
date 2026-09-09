@@ -61,17 +61,7 @@ local GestioConfig = {
     chamsOutlineTransparency = 0.10,
     chamsTeamCheck = true,
     chamsShowTeammates = false,
-    chamsMetallicChrome = false,   -- Metallic & Chrome style for chams
-    chamsChromeAlly = false,       -- apply chrome look to teammates too
-    nametagTeamCheck = true,
-    boxEspTeamCheck = true,
-    tracersTeamCheck = true,
-    headDotTeamCheck = true,
     chamsOcclusion = true,
-    chamsRainbow = false,
-    chamsHealthColor = false,
-    chamsUseOutline = true,
-    chamsMaxDistance = 3000,
 
     recoilStrength = 0.85,
     noRecoilEnabled = false,
@@ -300,6 +290,67 @@ local aimboneIndex = 1
 local silentAimResolved = nil
 local silentAimHooked = false
 local silentAimCamHooked = false
+local bloxStrikeShootHooked = false
+
+-- BloxStrike weapon path: InventoryController.ShootWeapon receives
+-- Data.Bullets before the weapon is simulated. Camera/Mouse hooks alone
+-- do not affect this path, so redirect each bullet direction here.
+local function setupBloxStrikeShootHook()
+    if bloxStrikeShootHooked then return end
+    if not ReplicatedStorage then return end
+
+    pcall(function()
+        local controllers = ReplicatedStorage:FindFirstChild("Controllers")
+        local moduleScript = controllers and controllers:FindFirstChild("InventoryController")
+        if not moduleScript then return end
+
+        local inventoryController = require(moduleScript)
+        if type(inventoryController) ~= "table" then return end
+        if type(inventoryController.ShootWeapon) ~= "function" then return end
+        if rawget(inventoryController, "__GestioShootHooked") then
+            bloxStrikeShootHooked = true
+            return
+        end
+
+        local originalShootWeapon = inventoryController.ShootWeapon
+        inventoryController.ShootWeapon = function(self, data, ...)
+            if GestioConfig.silentAimEnabled
+                and silentAimResolved
+                and type(data) == "table"
+                and type(data.Bullets) == "table" then
+
+                local camPos, aimPos = silentAimCamPosAim()
+                if camPos and aimPos then
+                    for _, bullet in pairs(data.Bullets) do
+                        if type(bullet) == "table" then
+                            local origin = bullet.Origin
+                                or bullet.StartingPoint
+                                or bullet.Position
+                                or camPos
+
+                            if typeof(origin) == "CFrame" then
+                                origin = origin.Position
+                            end
+
+                            if typeof(origin) == "Vector3" then
+                                local delta = aimPos - origin
+                                if delta.Magnitude > 0.001 then
+                                    bullet.Direction = delta.Unit
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+
+            return originalShootWeapon(self, data, ...)
+        end
+
+        rawset(inventoryController, "__GestioShootHooked", true)
+        bloxStrikeShootHooked = true
+        warn("[Gestio] BloxStrike InventoryController.ShootWeapon hook active")
+    end)
+end
 
 -- ==========================================
 -- STABLE RCS & RECOIL
@@ -345,41 +396,6 @@ function isTargetEnemy(plr, char)
     if not plr or plr == player then return false end
     if char and char == player.Character then return false end
     return not isAlly(plr)
-end
-
--- Independent Team Check for each visual ESP module.
--- This avoids one ESP module's setting affecting another.
-function isEspModuleAllowed(plr, moduleKey)
-    if not plr or plr == player then return false end
-
-    local checks = {
-        Chams = GestioConfig.chamsTeamCheck,
-        Nametags = GestioConfig.nametagTeamCheck,
-        Box = GestioConfig.boxEspTeamCheck,
-        Tracers = GestioConfig.tracersTeamCheck,
-        HeadDot = GestioConfig.headDotTeamCheck,
-    }
-
-    if checks[moduleKey] == false then
-        return true
-    end
-
-    if plr.Team and player.Team then
-        return plr.Team ~= player.Team
-    end
-
-    local pt = plr:GetAttribute("Team")
-    local mt = player:GetAttribute("Team")
-    if pt ~= nil and mt ~= nil then
-        return pt ~= mt
-    end
-
-    if plr.TeamColor and player.TeamColor then
-        return plr.TeamColor ~= player.TeamColor
-    end
-
-    -- If the game exposes no team information, keep the ESP visible.
-    return true
 end
 
 function getTargetHitbox(char)
@@ -471,10 +487,8 @@ local function getSilentAimTarget()
         -- Movement-aware target selection: score the predicted position rather
         -- than the current head position. This keeps the selected target stable
         -- while the target is strafing/jumping.
-        -- Select by the real current position. Prediction is only applied
-        -- after the target is locked, otherwise a strafing/jumping player can
-        -- be rejected from the FOV because the predicted point moved outside.
-        local dir = (part.Position - camPos).Unit
+        local predictedPos = getKinematicAimPosition(part)
+        local dir = (predictedPos - camPos).Unit
         local angle = math.acos(math.clamp(camLook:Dot(dir), -1, 1))
         if angle < bestAngle then
             bestAngle = angle
@@ -489,11 +503,30 @@ local function silentAimCamPosAim()
     local cam = Workspace.CurrentCamera or camera
     if not cam then return nil end
     local camPos = cam.CFrame.Position
-
-    -- Horizontal lead + shooter-movement compensation live inside
-    -- getKinematicAimPosition. Do not add another lead here: doing so
-    -- double-counts target movement and causes misses while strafing/jumping.
     local aimPos = getKinematicAimPosition(silentAimResolved)
+
+    -- Compensate for the shooter's own horizontal movement. Silent-aim
+    -- ray correction otherwise uses a world-space target lead and can miss
+    -- during strafing/jumping because the local camera is moving at the same time.
+    local myChar = player.Character
+    local myHrp = myChar and myChar:FindFirstChild("HumanoidRootPart")
+    local myVel = (myHrp and myHrp.AssemblyLinearVelocity) or Vector3.zero
+
+    if GestioConfig.predictionEnabled then
+        local horizontalMyVel = Vector3.new(myVel.X, 0, myVel.Z)
+        local horizontalTargetVel = Vector3.new(
+            silentAimResolved.AssemblyLinearVelocity.X,
+            0,
+            silentAimResolved.AssemblyLinearVelocity.Z
+        )
+
+        -- Keep vertical prediction from getKinematicAimPosition, but make
+        -- lateral lead relative to the shooter's movement.
+        local relativeLateral = horizontalTargetVel - horizontalMyVel
+        local lateralLead = relativeLateral * math.max(0, GestioConfig.predictionFactor * 0.35)
+        aimPos = aimPos + lateralLead
+    end
+
     return camPos, aimPos
 end
 
@@ -526,7 +559,7 @@ local function setupSilentAimHooks()
             local oldNamecall
             oldNamecall = hookmetamethod(camera, "__namecall", function(self, ...)
                 local method = getnamecallmethod()
-                if GestioConfig.silentAimEnabled and silentAimResolved
+                if GestioConfig.silentAimEnabled and silentAimResolved and noRecoil.isShooting
                     and (method == "ViewportPointToRay" or method == "ScreenPointToRay") then
                     local camPos, aimPos = silentAimCamPosAim()
                     if camPos then
@@ -543,22 +576,10 @@ end
 -- ==========================================
 -- CHAMS COLORS & HITMARKER VARS
 -- ==========================================
-local chamsColorVisible = Color3.fromRGB(228, 232, 238)   -- bright chrome
-local chamsColorHidden = Color3.fromRGB(92, 98, 108)       -- dark chrome (occluded)
-local chamsColorAlly = Color3.fromRGB(150, 205, 255)        -- chrome-blue ally
-local chamsOutlineColor = Color3.fromRGB(245, 247, 250)     -- chrome rim
-
-local function getChamsHealthColor(humanoid)
-    if not humanoid then return chamsColorVisible end
-    local maxHealth = math.max(humanoid.MaxHealth, 1)
-    local health = math.clamp(humanoid.Health / maxHealth, 0, 1)
-    -- Green at full HP -> yellow -> red at low HP.
-    return Color3.fromHSV(health * 0.33, 0.9, 1)
-end
-
-local function getChamsRainbowColor(offset)
-    return Color3.fromHSV((os.clock() * 0.18 + (offset or 0)) % 1, 0.85, 1)
-end
+local chamsColorVisible = Color3.fromRGB(255, 45, 85)
+local chamsColorHidden = Color3.fromRGB(110, 115, 125)
+local chamsColorAlly = Color3.fromRGB(0, 230, 255)
+local chamsOutlineColor = Color3.fromRGB(240, 240, 245)
 
 local hitmarkerLastHealth = {}
 local thirdPersonPreviousOffset = nil
@@ -1566,37 +1587,16 @@ function getKinematicAimPosition(targetPart)
         return rawPos
     end
 
-    -- For Blox Strike the camera ray is generated at the moment of the shot.
-    -- Do not add ping directly to the lead: that makes the aim overshoot when
-    -- the player is moving and is especially noticeable during jumps.
-    local leadTime = math.clamp(GestioConfig.predictionFactor, 0, 0.30)
-
-    local targetModel = targetPart:FindFirstAncestorOfClass("Model")
-    local targetHrp = targetModel and targetModel:FindFirstChild("HumanoidRootPart")
-    local targetVel = (targetHrp and targetHrp.AssemblyLinearVelocity) or Vector3.zero
+    local ping = getPingLatency()
+    local predDelta = (GestioConfig.predictionFactor * 0.5) + ping
+    local targetVel = targetPart.AssemblyLinearVelocity or Vector3.zero
 
     local myChar = player.Character
     local myHrp = myChar and myChar:FindFirstChild("HumanoidRootPart")
     local myVel = (myHrp and myHrp.AssemblyLinearVelocity) or Vector3.zero
-
-    -- Use relative horizontal motion for strafing. Never predict Y: on a jump
-    -- the current head position is the correct vertical intercept for a
-    -- hitscan/camera-ray weapon, while predicting Y creates a large miss.
-    local relativeVel = Vector3.new(
-        targetVel.X - (myVel.X * 0.10),
-        0,
-        targetVel.Z - (myVel.Z * 0.10)
-    )
-
-    -- Clamp the horizontal lead so high velocity / high ping cannot throw the
-    -- ray several studs past a strafing target.
-    local lead = relativeVel * leadTime
-    local maxLead = 4.0
-    if lead.Magnitude > maxLead then
-        lead = lead.Unit * maxLead
-    end
-
-    return rawPos + lead
+    
+    local relativeVel = targetVel - (myVel * 0.15)
+    return rawPos + (relativeVel * predDelta)
 end
 
 function getClosestTarget()
@@ -1853,13 +1853,10 @@ function renderTacticalOverlay()
         local rootPart = char and (char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso"))
         local head = char and char:FindFirstChild("Head")
 
+        local isEnemy = isTargetEnemy(plr, char)
         local isAlive = isEntityAlive(char, hum)
-        local showNametag = GestioConfig.nametagsEnabled and isEspModuleAllowed(plr, "Nametags")
-        local showBox = GestioConfig.boxEspEnabled and isEspModuleAllowed(plr, "Box")
-        local showCornerBox = GestioConfig.cornerBoxEnabled and isEspModuleAllowed(plr, "Box")
-        local hasTacticalEsp = showNametag or showBox or showCornerBox
 
-        if isAlive and rootPart and hasTacticalEsp then
+        if isEnemy and isAlive and rootPart and (GestioConfig.nametagsEnabled or GestioConfig.boxEspEnabled or GestioConfig.cornerBoxEnabled) then
             local dist = (rootPart.Position - camPos).Magnitude
 
             if dist <= GestioConfig.espMaxDist then
@@ -1873,10 +1870,7 @@ function renderTacticalOverlay()
                 local topScreen, topVisible = camera:WorldToViewportPoint(topWorld)
                 local bottomScreen, _ = camera:WorldToViewportPoint(bottomWorld)
 
-                -- Use depth as the primary visibility condition. Requiring the
-                -- top point to be inside the viewport made the whole ESP disappear
-                -- when a character was partially off-screen.
-                if topScreen.Z > 0 and bottomScreen.Z > 0 then
+                if topVisible and topScreen.Z > 0 then
                     local boxHeight = math.abs(bottomScreen.Y - topScreen.Y)
                     local boxWidth = boxHeight * 0.65
                     local boxPosX = topScreen.X - (boxWidth * 0.5)
@@ -1969,7 +1963,7 @@ function renderTacticalOverlay()
                         esp.HealthBarBg.Visible = false
                     end
 
-                    if showNametag then
+                    if GestioConfig.nametagsEnabled then
                         esp.TagCard.BackgroundTransparency = GestioConfig.tagTransparency
                         esp.TagCardStroke.Color = currentTheme.Border
                         esp.TagLabel.TextSize = GestioConfig.espTextSize
@@ -2106,25 +2100,6 @@ for _, v in pairs(Players:GetPlayers()) do attachEspToPlayer(v) end
 table.insert(connections, Players.PlayerAdded:Connect(attachEspToPlayer))
 
 -- ==========================================
--- DEDICATED ESP RENDER LOOP
--- ==========================================
--- Keep 2D ESP independent from the large combat/gameplay RenderStepped
--- callback. A transient error in another module must not stop ESP updates.
-local espErrorLogged = false
-table.insert(connections, RunService.RenderStepped:Connect(function()
-    camera = Workspace.CurrentCamera or camera
-    if not camera or not overlayContainer or not overlayContainer.Parent then return end
-
-    local ok, err = pcall(renderTacticalOverlay)
-    if not ok and not espErrorLogged then
-        espErrorLogged = true
-        warn("[Gestio ESP] Render error: " .. tostring(err))
-    elseif ok then
-        espErrorLogged = false
-    end
-end))
-
--- ==========================================
 -- MAIN ENGINE RENDER LOOP
 -- ==========================================
 table.insert(connections, RunService.RenderStepped:Connect(function(dt)
@@ -2201,6 +2176,8 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         currentAimTarget = nil
     end
 
+    setupBloxStrikeShootHook()
+
     if GestioConfig.skinChangerEnabled then
         skinScanAccumulator += dt
         if skinScanAccumulator >= 0.30 then
@@ -2217,6 +2194,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     end
 
     runMobileTriggerbot()
+    renderTacticalOverlay()
     renderGrenadeOverlays()
 
     for plr, data in pairs(activeEspHolders) do
@@ -2232,7 +2210,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         if char and isAlive and (dist <= GestioConfig.espMaxDist) then
             local isVisible = isVisibleThroughWalls(head or rootPart, char)
             
-            if GestioConfig.chamsEnabled and dist <= GestioConfig.chamsMaxDistance then
+            if GestioConfig.chamsEnabled then
                 if ally and not GestioConfig.chamsShowTeammates then
                     data.Highlight.Enabled = false
                 else
@@ -2240,29 +2218,12 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
                     if data.Highlight.Adornee ~= char then
                         data.Highlight.Adornee = char
                     end
-                    local chromeMode = GestioConfig.chamsMetallicChrome and (not ally or GestioConfig.chamsChromeAlly)
+                    data.Highlight.FillTransparency = GestioConfig.chamsFillTransparency
+                    data.Highlight.OutlineTransparency = GestioConfig.chamsOutlineTransparency
+                    data.Highlight.OutlineColor = chamsOutlineColor
 
-                    -- Highlight has no FillMaterial/OutlineMaterial properties.
-                    -- Chrome is therefore emulated with a high-contrast metal palette
-                    -- and tighter alpha values while keeping the Highlight API valid.
-                    if chromeMode then
-                        data.Highlight.FillTransparency = math.min(math.clamp(GestioConfig.chamsFillTransparency, 0, 1), 0.30)
-                        data.Highlight.OutlineTransparency = GestioConfig.chamsUseOutline
-                            and math.min(math.clamp(GestioConfig.chamsOutlineTransparency, 0, 1), 0.20)
-                            or 1
-                        data.Highlight.OutlineColor = chamsOutlineColor
-                    else
-                        data.Highlight.FillTransparency = math.clamp(GestioConfig.chamsFillTransparency, 0, 1)
-                        data.Highlight.OutlineTransparency = GestioConfig.chamsUseOutline and math.clamp(GestioConfig.chamsOutlineTransparency, 0, 1) or 1
-                        data.Highlight.OutlineColor = GestioConfig.chamsRainbow and getChamsRainbowColor(0.08) or chamsOutlineColor
-                    end
-
-                    if GestioConfig.chamsRainbow and not chromeMode then
-                        data.Highlight.FillColor = getChamsRainbowColor(ally and 0.48 or 0)
-                    elseif ally then
-                        data.Highlight.FillColor = chromeMode and chamsColorAlly or chamsColorAlly
-                    elseif GestioConfig.chamsHealthColor and not chromeMode then
-                        data.Highlight.FillColor = getChamsHealthColor(hum)
+                    if ally then
+                        data.Highlight.FillColor = chamsColorAlly
                     else
                         data.Highlight.FillColor = GestioConfig.chamsOcclusion and (isVisible and chamsColorVisible or chamsColorHidden) or chamsColorVisible
                     end
@@ -2278,9 +2239,9 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
                     data.HeadDot.Adornee = head
                 end
                 data.DotFrame.BackgroundColor3 = activeAccent
-                data.HeadDot.Enabled = GestioConfig.headDotEnabled and isEspModuleAllowed(plr, "HeadDot")
+                data.HeadDot.Enabled = GestioConfig.headDotEnabled
 
-                if GestioConfig.tracersEnabled and isEspModuleAllowed(plr, "Tracers") and rootPart then
+                if GestioConfig.tracersEnabled and rootPart then
                     local scrPos, onScreen = camera:WorldToViewportPoint(rootPart.Position)
                     if onScreen and scrPos.Z > 0 then
                         local origin = Vector2.new(camera.ViewportSize.X * 0.5, camera.ViewportSize.Y)
@@ -3318,13 +3279,6 @@ function buildGestioUI()
             addInspectorToggle(76, "Team Check", GestioConfig.chamsTeamCheck, function(v) GestioConfig.chamsTeamCheck = v end)
             addInspectorToggle(102, "Show Teammates", GestioConfig.chamsShowTeammates, function(v) GestioConfig.chamsShowTeammates = v end)
             addInspectorToggle(128, "Occlusion Color (Walls)", GestioConfig.chamsOcclusion, function(v) GestioConfig.chamsOcclusion = v end)
-            addInspectorToggle(154, "Rainbow", GestioConfig.chamsRainbow, function(v) GestioConfig.chamsRainbow = v end)
-            addInspectorToggle(180, "Health Colors", GestioConfig.chamsHealthColor, function(v) GestioConfig.chamsHealthColor = v end)
-            addInspectorToggle(206, "Outline", GestioConfig.chamsUseOutline, function(v) GestioConfig.chamsUseOutline = v end)
-            addInspectorToggle(232, "Metallic & Chrome", GestioConfig.chamsMetallicChrome, function(v)
-                GestioConfig.chamsMetallicChrome = v
-            end)
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 270)
         elseif moduleName == "No Recoil" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 110)
             addInspectorSlider(6, "Recoil Dampener", 0.1, 1.0, GestioConfig.recoilStrength, true, function(v)
@@ -3432,13 +3386,11 @@ function buildGestioUI()
             addInspectorSlider(6, "Max Distance", 100, 5000, GestioConfig.espMaxDist, false, function(v) GestioConfig.espMaxDist = v end)
             addInspectorSlider(38, "Text Size", 8, 20, GestioConfig.espTextSize, false, function(v) GestioConfig.espTextSize = v end)
             addInspectorSlider(70, "Transparency", 0.0, 0.9, GestioConfig.tagTransparency, true, function(v) GestioConfig.tagTransparency = v end)
-            addInspectorToggle(102, "Team Check", GestioConfig.nametagTeamCheck, function(v) GestioConfig.nametagTeamCheck = v end)
             addInspectorToggle(108, "Show Distance", GestioConfig.espShowDistance, function(v) GestioConfig.espShowDistance = v end)
             addInspectorToggle(134, "Show Health", GestioConfig.espShowHealth, function(v) GestioConfig.espShowHealth = v end)
             addInspectorToggle(160, "Show Weapon", GestioConfig.tagShowWeapon, function(v) GestioConfig.tagShowWeapon = v end)
         elseif moduleName == "Box Overlay" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 200)
-            addInspectorToggle(76, "Team Check", GestioConfig.boxEspTeamCheck, function(v) GestioConfig.boxEspTeamCheck = v end)
             addInspectorSlider(6, "Max Distance", 100, 5000, GestioConfig.espMaxDist, false, function(v) GestioConfig.espMaxDist = v end)
             addInspectorSlider(38, "Thickness", 1.0, 3.0, GestioConfig.boxThickness, true, function(v) GestioConfig.boxThickness = v end)
             addInspectorToggle(76, "Corner Box", GestioConfig.cornerBoxEnabled, function(v) GestioConfig.cornerBoxEnabled = v end)
