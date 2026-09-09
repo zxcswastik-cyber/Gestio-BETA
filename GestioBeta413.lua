@@ -57,6 +57,9 @@ local GestioConfig = {
     -- Movement-aware prediction is applied by the silent-aim resolver.
     showSilentFovCircle = true,
 
+    -- Perfect Silent Aim: redirects physical raycasts without moving the camera.
+    pSilentEnabled = false,
+
     chamsFillTransparency = 0.45,
     chamsOutlineTransparency = 0.10,
     chamsTeamCheck = true,
@@ -556,16 +559,60 @@ local function setupSilentAimHooks()
 
     if not silentAimCamHooked and hookmetamethod and getnamecallmethod then
         pcall(function()
+            -- One global __namecall hook handles both camera rays and physical
+            -- Workspace raycasts. This avoids stacking separate hooks on
+            -- Camera and Workspace.
             local oldNamecall
-            oldNamecall = hookmetamethod(camera, "__namecall", function(self, ...)
+            oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
                 local method = getnamecallmethod()
+                local args = {...}
+
+                -- Standard camera Silent Aim.
                 if GestioConfig.silentAimEnabled and silentAimResolved and noRecoil.isShooting
+                    and self == camera
                     and (method == "ViewportPointToRay" or method == "ScreenPointToRay") then
                     local camPos, aimPos = silentAimCamPosAim()
                     if camPos then
                         return Ray.new(camPos, (aimPos - camPos).Unit)
                     end
                 end
+
+                -- pSilent: redirect physical raycasts while leaving the
+                -- player's camera/view unchanged.
+                if GestioConfig.pSilentEnabled and silentAimResolved and self == Workspace then
+                    local _, aimPos = silentAimCamPosAim()
+
+                    if aimPos then
+                        if method == "Raycast" then
+                            local origin = args[1]
+                            local originalDirection = args[2]
+
+                            if typeof(origin) == "Vector3" and typeof(originalDirection) == "Vector3" then
+                                local magnitude = originalDirection.Magnitude
+                                if magnitude > 0.001 then
+                                    args[2] = (aimPos - origin).Unit * magnitude
+                                    return oldNamecall(self, unpack(args))
+                                end
+                            end
+                        elseif method == "FindPartOnRay"
+                            or method == "FindPartOnRayWithIgnoreList"
+                            or method == "FindPartOnRayWithWhitelist" then
+
+                            local oldRay = args[1]
+                            if typeof(oldRay) == "Ray" then
+                                local magnitude = oldRay.Direction.Magnitude
+                                if magnitude > 0.001 then
+                                    args[1] = Ray.new(
+                                        oldRay.Origin,
+                                        (aimPos - oldRay.Origin).Unit * magnitude
+                                    )
+                                    return oldNamecall(self, unpack(args))
+                                end
+                            end
+                        end
+                    end
+                end
+
                 return oldNamecall(self, ...)
             end)
         end)
@@ -2141,7 +2188,9 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         end
     end
 
-    if GestioConfig.silentAimEnabled then
+    -- Silent Aim and pSilent share the same target resolver.
+    -- pSilent can operate independently, without requiring the camera Silent Aim toggle.
+    if GestioConfig.silentAimEnabled or GestioConfig.pSilentEnabled then
         if math.random(1, 100) <= GestioConfig.silentAimHitChance then
             silentAimResolved = getSilentAimTarget()
         else
@@ -3265,13 +3314,14 @@ function buildGestioUI()
             addInspectorToggle(218, "Show FOV Circle", GestioConfig.showFovCircle, function(v) GestioConfig.showFovCircle = v end)
             addInspectorToggle(244, "Visibility Check", GestioConfig.visibleCheck, function(v) GestioConfig.visibleCheck = v end)
         elseif moduleName == "Silent Aim" then
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 230)
+            insContent.CanvasSize = UDim2.new(0, 0, 0, 260)
             addInspectorSlider(6, "FOV", 10, 360, GestioConfig.silentAimFov, false, function(v) GestioConfig.silentAimFov = v end)
             addInspectorSlider(38, "Hit Chance", 1, 100, GestioConfig.silentAimHitChance, false, function(v) GestioConfig.silentAimHitChance = v end)
             addInspectorToggle(70, "Team Check", GestioConfig.silentAimTeamCheck, function(v) GestioConfig.silentAimTeamCheck = v end)
             addInspectorToggle(96, "Visible Check", GestioConfig.silentAimVisibleCheck, function(v) GestioConfig.silentAimVisibleCheck = v end)
             addInspectorToggle(122, "Aim Head", GestioConfig.silentAimAimHead, function(v) GestioConfig.silentAimAimHead = v end)
             addInspectorToggle(148, "Show Silent FOV", GestioConfig.showSilentFovCircle, function(v) GestioConfig.showSilentFovCircle = v end)
+            addInspectorToggle(174, "pSilent (Raycast)", GestioConfig.pSilentEnabled, function(v) GestioConfig.pSilentEnabled = v end)
         elseif moduleName == "Chams" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 240)
             addInspectorSlider(6, "Fill Alpha", 0.0, 1.0, GestioConfig.chamsFillTransparency, true, function(v) GestioConfig.chamsFillTransparency = v end)
