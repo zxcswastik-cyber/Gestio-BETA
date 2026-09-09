@@ -18,8 +18,8 @@ local GestioConfig = {
     rcsEnabled = false,
     chamsEnabled = false,
     hitmarkerEnabled = false,
-    damageIndicatorEnabled = false, -- НОВАЯ ФУНКЦИЯ
-    killEffectEnabled = false,      -- НОВАЯ ФУНКЦИЯ
+    damageIndicatorEnabled = false,
+    killEffectEnabled = false,
     thirdPersonEnabled = false,
     skinChangerEnabled = false,
     triggerbotEnabled = false,
@@ -302,74 +302,9 @@ local silentAimHooked = false
 local silentAimCamHooked = false
 local bloxStrikeShootHooked = false
 
+-- ФИКС: Трассеры теперь рисуются напрямую из ядра стрельбы Blox Strike, минуя проверку на класс Tool
 local function setupBloxStrikeShootHook()
     if bloxStrikeShootHooked then return end
-    
-    pcall(function()
-        UserInputService.InputBegan:Connect(function(input, gameProcessed)
-            if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
-                local char = player.Character
-                local tool = char and char:FindFirstChildOfClass("Tool")
-                
-                if (GestioConfig.bulletTrailEnabled or GestioConfig.bulletFlashEnabled) and tool then
-                    local cam = Workspace.CurrentCamera or camera
-                    if not cam then return end
-                    
-                    local origin = cam.CFrame.Position
-                    local muzzle = tool:FindFirstChild("Muzzle") or tool:FindFirstChild("Handle")
-                    if muzzle and muzzle:IsA("BasePart") then
-                        origin = muzzle.Position
-                    end
-
-                    local rayParams = RaycastParams.new()
-                    rayParams.FilterType = Enum.RaycastFilterType.Exclude
-                    rayParams.FilterDescendantsInstances = {player.Character, camera}
-                    rayParams.IgnoreWater = true
-                    
-                    local hit = Workspace:Raycast(origin, cam.CFrame.LookVector * 500, rayParams)
-                    local bulletEnd = hit and hit.Position or (origin + cam.CFrame.LookVector * 500)
-                    local dist = (origin - bulletEnd).Magnitude
-
-                    if GestioConfig.bulletTrailEnabled then
-                        local trail = Instance.new("Part")
-                        trail.Anchored = true
-                        trail.CanCollide = false
-                        trail.CastShadow = false
-                        trail.Material = Enum.Material.Neon
-                        trail.Color = Color3.fromRGB(255, 20, 20)
-                        trail.Size = Vector3.new(0.08, 0.08, dist)
-                        trail.CFrame = CFrame.lookAt(origin, bulletEnd) * CFrame.new(0, 0, -dist / 2)
-                        trail.Parent = Workspace
-                        
-                        TweenService:Create(trail, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = Vector3.new(0, 0, dist), Transparency = 1}):Play()
-                        task.delay(0.15, function() pcall(function() trail:Destroy() end) end)
-                    end
-
-                    if GestioConfig.bulletFlashEnabled then
-                        local flash = Instance.new("Part")
-                        flash.Anchored = true
-                        flash.CanCollide = false
-                        flash.CastShadow = false
-                        flash.Material = Enum.Material.Neon
-                        flash.Color = Color3.fromRGB(255, 80, 80)
-                        flash.Shape = Enum.PartType.Ball
-                        flash.Size = Vector3.new(0.6, 0.6, 0.6)
-                        flash.CFrame = CFrame.new(bulletEnd)
-                        flash.Parent = Workspace
-                        
-                        local s = Instance.new("Sound")
-                        s.SoundId = "rbxassetid://9113089896"
-                        s.Volume = 0.2
-                        s.Parent = flash
-                        s:Play()
-
-                        TweenService:Create(flash, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = Vector3.new(0, 0, 0), Transparency = 1}):Play()
-                        task.delay(0.15, function() pcall(function() flash:Destroy() end) end)
-                    end
-                end
-            end
-        end)
-    end)
 
     pcall(function()
         local controllers = ReplicatedStorage:FindFirstChild("Controllers")
@@ -386,34 +321,83 @@ local function setupBloxStrikeShootHook()
 
         local originalShootWeapon = inventoryController.ShootWeapon
         inventoryController.ShootWeapon = function(self, data, ...)
-            if GestioConfig.silentAimEnabled
-                and silentAimResolved
-                and type(data) == "table"
-                and type(data.Bullets) == "table" then
+            local camPos, aimPos = nil, nil
+            if GestioConfig.silentAimEnabled and silentAimResolved then
+                camPos, aimPos = silentAimCamPosAim()
+            end
 
-                local camPos, aimPos = silentAimCamPosAim()
-                if camPos and aimPos then
-                    for _, bullet in pairs(data.Bullets) do
-                        if type(bullet) == "table" then
-                            local origin = bullet.Origin
-                                or bullet.StartingPoint
-                                or bullet.Position
-                                or camPos
+            if type(data) == "table" and type(data.Bullets) == "table" then
+                for _, bullet in pairs(data.Bullets) do
+                    if type(bullet) == "table" then
+                        -- Надежное получение точки старта пули из самого движка игры
+                        local origin = bullet.Origin or bullet.StartingPoint or bullet.Position or (camera and camera.CFrame.Position)
+                        
+                        if typeof(origin) == "CFrame" then
+                            origin = origin.Position
+                        end
 
-                            if typeof(origin) == "CFrame" then
-                                origin = origin.Position
-                            end
-
-                            if typeof(origin) == "Vector3" then
+                        if typeof(origin) == "Vector3" then
+                            -- Логика Silent Aim / Wallbang
+                            if aimPos then
                                 local delta = aimPos - origin
                                 if delta.Magnitude > 0.001 then
                                     bullet.Direction = delta.Unit
                                 end
+                            end
 
-                                if GestioConfig.wallbangEnabled then
-                                    bullet.Penetration = 9999
-                                    bullet.Wallbang = true
-                                    bullet.IgnoreEnvironment = true
+                            if GestioConfig.wallbangEnabled then
+                                bullet.Penetration = 9999
+                                bullet.Wallbang = true
+                                bullet.IgnoreEnvironment = true
+                            end
+
+                            -- ФИКС: Встроенные трассеры (Срабатывают безошибочно при каждом выстреле)
+                            if (GestioConfig.bulletTrailEnabled or GestioConfig.bulletFlashEnabled) and typeof(bullet.Direction) == "Vector3" then
+                                local rayDir = bullet.Direction * 500
+                                local rayParams = RaycastParams.new()
+                                rayParams.FilterType = Enum.RaycastFilterType.Exclude
+                                rayParams.FilterDescendantsInstances = {player.Character, camera}
+                                rayParams.IgnoreWater = true
+                                
+                                local hit = Workspace:Raycast(origin, rayDir, rayParams)
+                                local bulletEnd = hit and hit.Position or (origin + rayDir)
+                                local dist = (origin - bulletEnd).Magnitude
+
+                                if GestioConfig.bulletTrailEnabled then
+                                    local trail = Instance.new("Part")
+                                    trail.Anchored = true
+                                    trail.CanCollide = false
+                                    trail.CastShadow = false
+                                    trail.Material = Enum.Material.Neon
+                                    trail.Color = Color3.fromRGB(255, 20, 20)
+                                    trail.Size = Vector3.new(0.08, 0.08, dist)
+                                    trail.CFrame = CFrame.lookAt(origin, bulletEnd) * CFrame.new(0, 0, -dist / 2)
+                                    trail.Parent = Workspace
+                                    
+                                    TweenService:Create(trail, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = Vector3.new(0, 0, dist), Transparency = 1}):Play()
+                                    task.delay(0.15, function() pcall(function() trail:Destroy() end) end)
+                                end
+
+                                if GestioConfig.bulletFlashEnabled then
+                                    local flash = Instance.new("Part")
+                                    flash.Anchored = true
+                                    flash.CanCollide = false
+                                    flash.CastShadow = false
+                                    flash.Material = Enum.Material.Neon
+                                    flash.Color = Color3.fromRGB(255, 80, 80)
+                                    flash.Shape = Enum.PartType.Ball
+                                    flash.Size = Vector3.new(0.6, 0.6, 0.6)
+                                    flash.CFrame = CFrame.new(bulletEnd)
+                                    flash.Parent = Workspace
+                                    
+                                    local s = Instance.new("Sound")
+                                    s.SoundId = "rbxassetid://9113089896"
+                                    s.Volume = 0.2
+                                    s.Parent = flash
+                                    s:Play()
+
+                                    TweenService:Create(flash, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = Vector3.new(0, 0, 0), Transparency = 1}):Play()
+                                    task.delay(0.15, function() pcall(function() flash:Destroy() end) end)
                                 end
                             end
                         end
@@ -2854,43 +2838,41 @@ local inEndedConn = UserInputService.InputEnded:Connect(function(input)
 end)
 table.insert(connections, inEndedConn)
 
--- ==========================================
--- HITMARKER & PHYSICS LOOP
--- ==========================================
+-- ФИКС: Переписана проверка получения урона, чтобы она фиксировала момент смерти врага
 table.insert(connections, RunService.Heartbeat:Connect(function()
     if not GestioConfig.hitmarkerEnabled and not GestioConfig.damageIndicatorEnabled and not GestioConfig.killEffectEnabled then
-        hitmarkerLastHealth = {}
         return
     end
 
     for _, targetPlr in ipairs(Players:GetPlayers()) do
         if targetPlr ~= player then
             local char = targetPlr.Character
-            local hum = char and char:FindFirstChildOfClass("Humanoid")
+            if char and char:IsDescendantOf(Workspace) then
+                local hum = char:FindFirstChildOfClass("Humanoid")
+                if hum and isTargetEnemy(targetPlr, char) then
+                    local currentHealth = hum.Health
+                    local previousHealth = hitmarkerLastHealth[hum]
 
-            if char and hum and isTargetEnemy(targetPlr, char) and isEntityAlive(char, hum) then
-                local currentHealth = hum.Health
-                local previousHealth = hitmarkerLastHealth[hum]
+                    if previousHealth and currentHealth < previousHealth and (previousHealth - currentHealth) > 0.01 then
+                        local damageDealt = previousHealth - currentHealth
+                        
+                        if GestioConfig.hitmarkerEnabled then
+                            showHitmarker()
+                        end
+                        
+                        if GestioConfig.damageIndicatorEnabled then
+                            local dmgPart = char:FindFirstChild("Head") or char:FindFirstChild("HumanoidRootPart")
+                            if dmgPart then spawnDamageIndicator(dmgPart, damageDealt) end
+                        end
+                        
+                        if currentHealth <= 0.1 and GestioConfig.killEffectEnabled then
+                            local hrp = char:FindFirstChild("HumanoidRootPart")
+                            if hrp then spawnFeatherKillEffect(hrp.Position) end
+                        end
+                    end
 
-                if previousHealth and currentHealth < previousHealth and (previousHealth - currentHealth) > 0.01 then
-                    local damageDealt = previousHealth - currentHealth
-                    
-                    if GestioConfig.hitmarkerEnabled then
-                        showHitmarker()
-                    end
-                    
-                    if GestioConfig.damageIndicatorEnabled then
-                        local dmgPart = char:FindFirstChild("Head") or char:FindFirstChild("HumanoidRootPart")
-                        if dmgPart then spawnDamageIndicator(dmgPart, damageDealt) end
-                    end
-                    
-                    if currentHealth <= 0.1 and GestioConfig.killEffectEnabled then
-                        local hrp = char:FindFirstChild("HumanoidRootPart")
-                        if hrp then spawnFeatherKillEffect(hrp.Position) end
-                    end
+                    hitmarkerLastHealth[hum] = currentHealth
                 end
-
-                hitmarkerLastHealth[hum] = currentHealth
             end
         end
     end
