@@ -797,6 +797,7 @@ local nightPresets = {
 
 local fogLibrary = {
     ["Nebula"] = Color3.fromRGB(90, 30, 110),
+    ["nebula"] = Color3.fromRGB(90, 30, 110),
     ["Midnight"] = Color3.fromRGB(10, 10, 20),
     ["DeepBlood"] = Color3.fromRGB(35, 5, 8),
     ["CyberPurple"] = Color3.fromRGB(30, 8, 45),
@@ -2722,17 +2723,26 @@ table.insert(connections, RunService.Heartbeat:Connect(function(dt)
 
     if activeMode == "Normal" and GestioConfig.bunnyHopEnabled then
         local grounded = isPlayerGrounded(char, hrp) or hum.FloorMaterial ~= Enum.Material.Air
-        local shouldJump = GestioConfig.bhopAutoJump or isMobileJumpHeld or hum.Jump
+        local isSpacePressed = UserInputService:IsKeyDown(Enum.KeyCode.Space)
+        local shouldJump = GestioConfig.bhopAutoJump or isMobileJumpHeld or hum.Jump or isSpacePressed
 
         if grounded and shouldJump then
             activeMode = "Bhop"
-            hum.JumpPower = GestioConfig.bhopJumpPower
             hum.Jump = true
+            
+            local currentX = finalVelocity and finalVelocity.X or currentVel.X
+            local currentZ = finalVelocity and finalVelocity.Z or currentVel.Z
+            finalVelocity = Vector3.new(currentX, GestioConfig.bhopJumpPower, currentZ)
+            
+            pcall(function() hum:ChangeState(Enum.HumanoidStateType.Jumping) end)
+            
         elseif not grounded and GestioConfig.bhopAirStrafe and currentMove.Magnitude > 0.05 then
             activeMode = "AutoStrafe"
             local targetSpeed = 16 * GestioConfig.bhopSpeedBoost
             local targetVel = currentMove * targetSpeed
-            finalVelocity = Vector3.new(targetVel.X, currentVel.Y, targetVel.Z)
+            
+            local currentY = finalVelocity and finalVelocity.Y or currentVel.Y
+            finalVelocity = Vector3.new(targetVel.X, currentY, targetVel.Z)
         end
     end
 
