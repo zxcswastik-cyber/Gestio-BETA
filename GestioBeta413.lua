@@ -487,30 +487,11 @@ local function silentAimCamPosAim()
     local cam = Workspace.CurrentCamera or camera
     if not cam then return nil end
     local camPos = cam.CFrame.Position
+
+    -- Horizontal lead + shooter-movement compensation live inside
+    -- getKinematicAimPosition. Do not add another lead here: doing so
+    -- double-counts target movement and causes misses while strafing/jumping.
     local aimPos = getKinematicAimPosition(silentAimResolved)
-
-    -- Compensate for the shooter's own horizontal movement. Silent-aim
-    -- ray correction otherwise uses a world-space target lead and can miss
-    -- during strafing/jumping because the local camera is moving at the same time.
-    local myChar = player.Character
-    local myHrp = myChar and myChar:FindFirstChild("HumanoidRootPart")
-    local myVel = (myHrp and myHrp.AssemblyLinearVelocity) or Vector3.zero
-
-    if GestioConfig.predictionEnabled then
-        local horizontalMyVel = Vector3.new(myVel.X, 0, myVel.Z)
-        local horizontalTargetVel = Vector3.new(
-            silentAimResolved.AssemblyLinearVelocity.X,
-            0,
-            silentAimResolved.AssemblyLinearVelocity.Z
-        )
-
-        -- Keep vertical prediction from getKinematicAimPosition, but make
-        -- lateral lead relative to the shooter's movement.
-        local relativeLateral = horizontalTargetVel - horizontalMyVel
-        local lateralLead = relativeLateral * math.max(0, GestioConfig.predictionFactor * 0.35)
-        aimPos = aimPos + lateralLead
-    end
-
     return camPos, aimPos
 end
 
@@ -543,7 +524,7 @@ local function setupSilentAimHooks()
             local oldNamecall
             oldNamecall = hookmetamethod(camera, "__namecall", function(self, ...)
                 local method = getnamecallmethod()
-                if GestioConfig.silentAimEnabled and silentAimResolved and noRecoil.isShooting
+                if GestioConfig.silentAimEnabled and silentAimResolved
                     and (method == "ViewportPointToRay" or method == "ScreenPointToRay") then
                     local camPos, aimPos = silentAimCamPosAim()
                     if camPos then
@@ -1585,13 +1566,25 @@ function getKinematicAimPosition(targetPart)
 
     local ping = getPingLatency()
     local predDelta = (GestioConfig.predictionFactor * 0.5) + ping
-    local targetVel = targetPart.AssemblyLinearVelocity or Vector3.zero
+
+    -- Welded body parts such as Head/Torso can report zero velocity.
+    -- Resolve movement from the target character's HumanoidRootPart instead.
+    local targetModel = targetPart:FindFirstAncestorOfType("Model")
+    local targetHrp = targetModel and targetModel:FindFirstChild("HumanoidRootPart")
+    local targetVel = (targetHrp and targetHrp.AssemblyLinearVelocity) or Vector3.zero
 
     local myChar = player.Character
     local myHrp = myChar and myChar:FindFirstChild("HumanoidRootPart")
     local myVel = (myHrp and myHrp.AssemblyLinearVelocity) or Vector3.zero
-    
-    local relativeVel = targetVel - (myVel * 0.15)
+
+    -- Horizontal lead ONLY. Keep the target's current Y coordinate so
+    -- vertical movement/jumps do not introduce a several-stud overshoot.
+    local relativeVel = Vector3.new(
+        targetVel.X - (myVel.X * 0.15),
+        0,
+        targetVel.Z - (myVel.Z * 0.15)
+    )
+
     return rawPos + (relativeVel * predDelta)
 end
 
