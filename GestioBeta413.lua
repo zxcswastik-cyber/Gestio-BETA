@@ -298,84 +298,110 @@ local silentAimResolved = nil
 local silentAimHooked = false
 local silentAimCamHooked = false
 local bloxStrikeShootHooked = false
+local shootEffectsInputHooked = false
+local silentAimShotActive = false
+local silentAimShotSerial = 0
+
+-- Forward declaration: setupBloxStrikeShootHook is defined before the aim solver.
+-- Keeping the reference in one local upvalue prevents a nil/global lookup at runtime.
+local silentAimCamPosAim
+
+local function hookCallerIsExternal()
+    local ok, result = pcall(function()
+        return type(checkcaller) == "function" and checkcaller()
+    end)
+    return ok and result == true
+end
 
 local function setupBloxStrikeShootHook()
-    if bloxStrikeShootHooked then return end
-    
-    pcall(function()
-        UserInputService.InputBegan:Connect(function(input, gameProcessed)
-            if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
-                local char = player.Character
-                local tool = char and char:FindFirstChildOfClass("Tool")
-                
-                if (GestioConfig.bulletTrailEnabled or GestioConfig.bulletFlashEnabled) and tool then
-                    local cam = Workspace.CurrentCamera or camera
-                    if not cam then return end
-                    
-                    local origin = cam.CFrame.Position
-                    local muzzle = tool:FindFirstChild("Muzzle") or tool:FindFirstChild("Handle")
-                    if muzzle and muzzle:IsA("BasePart") then
-                        origin = muzzle.Position
-                    end
+    -- Bullet visuals are input-driven and must be connected exactly once.
+    -- The old version attempted this from RenderStepped until the controller
+    -- module was found, which could create an unbounded number of connections.
+    if not shootEffectsInputHooked then
+        shootEffectsInputHooked = true
+        local conn = UserInputService.InputBegan:Connect(function(input, gameProcessed)
+            if gameProcessed then return end
+            if input.UserInputType ~= Enum.UserInputType.MouseButton1
+                and input.UserInputType ~= Enum.UserInputType.Touch then
+                return
+            end
 
-                    local rayParams = RaycastParams.new()
-                    rayParams.FilterType = Enum.RaycastFilterType.Exclude
-                    rayParams.FilterDescendantsInstances = {player.Character, camera}
-                    rayParams.IgnoreWater = true
-                    
-                    local hit = Workspace:Raycast(origin, cam.CFrame.LookVector * 500, rayParams)
-                    local bulletEnd = hit and hit.Position or (origin + cam.CFrame.LookVector * 500)
-                    local dist = (origin - bulletEnd).Magnitude
+            local char = player.Character
+            local tool = char and char:FindFirstChildOfClass("Tool")
+            if not ((GestioConfig.bulletTrailEnabled or GestioConfig.bulletFlashEnabled) and tool) then return end
 
-                    if GestioConfig.bulletTrailEnabled then
-                        local trail = Instance.new("Part")
-                        trail.Anchored = true
-                        trail.CanCollide = false
-                        trail.CastShadow = false
-                        trail.Material = Enum.Material.Neon
-                        trail.Color = Color3.fromRGB(255, 20, 20)
-                        trail.Size = Vector3.new(0.08, 0.08, dist)
-                        trail.CFrame = CFrame.lookAt(origin, bulletEnd) * CFrame.new(0, 0, -dist / 2)
-                        trail.Parent = Workspace
-                        
-                        TweenService:Create(trail, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = Vector3.new(0, 0, dist), Transparency = 1}):Play()
-                        task.delay(0.15, function() pcall(function() trail:Destroy() end) end)
-                    end
+            local cam = Workspace.CurrentCamera or camera
+            if not cam then return end
 
-                    if GestioConfig.bulletFlashEnabled then
-                        local flash = Instance.new("Part")
-                        flash.Anchored = true
-                        flash.CanCollide = false
-                        flash.CastShadow = false
-                        flash.Material = Enum.Material.Neon
-                        flash.Color = Color3.fromRGB(255, 80, 80)
-                        flash.Shape = Enum.PartType.Ball
-                        flash.Size = Vector3.new(0.6, 0.6, 0.6)
-                        flash.CFrame = CFrame.new(bulletEnd)
-                        flash.Parent = Workspace
-                        
-                        local s = Instance.new("Sound")
-                        s.SoundId = "rbxassetid://9113089896"
-                        s.Volume = 0.2
-                        s.Parent = flash
-                        s:Play()
+            local origin = cam.CFrame.Position
+            local muzzle = tool:FindFirstChild("Muzzle") or tool:FindFirstChild("Handle")
+            if muzzle and muzzle:IsA("BasePart") then origin = muzzle.Position end
 
-                        TweenService:Create(flash, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = Vector3.new(0, 0, 0), Transparency = 1}):Play()
-                        task.delay(0.15, function() pcall(function() flash:Destroy() end) end)
-                    end
-                end
+            local rayParams = RaycastParams.new()
+            rayParams.FilterType = Enum.RaycastFilterType.Exclude
+            rayParams.FilterDescendantsInstances = {player.Character, camera}
+            rayParams.IgnoreWater = true
+
+            local hit = Workspace:Raycast(origin, cam.CFrame.LookVector * 500, rayParams)
+            local bulletEnd = hit and hit.Position or (origin + cam.CFrame.LookVector * 500)
+            local dist = (origin - bulletEnd).Magnitude
+
+            if GestioConfig.bulletTrailEnabled then
+                local trail = Instance.new("Part")
+                trail.Anchored = true
+                trail.CanCollide = false
+                trail.CanQuery = false
+                trail.CanTouch = false
+                trail.CastShadow = false
+                trail.Material = Enum.Material.Neon
+                trail.Color = Color3.fromRGB(255, 20, 20)
+                trail.Size = Vector3.new(0.08, 0.08, dist)
+                trail.CFrame = CFrame.lookAt(origin, bulletEnd) * CFrame.new(0, 0, -dist / 2)
+                trail.Parent = Workspace
+                TweenService:Create(trail, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                    Size = Vector3.new(0, 0, dist), Transparency = 1
+                }):Play()
+                task.delay(0.15, function() pcall(function() trail:Destroy() end) end)
+            end
+
+            if GestioConfig.bulletFlashEnabled then
+                local flash = Instance.new("Part")
+                flash.Anchored = true
+                flash.CanCollide = false
+                flash.CanQuery = false
+                flash.CanTouch = false
+                flash.CastShadow = false
+                flash.Material = Enum.Material.Neon
+                flash.Color = Color3.fromRGB(255, 80, 80)
+                flash.Shape = Enum.PartType.Ball
+                flash.Size = Vector3.new(0.6, 0.6, 0.6)
+                flash.CFrame = CFrame.new(bulletEnd)
+                flash.Parent = Workspace
+
+                local sound = Instance.new("Sound")
+                sound.SoundId = "rbxassetid://9113089896"
+                sound.Volume = 0.2
+                sound.Parent = flash
+                sound:Play()
+
+                TweenService:Create(flash, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                    Size = Vector3.new(0, 0, 0), Transparency = 1
+                }):Play()
+                task.delay(0.15, function() pcall(function() flash:Destroy() end) end)
             end
         end)
-    end)
+        table.insert(connections, conn)
+    end
+
+    if bloxStrikeShootHooked then return end
 
     pcall(function()
         local controllers = ReplicatedStorage:FindFirstChild("Controllers")
         local moduleScript = controllers and controllers:FindFirstChild("InventoryController")
-        if not moduleScript then return end
+        if not moduleScript or not moduleScript:IsA("ModuleScript") then return end
 
         local inventoryController = require(moduleScript)
-        if type(inventoryController) ~= "table" then return end
-        if type(inventoryController.ShootWeapon) ~= "function" then return end
+        if type(inventoryController) ~= "table" or type(inventoryController.ShootWeapon) ~= "function" then return end
         if rawget(inventoryController, "__GestioShootHooked") then
             bloxStrikeShootHooked = true
             return
@@ -383,42 +409,44 @@ local function setupBloxStrikeShootHook()
 
         local originalShootWeapon = inventoryController.ShootWeapon
         inventoryController.ShootWeapon = function(self, data, ...)
-            if GestioConfig.silentAimEnabled
-                and silentAimResolved
-                and type(data) == "table"
-                and type(data.Bullets) == "table" then
+            local applySilent = false
+            if GestioConfig.silentAimEnabled and silentAimResolved then
+                local chance = math.clamp(tonumber(GestioConfig.silentAimHitChance) or 100, 0, 100)
+                applySilent = (chance >= 100) or (math.random() * 100 <= chance)
+            end
 
-                local camPos, aimPos = silentAimCamPosAim()
-                if camPos and aimPos then
-                    for _, bullet in pairs(data.Bullets) do
-                        if type(bullet) == "table" then
-                            local origin = bullet.Origin
-                                or bullet.StartingPoint
-                                or bullet.Position
-                                or camPos
+            silentAimShotSerial += 1
+            local serial = silentAimShotSerial
+            silentAimShotActive = applySilent
 
-                            if typeof(origin) == "CFrame" then
-                                origin = origin.Position
-                            end
-
-                            if typeof(origin) == "Vector3" then
-                                local delta = aimPos - origin
-                                if delta.Magnitude > 0.001 then
-                                    bullet.Direction = delta.Unit
-                                end
-
-                                if GestioConfig.wallbangEnabled then
-                                    bullet.Penetration = 9999
-                                    bullet.Wallbang = true
-                                    bullet.IgnoreEnvironment = true
+            local ok, result1, result2, result3 = pcall(function()
+                if applySilent and type(data) == "table" and type(data.Bullets) == "table" then
+                    local camPos, aimPos = silentAimCamPosAim()
+                    if camPos and aimPos then
+                        for _, bullet in pairs(data.Bullets) do
+                            if type(bullet) == "table" then
+                                local origin = bullet.Origin or bullet.StartingPoint or bullet.Position or camPos
+                                if typeof(origin) == "CFrame" then origin = origin.Position end
+                                if typeof(origin) == "Vector3" then
+                                    local delta = aimPos - origin
+                                    if delta.Magnitude > 0.001 then bullet.Direction = delta.Unit end
                                 end
                             end
                         end
                     end
                 end
+                return originalShootWeapon(self, data, ...)
+            end)
+
+            if silentAimShotSerial == serial then
+                silentAimShotActive = false
             end
 
-            return originalShootWeapon(self, data, ...)
+            if not ok then
+                warn("[Gestio] ShootWeapon hook error: " .. tostring(result1))
+                return originalShootWeapon(self, data, ...)
+            end
+            return result1, result2, result3
         end
 
         rawset(inventoryController, "__GestioShootHooked", true)
@@ -570,7 +598,7 @@ local function getSilentAimTarget()
     return best
 end
 
-local function silentAimCamPosAim()
+silentAimCamPosAim = function()
     if not (GestioConfig.silentAimEnabled and silentAimResolved) then return nil end
     local cam = Workspace.CurrentCamera or camera
     if not cam then return nil end
@@ -628,6 +656,10 @@ local function setupSilentAimHooks()
                 local method = getnamecallmethod()
                 local args = {...}
 
+                if hookCallerIsExternal() then
+                    return oldNamecall(self, ...)
+                end
+
                 if GestioConfig.silentAimEnabled and silentAimResolved and noRecoil.isShooting
                     and self == camera
                     and (method == "ViewportPointToRay" or method == "ScreenPointToRay") then
@@ -637,7 +669,7 @@ local function setupSilentAimHooks()
                     end
                 end
 
-                if GestioConfig.pSilentEnabled and silentAimResolved and self == Workspace then
+                if GestioConfig.pSilentEnabled and silentAimShotActive and silentAimResolved and self == Workspace then
                     local camPos, aimPos = silentAimCamPosAim()
                     if aimPos then
                         if method == "Raycast" then
@@ -1300,6 +1332,11 @@ function cleanup()
     savedAutoRotate = nil
     hitmarkerSerial += 1
     hitmarkerLastHealth = {}
+    silentAimResolved = nil
+    silentAimShotActive = false
+    silentAimShotSerial += 1
+    shootEffectsInputHooked = false
+    bloxStrikeShootHooked = false
 
     for _, c in pairs(connections) do 
         pcall(function() c:Disconnect() end) 
@@ -1824,6 +1861,12 @@ function getRageTarget()
                 if hitPart then
                     if GestioConfig.wallbangEnabled or isVisibleThroughWalls(hitPart, char) then
                         local aimPos = getKinematicAimPosition(hitPart)
+                        local lookDir = cam.CFrame.LookVector
+                        local targetDir = (aimPos - camPos).Unit
+                        local angleDeg = math.deg(math.acos(math.clamp(lookDir:Dot(targetDir), -1, 1)))
+                        if angleDeg > (GestioConfig.rageFov * 0.5) then
+                            continue
+                        end
                         local score = math.huge
                         
                         if GestioConfig.rageTargetMode == "Distance" then
@@ -1995,6 +2038,12 @@ function getOrCreateScreenEsp(plr)
 end
 
 table.insert(connections, Players.PlayerRemoving:Connect(function(plr)
+    local holderData = activeEspHolders[plr]
+    if holderData then
+        pcall(function() holderData.Holder:Destroy() end)
+        activeEspHolders[plr] = nil
+    end
+
     local oldChar = plr.Character
     local oldHum = oldChar and oldChar:FindFirstChildOfClass("Humanoid")
     if oldHum then
@@ -2154,7 +2203,7 @@ function renderTacticalOverlay()
                         end
                         if GestioConfig.espShowHealth and hum then
                             local curHealth = math.floor(hum.Health)
-                            infoText = string.format("%s [%dHP]", infoText, curHealth > 0 and curHealth or 100)
+                            infoText = string.format("%s [%dHP]", infoText, math.max(0, curHealth))
                         end
                         if GestioConfig.tagShowWeapon then
                             local tool = char:FindFirstChildOfClass("Tool")
@@ -2320,13 +2369,10 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     end
 
     if GestioConfig.silentAimEnabled then
-        if math.random(1, 100) <= GestioConfig.silentAimHitChance then
-            silentAimResolved = getSilentAimTarget()
-        else
-            silentAimResolved = nil
-        end
+        silentAimResolved = getSilentAimTarget()
     else
         silentAimResolved = nil
+        silentAimShotActive = false
     end
 
     if (GestioConfig.rcsEnabled or GestioConfig.noRecoilEnabled) and noRecoil.isShooting then
@@ -2372,8 +2418,6 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     else
         currentAimTarget = nil
     end
-
-    setupBloxStrikeShootHook()
 
     if GestioConfig.skinChangerEnabled then
         skinScanAccumulator += dt
@@ -2492,7 +2536,12 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     if GestioConfig.antiFlashEnabled then
         pcall(function()
             for _, v in pairs(Lighting:GetChildren()) do
-                if v:IsA("ColorCorrectionEffect") and v.Saturation < -0.5 then v.Enabled = false end
+                if v:IsA("ColorCorrectionEffect") and v.Saturation < -0.5 then
+                    local n = v.Name:lower()
+                    if n:find("flash") or n:find("blind") or n:find("stun") then
+                        v.Enabled = false
+                    end
+                end
             end
         end)
     end
@@ -3971,4 +4020,5 @@ end
 -- ENGINE LAUNCH
 -- ==========================================
 setupSilentAimHooks()
+setupBloxStrikeShootHook()
 buildGestioUI()
