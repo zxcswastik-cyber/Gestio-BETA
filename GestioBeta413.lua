@@ -54,6 +54,7 @@ local GestioConfig = {
     silentAimTeamCheck = true,
     silentAimVisibleCheck = false,
     silentAimAimHead = true,
+    showSilentFovCircle = true,
 
     chamsFillTransparency = 0.45,
     chamsOutlineTransparency = 0.10,
@@ -1174,6 +1175,18 @@ fovStroke.Thickness = 0.8
 local fovCorner = Instance.new("UICorner", fovFrame)
 fovCorner.CornerRadius = UDim.new(1, 0)
 
+local silentFovFrame = Instance.new("Frame", fovGui)
+silentFovFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+silentFovFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+silentFovFrame.BackgroundTransparency = 1
+silentFovFrame.BorderSizePixel = 0
+silentFovFrame.Visible = false
+local silentFovStroke = Instance.new("UIStroke", silentFovFrame)
+silentFovStroke.Color = Color3.fromRGB(0, 230, 255)
+silentFovStroke.Thickness = 0.8
+local silentFovCorner = Instance.new("UICorner", silentFovFrame)
+silentFovCorner.CornerRadius = UDim.new(1, 0)
+
 local watermarkGui = Instance.new("ScreenGui")
 watermarkGui.Name = "GestioWatermarkGui"
 watermarkGui.ResetOnSpawn = false
@@ -2029,6 +2042,15 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         if isFovVisible then
             local diameter = GestioConfig.aimFov * 2
             fovFrame.Size = UDim2.new(0, diameter, 0, diameter)
+        end
+    end
+
+    if silentFovFrame then
+        local isSilentFovVisible = GestioConfig.silentAimEnabled and GestioConfig.showSilentFovCircle
+        silentFovFrame.Visible = isSilentFovVisible
+        if isSilentFovVisible then
+            local diameter = GestioConfig.silentAimFov * 2
+            silentFovFrame.Size = UDim2.new(0, diameter, 0, diameter)
         end
     end
 
@@ -3154,12 +3176,13 @@ function buildGestioUI()
             addInspectorToggle(218, "Show FOV Circle", GestioConfig.showFovCircle, function(v) GestioConfig.showFovCircle = v end)
             addInspectorToggle(244, "Visibility Check", GestioConfig.visibleCheck, function(v) GestioConfig.visibleCheck = v end)
         elseif moduleName == "Silent Aim" then
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 200)
+            insContent.CanvasSize = UDim2.new(0, 0, 0, 230)
             addInspectorSlider(6, "FOV", 10, 360, GestioConfig.silentAimFov, false, function(v) GestioConfig.silentAimFov = v end)
             addInspectorSlider(38, "Hit Chance", 1, 100, GestioConfig.silentAimHitChance, false, function(v) GestioConfig.silentAimHitChance = v end)
             addInspectorToggle(70, "Team Check", GestioConfig.silentAimTeamCheck, function(v) GestioConfig.silentAimTeamCheck = v end)
             addInspectorToggle(96, "Visible Check", GestioConfig.silentAimVisibleCheck, function(v) GestioConfig.silentAimVisibleCheck = v end)
             addInspectorToggle(122, "Aim Head", GestioConfig.silentAimAimHead, function(v) GestioConfig.silentAimAimHead = v end)
+            addInspectorToggle(148, "Show Silent FOV", GestioConfig.showSilentFovCircle, function(v) GestioConfig.showSilentFovCircle = v end)
         elseif moduleName == "Chams" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 240)
             addInspectorSlider(6, "Fill Alpha", 0.0, 1.0, GestioConfig.chamsFillTransparency, true, function(v) GestioConfig.chamsFillTransparency = v end)
