@@ -9,29 +9,6 @@ end)
 -- ==========================================
 local HttpService = game:GetService("HttpService")
 
--- ==========================================
--- MODULAR 4-MODULE ADAPTER SETTINGS
--- ==========================================
-local FourModuleSettings = {
-    BunnyHop = false,
-    BunnyHopDelay = 0.00,
-
-    NoRecoil = false,
-    RecoilMultiplier = 0.0,
-    KickMultiplier = 0.0,
-
-    AntiAim = false,
-    AntiAimMode = "Spin",
-    AntiAimSpeed = 5,
-    AntiAimJitter = 45,
-    AntiAimVertical = 0,
-    AntiAimPauseOnFire = true,
-
-    SilentPrediction = true,
-    PredictionFactor = 0.19,
-    PingPredictionMultiplier = 1.5,
-}
-
 local GestioConfig = {
     -- Toggles
     antiAfkEnabled = true,
@@ -578,15 +555,6 @@ function isVisibleThroughWalls(targetPart, targetChar)
         end
     end
     return false
-end
-
--- Keep the adapter synchronized with Gestio's existing UI/config.
-local function syncFourModuleSettings()
-    FourModuleSettings.BunnyHop = GestioConfig.bunnyHopEnabled
-    FourModuleSettings.NoRecoil = GestioConfig.noRecoilEnabled
-    FourModuleSettings.AntiAim = GestioConfig.antiAimEnabled
-    FourModuleSettings.SilentPrediction = GestioConfig.predictionEnabled
-    FourModuleSettings.PredictionFactor = GestioConfig.predictionFactor
 end
 
 -- ==========================================
@@ -2746,9 +2714,6 @@ end))
 -- ANTI-AIM ROTATION LOOP
 -- ==========================================
 table.insert(connections, RunService.RenderStepped:Connect(function(dt)
-    -- SampleInput adapter owns Anti-Aim when it successfully installs.
-    if _G.__GestioAntiAimSampleInputInstalled then return end
-
     local char = player.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
     local hum = char and char:FindFirstChildOfClass("Humanoid")
@@ -4268,148 +4233,30 @@ Workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
 end)
 
 -- ==========================================
--- MODULAR 4-MODULE RUNTIME ADAPTER
+-- MODULAR 4-MODULE COMPATIBILITY LAYER (UI-SAFE)
+-- Does not modify or replace Gestio UI construction.
 -- ==========================================
-local FourModuleRuntime = {
-    BunnyHopSampleInputInstalled = false,
-    AntiAimSampleInputInstalled = false,
-    WeaponMetaInstalled = false,
+local FourModuleSettings = {
+    BunnyHop = false,
+    NoRecoil = false,
+    AntiAim = false,
+    PredictionFactor = 0.19,
+    PingPredictionMultiplier = 1.5,
 }
 
-local function tryGetCharacterController()
-    if type(hookfunction) ~= "function" then return nil end
-
-    local controller
-    pcall(function()
-        local classes = ReplicatedStorage:FindFirstChild("Classes")
-        local characterModule = classes and classes:FindFirstChild("Character")
-        if characterModule and characterModule:IsA("ModuleScript") then
-            local ok, obj = pcall(require, characterModule)
-            if ok and type(obj) == "table" then
-                controller = obj
-            end
-        end
-    end)
-
-    return controller
+local function syncFourModuleSettings()
+    FourModuleSettings.BunnyHop = GestioConfig.bunnyHopEnabled == true
+    FourModuleSettings.NoRecoil = GestioConfig.noRecoilEnabled == true
+    FourModuleSettings.AntiAim = GestioConfig.antiAimEnabled == true
+    FourModuleSettings.PredictionFactor = tonumber(GestioConfig.predictionFactor) or 0.19
 end
 
-local function installSampleInputAdapter()
-    local controller = tryGetCharacterController()
-    if not controller or type(controller.SampleInput) ~= "function" then
-        return false
-    end
-
-    -- Install BunnyHop and Anti-Aim together so only one SampleInput hook
-    -- is added to the Character controller.
-    local oldSampleInput
-    local ok = pcall(function()
-        oldSampleInput = hookfunction(controller.SampleInput, function(selfObj, input, ...)
-            if type(input) == "table" then
-                syncFourModuleSettings()
-
-                -- BunnyHop: only request a jump; existing Gestio physics
-                -- remains responsible for the actual movement/velocity.
-                if FourModuleSettings.BunnyHop
-                    and UserInputService:IsKeyDown(Enum.KeyCode.Space) then
-                    input.Jump = true
-                end
-
-                -- Anti-Aim: modify the controller's look input when the
-                -- game actually exposes the expected SampleInput fields.
-                if FourModuleSettings.AntiAim
-                    and type(input.LookYaw) == "number" then
-
-                    local pause = false
-                    if FourModuleSettings.AntiAimPauseOnFire then
-                        pause = noRecoil.isShooting
-                    end
-
-                    if not pause then
-                        local t = os.clock()
-                        local offset
-
-                        if FourModuleSettings.AntiAimMode == "Jitter" then
-                            offset =
-                                (math.sin(t * FourModuleSettings.AntiAimSpeed * 12) >= 0 and 1 or -1)
-                                * FourModuleSettings.AntiAimJitter
-                        elseif FourModuleSettings.AntiAimMode == "Random" then
-                            offset = math.random(-FourModuleSettings.AntiAimJitter,
-                                                 FourModuleSettings.AntiAimJitter)
-                        else
-                            offset = t * FourModuleSettings.AntiAimSpeed * 360
-                        end
-
-                        input.LookYaw += offset
-
-                        if type(input.VerticalLook) == "number" then
-                            input.VerticalLook += FourModuleSettings.AntiAimVertical
-                        end
-                    end
-                end
-            end
-
-            return oldSampleInput(selfObj, input, ...)
-        end)
-    end)
-
-    if not ok or type(oldSampleInput) ~= "function" then
-        return false
-    end
-
-    FourModuleRuntime.BunnyHopSampleInputInstalled = true
-    FourModuleRuntime.AntiAimSampleInputInstalled = true
-    _G.__GestioAntiAimSampleInputInstalled = true
-    return true
-end
-
--- Weapon property adapter. It only runs when a concrete weapon-config
--- table is supplied/found; no arbitrary global metatable is modified.
-local function installWeaponMetaAdapter(weaponConfig)
-    if FourModuleRuntime.WeaponMetaInstalled then return true end
-    if type(weaponConfig) ~= "table" then return false end
-    if type(getrawmetatable) ~= "function" or type(setreadonly) ~= "function" then
-        return false
-    end
-
-    local mt
-    local ok = pcall(function()
-        mt = getrawmetatable(weaponConfig)
-    end)
-    if not ok or type(mt) ~= "table" or type(mt.__index) ~= "function" then
-        return false
-    end
-
-    local oldIndex = mt.__index
-    local changed = pcall(function()
-        setreadonly(mt, false)
-        mt.__index = function(t, k)
-            if FourModuleSettings.NoRecoil then
-                if k == "Recoil" then return 0 end
-                if k == "Kick" then return 0 end
-            end
-            return oldIndex(t, k)
-        end
-        setreadonly(mt, true)
-    end)
-
-    if changed then
-        FourModuleRuntime.WeaponMetaInstalled = true
-        return true
-    end
-    return false
-end
-
--- Initial attempt. If Blox Strike exposes the expected Character controller,
--- the new SampleInput path becomes active; otherwise Gestio's existing
--- movement fallback stays intact.
-pcall(installSampleInputAdapter)
-syncFourModuleSettings()
+-- Keep the four-module layer isolated: no UI objects are removed/rebuilt.
+pcall(syncFourModuleSettings)
 
 -- ==========================================
 -- ENGINE LAUNCH
 -- ==========================================
-syncFourModuleSettings()
 setupSilentAimHooks()
 SARG.Init()
 setupBloxStrikeShootHook()
