@@ -15,6 +15,11 @@ local GestioConfig = {
     aimbotEnabled = false,
     predictionEnabled = true,
     silentAimEnabled = false,
+    sargEnabled = false,
+    sargWallbang = false,
+    sargTeamCheck = true,
+    sargVisibleCheck = false,
+    sargAimHead = true,
     rcsEnabled = false,
     chamsEnabled = false,
     hitmarkerEnabled = false,
@@ -55,6 +60,9 @@ local GestioConfig = {
     showFovCircle = true,
     visibleCheck = false,
     
+    sargFov = 130,
+    sargHitChance = 100,
+
     silentAimFov = 150,
     silentAimHitChance = 100,
     silentAimTeamCheck = true,
@@ -827,7 +835,7 @@ function SARG.GetPlayerTeam(targetPlr)
 end
 
 function SARG.IsTargetVisible(camPos, targetPart)
-    if GestioConfig.wallbangEnabled then return true end
+    if GestioConfig.sargWallbang then return true end
     local myChar = player and player.Character
     sargRayParams.FilterDescendantsInstances = myChar and {myChar, camera} or {camera}
     
@@ -840,7 +848,7 @@ function SARG.IsTargetVisible(camPos, targetPart)
 end
 
 function SARG.GetBestTarget()
-    if not GestioConfig.silentAimEnabled then return nil end
+    if not GestioConfig.sargEnabled then return nil end
 
     local cam = Workspace.CurrentCamera or camera
     if not cam then return nil end
@@ -849,7 +857,7 @@ function SARG.GetBestTarget()
     local myTeam = SARG.GetPlayerTeam(player)
     local closestDist = math.huge
     local bestPart = nil
-    local targetPartName = GestioConfig.silentAimAimHead and "Head" or "HumanoidRootPart"
+    local targetPartName = GestioConfig.sargAimHead and "Head" or "HumanoidRootPart"
 
     for _, targetPlr in ipairs(Players:GetPlayers()) do
         if targetPlr == player then continue end
@@ -860,7 +868,7 @@ function SARG.GetBestTarget()
         local hum = char:FindFirstChildOfClass("Humanoid")
         if not isEntityAlive(char, hum) then continue end
 
-        if GestioConfig.silentAimTeamCheck then
+        if GestioConfig.sargTeamCheck then
             local enemyTeam = SARG.GetPlayerTeam(targetPlr)
             if (myTeam and enemyTeam and myTeam == enemyTeam) or isAlly(targetPlr) then
                 continue
@@ -873,8 +881,8 @@ function SARG.GetBestTarget()
         local screenPos, onScreen = cam:WorldToViewportPoint(part.Position)
         if onScreen and screenPos.Z > 0 then
             local dist = (Vector2.new(screenPos.X, screenPos.Y) - screenCenter).Magnitude
-            if dist <= GestioConfig.silentAimFov and dist < closestDist then
-                if not GestioConfig.silentAimVisibleCheck or SARG.IsTargetVisible(cam.CFrame.Position, part) then
+            if dist <= GestioConfig.sargFov and dist < closestDist then
+                if not GestioConfig.sargVisibleCheck or SARG.IsTargetVisible(cam.CFrame.Position, part) then
                     closestDist = dist
                     bestPart = part
                 end
@@ -887,15 +895,13 @@ end
 
 function SARG.Init()
     local renderConn = RunService.RenderStepped:Connect(function()
-        if not GestioConfig.silentAimEnabled then
+        if not GestioConfig.sargEnabled then
             getgenv().ParsaSilentTarget = nil
-            silentAimResolved = nil
             return
         end
 
         local target = SARG.GetBestTarget()
         getgenv().ParsaSilentTarget = target
-        silentAimResolved = target
     end)
     table.insert(connections, renderConn)
 
@@ -917,12 +923,12 @@ function SARG.Init()
             local oldRaycast = bulletClass._performRaycast
             bulletClass._performRaycast = function(self, ...)
                 local result = oldRaycast(self, ...)
-                local target = getgenv().ParsaSilentTarget or silentAimResolved
+                local target = getgenv().ParsaSilentTarget
 
-                if GestioConfig.silentAimEnabled and target and type(result) == "table" then
+                if GestioConfig.sargEnabled and target and type(result) == "table" then
                     local allowed = true
-                    if GestioConfig.silentAimHitChance < 100 then
-                        allowed = math.random(1, 100) <= math.clamp(GestioConfig.silentAimHitChance, 0, 100)
+                    if GestioConfig.sargHitChance < 100 then
+                        allowed = math.random(1, 100) <= math.clamp(GestioConfig.sargHitChance, 0, 100)
                     end
 
                     if allowed then
@@ -3359,7 +3365,7 @@ function buildGestioUI()
 
         local grid = Instance.new("UIGridLayout", gridFrame)
         grid.CellSize = UDim2.new(0, 58, 0, 58)
-        grid.CellPadding = UDim2.new(0, 6, 0, 6)
+        grid.CellPadding = UDim.new(0, 6, 0, 6)
 
         return gridFrame
     end
@@ -3686,6 +3692,14 @@ function buildGestioUI()
             addInspectorToggle(192, "Prediction", GestioConfig.predictionEnabled, function(v) GestioConfig.predictionEnabled = v end)
             addInspectorToggle(218, "Show FOV Circle", GestioConfig.showFovCircle, function(v) GestioConfig.showFovCircle = v end)
             addInspectorToggle(244, "Visibility Check", GestioConfig.visibleCheck, function(v) GestioConfig.visibleCheck = v end)
+        elseif moduleName == "SARG" then
+            insContent.CanvasSize = UDim2.new(0, 0, 0, 230)
+            addInspectorSlider(6, "FOV Radius", 10, 360, GestioConfig.sargFov, false, function(v) GestioConfig.sargFov = v end)
+            addInspectorSlider(38, "Hit Chance", 1, 100, GestioConfig.sargHitChance, false, function(v) GestioConfig.sargHitChance = v end)
+            addInspectorToggle(70, "Wallbang", GestioConfig.sargWallbang, function(v) GestioConfig.sargWallbang = v end)
+            addInspectorToggle(96, "Team Check", GestioConfig.sargTeamCheck, function(v) GestioConfig.sargTeamCheck = v end)
+            addInspectorToggle(122, "Visible Check", GestioConfig.sargVisibleCheck, function(v) GestioConfig.sargVisibleCheck = v end)
+            addInspectorToggle(148, "Aim Head", GestioConfig.sargAimHead, function(v) GestioConfig.sargAimHead = v end)
         elseif moduleName == "Silent Aim" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 290)
             addInspectorSlider(6, "FOV", 10, 360, GestioConfig.silentAimFov, false, function(v) GestioConfig.silentAimFov = v end)
@@ -3915,9 +3929,10 @@ function buildGestioUI()
     end
 
     -- PAGES SETUP
-    local cGrid = makeCategorySection(cPage, "Aim Assistants", 1, 5)
+    local cGrid = makeCategorySection(cPage, "Aim Assistants", 1, 6)
     createModuleCard(cGrid, "Tracking", "aimbotEnabled", nil, true)
     createModuleCard(cGrid, "Silent Aim", "silentAimEnabled", nil, true)
+    createModuleCard(cGrid, "SARG", "sargEnabled", nil, true)
     createModuleCard(cGrid, "Triggerbot", "triggerbotEnabled", nil, false)
     createModuleCard(cGrid, "RCS", "rcsEnabled", nil, true)
     createModuleCard(cGrid, "RageBot", "rageBotEnabled", nil, true)
