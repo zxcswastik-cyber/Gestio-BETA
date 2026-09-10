@@ -1002,14 +1002,11 @@ if genv then
 end
 
 -- ==========================================
--- ROBUST THIRD PERSON CONTROLLER (BLOX STRIKE)
+-- MOBILE + PC THIRD PERSON CONTROLLER
 -- ==========================================
 local isThirdPersonActive = false
-local thirdPersonYaw = 0
-local thirdPersonPitch = math.rad(-8)
-local thirdPersonInitialized = false
 local thirdPersonTargetCFrame = nil
-local thirdPersonLastCameraType = nil
+local thirdPersonSaved = nil
 
 local function getThirdPersonTarget()
     local char = player.Character
@@ -1019,107 +1016,108 @@ local function getThirdPersonTarget()
     return hrp, hum
 end
 
-local function initThirdPersonAngles()
-    if thirdPersonInitialized then return end
-    local cf = camera and camera.CFrame
-    if cf then
-        local look = cf.LookVector
-        thirdPersonYaw = math.atan2(-look.X, -look.Z)
-        thirdPersonPitch = math.asin(math.clamp(look.Y, -0.98, 0.98))
-        thirdPersonPitch = math.clamp(thirdPersonPitch, math.rad(-75), math.rad(65))
-    end
-    thirdPersonInitialized = true
-end
-
-local function resetThirdPerson()
+local function restoreThirdPerson()
     isThirdPersonActive = false
-    thirdPersonInitialized = false
     thirdPersonTargetCFrame = nil
-    if camera then
-        camera.CameraType = Enum.CameraType.Custom
-        local char = player.Character
-        local hum = char and char:FindFirstChildOfClass("Humanoid")
-        if hum then
-            camera.CameraSubject = hum
-        end
+
+    local char = player.Character
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+
+    if hum and thirdPersonSaved then
+        hum.CameraOffset = thirdPersonSaved.cameraOffset
     end
+
+    if camera then
+        if thirdPersonSaved then
+            camera.CameraMinZoomDistance = thirdPersonSaved.minZoom
+            camera.CameraMaxZoomDistance = thirdPersonSaved.maxZoom
+        end
+        camera.CameraType = Enum.CameraType.Custom
+        if hum then camera.CameraSubject = hum end
+    end
+
+    thirdPersonSaved = nil
 end
 
 function applyThirdPerson(dt)
     if not GestioConfig.thirdPersonEnabled then
-        if isThirdPersonActive then resetThirdPerson() end
-        return
-    end
-
-    local hrp, hum = getThirdPersonTarget()
-    if not hrp then
-        if isThirdPersonActive then resetThirdPerson() end
+        if isThirdPersonActive then restoreThirdPerson() end
         return
     end
 
     camera = Workspace.CurrentCamera or camera
     if not camera then return end
 
-    if not isThirdPersonActive then
-        initThirdPersonAngles()
-        isThirdPersonActive = true
-    end
-
-    -- Mobile safety: do not replace Roblox's native touch-camera pipeline.
-    -- Scriptable camera can cause the game's TouchGui controls to disappear.
-    if UserInputService.TouchEnabled then
-        camera.CameraType = Enum.CameraType.Custom
-        camera.CameraSubject = hum
+    local hrp, hum = getThirdPersonTarget()
+    if not hrp then
+        if isThirdPersonActive then restoreThirdPerson() end
         return
     end
 
+    if not isThirdPersonActive then
+        thirdPersonSaved = {
+            cameraOffset = hum.CameraOffset,
+            minZoom = camera.CameraMinZoomDistance,
+            maxZoom = camera.CameraMaxZoomDistance
+        }
+        isThirdPersonActive = true
+    end
+
+    -- Mobile uses Roblox's native Custom camera. This keeps the
+    -- touchscreen joystick/jump/buttons and touch-look pipeline intact.
+    if UserInputService.TouchEnabled then
+        camera.CameraType = Enum.CameraType.Custom
+        camera.CameraSubject = hum
+
+        local distance = math.max(4, tonumber(GestioConfig.thirdPersonDistance) or 12)
+        local height = tonumber(GestioConfig.thirdPersonHeight) or 1.5
+        local offset = tonumber(GestioConfig.thirdPersonOffset) or 2.5
+
+        camera.CameraMinZoomDistance = distance
+        camera.CameraMaxZoomDistance = distance
+        hum.CameraOffset = Vector3.new(offset, height, 0)
+        return
+    end
+
+    -- Desktop keeps the controlled Scriptable camera.
     camera.CameraType = Enum.CameraType.Scriptable
     camera.CameraSubject = nil
 
-    -- Preserve the player's current view direction instead of using the
-    -- previous Scriptable camera CFrame as the next frame's input.
     local targetPos = hrp.Position + Vector3.new(0, GestioConfig.thirdPersonHeight, 0)
-    local yawCF = CFrame.Angles(0, thirdPersonYaw, 0)
-    local pitchCF = CFrame.Angles(thirdPersonPitch, 0, 0)
-    local rotation = yawCF * pitchCF
-    local desiredPos = targetPos - rotation.LookVector * GestioConfig.thirdPersonDistance
-    desiredPos += rotation.RightVector * GestioConfig.thirdPersonOffset
+    local look = camera.CFrame.LookVector
+    local flatLook = Vector3.new(look.X, 0, look.Z)
 
-    -- Basic camera collision: shorten the boom when geometry is between
-    -- the player and camera. This prevents clipping through walls.
-    local rayParams = RaycastParams.new()
-    rayParams.FilterType = Enum.RaycastFilterType.Exclude
-    rayParams.FilterDescendantsInstances = {player.Character}
-    rayParams.IgnoreWater = true
-
-    local cast = Workspace:Raycast(targetPos, desiredPos - targetPos, rayParams)
-    if cast then
-        local dir = (desiredPos - targetPos).Unit
-        desiredPos = cast.Position - dir * 0.35
-    end
-
-    local desiredCF = CFrame.lookAt(desiredPos, targetPos + rotation.LookVector * 100)
-    local alpha = math.clamp((dt or 1/60) * 14, 0, 1)
-    if not thirdPersonTargetCFrame then
-        thirdPersonTargetCFrame = desiredCF
+    if flatLook.Magnitude < 0.001 then
+        flatLook = Vector3.new(0, 0, -1)
     else
-        thirdPersonTargetCFrame = thirdPersonTargetCFrame:Lerp(desiredCF, alpha)
+        flatLook = flatLook.Unit
     end
+
+    local right = Vector3.new(-flatLook.Z, 0, flatLook.X)
+    local distance = math.max(2, tonumber(GestioConfig.thirdPersonDistance) or 12)
+    local shoulder = tonumber(GestioConfig.thirdPersonOffset) or 2.5
+
+    local desiredPos = targetPos - flatLook * distance + right * shoulder
+    local desiredCF = CFrame.lookAt(desiredPos, targetPos)
+
+    local alpha = math.clamp((dt or 1/60) * 14, 0, 1)
+    thirdPersonTargetCFrame = thirdPersonTargetCFrame
+        and thirdPersonTargetCFrame:Lerp(desiredCF, alpha)
+        or desiredCF
+
     camera.CFrame = thirdPersonTargetCFrame
 end
 
 function setThirdPersonEnabled(enabled)
     GestioConfig.thirdPersonEnabled = enabled
-    if enabled then
-        thirdPersonInitialized = false
-        thirdPersonTargetCFrame = nil
+    if not enabled then
+        restoreThirdPerson()
     else
-        resetThirdPerson()
+        thirdPersonTargetCFrame = nil
     end
 end
 
 function refreshThirdPerson()
-    -- Managed internally by the main RenderStepped loop.
 end
 
 -- ==========================================
@@ -4052,25 +4050,44 @@ end
 -- CAMERA PROTECTION HOOK
 -- ==========================================
 local thirdPersonCameraConnection
-thirdPersonCameraConnection = camera:GetPropertyChangedSignal("CameraType"):Connect(function()
-    if not GestioConfig.thirdPersonEnabled or not camera then return end
-    if UserInputService.TouchEnabled then
-        -- Never fight Roblox's mobile camera controller.
-        if camera.CameraType ~= Enum.CameraType.Custom then
-            camera.CameraType = Enum.CameraType.Custom
-        end
-    elseif camera.CameraType ~= Enum.CameraType.Scriptable then
-        camera.CameraType = Enum.CameraType.Scriptable
+
+local function reconnectThirdPersonCamera()
+    if thirdPersonCameraConnection then
+        thirdPersonCameraConnection:Disconnect()
+        thirdPersonCameraConnection = nil
     end
-end)
+
+    if not camera then return end
+
+    thirdPersonCameraConnection = camera:GetPropertyChangedSignal("CameraType"):Connect(function()
+        if not GestioConfig.thirdPersonEnabled or not camera then return end
+
+        -- Never fight the native mobile camera.
+        if UserInputService.TouchEnabled then
+            if camera.CameraType ~= Enum.CameraType.Custom then
+                camera.CameraType = Enum.CameraType.Custom
+            end
+            return
+        end
+
+        if camera.CameraType ~= Enum.CameraType.Scriptable then
+            camera.CameraType = Enum.CameraType.Scriptable
+        end
+    end)
+end
+
+reconnectThirdPersonCamera()
 
 Workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
     camera = Workspace.CurrentCamera or camera
+    reconnectThirdPersonCamera()
+
     if GestioConfig.thirdPersonEnabled and camera then
+        local char = player.Character
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+
         if UserInputService.TouchEnabled then
             camera.CameraType = Enum.CameraType.Custom
-            local char = player.Character
-            local hum = char and char:FindFirstChildOfClass("Humanoid")
             if hum then camera.CameraSubject = hum end
         else
             camera.CameraType = Enum.CameraType.Scriptable
