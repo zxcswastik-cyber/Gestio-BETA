@@ -288,6 +288,13 @@ local themeLibrary = {
 
 local currentTheme = themeLibrary["Charcoal Crimson"]
 
+-- Chams colors (kept local so ESP initialization cannot fail when a color
+-- preset is missing or was removed during modularization).
+local chamsColorVisible = currentTheme.Enemy_Fill or currentTheme.Enemy_Accent or Color3.fromRGB(235, 75, 75)
+local chamsColorHidden = currentTheme.Enemy_Hidden or Color3.fromRGB(120, 125, 135)
+local chamsColorAlly = currentTheme.Accent or Color3.fromRGB(46, 204, 113)
+local chamsOutlineColor = currentTheme.Enemy_Accent or Color3.fromRGB(235, 75, 75)
+
 -- ==========================================
 -- COMBAT ENGINE STATE VARIABLES
 -- ==========================================
@@ -2261,8 +2268,8 @@ function attachEspToPlayer(plr)
     hl.FillTransparency = GestioConfig.chamsFillTransparency
     hl.OutlineTransparency = GestioConfig.chamsOutlineTransparency
     hl.Enabled = false
-    hl.FillColor = chamsColorVisible
-    hl.OutlineColor = chamsOutlineColor
+    hl.FillColor = chamsColorVisible or Color3.fromRGB(235, 75, 75)
+    hl.OutlineColor = chamsOutlineColor or Color3.fromRGB(255, 255, 255)
     hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
     hl.Parent = holder
 
@@ -2437,12 +2444,12 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
                     end
                     data.Highlight.FillTransparency = GestioConfig.chamsFillTransparency
                     data.Highlight.OutlineTransparency = GestioConfig.chamsOutlineTransparency
-                    data.Highlight.OutlineColor = chamsOutlineColor
+                    data.Highlight.OutlineColor = chamsOutlineColor or Color3.fromRGB(255, 255, 255)
 
                     if ally then
-                        data.Highlight.FillColor = chamsColorAlly
+                        data.Highlight.FillColor = chamsColorAlly or currentTheme.Accent or Color3.fromRGB(46, 204, 113)
                     else
-                        data.Highlight.FillColor = GestioConfig.chamsOcclusion and (isVisible and chamsColorVisible or chamsColorHidden) or chamsColorVisible
+                        data.Highlight.FillColor = GestioConfig.chamsOcclusion and (isVisible and (chamsColorVisible or currentTheme.Enemy_Fill) or (chamsColorHidden or currentTheme.Enemy_Hidden)) or (chamsColorVisible or currentTheme.Enemy_Fill)
                     end
                 end
             else
