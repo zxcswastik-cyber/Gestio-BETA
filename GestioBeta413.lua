@@ -558,8 +558,8 @@ local function getSilentAimTarget()
         local part = char:FindFirstChild(GestioConfig.silentAimAimHead and "Head" or "HumanoidRootPart")
             or char:FindFirstChild("Torso")
         if not part or not part:IsA("BasePart") then continue end
-        if GestioConfig.silentAimVisibleCheck and not isVisibleThroughWalls(part, char) then continue end
-
+        -- Silent aim target selection intentionally does not gate on the client
+        -- visibility raycast. Target validity is still checked above.
         local predictedPos = getKinematicAimPosition(part)
         local dir = (predictedPos - camPos).Unit
         local angle = math.acos(math.clamp(camLook:Dot(dir), -1, 1))
@@ -578,23 +578,8 @@ local function silentAimCamPosAim()
     local camPos = cam.CFrame.Position
     local aimPos = getKinematicAimPosition(silentAimResolved)
 
-    local myChar = player.Character
-    local myHrp = myChar and myChar:FindFirstChild("HumanoidRootPart")
-    local myVel = (myHrp and myHrp.AssemblyLinearVelocity) or Vector3.zero
-
-    if GestioConfig.predictionEnabled then
-        local horizontalMyVel = Vector3.new(myVel.X, 0, myVel.Z)
-        local horizontalTargetVel = Vector3.new(
-            silentAimResolved.AssemblyLinearVelocity.X,
-            0,
-            silentAimResolved.AssemblyLinearVelocity.Z
-        )
-
-        local relativeLateral = horizontalTargetVel - horizontalMyVel
-        local lateralLead = relativeLateral * math.max(0, GestioConfig.predictionFactor * 0.35)
-        aimPos = aimPos + lateralLead
-    end
-
+    -- getKinematicAimPosition() is the single source of prediction.
+    -- Do not apply a second lateral lead here.
     return camPos, aimPos
 end
 
@@ -1828,7 +1813,7 @@ function getClosestTarget()
             local toTarget = (predPos - camPos).Unit
             local angle = math.acos(math.clamp(camLook:Dot(toTarget), -1, 1))
             
-            if angle <= (maxAngleRad * 1.15) and isTargetVisible(camPos, cPart, cChar) then
+            if angle <= (maxAngleRad * 1.15) then
                 currentAimTarget.AimPosition = predPos
                 return currentAimTarget
             end
@@ -1852,21 +1837,19 @@ function getClosestTarget()
                     local angle = math.acos(math.clamp(camLook:Dot(toTarget), -1, 1))
 
                     if angle <= maxAngleRad then
-                        if isTargetVisible(camPos, hitPart, char) then
-                            local dist = (aimPos - camPos).Magnitude
-                            local score = (angle * 0.7) + ((dist / 1000) * 0.3)
-                            if score < bestScore then
-                                bestScore = score
-                                bestTarget = {
-                                    Player = plr,
-                                    Char = char,
-                                    Part = hitPart,
-                                    Hum = hum,
-                                    Position = hitPart.Position,
-                                    AimPosition = aimPos,
-                                    AngularDelta = angle
-                                }
-                            end
+                        local dist = (aimPos - camPos).Magnitude
+                        local score = (angle * 0.7) + ((dist / 1000) * 0.3)
+                        if score < bestScore then
+                            bestScore = score
+                            bestTarget = {
+                                Player = plr,
+                                Char = char,
+                                Part = hitPart,
+                                Hum = hum,
+                                Position = hitPart.Position,
+                                AimPosition = aimPos,
+                                AngularDelta = angle
+                            }
                         end
                     end
                 end
