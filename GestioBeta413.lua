@@ -296,6 +296,8 @@ local TARGET_HYSTERESIS_TIME = 0.12
 local aimboneIndex = 1
 
 local silentAimResolved = nil
+local getSilentAimTarget
+local silentAimCamPosAim
 local silentAimHooked = false
 local silentAimCamHooked = false
 local bloxStrikeShootHooked = false
@@ -385,33 +387,41 @@ local function setupBloxStrikeShootHook()
         local originalShootWeapon = inventoryController.ShootWeapon
         inventoryController.ShootWeapon = function(self, data, ...)
             if GestioConfig.silentAimEnabled
-                and silentAimResolved
                 and type(data) == "table"
                 and type(data.Bullets) == "table" then
 
-                local camPos, aimPos = silentAimCamPosAim()
-                if camPos and aimPos then
-                    for _, bullet in pairs(data.Bullets) do
-                        if type(bullet) == "table" then
-                            local origin = bullet.Origin
-                                or bullet.StartingPoint
-                                or bullet.Position
-                                or camPos
+                local shotTarget = getSilentAimTarget and getSilentAimTarget() or nil
+                local shotAllowed = true
 
-                            if typeof(origin) == "CFrame" then
-                                origin = origin.Position
-                            end
+                if GestioConfig.silentAimHitChance < 100 then
+                    shotAllowed = math.random(1, 100) <= math.clamp(GestioConfig.silentAimHitChance, 0, 100)
+                end
 
-                            if typeof(origin) == "Vector3" then
-                                local delta = aimPos - origin
-                                if delta.Magnitude > 0.001 then
-                                    bullet.Direction = delta.Unit
+                if shotTarget and shotAllowed then
+                    local camPos, aimPos = silentAimCamPosAim(shotTarget)
+                    if camPos and aimPos then
+                        for _, bullet in pairs(data.Bullets) do
+                            if type(bullet) == "table" then
+                                local origin = bullet.Origin
+                                    or bullet.StartingPoint
+                                    or bullet.Position
+                                    or camPos
+
+                                if typeof(origin) == "CFrame" then
+                                    origin = origin.Position
                                 end
 
-                                if GestioConfig.wallbangEnabled then
-                                    bullet.Penetration = 9999
-                                    bullet.Wallbang = true
-                                    bullet.IgnoreEnvironment = true
+                                if typeof(origin) == "Vector3" then
+                                    local delta = aimPos - origin
+                                    if delta.Magnitude > 0.001 then
+                                        bullet.Direction = delta.Unit
+                                    end
+
+                                    if GestioConfig.wallbangEnabled then
+                                        bullet.Penetration = 9999
+                                        bullet.Wallbang = true
+                                        bullet.IgnoreEnvironment = true
+                                    end
                                 end
                             end
                         end
@@ -540,9 +550,130 @@ function isVisibleThroughWalls(targetPart, targetChar)
 end
 
 -- ==========================================
+-- ADVANCED KINEMATIC AIM ENGINE
+-- ==========================================
+local visRayParams = RaycastParams.new()
+visRayParams.FilterType = Enum.RaycastFilterType.Exclude
+visRayParams.IgnoreWater = true
+
+function isTargetVisible(originPos, targetPart, targetChar)
+    if not GestioConfig.visibleCheck or GestioConfig.wallbangEnabled then return true end
+    local myChar = player.Character
+    visRayParams.FilterDescendantsInstances = {myChar, camera}
+    local dir = targetPart.Position - originPos
+    
+    local hit = Workspace:Raycast(originPos, dir, visRayParams)
+    if hit and (hit.Instance:IsDescendantOf(targetChar) or hit.Instance == targetPart) then
+        return true
+    end
+    return false
+end
+
+local function getPingLatency()
+    local ping = 0.03
+    pcall(function()
+        local serverStats = Stats:FindFirstChild("Network") and Stats.Network:FindFirstChild("ServerStatsItem")
+        if serverStats and serverStats:FindFirstChild("Data Ping") then
+            ping = (serverStats["Data Ping"]:GetValue() / 1000)
+        end
+    end)
+    return ping
+end
+
+function getKinematicAimPosition(targetPart)
+    local rawPos = targetPart.Position
+    if not GestioConfig.predictionEnabled then
+        return rawPos
+    end
+
+    local ping = getPingLatency()
+    local predDelta = (GestioConfig.predictionFactor * 0.5) + ping
+    local targetVel = targetPart.AssemblyLinearVelocity or Vector3.zero
+
+    local myChar = player.Character
+    local myHrp = myChar and myChar:FindFirstChild("HumanoidRootPart")
+    local myVel = (myHrp and myHrp.AssemblyLinearVelocity) or Vector3.zero
+    
+    local relativeVel = targetVel - (myVel * 0.15)
+    return rawPos + (relativeVel * predDelta)
+end
+
+function getClosestTarget()
+    local cam = Workspace.CurrentCamera or camera
+    if not cam then return nil end
+
+    local camCFrame = cam.CFrame
+    local camPos = camCFrame.Position
+    local camLook = camCFrame.LookVector
+    local maxAngleRad = math.rad(GestioConfig.aimFov * 0.5)
+
+    if currentAimTarget then
+        local cChar = currentAimTarget.Char
+        local cHum = currentAimTarget.Hum
+        local cPart = currentAimTarget.Part
+        if isEntityAlive(cChar, cHum) and cPart and cPart.Parent then
+            local predPos = getKinematicAimPosition(cPart)
+            local toTarget = (predPos - camPos).Unit
+            local angle = math.acos(math.clamp(camLook:Dot(toTarget), -1, 1))
+            
+            if angle <= (maxAngleRad * 1.15) then
+                currentAimTarget.AimPosition = predPos
+                return currentAimTarget
+            end
+        end
+    end
+
+    local bestTarget = nil
+    local bestScore = math.huge
+    local allPlayers = Players:GetPlayers()
+
+    for i = 1, #allPlayers do
+        local plr = allPlayers[i]
+        local char = plr.Character
+        if char and plr ~= player and isTargetEnemy(plr, char) then
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            if isEntityAlive(char, hum) then
+                local hitPart = getTargetHitbox(char)
+                if hitPart then
+                    local aimPos = getKinematicAimPosition(hitPart)
+                    local toTarget = (aimPos - camPos).Unit
+                    local angle = math.acos(math.clamp(camLook:Dot(toTarget), -1, 1))
+
+                    if angle <= maxAngleRad then
+                        local dist = (aimPos - camPos).Magnitude
+                        local score = (angle * 0.7) + ((dist / 1000) * 0.3)
+                        if score < bestScore then
+                            bestScore = score
+                            bestTarget = {
+                                Player = plr,
+                                Char = char,
+                                Part = hitPart,
+                                Hum = hum,
+                                Position = hitPart.Position,
+                                AimPosition = aimPos,
+                                AngularDelta = angle
+                            }
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    if bestTarget and (tick() - lastTargetSwitchTick > TARGET_HYSTERESIS_TIME) then
+        currentAimTarget = bestTarget
+        lastTargetSwitchTick = tick()
+    elseif not bestTarget then
+        currentAimTarget = nil
+    end
+
+    return currentAimTarget
+end
+
+-- ==========================================
 -- ZERO-LAG SILENT AIM
 -- ==========================================
-local function getSilentAimTarget()
+getSilentAimTarget = function()
     local cam = Workspace.CurrentCamera or camera
     if not cam then return nil end
     local camPos = cam.CFrame.Position
@@ -558,8 +689,9 @@ local function getSilentAimTarget()
         local part = char:FindFirstChild(GestioConfig.silentAimAimHead and "Head" or "HumanoidRootPart")
             or char:FindFirstChild("Torso")
         if not part or not part:IsA("BasePart") then continue end
-        -- Silent aim target selection intentionally does not gate on the client
-        -- visibility raycast. Target validity is still checked above.
+        if GestioConfig.silentAimVisibleCheck and not isVisibleThroughWalls(part, char) then
+            continue
+        end
         local predictedPos = getKinematicAimPosition(part)
         local dir = (predictedPos - camPos).Unit
         local angle = math.acos(math.clamp(camLook:Dot(dir), -1, 1))
@@ -571,15 +703,14 @@ local function getSilentAimTarget()
     return best
 end
 
-local function silentAimCamPosAim()
-    if not (GestioConfig.silentAimEnabled and silentAimResolved) then return nil end
+silentAimCamPosAim = function(targetPart)
+    targetPart = targetPart or silentAimResolved
+    if not (GestioConfig.silentAimEnabled and targetPart) then return nil end
     local cam = Workspace.CurrentCamera or camera
     if not cam then return nil end
     local camPos = cam.CFrame.Position
-    local aimPos = getKinematicAimPosition(silentAimResolved)
+    local aimPos = getKinematicAimPosition(targetPart)
 
-    -- getKinematicAimPosition() is the single source of prediction.
-    -- Do not apply a second lateral lead here.
     return camPos, aimPos
 end
 
@@ -670,6 +801,150 @@ local function setupSilentAimHooks()
         end)
         silentAimCamHooked = true
     end
+end
+
+-- ==========================================
+-- SARG MODULE: BLOX STRIKE SPECIALIZED ENGINE
+-- ==========================================
+local SARG = {}
+SARG.__index = SARG
+
+local sargRayParams = RaycastParams.new()
+sargRayParams.FilterType = Enum.RaycastFilterType.Exclude
+sargRayParams.IgnoreWater = true
+
+function SARG.GetPlayerTeam(targetPlr)
+    if not targetPlr then return nil end
+    local char = targetPlr.Character
+    if char then
+        local attr = char:GetAttribute("Team")
+        if attr == "Terrorists" or attr == "Counter-Terrorists" then 
+            return attr 
+        end
+    end
+    if targetPlr.Team then return targetPlr.Team.Name end
+    return nil
+end
+
+function SARG.IsTargetVisible(camPos, targetPart)
+    if GestioConfig.wallbangEnabled then return true end
+    local myChar = player and player.Character
+    sargRayParams.FilterDescendantsInstances = myChar and {myChar, camera} or {camera}
+    
+    local dir = targetPart.Position - camPos
+    local hit = Workspace:Raycast(camPos, dir, sargRayParams)
+    if not hit then return true end
+    
+    local model = hit.Instance and hit.Instance:FindFirstAncestorOfClass("Model")
+    return model and Players:GetPlayerFromCharacter(model) ~= nil
+end
+
+function SARG.GetBestTarget()
+    if not GestioConfig.silentAimEnabled then return nil end
+
+    local cam = Workspace.CurrentCamera or camera
+    if not cam then return nil end
+
+    local screenCenter = cam.ViewportSize / 2
+    local myTeam = SARG.GetPlayerTeam(player)
+    local closestDist = math.huge
+    local bestPart = nil
+    local targetPartName = GestioConfig.silentAimAimHead and "Head" or "HumanoidRootPart"
+
+    for _, targetPlr in ipairs(Players:GetPlayers()) do
+        if targetPlr == player then continue end
+
+        local char = targetPlr.Character
+        if not char or char:GetAttribute("Dead") then continue end
+
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if not isEntityAlive(char, hum) then continue end
+
+        if GestioConfig.silentAimTeamCheck then
+            local enemyTeam = SARG.GetPlayerTeam(targetPlr)
+            if (myTeam and enemyTeam and myTeam == enemyTeam) or isAlly(targetPlr) then
+                continue
+            end
+        end
+
+        local part = char:FindFirstChild(targetPartName) or char:FindFirstChild("UpperTorso") or char.PrimaryPart
+        if not part or not part:IsA("BasePart") then continue end
+
+        local screenPos, onScreen = cam:WorldToViewportPoint(part.Position)
+        if onScreen and screenPos.Z > 0 then
+            local dist = (Vector2.new(screenPos.X, screenPos.Y) - screenCenter).Magnitude
+            if dist <= GestioConfig.silentAimFov and dist < closestDist then
+                if not GestioConfig.silentAimVisibleCheck or SARG.IsTargetVisible(cam.CFrame.Position, part) then
+                    closestDist = dist
+                    bestPart = part
+                end
+            end
+        end
+    end
+
+    return bestPart
+end
+
+function SARG.Init()
+    local renderConn = RunService.RenderStepped:Connect(function()
+        if not GestioConfig.silentAimEnabled then
+            getgenv().ParsaSilentTarget = nil
+            silentAimResolved = nil
+            return
+        end
+
+        local target = SARG.GetBestTarget()
+        getgenv().ParsaSilentTarget = target
+        silentAimResolved = target
+    end)
+    table.insert(connections, renderConn)
+
+    task.spawn(function()
+        local bulletClass = nil
+        for _ = 1, 30 do
+            if not getgc then break end
+            for _, obj in next, getgc(true) do
+                if type(obj) == "table" and typeof(rawget(obj, "_performRaycast")) == "function" then
+                    bulletClass = obj
+                    break
+                end
+            end
+            if bulletClass then break end
+            task.wait(1)
+        end
+
+        if bulletClass and not rawget(bulletClass, "__SARG_Hooked") then
+            local oldRaycast = bulletClass._performRaycast
+            bulletClass._performRaycast = function(self, ...)
+                local result = oldRaycast(self, ...)
+                local target = getgenv().ParsaSilentTarget or silentAimResolved
+
+                if GestioConfig.silentAimEnabled and target and type(result) == "table" then
+                    local allowed = true
+                    if GestioConfig.silentAimHitChance < 100 then
+                        allowed = math.random(1, 100) <= math.clamp(GestioConfig.silentAimHitChance, 0, 100)
+                    end
+
+                    if allowed then
+                        local hits = rawget(result, "Hits")
+                        if type(hits) == "table" then
+                            local finalHit = hits[#hits]
+                            if finalHit then
+                                finalHit.Instance = target
+                                finalHit.Position = target.Position
+                                if result.Origin then
+                                    result.Distance = (target.Position - result.Origin).Magnitude
+                                    result.Direction = (target.Position - result.Origin).Unit
+                                end
+                            end
+                        end
+                    end
+                end
+                return result
+            end
+            rawset(bulletClass, "__SARG_Hooked", true)
+        end
+    end)
 end
 
 -- ==========================================
@@ -1048,8 +1323,6 @@ function applyThirdPerson(dt)
         isThirdPersonActive = true
     end
 
-    -- Mobile uses Roblox's native Custom camera. This keeps the
-    -- touchscreen joystick/jump/buttons and touch-look pipeline intact.
     if UserInputService.TouchEnabled then
         camera.CameraType = Enum.CameraType.Custom
         camera.CameraSubject = hum
@@ -1064,7 +1337,6 @@ function applyThirdPerson(dt)
         return
     end
 
-    -- Desktop keeps the controlled Scriptable camera.
     camera.CameraType = Enum.CameraType.Scriptable
     camera.CameraSubject = nil
 
@@ -1140,7 +1412,7 @@ function restoreLightingState()
 end
 
 -- ==========================================
--- JUMP CIRCLE RENDER ENGINE (GROUND CONTOUR)
+-- JUMP CIRCLE RENDER ENGINE
 -- ==========================================
 local jumpRayParams = RaycastParams.new()
 jumpRayParams.FilterType = Enum.RaycastFilterType.Exclude
@@ -1399,11 +1671,6 @@ function cleanup()
     clearActiveJumpCircle()
     pcall(function() jumpCircleFolder:Destroy() end)
     pcall(function() hitmarkerGui:Destroy() end)
-    
-    pcall(function()
-        if bulletTrail then bulletTrail:Destroy() end
-        if bulletFlash then bulletFlash:Destroy() end
-    end)
     
     if genv then genv.GestioShowHitmarker = nil end
     if mobileSlideBtn then
@@ -1744,127 +2011,6 @@ function renderGrenadeOverlays()
             grenadePool[inst] = nil
         end
     end
-end
-
--- ==========================================
--- ADVANCED KINEMATIC AIM ENGINE
--- ==========================================
-local visRayParams = RaycastParams.new()
-visRayParams.FilterType = Enum.RaycastFilterType.Exclude
-visRayParams.IgnoreWater = true
-
-function isTargetVisible(originPos, targetPart, targetChar)
-    if not GestioConfig.visibleCheck or GestioConfig.wallbangEnabled then return true end
-    local myChar = player.Character
-    visRayParams.FilterDescendantsInstances = {myChar, camera}
-    local dir = targetPart.Position - originPos
-    
-    local hit = Workspace:Raycast(originPos, dir, visRayParams)
-    if hit and (hit.Instance:IsDescendantOf(targetChar) or hit.Instance == targetPart) then
-        return true
-    end
-    return false
-end
-
-local function getPingLatency()
-    local ping = 0.03
-    pcall(function()
-        local serverStats = Stats:FindFirstChild("Network") and Stats.Network:FindFirstChild("ServerStatsItem")
-        if serverStats and serverStats:FindFirstChild("Data Ping") then
-            ping = (serverStats["Data Ping"]:GetValue() / 1000)
-        end
-    end)
-    return ping
-end
-
-function getKinematicAimPosition(targetPart)
-    local rawPos = targetPart.Position
-    if not GestioConfig.predictionEnabled then
-        return rawPos
-    end
-
-    local ping = getPingLatency()
-    local predDelta = (GestioConfig.predictionFactor * 0.5) + ping
-    local targetVel = targetPart.AssemblyLinearVelocity or Vector3.zero
-
-    local myChar = player.Character
-    local myHrp = myChar and myChar:FindFirstChild("HumanoidRootPart")
-    local myVel = (myHrp and myHrp.AssemblyLinearVelocity) or Vector3.zero
-    
-    local relativeVel = targetVel - (myVel * 0.15)
-    return rawPos + (relativeVel * predDelta)
-end
-
-function getClosestTarget()
-    local cam = Workspace.CurrentCamera or camera
-    if not cam then return nil end
-
-    local camCFrame = cam.CFrame
-    local camPos = camCFrame.Position
-    local camLook = camCFrame.LookVector
-    local maxAngleRad = math.rad(GestioConfig.aimFov * 0.5)
-
-    if currentAimTarget then
-        local cChar = currentAimTarget.Char
-        local cHum = currentAimTarget.Hum
-        local cPart = currentAimTarget.Part
-        if isEntityAlive(cChar, cHum) and cPart and cPart.Parent then
-            local predPos = getKinematicAimPosition(cPart)
-            local toTarget = (predPos - camPos).Unit
-            local angle = math.acos(math.clamp(camLook:Dot(toTarget), -1, 1))
-            
-            if angle <= (maxAngleRad * 1.15) then
-                currentAimTarget.AimPosition = predPos
-                return currentAimTarget
-            end
-        end
-    end
-
-    local bestTarget = nil
-    local bestScore = math.huge
-    local allPlayers = Players:GetPlayers()
-
-    for i = 1, #allPlayers do
-        local plr = allPlayers[i]
-        local char = plr.Character
-        if char and plr ~= player and isTargetEnemy(plr, char) then
-            local hum = char:FindFirstChildOfClass("Humanoid")
-            if isEntityAlive(char, hum) then
-                local hitPart = getTargetHitbox(char)
-                if hitPart then
-                    local aimPos = getKinematicAimPosition(hitPart)
-                    local toTarget = (aimPos - camPos).Unit
-                    local angle = math.acos(math.clamp(camLook:Dot(toTarget), -1, 1))
-
-                    if angle <= maxAngleRad then
-                        local dist = (aimPos - camPos).Magnitude
-                        local score = (angle * 0.7) + ((dist / 1000) * 0.3)
-                        if score < bestScore then
-                            bestScore = score
-                            bestTarget = {
-                                Player = plr,
-                                Char = char,
-                                Part = hitPart,
-                                Hum = hum,
-                                Position = hitPart.Position,
-                                AimPosition = aimPos,
-                                AngularDelta = angle
-                            }
-                        end
-                    end
-                end
-            end
-        end
-    end
-
-    if bestTarget and (tick() - lastTargetSwitchTick > TARGET_HYSTERESIS_TIME) then
-        currentAimTarget = bestTarget
-        lastTargetSwitchTick = tick()
-    elseif not bestTarget then
-        currentAimTarget = nil
-    end
-
-    return currentAimTarget
 end
 
 -- ==========================================
@@ -2387,13 +2533,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         end
     end
 
-    if GestioConfig.silentAimEnabled then
-        if math.random(1, 100) <= GestioConfig.silentAimHitChance then
-            silentAimResolved = getSilentAimTarget()
-        else
-            silentAimResolved = nil
-        end
-    else
+    if not GestioConfig.silentAimEnabled then
         silentAimResolved = nil
     end
 
@@ -4045,7 +4185,6 @@ local function reconnectThirdPersonCamera()
     thirdPersonCameraConnection = camera:GetPropertyChangedSignal("CameraType"):Connect(function()
         if not GestioConfig.thirdPersonEnabled or not camera then return end
 
-        -- Never fight the native mobile camera.
         if UserInputService.TouchEnabled then
             if camera.CameraType ~= Enum.CameraType.Custom then
                 camera.CameraType = Enum.CameraType.Custom
@@ -4082,5 +4221,6 @@ end)
 -- ENGINE LAUNCH
 -- ==========================================
 setupSilentAimHooks()
+SARG.Init()
 setupBloxStrikeShootHook()
 buildGestioUI()
