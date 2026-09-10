@@ -159,21 +159,22 @@ end
 local camera = Workspace.CurrentCamera or Workspace:FindFirstChildOfClass("Camera")
 
 function getSafeGui()
-    local success, result = pcall(function()
-        if gethui then
-            return gethui()
-        end
-    end)
-    if success and result then return result end
-    
-    success, result = pcall(function()
-        return CoreGui
-    end)
-    if success and result then return result end
-    
+    -- PlayerGui is the most portable parent and does not depend on executor APIs.
     if player then
-        return player:WaitForChild("PlayerGui", 5) or player:FindFirstChildOfClass("PlayerGui")
+        local ok, pg = pcall(function()
+            return player:FindFirstChildOfClass("PlayerGui") or player:WaitForChild("PlayerGui", 10)
+        end)
+        if ok and pg then return pg end
     end
+
+    -- Executor GUI containers are only fallbacks. Missing gethui() must never abort UI startup.
+    if type(gethui) == "function" then
+        local ok, gui = pcall(gethui)
+        if ok and gui then return gui end
+    end
+
+    local ok, gui = pcall(function() return CoreGui end)
+    if ok and gui then return gui end
     return nil
 end
 
@@ -4031,11 +4032,131 @@ Workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
 end)
 
 -- ==========================================
--- ENGINE LAUNCH
+-- UI RECOVERY / ENGINE LAUNCH
 -- ==========================================
--- Build the UI FIRST. Optional game/executor hooks must never prevent
--- the Gestio menu from appearing.
-pcall(buildGestioUI)
+-- The menu must not depend on exploit-only APIs. Build the normal UI first,
+-- then verify that the module cards actually exist.
+local function buildModuleRecoveryUI(reason)
+    if not targetGui then return end
+
+    pcall(function()
+        local old = targetGui:FindFirstChild("GestioRecoveryGui")
+        if old then old:Destroy() end
+
+        local gui = Instance.new("ScreenGui")
+        gui.Name = "GestioRecoveryGui"
+        gui.ResetOnSpawn = false
+        gui.DisplayOrder = 1000
+        gui.IgnoreGuiInset = true
+        gui.Parent = targetGui
+
+        local frame = Instance.new("Frame")
+        frame.Size = UDim2.new(0, 310, 0, 250)
+        frame.Position = UDim2.new(0.5, -155, 0.5, -125)
+        frame.BackgroundColor3 = Color3.fromRGB(24, 25, 28)
+        frame.BorderSizePixel = 0
+        frame.Parent = gui
+        Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 8)
+        local stroke = Instance.new("UIStroke", frame)
+        stroke.Color = Color3.fromRGB(210, 45, 55)
+
+        local title = Instance.new("TextLabel", frame)
+        title.Size = UDim2.new(1, -20, 0, 30)
+        title.Position = UDim2.new(0, 10, 0, 8)
+        title.BackgroundTransparency = 1
+        title.Text = "GESTIO  •  MODULES"
+        title.TextColor3 = Color3.fromRGB(235, 238, 242)
+        title.Font = Enum.Font.GothamBold
+        title.TextSize = 12
+
+        local sub = Instance.new("TextLabel", frame)
+        sub.Size = UDim2.new(1, -20, 0, 18)
+        sub.Position = UDim2.new(0, 10, 0, 35)
+        sub.BackgroundTransparency = 1
+        sub.Text = "UI recovery mode" .. (reason and (" • " .. tostring(reason):sub(1, 45)) or "")
+        sub.TextColor3 = Color3.fromRGB(140, 145, 155)
+        sub.Font = Enum.Font.Gotham
+        sub.TextSize = 8
+        sub.TextXAlignment = Enum.TextXAlignment.Left
+
+        local list = Instance.new("ScrollingFrame", frame)
+        list.Size = UDim2.new(1, -20, 1, -68)
+        list.Position = UDim2.new(0, 10, 0, 60)
+        list.BackgroundColor3 = Color3.fromRGB(30, 32, 36)
+        list.BorderSizePixel = 0
+        list.ScrollBarThickness = 2
+        Instance.new("UICorner", list).CornerRadius = UDim.new(0, 5)
+        local layout = Instance.new("UIListLayout", list)
+        layout.Padding = UDim.new(0, 4)
+        layout.SortOrder = Enum.SortOrder.LayoutOrder
+
+        local modules = {
+            {"Tracking", "aimbotEnabled"}, {"Silent Aim", "silentAimEnabled"},
+            {"Triggerbot", "triggerbotEnabled"}, {"RCS", "rcsEnabled"},
+            {"RageBot", "rageBotEnabled"}, {"No Recoil", "noRecoilEnabled"},
+            {"Anti-Aim", "antiAimEnabled"}, {"Bhop Engine", "bunnyHopEnabled"},
+            {"Slide", "slideEnabled"}, {"Flight", "flightEnabled"},
+            {"Speed Boost", "speedEnabled"}, {"Chams", "chamsEnabled"},
+            {"Nametags", "nametagsEnabled"}, {"Box Overlay", "boxEspEnabled"},
+            {"Grenade ESP", "grenadeEspEnabled"}, {"Tracers", "tracersEnabled"},
+            {"Head Dot", "headDotEnabled"}, {"Jump Circle", "jumpCircleEnabled"},
+            {"Bullet Trail", "bulletTrailEnabled"}, {"Bullet Flash", "bulletFlashEnabled"},
+            {"Knife Changer", "skinChangerEnabled"}, {"World Changer", "nightModeEnabled"},
+            {"FullBright", "fullBrightEnabled"}, {"Remove Fog", "removeFogEnabled"},
+            {"Anti Flash", "antiFlashEnabled"}, {"Hitmarker", "hitmarkerEnabled"},
+            {"Third Person", "thirdPersonEnabled"}, {"Anti AFK", "antiAfkEnabled"}
+        }
+
+        for i, info in ipairs(modules) do
+            local name, key = info[1], info[2]
+            local b = Instance.new("TextButton", list)
+            b.Size = UDim2.new(1, -6, 0, 25)
+            b.BackgroundColor3 = Color3.fromRGB(35, 38, 43)
+            b.BorderSizePixel = 0
+            b.Text = name .. "    [" .. (GestioConfig[key] and "ON" or "OFF") .. "]"
+            b.TextColor3 = GestioConfig[key] and Color3.fromRGB(235, 238, 242) or Color3.fromRGB(140, 145, 155)
+            b.Font = Enum.Font.GothamBold
+            b.TextSize = 8
+            b.LayoutOrder = i
+            Instance.new("UICorner", b).CornerRadius = UDim.new(0, 4)
+            b.MouseButton1Click:Connect(function()
+                GestioConfig[key] = not GestioConfig[key]
+                b.Text = name .. "    [" .. (GestioConfig[key] and "ON" or "OFF") .. "]"
+                b.TextColor3 = GestioConfig[key] and Color3.fromRGB(235, 238, 242) or Color3.fromRGB(140, 145, 155)
+                if UI_Bind_Registry[key] then pcall(UI_Bind_Registry[key], GestioConfig[key]) end
+            end)
+        end
+        task.defer(function()
+            list.CanvasSize = UDim2.new(0, 0, 0, #modules * 29)
+        end)
+    end)
+end
+
+local uiOk, uiErr = xpcall(buildGestioUI, function(err)
+    warn("[Gestio] UI build error: " .. tostring(err))
+    return debug.traceback(tostring(err), 2)
+end)
+
+if not uiOk then
+    buildModuleRecoveryUI(uiErr)
+else
+    local hasModules = false
+    pcall(function()
+        local gui = targetGui and targetGui:FindFirstChild("GestioScreenGui")
+        if gui then
+            for _, d in ipairs(gui:GetDescendants()) do
+                if d:IsA("TextLabel") and (d.Text == "Tracking" or d.Text == "Silent Aim") then
+                    hasModules = true
+                    break
+                end
+            end
+        end
+    end)
+    if not hasModules then
+        warn("[Gestio] Main UI loaded without module cards; starting recovery UI")
+        buildModuleRecoveryUI("module cards missing")
+    end
+end
 
 -- Optional runtime integrations are isolated so a missing executor API
 -- or a game-version mismatch cannot kill the UI.
