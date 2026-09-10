@@ -1065,6 +1065,14 @@ function applyThirdPerson(dt)
         isThirdPersonActive = true
     end
 
+    -- Mobile safety: do not replace Roblox's native touch-camera pipeline.
+    -- Scriptable camera can cause the game's TouchGui controls to disappear.
+    if UserInputService.TouchEnabled then
+        camera.CameraType = Enum.CameraType.Custom
+        camera.CameraSubject = hum
+        return
+    end
+
     camera.CameraType = Enum.CameraType.Scriptable
     camera.CameraSubject = nil
 
@@ -4045,7 +4053,13 @@ end
 -- ==========================================
 local thirdPersonCameraConnection
 thirdPersonCameraConnection = camera:GetPropertyChangedSignal("CameraType"):Connect(function()
-    if GestioConfig.thirdPersonEnabled and camera and camera.CameraType ~= Enum.CameraType.Scriptable then
+    if not GestioConfig.thirdPersonEnabled or not camera then return end
+    if UserInputService.TouchEnabled then
+        -- Never fight Roblox's mobile camera controller.
+        if camera.CameraType ~= Enum.CameraType.Custom then
+            camera.CameraType = Enum.CameraType.Custom
+        end
+    elseif camera.CameraType ~= Enum.CameraType.Scriptable then
         camera.CameraType = Enum.CameraType.Scriptable
     end
 end)
@@ -4053,7 +4067,14 @@ end)
 Workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
     camera = Workspace.CurrentCamera or camera
     if GestioConfig.thirdPersonEnabled and camera then
-        camera.CameraType = Enum.CameraType.Scriptable
+        if UserInputService.TouchEnabled then
+            camera.CameraType = Enum.CameraType.Custom
+            local char = player.Character
+            local hum = char and char:FindFirstChildOfClass("Humanoid")
+            if hum then camera.CameraSubject = hum end
+        else
+            camera.CameraType = Enum.CameraType.Scriptable
+        end
     end
 end)
 
