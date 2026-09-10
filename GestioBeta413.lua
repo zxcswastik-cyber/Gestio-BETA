@@ -15,11 +15,6 @@ local GestioConfig = {
     aimbotEnabled = false,
     predictionEnabled = true,
     silentAimEnabled = false,
-    sargEnabled = false,
-    sargWallbang = false,
-    sargTeamCheck = true,
-    sargVisibleCheck = false,
-    sargAimHead = true,
     rcsEnabled = false,
     chamsEnabled = false,
     hitmarkerEnabled = false,
@@ -60,8 +55,6 @@ local GestioConfig = {
     showFovCircle = true,
     visibleCheck = false,
     
-    sargFov = 130,
-    sargHitChance = 100,
 
     silentAimFov = 150,
     silentAimHitChance = 100,
@@ -812,192 +805,6 @@ local function setupSilentAimHooks()
 end
 
 -- ==========================================
--- SARG MODULE: BLOX STRIKE SPECIALIZED ENGINE
--- ==========================================
-local SARG = {}
-SARG.__index = SARG
-
-local sargRayParams = RaycastParams.new()
-sargRayParams.FilterType = Enum.RaycastFilterType.Exclude
-sargRayParams.IgnoreWater = true
-
-function SARG.GetPlayerTeam(targetPlr)
-    if not targetPlr then return nil end
-    local char = targetPlr.Character
-    if char then
-        local attr = char:GetAttribute("Team")
-        if attr == "Terrorists" or attr == "Counter-Terrorists" then 
-            return attr 
-        end
-    end
-    if targetPlr.Team then return targetPlr.Team.Name end
-    return nil
-end
-
-function SARG.IsTargetVisible(camPos, targetPart)
-    if GestioConfig.sargWallbang then return true end
-    local myChar = player and player.Character
-    sargRayParams.FilterDescendantsInstances = myChar and {myChar, camera} or {camera}
-    
-    local dir = targetPart.Position - camPos
-    local hit = Workspace:Raycast(camPos, dir, sargRayParams)
-    if not hit then return true end
-    
-    local model = hit.Instance and hit.Instance:FindFirstAncestorOfClass("Model")
-    return model and Players:GetPlayerFromCharacter(model) ~= nil
-end
-
-function SARG.GetBestTarget()
-    if not GestioConfig.sargEnabled then return nil end
-
-    local cam = Workspace.CurrentCamera or camera
-    if not cam then return nil end
-
-    local screenCenter = cam.ViewportSize / 2
-    local myTeam = SARG.GetPlayerTeam(player)
-    local closestDist = math.huge
-    local bestPart = nil
-    local targetPartName = GestioConfig.sargAimHead and "Head" or "HumanoidRootPart"
-
-    for _, targetPlr in ipairs(Players:GetPlayers()) do
-        if targetPlr == player then continue end
-
-        local char = targetPlr.Character
-        if not char or char:GetAttribute("Dead") then continue end
-
-        local hum = char:FindFirstChildOfClass("Humanoid")
-        if not isEntityAlive(char, hum) then continue end
-
-        if GestioConfig.sargTeamCheck then
-            local enemyTeam = SARG.GetPlayerTeam(targetPlr)
-            if (myTeam and enemyTeam and myTeam == enemyTeam) or isAlly(targetPlr) then
-                continue
-            end
-        end
-
-        local part = char:FindFirstChild(targetPartName) or char:FindFirstChild("UpperTorso") or char.PrimaryPart
-        if not part or not part:IsA("BasePart") then continue end
-
-        local screenPos, onScreen = cam:WorldToViewportPoint(part.Position)
-        if onScreen and screenPos.Z > 0 then
-            local dist = (Vector2.new(screenPos.X, screenPos.Y) - screenCenter).Magnitude
-            if dist <= GestioConfig.sargFov and dist < closestDist then
-                if not GestioConfig.sargVisibleCheck or SARG.IsTargetVisible(cam.CFrame.Position, part) then
-                    closestDist = dist
-                    bestPart = part
-                end
-            end
-        end
-    end
-
-    return bestPart
-end
-
-function SARG.Init()
-    local renderConn = RunService.RenderStepped:Connect(function()
-        if not GestioConfig.sargEnabled then
-            getgenv().ParsaSilentTarget = nil
-            return
-        end
-
-        local target = SARG.GetBestTarget()
-        getgenv().ParsaSilentTarget = target
-    end)
-    table.insert(connections, renderConn)
-
-    task.spawn(function()
-        local bulletClass = nil
-        for _ = 1, 30 do
-            if not getgc then break end
-            for _, obj in next, getgc(true) do
-                if type(obj) == "table" and typeof(rawget(obj, "_performRaycast")) == "function" then
-                    bulletClass = obj
-                    break
-                end
-            end
-            if bulletClass then break end
-            task.wait(1)
-        end
-
-        if bulletClass and not rawget(bulletClass, "__SARG_Hooked") then
-            local oldRaycast = bulletClass._performRaycast
-            bulletClass._performRaycast = function(self, ...)
-                local result = oldRaycast(self, ...)
-                local target = getgenv().ParsaSilentTarget
-
-                if GestioConfig.sargEnabled and target and type(result) == "table" then
-                    local allowed = true
-                    if GestioConfig.sargHitChance < 100 then
-                        allowed = math.random(1, 100) <= math.clamp(GestioConfig.sargHitChance, 0, 100)
-                    end
-
-                    if allowed then
-                        local hits = rawget(result, "Hits")
-                        if type(hits) == "table" then
-                            local finalHit = hits[#hits]
-                            if finalHit then
-                                finalHit.Instance = target
-                                finalHit.Position = target.Position
-                                if result.Origin then
-                                    result.Distance = (target.Position - result.Origin).Magnitude
-                                    result.Direction = (target.Position - result.Origin).Unit
-                                end
-                            end
-                        end
-                    end
-                end
-                return result
-            end
-            rawset(bulletClass, "__SARG_Hooked", true)
-        end
-    end)
-end
-
--- ==========================================
--- CHAMS COLORS & HITMARKER VARS
--- ==========================================
-local chamsColorVisible = Color3.fromRGB(255, 45, 85)
-local chamsColorHidden = Color3.fromRGB(110, 115, 125)
-local chamsColorAlly = Color3.fromRGB(0, 230, 255)
-local chamsOutlineColor = Color3.fromRGB(240, 240, 245)
-
-local hitmarkerLastHealth = {}
-
--- ==========================================
--- SKINS CATALOG
--- ==========================================
-local knifeSkinCatalog = {
-    ["Butterfly Knife"] = {
-        ["Vanilla"] = "rbxassetid://4991206306",
-        ["Fade"]    = "rbxassetid://4991206411",
-        ["Doppler"] = "rbxassetid://4991206517",
-        ["Lore"]    = "rbxassetid://4991206622"
-    },
-    ["Karambit"] = {
-        ["Vanilla"] = "rbxassetid://4991206306",
-        ["Fade"]    = "rbxassetid://4991206411",
-        ["Doppler"] = "rbxassetid://4991206517",
-        ["Lore"]    = "rbxassetid://4991206622"
-    },
-    ["Bayonet"] = {
-        ["Vanilla"] = "rbxassetid://4991206306",
-        ["Fade"]    = "rbxassetid://4991206411",
-        ["Doppler"] = "rbxassetid://4991206517"
-    },
-    ["Shadow Daggers"] = {
-        ["Vanilla"] = "rbxassetid://4991206306",
-        ["Fade"]    = "rbxassetid://4991206411"
-    },
-    ["Huntsman"] = {
-        ["Vanilla"] = "rbxassetid://4991206306",
-        ["Doppler"] = "rbxassetid://4991206517"
-    }
-}
-
-local knifeTypeNames = {}
-for k in pairs(knifeSkinCatalog) do table.insert(knifeTypeNames, k) end
-table.sort(knifeTypeNames)
-
 local function getSkinTextureId()
     local cat = knifeSkinCatalog[GestioConfig.selectedKnifeType]
     if cat and cat[GestioConfig.selectedSkin] then
@@ -3692,14 +3499,6 @@ function buildGestioUI()
             addInspectorToggle(192, "Prediction", GestioConfig.predictionEnabled, function(v) GestioConfig.predictionEnabled = v end)
             addInspectorToggle(218, "Show FOV Circle", GestioConfig.showFovCircle, function(v) GestioConfig.showFovCircle = v end)
             addInspectorToggle(244, "Visibility Check", GestioConfig.visibleCheck, function(v) GestioConfig.visibleCheck = v end)
-        elseif moduleName == "SARG" then
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 230)
-            addInspectorSlider(6, "FOV Radius", 10, 360, GestioConfig.sargFov, false, function(v) GestioConfig.sargFov = v end)
-            addInspectorSlider(38, "Hit Chance", 1, 100, GestioConfig.sargHitChance, false, function(v) GestioConfig.sargHitChance = v end)
-            addInspectorToggle(70, "Wallbang", GestioConfig.sargWallbang, function(v) GestioConfig.sargWallbang = v end)
-            addInspectorToggle(96, "Team Check", GestioConfig.sargTeamCheck, function(v) GestioConfig.sargTeamCheck = v end)
-            addInspectorToggle(122, "Visible Check", GestioConfig.sargVisibleCheck, function(v) GestioConfig.sargVisibleCheck = v end)
-            addInspectorToggle(148, "Aim Head", GestioConfig.sargAimHead, function(v) GestioConfig.sargAimHead = v end)
         elseif moduleName == "Silent Aim" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 290)
             addInspectorSlider(6, "FOV", 10, 360, GestioConfig.silentAimFov, false, function(v) GestioConfig.silentAimFov = v end)
@@ -3932,7 +3731,6 @@ function buildGestioUI()
     local cGrid = makeCategorySection(cPage, "Aim Assistants", 1, 6)
     createModuleCard(cGrid, "Tracking", "aimbotEnabled", nil, true)
     createModuleCard(cGrid, "Silent Aim", "silentAimEnabled", nil, true)
-    createModuleCard(cGrid, "SARG", "sargEnabled", nil, true)
     createModuleCard(cGrid, "Triggerbot", "triggerbotEnabled", nil, false)
     createModuleCard(cGrid, "RCS", "rcsEnabled", nil, true)
     createModuleCard(cGrid, "RageBot", "rageBotEnabled", nil, true)
@@ -4233,31 +4031,13 @@ Workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
 end)
 
 -- ==========================================
--- MODULAR 4-MODULE COMPATIBILITY LAYER (UI-SAFE)
--- Does not modify or replace Gestio UI construction.
--- ==========================================
-local FourModuleSettings = {
-    BunnyHop = false,
-    NoRecoil = false,
-    AntiAim = false,
-    PredictionFactor = 0.19,
-    PingPredictionMultiplier = 1.5,
-}
-
-local function syncFourModuleSettings()
-    FourModuleSettings.BunnyHop = GestioConfig.bunnyHopEnabled == true
-    FourModuleSettings.NoRecoil = GestioConfig.noRecoilEnabled == true
-    FourModuleSettings.AntiAim = GestioConfig.antiAimEnabled == true
-    FourModuleSettings.PredictionFactor = tonumber(GestioConfig.predictionFactor) or 0.19
-end
-
--- Keep the four-module layer isolated: no UI objects are removed/rebuilt.
-pcall(syncFourModuleSettings)
-
--- ==========================================
 -- ENGINE LAUNCH
 -- ==========================================
-setupSilentAimHooks()
-SARG.Init()
-setupBloxStrikeShootHook()
-buildGestioUI()
+-- Build the UI FIRST. Optional game/executor hooks must never prevent
+-- the Gestio menu from appearing.
+pcall(buildGestioUI)
+
+-- Optional runtime integrations are isolated so a missing executor API
+-- or a game-version mismatch cannot kill the UI.
+pcall(setupSilentAimHooks)
+pcall(setupBloxStrikeShootHook)
