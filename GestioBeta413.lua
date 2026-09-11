@@ -55,7 +55,6 @@ local GestioConfig = {
     showFovCircle = true,
     visibleCheck = false,
     
-
     silentAimFov = 150,
     silentAimHitChance = 100,
     silentAimTeamCheck = true,
@@ -159,22 +158,21 @@ end
 local camera = Workspace.CurrentCamera or Workspace:FindFirstChildOfClass("Camera")
 
 function getSafeGui()
-    -- PlayerGui is the most portable parent and does not depend on executor APIs.
+    local success, result = pcall(function()
+        if gethui then
+            return gethui()
+        end
+    end)
+    if success and result then return result end
+    
+    success, result = pcall(function()
+        return CoreGui
+    end)
+    if success and result then return result end
+    
     if player then
-        local ok, pg = pcall(function()
-            return player:FindFirstChildOfClass("PlayerGui") or player:WaitForChild("PlayerGui", 10)
-        end)
-        if ok and pg then return pg end
+        return player:WaitForChild("PlayerGui", 5) or player:FindFirstChildOfClass("PlayerGui")
     end
-
-    -- Executor GUI containers are only fallbacks. Missing gethui() must never abort UI startup.
-    if type(gethui) == "function" then
-        local ok, gui = pcall(gethui)
-        if ok and gui then return gui end
-    end
-
-    local ok, gui = pcall(function() return CoreGui end)
-    if ok and gui then return gui end
     return nil
 end
 
@@ -288,13 +286,6 @@ local themeLibrary = {
 
 local currentTheme = themeLibrary["Charcoal Crimson"]
 
--- Chams colors (kept local so ESP initialization cannot fail when a color
--- preset is missing or was removed during modularization).
-local chamsColorVisible = currentTheme.Enemy_Fill or currentTheme.Enemy_Accent or Color3.fromRGB(235, 75, 75)
-local chamsColorHidden = currentTheme.Enemy_Hidden or Color3.fromRGB(120, 125, 135)
-local chamsColorAlly = currentTheme.Accent or Color3.fromRGB(46, 204, 113)
-local chamsOutlineColor = currentTheme.Enemy_Accent or Color3.fromRGB(235, 75, 75)
-
 -- ==========================================
 -- COMBAT ENGINE STATE VARIABLES
 -- ==========================================
@@ -305,6 +296,7 @@ local TARGET_HYSTERESIS_TIME = 0.12
 local aimboneIndex = 1
 
 local silentAimResolved = nil
+-- Forward declarations: the shoot hook is defined before the Silent Aim helpers.
 local getSilentAimTarget
 local silentAimCamPosAim
 local silentAimHooked = false
@@ -399,9 +391,15 @@ local function setupBloxStrikeShootHook()
                 and type(data) == "table"
                 and type(data.Bullets) == "table" then
 
+                -- Resolve the target at the actual weapon call instead of relying only
+                -- on the RenderStepped snapshot. This removes frame-rate dependent
+                -- target staleness for automatic weapons and multi-pellet shots.
                 local shotTarget = getSilentAimTarget and getSilentAimTarget() or nil
                 local shotAllowed = true
 
+                -- Hit chance is evaluated once per actual ShootWeapon invocation.
+                -- A single invocation may contain multiple pellets; they share the
+                -- same decision so one shot is not partially modified.
                 if GestioConfig.silentAimHitChance < 100 then
                     shotAllowed = math.random(1, 100) <= math.clamp(GestioConfig.silentAimHitChance, 0, 100)
                 end
@@ -559,127 +557,6 @@ function isVisibleThroughWalls(targetPart, targetChar)
 end
 
 -- ==========================================
--- ADVANCED KINEMATIC AIM ENGINE
--- ==========================================
-local visRayParams = RaycastParams.new()
-visRayParams.FilterType = Enum.RaycastFilterType.Exclude
-visRayParams.IgnoreWater = true
-
-function isTargetVisible(originPos, targetPart, targetChar)
-    if not GestioConfig.visibleCheck or GestioConfig.wallbangEnabled then return true end
-    local myChar = player.Character
-    visRayParams.FilterDescendantsInstances = {myChar, camera}
-    local dir = targetPart.Position - originPos
-    
-    local hit = Workspace:Raycast(originPos, dir, visRayParams)
-    if hit and (hit.Instance:IsDescendantOf(targetChar) or hit.Instance == targetPart) then
-        return true
-    end
-    return false
-end
-
-local function getPingLatency()
-    local ping = 0.03
-    pcall(function()
-        local serverStats = Stats:FindFirstChild("Network") and Stats.Network:FindFirstChild("ServerStatsItem")
-        if serverStats and serverStats:FindFirstChild("Data Ping") then
-            ping = (serverStats["Data Ping"]:GetValue() / 1000)
-        end
-    end)
-    return ping
-end
-
-function getKinematicAimPosition(targetPart)
-    local rawPos = targetPart.Position
-    if not GestioConfig.predictionEnabled then
-        return rawPos
-    end
-
-    local ping = getPingLatency()
-    local predDelta = (GestioConfig.predictionFactor * 0.5) + ping
-    local targetVel = targetPart.AssemblyLinearVelocity or Vector3.zero
-
-    local myChar = player.Character
-    local myHrp = myChar and myChar:FindFirstChild("HumanoidRootPart")
-    local myVel = (myHrp and myHrp.AssemblyLinearVelocity) or Vector3.zero
-    
-    local relativeVel = targetVel - (myVel * 0.15)
-    return rawPos + (relativeVel * predDelta)
-end
-
-function getClosestTarget()
-    local cam = Workspace.CurrentCamera or camera
-    if not cam then return nil end
-
-    local camCFrame = cam.CFrame
-    local camPos = camCFrame.Position
-    local camLook = camCFrame.LookVector
-    local maxAngleRad = math.rad(GestioConfig.aimFov * 0.5)
-
-    if currentAimTarget then
-        local cChar = currentAimTarget.Char
-        local cHum = currentAimTarget.Hum
-        local cPart = currentAimTarget.Part
-        if isEntityAlive(cChar, cHum) and cPart and cPart.Parent then
-            local predPos = getKinematicAimPosition(cPart)
-            local toTarget = (predPos - camPos).Unit
-            local angle = math.acos(math.clamp(camLook:Dot(toTarget), -1, 1))
-            
-            if angle <= (maxAngleRad * 1.15) then
-                currentAimTarget.AimPosition = predPos
-                return currentAimTarget
-            end
-        end
-    end
-
-    local bestTarget = nil
-    local bestScore = math.huge
-    local allPlayers = Players:GetPlayers()
-
-    for i = 1, #allPlayers do
-        local plr = allPlayers[i]
-        local char = plr.Character
-        if char and plr ~= player and isTargetEnemy(plr, char) then
-            local hum = char:FindFirstChildOfClass("Humanoid")
-            if isEntityAlive(char, hum) then
-                local hitPart = getTargetHitbox(char)
-                if hitPart then
-                    local aimPos = getKinematicAimPosition(hitPart)
-                    local toTarget = (aimPos - camPos).Unit
-                    local angle = math.acos(math.clamp(camLook:Dot(toTarget), -1, 1))
-
-                    if angle <= maxAngleRad then
-                        local dist = (aimPos - camPos).Magnitude
-                        local score = (angle * 0.7) + ((dist / 1000) * 0.3)
-                        if score < bestScore then
-                            bestScore = score
-                            bestTarget = {
-                                Player = plr,
-                                Char = char,
-                                Part = hitPart,
-                                Hum = hum,
-                                Position = hitPart.Position,
-                                AimPosition = aimPos,
-                                AngularDelta = angle
-                            }
-                        end
-                    end
-                end
-            end
-        end
-    end
-
-    if bestTarget and (tick() - lastTargetSwitchTick > TARGET_HYSTERESIS_TIME) then
-        currentAimTarget = bestTarget
-        lastTargetSwitchTick = tick()
-    elseif not bestTarget then
-        currentAimTarget = nil
-    end
-
-    return currentAimTarget
-end
-
--- ==========================================
 -- ZERO-LAG SILENT AIM
 -- ==========================================
 getSilentAimTarget = function()
@@ -720,6 +597,8 @@ silentAimCamPosAim = function(targetPart)
     local camPos = cam.CFrame.Position
     local aimPos = getKinematicAimPosition(targetPart)
 
+    -- getKinematicAimPosition() is the single source of prediction.
+    -- Do not apply a second lateral lead here.
     return camPos, aimPos
 end
 
@@ -813,6 +692,50 @@ local function setupSilentAimHooks()
 end
 
 -- ==========================================
+-- CHAMS COLORS & HITMARKER VARS
+-- ==========================================
+local chamsColorVisible = Color3.fromRGB(255, 45, 85)
+local chamsColorHidden = Color3.fromRGB(110, 115, 125)
+local chamsColorAlly = Color3.fromRGB(0, 230, 255)
+local chamsOutlineColor = Color3.fromRGB(240, 240, 245)
+
+local hitmarkerLastHealth = {}
+
+-- ==========================================
+-- SKINS CATALOG
+-- ==========================================
+local knifeSkinCatalog = {
+    ["Butterfly Knife"] = {
+        ["Vanilla"] = "rbxassetid://4991206306",
+        ["Fade"]    = "rbxassetid://4991206411",
+        ["Doppler"] = "rbxassetid://4991206517",
+        ["Lore"]    = "rbxassetid://4991206622"
+    },
+    ["Karambit"] = {
+        ["Vanilla"] = "rbxassetid://4991206306",
+        ["Fade"]    = "rbxassetid://4991206411",
+        ["Doppler"] = "rbxassetid://4991206517",
+        ["Lore"]    = "rbxassetid://4991206622"
+    },
+    ["Bayonet"] = {
+        ["Vanilla"] = "rbxassetid://4991206306",
+        ["Fade"]    = "rbxassetid://4991206411",
+        ["Doppler"] = "rbxassetid://4991206517"
+    },
+    ["Shadow Daggers"] = {
+        ["Vanilla"] = "rbxassetid://4991206306",
+        ["Fade"]    = "rbxassetid://4991206411"
+    },
+    ["Huntsman"] = {
+        ["Vanilla"] = "rbxassetid://4991206306",
+        ["Doppler"] = "rbxassetid://4991206517"
+    }
+}
+
+local knifeTypeNames = {}
+for k in pairs(knifeSkinCatalog) do table.insert(knifeTypeNames, k) end
+table.sort(knifeTypeNames)
+
 local function getSkinTextureId()
     local cat = knifeSkinCatalog[GestioConfig.selectedKnifeType]
     if cat and cat[GestioConfig.selectedSkin] then
@@ -1144,6 +1067,8 @@ function applyThirdPerson(dt)
         isThirdPersonActive = true
     end
 
+    -- Mobile uses Roblox's native Custom camera. This keeps the
+    -- touchscreen joystick/jump/buttons and touch-look pipeline intact.
     if UserInputService.TouchEnabled then
         camera.CameraType = Enum.CameraType.Custom
         camera.CameraSubject = hum
@@ -1158,6 +1083,7 @@ function applyThirdPerson(dt)
         return
     end
 
+    -- Desktop keeps the controlled Scriptable camera.
     camera.CameraType = Enum.CameraType.Scriptable
     camera.CameraSubject = nil
 
@@ -1233,7 +1159,7 @@ function restoreLightingState()
 end
 
 -- ==========================================
--- JUMP CIRCLE RENDER ENGINE
+-- JUMP CIRCLE RENDER ENGINE (GROUND CONTOUR)
 -- ==========================================
 local jumpRayParams = RaycastParams.new()
 jumpRayParams.FilterType = Enum.RaycastFilterType.Exclude
@@ -1492,6 +1418,11 @@ function cleanup()
     clearActiveJumpCircle()
     pcall(function() jumpCircleFolder:Destroy() end)
     pcall(function() hitmarkerGui:Destroy() end)
+    
+    pcall(function()
+        if bulletTrail then bulletTrail:Destroy() end
+        if bulletFlash then bulletFlash:Destroy() end
+    end)
     
     if genv then genv.GestioShowHitmarker = nil end
     if mobileSlideBtn then
@@ -1832,6 +1763,127 @@ function renderGrenadeOverlays()
             grenadePool[inst] = nil
         end
     end
+end
+
+-- ==========================================
+-- ADVANCED KINEMATIC AIM ENGINE
+-- ==========================================
+local visRayParams = RaycastParams.new()
+visRayParams.FilterType = Enum.RaycastFilterType.Exclude
+visRayParams.IgnoreWater = true
+
+function isTargetVisible(originPos, targetPart, targetChar)
+    if not GestioConfig.visibleCheck or GestioConfig.wallbangEnabled then return true end
+    local myChar = player.Character
+    visRayParams.FilterDescendantsInstances = {myChar, camera}
+    local dir = targetPart.Position - originPos
+    
+    local hit = Workspace:Raycast(originPos, dir, visRayParams)
+    if hit and (hit.Instance:IsDescendantOf(targetChar) or hit.Instance == targetPart) then
+        return true
+    end
+    return false
+end
+
+local function getPingLatency()
+    local ping = 0.03
+    pcall(function()
+        local serverStats = Stats:FindFirstChild("Network") and Stats.Network:FindFirstChild("ServerStatsItem")
+        if serverStats and serverStats:FindFirstChild("Data Ping") then
+            ping = (serverStats["Data Ping"]:GetValue() / 1000)
+        end
+    end)
+    return ping
+end
+
+function getKinematicAimPosition(targetPart)
+    local rawPos = targetPart.Position
+    if not GestioConfig.predictionEnabled then
+        return rawPos
+    end
+
+    local ping = getPingLatency()
+    local predDelta = (GestioConfig.predictionFactor * 0.5) + ping
+    local targetVel = targetPart.AssemblyLinearVelocity or Vector3.zero
+
+    local myChar = player.Character
+    local myHrp = myChar and myChar:FindFirstChild("HumanoidRootPart")
+    local myVel = (myHrp and myHrp.AssemblyLinearVelocity) or Vector3.zero
+    
+    local relativeVel = targetVel - (myVel * 0.15)
+    return rawPos + (relativeVel * predDelta)
+end
+
+function getClosestTarget()
+    local cam = Workspace.CurrentCamera or camera
+    if not cam then return nil end
+
+    local camCFrame = cam.CFrame
+    local camPos = camCFrame.Position
+    local camLook = camCFrame.LookVector
+    local maxAngleRad = math.rad(GestioConfig.aimFov * 0.5)
+
+    if currentAimTarget then
+        local cChar = currentAimTarget.Char
+        local cHum = currentAimTarget.Hum
+        local cPart = currentAimTarget.Part
+        if isEntityAlive(cChar, cHum) and cPart and cPart.Parent then
+            local predPos = getKinematicAimPosition(cPart)
+            local toTarget = (predPos - camPos).Unit
+            local angle = math.acos(math.clamp(camLook:Dot(toTarget), -1, 1))
+            
+            if angle <= (maxAngleRad * 1.15) then
+                currentAimTarget.AimPosition = predPos
+                return currentAimTarget
+            end
+        end
+    end
+
+    local bestTarget = nil
+    local bestScore = math.huge
+    local allPlayers = Players:GetPlayers()
+
+    for i = 1, #allPlayers do
+        local plr = allPlayers[i]
+        local char = plr.Character
+        if char and plr ~= player and isTargetEnemy(plr, char) then
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            if isEntityAlive(char, hum) then
+                local hitPart = getTargetHitbox(char)
+                if hitPart then
+                    local aimPos = getKinematicAimPosition(hitPart)
+                    local toTarget = (aimPos - camPos).Unit
+                    local angle = math.acos(math.clamp(camLook:Dot(toTarget), -1, 1))
+
+                    if angle <= maxAngleRad then
+                        local dist = (aimPos - camPos).Magnitude
+                        local score = (angle * 0.7) + ((dist / 1000) * 0.3)
+                        if score < bestScore then
+                            bestScore = score
+                            bestTarget = {
+                                Player = plr,
+                                Char = char,
+                                Part = hitPart,
+                                Hum = hum,
+                                Position = hitPart.Position,
+                                AimPosition = aimPos,
+                                AngularDelta = angle
+                            }
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    if bestTarget and (tick() - lastTargetSwitchTick > TARGET_HYSTERESIS_TIME) then
+        currentAimTarget = bestTarget
+        lastTargetSwitchTick = tick()
+    elseif not bestTarget then
+        currentAimTarget = nil
+    end
+
+    return currentAimTarget
 end
 
 -- ==========================================
@@ -2268,8 +2320,8 @@ function attachEspToPlayer(plr)
     hl.FillTransparency = GestioConfig.chamsFillTransparency
     hl.OutlineTransparency = GestioConfig.chamsOutlineTransparency
     hl.Enabled = false
-    hl.FillColor = chamsColorVisible or Color3.fromRGB(235, 75, 75)
-    hl.OutlineColor = chamsOutlineColor or Color3.fromRGB(255, 255, 255)
+    hl.FillColor = chamsColorVisible
+    hl.OutlineColor = chamsOutlineColor
     hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
     hl.Parent = holder
 
@@ -2354,7 +2406,12 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         end
     end
 
-    if not GestioConfig.silentAimEnabled then
+    if GestioConfig.silentAimEnabled then
+        -- Cache only the current target for legacy camera/mouse hooks.
+        -- Actual ShootWeapon interception resolves its own target at fire time
+        -- and performs Hit Chance once per shot.
+        silentAimResolved = getSilentAimTarget()
+    else
         silentAimResolved = nil
     end
 
@@ -2444,12 +2501,12 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
                     end
                     data.Highlight.FillTransparency = GestioConfig.chamsFillTransparency
                     data.Highlight.OutlineTransparency = GestioConfig.chamsOutlineTransparency
-                    data.Highlight.OutlineColor = chamsOutlineColor or Color3.fromRGB(255, 255, 255)
+                    data.Highlight.OutlineColor = chamsOutlineColor
 
                     if ally then
-                        data.Highlight.FillColor = chamsColorAlly or currentTheme.Accent or Color3.fromRGB(46, 204, 113)
+                        data.Highlight.FillColor = chamsColorAlly
                     else
-                        data.Highlight.FillColor = GestioConfig.chamsOcclusion and (isVisible and (chamsColorVisible or currentTheme.Enemy_Fill) or (chamsColorHidden or currentTheme.Enemy_Hidden)) or (chamsColorVisible or currentTheme.Enemy_Fill)
+                        data.Highlight.FillColor = GestioConfig.chamsOcclusion and (isVisible and chamsColorVisible or chamsColorHidden) or chamsColorVisible
                     end
                 end
             else
@@ -3180,7 +3237,7 @@ function buildGestioUI()
 
         local grid = Instance.new("UIGridLayout", gridFrame)
         grid.CellSize = UDim2.new(0, 58, 0, 58)
-        grid.CellPadding = UDim.new(0, 6, 0, 6)
+        grid.CellPadding = UDim2.new(0, 6, 0, 6)
 
         return gridFrame
     end
@@ -3736,7 +3793,7 @@ function buildGestioUI()
     end
 
     -- PAGES SETUP
-    local cGrid = makeCategorySection(cPage, "Aim Assistants", 1, 6)
+    local cGrid = makeCategorySection(cPage, "Aim Assistants", 1, 5)
     createModuleCard(cGrid, "Tracking", "aimbotEnabled", nil, true)
     createModuleCard(cGrid, "Silent Aim", "silentAimEnabled", nil, true)
     createModuleCard(cGrid, "Triggerbot", "triggerbotEnabled", nil, false)
@@ -4006,6 +4063,7 @@ local function reconnectThirdPersonCamera()
     thirdPersonCameraConnection = camera:GetPropertyChangedSignal("CameraType"):Connect(function()
         if not GestioConfig.thirdPersonEnabled or not camera then return end
 
+        -- Never fight the native mobile camera.
         if UserInputService.TouchEnabled then
             if camera.CameraType ~= Enum.CameraType.Custom then
                 camera.CameraType = Enum.CameraType.Custom
@@ -4039,133 +4097,8 @@ Workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
 end)
 
 -- ==========================================
--- UI RECOVERY / ENGINE LAUNCH
+-- ENGINE LAUNCH
 -- ==========================================
--- The menu must not depend on exploit-only APIs. Build the normal UI first,
--- then verify that the module cards actually exist.
-local function buildModuleRecoveryUI(reason)
-    if not targetGui then return end
-
-    pcall(function()
-        local old = targetGui:FindFirstChild("GestioRecoveryGui")
-        if old then old:Destroy() end
-
-        local gui = Instance.new("ScreenGui")
-        gui.Name = "GestioRecoveryGui"
-        gui.ResetOnSpawn = false
-        gui.DisplayOrder = 1000
-        gui.IgnoreGuiInset = true
-        gui.Parent = targetGui
-
-        local frame = Instance.new("Frame")
-        frame.Size = UDim2.new(0, 310, 0, 250)
-        frame.Position = UDim2.new(0.5, -155, 0.5, -125)
-        frame.BackgroundColor3 = Color3.fromRGB(24, 25, 28)
-        frame.BorderSizePixel = 0
-        frame.Parent = gui
-        Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 8)
-        local stroke = Instance.new("UIStroke", frame)
-        stroke.Color = Color3.fromRGB(210, 45, 55)
-
-        local title = Instance.new("TextLabel", frame)
-        title.Size = UDim2.new(1, -20, 0, 30)
-        title.Position = UDim2.new(0, 10, 0, 8)
-        title.BackgroundTransparency = 1
-        title.Text = "GESTIO  •  MODULES"
-        title.TextColor3 = Color3.fromRGB(235, 238, 242)
-        title.Font = Enum.Font.GothamBold
-        title.TextSize = 12
-
-        local sub = Instance.new("TextLabel", frame)
-        sub.Size = UDim2.new(1, -20, 0, 18)
-        sub.Position = UDim2.new(0, 10, 0, 35)
-        sub.BackgroundTransparency = 1
-        sub.Text = "UI recovery mode" .. (reason and (" • " .. tostring(reason):sub(1, 45)) or "")
-        sub.TextColor3 = Color3.fromRGB(140, 145, 155)
-        sub.Font = Enum.Font.Gotham
-        sub.TextSize = 8
-        sub.TextXAlignment = Enum.TextXAlignment.Left
-
-        local list = Instance.new("ScrollingFrame", frame)
-        list.Size = UDim2.new(1, -20, 1, -68)
-        list.Position = UDim2.new(0, 10, 0, 60)
-        list.BackgroundColor3 = Color3.fromRGB(30, 32, 36)
-        list.BorderSizePixel = 0
-        list.ScrollBarThickness = 2
-        Instance.new("UICorner", list).CornerRadius = UDim.new(0, 5)
-        local layout = Instance.new("UIListLayout", list)
-        layout.Padding = UDim.new(0, 4)
-        layout.SortOrder = Enum.SortOrder.LayoutOrder
-
-        local modules = {
-            {"Tracking", "aimbotEnabled"}, {"Silent Aim", "silentAimEnabled"},
-            {"Triggerbot", "triggerbotEnabled"}, {"RCS", "rcsEnabled"},
-            {"RageBot", "rageBotEnabled"}, {"No Recoil", "noRecoilEnabled"},
-            {"Anti-Aim", "antiAimEnabled"}, {"Bhop Engine", "bunnyHopEnabled"},
-            {"Slide", "slideEnabled"}, {"Flight", "flightEnabled"},
-            {"Speed Boost", "speedEnabled"}, {"Chams", "chamsEnabled"},
-            {"Nametags", "nametagsEnabled"}, {"Box Overlay", "boxEspEnabled"},
-            {"Grenade ESP", "grenadeEspEnabled"}, {"Tracers", "tracersEnabled"},
-            {"Head Dot", "headDotEnabled"}, {"Jump Circle", "jumpCircleEnabled"},
-            {"Bullet Trail", "bulletTrailEnabled"}, {"Bullet Flash", "bulletFlashEnabled"},
-            {"Knife Changer", "skinChangerEnabled"}, {"World Changer", "nightModeEnabled"},
-            {"FullBright", "fullBrightEnabled"}, {"Remove Fog", "removeFogEnabled"},
-            {"Anti Flash", "antiFlashEnabled"}, {"Hitmarker", "hitmarkerEnabled"},
-            {"Third Person", "thirdPersonEnabled"}, {"Anti AFK", "antiAfkEnabled"}
-        }
-
-        for i, info in ipairs(modules) do
-            local name, key = info[1], info[2]
-            local b = Instance.new("TextButton", list)
-            b.Size = UDim2.new(1, -6, 0, 25)
-            b.BackgroundColor3 = Color3.fromRGB(35, 38, 43)
-            b.BorderSizePixel = 0
-            b.Text = name .. "    [" .. (GestioConfig[key] and "ON" or "OFF") .. "]"
-            b.TextColor3 = GestioConfig[key] and Color3.fromRGB(235, 238, 242) or Color3.fromRGB(140, 145, 155)
-            b.Font = Enum.Font.GothamBold
-            b.TextSize = 8
-            b.LayoutOrder = i
-            Instance.new("UICorner", b).CornerRadius = UDim.new(0, 4)
-            b.MouseButton1Click:Connect(function()
-                GestioConfig[key] = not GestioConfig[key]
-                b.Text = name .. "    [" .. (GestioConfig[key] and "ON" or "OFF") .. "]"
-                b.TextColor3 = GestioConfig[key] and Color3.fromRGB(235, 238, 242) or Color3.fromRGB(140, 145, 155)
-                if UI_Bind_Registry[key] then pcall(UI_Bind_Registry[key], GestioConfig[key]) end
-            end)
-        end
-        task.defer(function()
-            list.CanvasSize = UDim2.new(0, 0, 0, #modules * 29)
-        end)
-    end)
-end
-
-local uiOk, uiErr = xpcall(buildGestioUI, function(err)
-    warn("[Gestio] UI build error: " .. tostring(err))
-    return debug.traceback(tostring(err), 2)
-end)
-
-if not uiOk then
-    buildModuleRecoveryUI(uiErr)
-else
-    local hasModules = false
-    pcall(function()
-        local gui = targetGui and targetGui:FindFirstChild("GestioScreenGui")
-        if gui then
-            for _, d in ipairs(gui:GetDescendants()) do
-                if d:IsA("TextLabel") and (d.Text == "Tracking" or d.Text == "Silent Aim") then
-                    hasModules = true
-                    break
-                end
-            end
-        end
-    end)
-    if not hasModules then
-        warn("[Gestio] Main UI loaded without module cards; starting recovery UI")
-        buildModuleRecoveryUI("module cards missing")
-    end
-end
-
--- Optional runtime integrations are isolated so a missing executor API
--- or a game-version mismatch cannot kill the UI.
-pcall(setupSilentAimHooks)
-pcall(setupBloxStrikeShootHook)
+setupSilentAimHooks()
+setupBloxStrikeShootHook()
+buildGestioUI()
