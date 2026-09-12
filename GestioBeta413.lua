@@ -507,109 +507,6 @@ local function setupBloxStrikeShootHook()
     if bloxStrikeShootHooked then return end
 
     pcall(function()
-        local fireConn = UserInputService.InputBegan:Connect(function(input, gameProcessed)
-            if gameProcessed then return end
-
-            if input.UserInputType ~= Enum.UserInputType.MouseButton1
-                and input.UserInputType ~= Enum.UserInputType.Touch then
-                return
-            end
-
-            if not (GestioConfig.bulletTrailEnabled or GestioConfig.bulletFlashEnabled) then
-                return
-            end
-
-            local char = player.Character
-            local tool = char and char:FindFirstChildOfClass("Tool")
-
-            local cam = Workspace.CurrentCamera or camera
-            if not cam then return end
-
-            local origin = cam.CFrame.Position
-            local isCameraOrigin = true
-            
-            if tool then
-                local muzzle = tool:FindFirstChild("Muzzle", true)
-                    or tool:FindFirstChild("Barrel", true)
-                    or tool:FindFirstChild("Handle", true)
-
-                if muzzle and muzzle:IsA("BasePart") then
-                    origin = muzzle.Position
-                    isCameraOrigin = false
-                end
-            end
-
-            local rayParams = RaycastParams.new()
-            rayParams.FilterType = Enum.RaycastFilterType.Exclude
-            rayParams.FilterDescendantsInstances = {
-                player.Character,
-                cam,
-                bulletTracerFolder
-            }
-            rayParams.IgnoreWater = true
-
-            local maxDistance = 500
-            local rayDirection = cam.CFrame.LookVector * maxDistance
-            local hit = Workspace:Raycast(origin, rayDirection, rayParams)
-            local bulletEnd = hit and hit.Position or (origin + rayDirection)
-            
-            local tracerOrigin = origin
-            if isCameraOrigin then
-                tracerOrigin = (cam.CFrame * CFrame.new(0, -0.4, -2.5)).Position
-            end
-            
-            local distance = (bulletEnd - tracerOrigin).Magnitude
-
-            if GestioConfig.bulletTrailEnabled then
-                createAdvancedBulletTracer(
-                    tracerOrigin,
-                    bulletEnd - tracerOrigin,
-                    distance
-                )
-            end
-
-            if GestioConfig.bulletFlashEnabled then
-                local flashFolder = bulletTracerFolder
-                local flash = Instance.new("Part")
-                flash.Name = "TracerImpactFlash"
-                flash.Anchored = true
-                flash.CanCollide = false
-                flash.CanTouch = false
-                flash.CanQuery = false
-                flash.CastShadow = false
-                flash.Material = Enum.Material.Neon
-                flash.Color = Color3.fromRGB(255, 80, 80)
-                flash.Shape = Enum.PartType.Ball
-                flash.Size = Vector3.new(0.6, 0.6, 0.6)
-                flash.CFrame = CFrame.new(bulletEnd)
-                flash.Parent = flashFolder
-
-                if GestioConfig.bulletTracerSound then
-                    local sound = Instance.new("Sound")
-                    sound.Name = "ImpactSound"
-                    sound.SoundId = "rbxassetid://9113089896"
-                    sound.Volume = 0.2
-                    sound.Parent = flash
-                    pcall(function() sound:Play() end)
-                end
-
-                TweenService:Create(
-                    flash,
-                    TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-                    {
-                        Size = Vector3.zero,
-                        Transparency = 1
-                    }
-                ):Play()
-
-                Debris:AddItem(flash, 0.2)
-            end
-        end)
-
-        table.insert(connections, fireConn)
-    end)
-
-    pcall(function()
         local controllers = ReplicatedStorage:FindFirstChild("Controllers")
         local moduleScript = controllers and controllers:FindFirstChild("InventoryController")
         if not moduleScript then return end
@@ -624,45 +521,102 @@ local function setupBloxStrikeShootHook()
 
         local originalShootWeapon = inventoryController.ShootWeapon
         inventoryController.ShootWeapon = function(self, data, ...)
-            if GestioConfig.silentAimEnabled
-                and type(data) == "table"
-                and type(data.Bullets) == "table" then
+            if type(data) == "table" and type(data.Bullets) == "table" then
+                -- 1. Silent Aim Logic
+                if GestioConfig.silentAimEnabled then
+                    local shotTarget = getSilentAimTarget and getSilentAimTarget() or nil
+                    local shotAllowed = true
 
-                local shotTarget = getSilentAimTarget and getSilentAimTarget() or nil
-                local shotAllowed = true
+                    if GestioConfig.silentAimHitChance < 100 then
+                        shotAllowed = math.random(1, 100) <= math.clamp(GestioConfig.silentAimHitChance, 0, 100)
+                    end
 
-                if GestioConfig.silentAimHitChance < 100 then
-                    shotAllowed = math.random(1, 100)
-                        <= math.clamp(GestioConfig.silentAimHitChance, 0, 100)
+                    if shotTarget and shotAllowed then
+                        local camPos, aimPos = silentAimCamPosAim(shotTarget)
+                        if camPos and aimPos then
+                            for _, bullet in pairs(data.Bullets) do
+                                if type(bullet) == "table" then
+                                    local bulletOrigin = bullet.Origin or bullet.StartingPoint or bullet.Position or camPos
+                                    if typeof(bulletOrigin) == "CFrame" then bulletOrigin = bulletOrigin.Position end
+
+                                    if typeof(bulletOrigin) == "Vector3" then
+                                        local delta = aimPos - bulletOrigin
+                                        if delta.Magnitude > 0.001 then
+                                            bullet.Direction = delta.Unit
+                                        end
+
+                                        if GestioConfig.wallbangEnabled then
+                                            bullet.Penetration = 9999
+                                            bullet.Wallbang = true
+                                            bullet.IgnoreEnvironment = true
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
                 end
 
-                if shotTarget and shotAllowed then
-                    local camPos, aimPos = silentAimCamPosAim(shotTarget)
+                -- 2. Tracers Logic
+                if GestioConfig.bulletTrailEnabled or GestioConfig.bulletFlashEnabled then
+                    local cam = Workspace.CurrentCamera or camera
+                    for _, bullet in pairs(data.Bullets) do
+                        if type(bullet) == "table" then
+                            local bOrigin = bullet.Origin or bullet.StartingPoint or bullet.Position
+                            if typeof(bOrigin) == "CFrame" then bOrigin = bOrigin.Position end
+                            local bDir = bullet.Direction
 
-                    if camPos and aimPos then
-                        for _, bullet in pairs(data.Bullets) do
-                            if type(bullet) == "table" then
-                                local bulletOrigin = bullet.Origin
-                                    or bullet.StartingPoint
-                                    or bullet.Position
-                                    or camPos
-
-                                if typeof(bulletOrigin) == "CFrame" then
-                                    bulletOrigin = bulletOrigin.Position
+                            if typeof(bOrigin) == "Vector3" and typeof(bDir) == "Vector3" then
+                                local tracerOrigin = bOrigin
+                                if cam and (bOrigin - cam.CFrame.Position).Magnitude < 2 then
+                                    tracerOrigin = (cam.CFrame * CFrame.new(0, -0.4, -2.5)).Position
                                 end
 
-                                if typeof(bulletOrigin) == "Vector3" then
-                                    local delta = aimPos - bulletOrigin
+                                local rayParams = RaycastParams.new()
+                                rayParams.FilterType = Enum.RaycastFilterType.Exclude
+                                rayParams.FilterDescendantsInstances = {player.Character, cam, bulletTracerFolder}
+                                rayParams.IgnoreWater = true
 
-                                    if delta.Magnitude > 0.001 then
-                                        bullet.Direction = delta.Unit
+                                local maxDistance = 500
+                                local hit = Workspace:Raycast(tracerOrigin, bDir.Unit * maxDistance, rayParams)
+                                local bulletEnd = hit and hit.Position or (tracerOrigin + bDir.Unit * maxDistance)
+                                local distance = (bulletEnd - tracerOrigin).Magnitude
+
+                                if GestioConfig.bulletTrailEnabled then
+                                    createAdvancedBulletTracer(tracerOrigin, bulletEnd - tracerOrigin, distance)
+                                end
+
+                                if GestioConfig.bulletFlashEnabled then
+                                    local flash = Instance.new("Part")
+                                    flash.Name = "TracerImpactFlash"
+                                    flash.Anchored = true
+                                    flash.CanCollide = false
+                                    flash.CanTouch = false
+                                    flash.CanQuery = false
+                                    flash.CastShadow = false
+                                    flash.Material = Enum.Material.Neon
+                                    flash.Color = Color3.fromRGB(255, 80, 80)
+                                    flash.Shape = Enum.PartType.Ball
+                                    flash.Size = Vector3.new(0.6, 0.6, 0.6)
+                                    flash.CFrame = CFrame.new(bulletEnd)
+                                    flash.Parent = bulletTracerFolder or Workspace
+
+                                    if GestioConfig.bulletTracerSound then
+                                        local sound = Instance.new("Sound")
+                                        sound.Name = "ImpactSound"
+                                        sound.SoundId = "rbxassetid://9113089896"
+                                        sound.Volume = 0.2
+                                        sound.Parent = flash
+                                        pcall(function() sound:Play() end)
                                     end
 
-                                    if GestioConfig.wallbangEnabled then
-                                        bullet.Penetration = 9999
-                                        bullet.Wallbang = true
-                                        bullet.IgnoreEnvironment = true
-                                    end
+                                    TweenService:Create(
+                                        flash,
+                                        TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+                                        {Size = Vector3.zero, Transparency = 1}
+                                    ):Play()
+
+                                    Debris:AddItem(flash, 0.2)
                                 end
                             end
                         end
