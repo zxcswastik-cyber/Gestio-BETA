@@ -548,18 +548,21 @@ local function setupBloxStrikeShootHook()
 
             local char = player.Character
             local tool = char and char:FindFirstChildOfClass("Tool")
-            if not tool then return end
 
             local cam = Workspace.CurrentCamera or camera
             if not cam then return end
 
             local origin = cam.CFrame.Position
-            local muzzle = tool:FindFirstChild("Muzzle", true)
-                or tool:FindFirstChild("Barrel", true)
-                or tool:FindFirstChild("Handle", true)
+            
+            -- Вычисляем позицию только если в руках есть стандартный Tool
+            if tool then
+                local muzzle = tool:FindFirstChild("Muzzle", true)
+                    or tool:FindFirstChild("Barrel", true)
+                    or tool:FindFirstChild("Handle", true)
 
-            if muzzle and muzzle:IsA("BasePart") then
-                origin = muzzle.Position
+                if muzzle and muzzle:IsA("BasePart") then
+                    origin = muzzle.Position
+                end
             end
 
             local rayParams = RaycastParams.new()
