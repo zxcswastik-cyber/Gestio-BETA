@@ -73,7 +73,6 @@ local GestioConfig = {
     silentAimTeamCheck = true,
     silentAimVisibleCheck = false,
     silentAimAimHead = true,
-    pSilentEnabled = false,
     wallbangEnabled = false,
     showSilentFovCircle = true,
 
@@ -312,8 +311,6 @@ local aimboneIndex = 1
 local silentAimResolved = nil
 local getSilentAimTarget
 local silentAimCamPosAim
-local silentAimHooked = false
-local silentAimCamHooked = false
 local bloxStrikeShootHooked = false
 
 local function createAdvancedBulletTracer(origin, direction, distance)
@@ -522,7 +519,7 @@ local function setupBloxStrikeShootHook()
         local originalShootWeapon = inventoryController.ShootWeapon
         inventoryController.ShootWeapon = function(self, data, ...)
             if type(data) == "table" and type(data.Bullets) == "table" then
-                -- 1. Silent Aim Logic
+                -- 1. Silent Aim: intercept bullet directions at ShootWeapon
                 if GestioConfig.silentAimEnabled then
                     local shotTarget = getSilentAimTarget and getSilentAimTarget() or nil
                     local shotAllowed = true
@@ -786,95 +783,6 @@ silentAimCamPosAim = function(targetPart)
     local aimPos = getKinematicAimPosition(targetPart)
 
     return camPos, aimPos
-end
-
-local function setupSilentAimHooks()
-    if silentAimHooked and silentAimCamHooked then return end
-
-    if not silentAimHooked and hookmetamethod then
-        pcall(function()
-            local mouse = player:GetMouse()
-            local oldIndex
-            oldIndex = hookmetamethod(mouse, "__index", function(self, key)
-                if GestioConfig.silentAimEnabled and silentAimResolved and (key == "Hit" or key == "UnitRay") then
-                    local camPos, aimPos = silentAimCamPosAim()
-                    if camPos then
-                        if key == "Hit" then
-                            return CFrame.new(camPos, aimPos)
-                        else
-                            return Ray.new(camPos, (aimPos - camPos).Unit)
-                        end
-                    end
-                end
-                return oldIndex(self, key)
-            end)
-        end)
-        silentAimHooked = true
-    end
-
-    if not silentAimCamHooked and hookmetamethod and getnamecallmethod then
-        pcall(function()
-            local oldNamecall
-            oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
-                local method = getnamecallmethod()
-                local args = {...}
-
-                if GestioConfig.silentAimEnabled and silentAimResolved and noRecoil.isShooting
-                    and self == camera
-                    and (method == "ViewportPointToRay" or method == "ScreenPointToRay") then
-                    local camPos, aimPos = silentAimCamPosAim()
-                    if camPos then
-                        return Ray.new(camPos, (aimPos - camPos).Unit)
-                    end
-                end
-
-                if GestioConfig.pSilentEnabled and silentAimResolved and self == Workspace then
-                    local camPos, aimPos = silentAimCamPosAim()
-                    if aimPos then
-                        if method == "Raycast" then
-                            local origin = args[1]
-                            local originalDirection = args[2]
-                            if typeof(origin) == "Vector3" and typeof(originalDirection) == "Vector3" then
-                                local magnitude = originalDirection.Magnitude
-                                local delta = aimPos - origin
-                                if magnitude > 0 and delta.Magnitude > 0.001 then
-                                    args[2] = delta.Unit * magnitude
-                                    if GestioConfig.wallbangEnabled then
-                                        local wbParams = RaycastParams.new()
-                                        wbParams.FilterType = Enum.RaycastFilterType.Include
-                                        local charList = {}
-                                        for _, plr in ipairs(Players:GetPlayers()) do
-                                            if plr.Character then
-                                                table.insert(charList, plr.Character)
-                                            end
-                                        end
-                                        wbParams.FilterDescendantsInstances = charList
-                                        wbParams.IgnoreWater = true
-                                        args[3] = wbParams
-                                    end
-                                    return oldNamecall(self, unpack(args))
-                                end
-                            end
-                        elseif method == "FindPartOnRay"
-                            or method == "FindPartOnRayWithIgnoreList"
-                            or method == "FindPartOnRayWithWhitelist" then
-                            local oldRay = args[1]
-                            if typeof(oldRay) == "Ray" then
-                                local delta = aimPos - oldRay.Origin
-                                if delta.Magnitude > 0.001 then
-                                    args[1] = Ray.new(oldRay.Origin, delta.Unit * oldRay.Direction.Magnitude)
-                                    return oldNamecall(self, unpack(args))
-                                end
-                            end
-                        end
-                    end
-                end
-
-                return oldNamecall(self, ...)
-            end)
-        end)
-        silentAimCamHooked = true
-    end
 end
 
 -- ==========================================
@@ -3760,7 +3668,6 @@ function buildGestioUI()
             addInspectorToggle(96, "Visible Check", GestioConfig.silentAimVisibleCheck, function(v) GestioConfig.silentAimVisibleCheck = v end)
             addInspectorToggle(122, "Aim Head", GestioConfig.silentAimAimHead, function(v) GestioConfig.silentAimAimHead = v end)
             addInspectorToggle(148, "Show Silent FOV", GestioConfig.showSilentFovCircle, function(v) GestioConfig.showSilentFovCircle = v end)
-            addInspectorToggle(174, "pSilent (Raycast)", GestioConfig.pSilentEnabled, function(v) GestioConfig.pSilentEnabled = v end)
             addInspectorToggle(200, "Advanced Wallbang", GestioConfig.wallbangEnabled, function(v) GestioConfig.wallbangEnabled = v end)
         elseif moduleName == "RageBot" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 150)
@@ -4287,6 +4194,5 @@ end)
 -- ==========================================
 -- ENGINE LAUNCH
 -- ==========================================
-setupSilentAimHooks()
 setupBloxStrikeShootHook()
 buildGestioUI()
