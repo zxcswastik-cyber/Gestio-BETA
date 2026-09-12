@@ -49,8 +49,8 @@ local GestioConfig = {
     bulletTracerLength = 8,
     bulletTracerSpeed = 800,
     bulletTracerFadeTime = 0.15,
-    bulletTracerBloomPower = 1.8,
-    bulletTracerLightBrightness = 3,
+    bulletTracerBloomPower = 0,
+    bulletTracerLightBrightness = 0.5,
     bulletTracerLightRange = 12,
     bulletTracerParticles = true,
     bulletTracerParticleRate = 120,
@@ -310,7 +310,6 @@ local TARGET_HYSTERESIS_TIME = 0.12
 local aimboneIndex = 1
 
 local silentAimResolved = nil
--- Forward declarations: the shoot hook is defined before the Silent Aim helpers.
 local getSilentAimTarget
 local silentAimCamPosAim
 local silentAimHooked = false
@@ -329,8 +328,8 @@ local function createAdvancedBulletTracer(origin, direction, distance)
         Length = math.max(0.5, tonumber(cfg.bulletTracerLength) or 8),
         Speed = math.max(50, tonumber(cfg.bulletTracerSpeed) or 800),
         FadeTime = math.max(0.03, tonumber(cfg.bulletTracerFadeTime) or 0.15),
-        BloomPower = math.max(0, tonumber(cfg.bulletTracerBloomPower) or 1.8),
-        LightBrightness = math.max(0, tonumber(cfg.bulletTracerLightBrightness) or 3),
+        BloomPower = math.max(0, tonumber(cfg.bulletTracerBloomPower) or 0),
+        LightBrightness = math.max(0, tonumber(cfg.bulletTracerLightBrightness) or 0.5),
         LightRange = math.max(1, tonumber(cfg.bulletTracerLightRange) or 12),
         ParticleRate = math.max(1, tonumber(cfg.bulletTracerParticleRate) or 120)
     }
@@ -393,7 +392,6 @@ local function createAdvancedBulletTracer(origin, direction, distance)
     glow.CFrame = initialCF
     outer.CFrame = initialCF
 
-    -- Trail is attached to the core so the tracer has a softer after-image.
     local attachment0 = Instance.new("Attachment")
     attachment0.Name = "TrailStart"
     attachment0.Parent = core
@@ -461,20 +459,6 @@ local function createAdvancedBulletTracer(origin, direction, distance)
     light.Shadows = false
     light.Parent = core
 
-    -- A short-lived Bloom is used only for the muzzle/tracer pulse.
-    -- Keep the lifetime short to avoid accumulating post-processing effects.
-    if settings.BloomPower > 0 then
-        pcall(function()
-            local bloom = Instance.new("BloomEffect")
-            bloom.Name = "GestioTracerBloom"
-            bloom.Intensity = settings.BloomPower
-            bloom.Size = 24
-            bloom.Threshold = 0.1
-            bloom.Parent = Lighting
-            Debris:AddItem(bloom, math.min(0.12, travelTime + settings.FadeTime))
-        end)
-    end
-
     local targetPosition = origin + direction * distance
     local targetCenter = targetPosition - direction * (length * 0.5)
     local targetCF = CFrame.lookAt(targetCenter, targetCenter + direction)
@@ -498,21 +482,10 @@ local function createAdvancedBulletTracer(origin, direction, distance)
             Enum.EasingDirection.In
         )
 
-        TweenService:Create(core, fadeInfo, {
-            Transparency = 1
-        }):Play()
-
-        TweenService:Create(glow, fadeInfo, {
-            Transparency = 1
-        }):Play()
-
-        TweenService:Create(outer, fadeInfo, {
-            Transparency = 1
-        }):Play()
-
-        TweenService:Create(light, fadeInfo, {
-            Brightness = 0
-        }):Play()
+        TweenService:Create(core, fadeInfo, {Transparency = 1}):Play()
+        TweenService:Create(glow, fadeInfo, {Transparency = 1}):Play()
+        TweenService:Create(outer, fadeInfo, {Transparency = 1}):Play()
+        TweenService:Create(light, fadeInfo, {Brightness = 0}):Play()
 
         for _, child in ipairs(core:GetChildren()) do
             if child:IsA("ParticleEmitter") then
@@ -553,8 +526,8 @@ local function setupBloxStrikeShootHook()
             if not cam then return end
 
             local origin = cam.CFrame.Position
+            local isCameraOrigin = true
             
-            -- Вычисляем позицию только если в руках есть стандартный Tool
             if tool then
                 local muzzle = tool:FindFirstChild("Muzzle", true)
                     or tool:FindFirstChild("Barrel", true)
@@ -562,6 +535,7 @@ local function setupBloxStrikeShootHook()
 
                 if muzzle and muzzle:IsA("BasePart") then
                     origin = muzzle.Position
+                    isCameraOrigin = false
                 end
             end
 
@@ -578,12 +552,18 @@ local function setupBloxStrikeShootHook()
             local rayDirection = cam.CFrame.LookVector * maxDistance
             local hit = Workspace:Raycast(origin, rayDirection, rayParams)
             local bulletEnd = hit and hit.Position or (origin + rayDirection)
-            local distance = (bulletEnd - origin).Magnitude
+            
+            local tracerOrigin = origin
+            if isCameraOrigin then
+                tracerOrigin = (cam.CFrame * CFrame.new(0, -0.4, -2.5)).Position
+            end
+            
+            local distance = (bulletEnd - tracerOrigin).Magnitude
 
             if GestioConfig.bulletTrailEnabled then
                 createAdvancedBulletTracer(
-                    origin,
-                    bulletEnd - origin,
+                    tracerOrigin,
+                    bulletEnd - tracerOrigin,
                     distance
                 )
             end
@@ -629,7 +609,6 @@ local function setupBloxStrikeShootHook()
         table.insert(connections, fireConn)
     end)
 
-    -- Keep the existing Blox Strike weapon integration intact.
     pcall(function()
         local controllers = ReplicatedStorage:FindFirstChild("Controllers")
         local moduleScript = controllers and controllers:FindFirstChild("InventoryController")
@@ -663,17 +642,17 @@ local function setupBloxStrikeShootHook()
                     if camPos and aimPos then
                         for _, bullet in pairs(data.Bullets) do
                             if type(bullet) == "table" then
-                                local origin = bullet.Origin
+                                local bulletOrigin = bullet.Origin
                                     or bullet.StartingPoint
                                     or bullet.Position
                                     or camPos
 
-                                if typeof(origin) == "CFrame" then
-                                    origin = origin.Position
+                                if typeof(bulletOrigin) == "CFrame" then
+                                    bulletOrigin = bulletOrigin.Position
                                 end
 
-                                if typeof(origin) == "Vector3" then
-                                    local delta = aimPos - origin
+                                if typeof(bulletOrigin) == "Vector3" then
+                                    local delta = aimPos - bulletOrigin
 
                                     if delta.Magnitude > 0.001 then
                                         bullet.Direction = delta.Unit
@@ -852,8 +831,6 @@ silentAimCamPosAim = function(targetPart)
     local camPos = cam.CFrame.Position
     local aimPos = getKinematicAimPosition(targetPart)
 
-    -- getKinematicAimPosition() is the single source of prediction.
-    -- Do not apply a second lateral lead here.
     return camPos, aimPos
 end
 
@@ -2668,9 +2645,6 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     end
 
     if GestioConfig.silentAimEnabled then
-        -- Cache only the current target for legacy camera/mouse hooks.
-        -- Actual ShootWeapon interception resolves its own target at fire time
-        -- and performs Hit Chance once per shot.
         silentAimResolved = getSilentAimTarget()
     else
         silentAimResolved = nil
@@ -2681,7 +2655,6 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         camera.CFrame = camera.CFrame * CFrame.Angles(-comp, 0, 0)
     end
 
-    -- RAGEBOT & AIMBOT EXECUTION
     if GestioConfig.rageBotEnabled then
         local target = getRageTarget()
         if target and target.Part and target.Part.Parent then
