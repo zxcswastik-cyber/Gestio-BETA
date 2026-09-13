@@ -118,7 +118,11 @@ local GestioConfig = {
     nightBrightness = 0.2,
     nightClockTime = 0.0,
     selectedKnifeType = "Butterfly Knife",
-    selectedSkin = "Fade"
+    selectedSkin = "Fade",
+    gloveChangerEnabled = false,
+    selectedGloveModel = "Sports Gloves",
+    selectedGloveSkin = "Default",
+    weaponSkinSelections = {}
 }
 
 local UI_Bind_Registry = {}
@@ -387,7 +391,7 @@ local function setupBloxStrikeShootHook()
 
         local originalShootWeapon = inventoryController.ShootWeapon
         inventoryController.ShootWeapon = function(self, data, ...)
-            if (GestioConfig.silentAimEnabled or GestioConfig.pSilentEnabled)
+            if GestioConfig.silentAimEnabled
                 and type(data) == "table"
                 and type(data.Bullets) == "table" then
 
@@ -421,7 +425,18 @@ local function setupBloxStrikeShootHook()
                                 if typeof(origin) == "Vector3" then
                                     local delta = aimPos - origin
                                     if delta.Magnitude > 0.001 then
+                                        -- Keep Gestio's direction rewrite.
                                         bullet.Direction = delta.Unit
+                                    end
+
+                                    -- MemeSense-style authoritative hit payload rewrite.
+                                    if type(bullet.Hits) == "table" then
+                                        for _, hitData in pairs(bullet.Hits) do
+                                            if type(hitData) == "table" then
+                                                hitData.Instance = shotTarget
+                                                hitData.Position = shotTarget.Position
+                                            end
+                                        end
                                     end
 
                                     if GestioConfig.wallbangEnabled then
@@ -591,17 +606,14 @@ end
 
 silentAimCamPosAim = function(targetPart)
     targetPart = targetPart or silentAimResolved
-    if not ((GestioConfig.silentAimEnabled or GestioConfig.pSilentEnabled) and targetPart) then
-        return nil
-    end
-
+    if not (GestioConfig.silentAimEnabled and targetPart) then return nil end
     local cam = Workspace.CurrentCamera or camera
     if not cam then return nil end
-
     local camPos = cam.CFrame.Position
     local aimPos = getKinematicAimPosition(targetPart)
 
-    -- One target -> one predicted point -> one final shot direction.
+    -- getKinematicAimPosition() is the single source of prediction.
+    -- Do not apply a second lateral lead here.
     return camPos, aimPos
 end
 
@@ -705,108 +717,190 @@ local chamsOutlineColor = Color3.fromRGB(240, 240, 245)
 local hitmarkerLastHealth = {}
 
 -- ==========================================
--- SKINS CATALOG
+-- MEMESENSE -> GESTIO SKIN / KNIFE / GLOVE CHANGER
 -- ==========================================
-local knifeSkinCatalog = {
-    ["Butterfly Knife"] = {
-        ["Vanilla"] = "rbxassetid://4991206306",
-        ["Fade"]    = "rbxassetid://4991206411",
-        ["Doppler"] = "rbxassetid://4991206517",
-        ["Lore"]    = "rbxassetid://4991206622"
-    },
-    ["Karambit"] = {
-        ["Vanilla"] = "rbxassetid://4991206306",
-        ["Fade"]    = "rbxassetid://4991206411",
-        ["Doppler"] = "rbxassetid://4991206517",
-        ["Lore"]    = "rbxassetid://4991206622"
-    },
-    ["Bayonet"] = {
-        ["Vanilla"] = "rbxassetid://4991206306",
-        ["Fade"]    = "rbxassetid://4991206411",
-        ["Doppler"] = "rbxassetid://4991206517"
-    },
-    ["Shadow Daggers"] = {
-        ["Vanilla"] = "rbxassetid://4991206306",
-        ["Fade"]    = "rbxassetid://4991206411"
-    },
-    ["Huntsman"] = {
-        ["Vanilla"] = "rbxassetid://4991206306",
-        ["Doppler"] = "rbxassetid://4991206517"
-    }
+local skinData = {
+    SkinsRoot = nil,
+    SkinSelections = {},
+    GloveSelections = {},
+    GloveFolders = {},
+    Ready = false
 }
 
-local knifeTypeNames = {}
-for k in pairs(knifeSkinCatalog) do table.insert(knifeTypeNames, k) end
-table.sort(knifeTypeNames)
+local function refreshGestioSkinData()
+    if skinData.Ready and skinData.SkinsRoot and skinData.SkinsRoot.Parent then return end
 
-local function getSkinTextureId()
-    local cat = knifeSkinCatalog[GestioConfig.selectedKnifeType]
-    if cat and cat[GestioConfig.selectedSkin] then
-        return cat[GestioConfig.selectedSkin]
+    local assets = ReplicatedStorage:FindFirstChild("Assets")
+    skinData.SkinsRoot = assets and assets:FindFirstChild("Skins")
+    if not skinData.SkinsRoot then return end
+
+    skinData.SkinSelections = {}
+    skinData.GloveSelections = {}
+    skinData.GloveFolders = {}
+
+    for _, weaponFolder in ipairs(skinData.SkinsRoot:GetChildren()) do
+        local skins = {}
+        for _, skin in ipairs(weaponFolder:GetChildren()) do
+            skins[#skins + 1] = skin.Name
+        end
+        table.sort(skins)
+        skinData.SkinSelections[weaponFolder.Name] = skins
+
+        if weaponFolder.Name:match("Glove") or weaponFolder.Name:match("Gloves") or weaponFolder.Name == "Hand Wraps" then
+            skinData.GloveFolders[#skinData.GloveFolders + 1] = weaponFolder
+            local gloveSkins = {"Default"}
+            for _, skin in ipairs(weaponFolder:GetChildren()) do
+                gloveSkins[#gloveSkins + 1] = skin.Name
+            end
+            skinData.GloveSelections[weaponFolder.Name] = gloveSkins
+        end
     end
-    return "rbxassetid://4991206306"
+
+    for weaponName, skins in pairs(skinData.SkinSelections) do
+        if GestioConfig.weaponSkinSelections[weaponName] == nil then
+            GestioConfig.weaponSkinSelections[weaponName] = skins[1] or "Default"
+        end
+    end
+
+    skinData.Ready = true
+end
+
+refreshGestioSkinData()
+
+local function isBaseKnife(name)
+    return name == "CT Knife" or name == "T Knife" or name == "Knife"
+end
+
+local function getCurrentWeaponModel()
+    local cam = Workspace.CurrentCamera or camera
+    if not cam then return nil end
+    for _, child in ipairs(cam:GetChildren()) do
+        if child:IsA("Model") and child.Name ~= "Viewmodel" and not child.Name:lower():find("light") then
+            return child
+        end
+    end
+    return nil
+end
+
+local function applySurfaceAppearanceSkin(model, weaponName, skinName)
+    if not model or not skinData.SkinsRoot then return end
+    if not weaponName or not skinName or skinName == "Default" then return end
+
+    local weaponFolder = skinData.SkinsRoot:FindFirstChild(weaponName)
+    local skinFolder = weaponFolder and weaponFolder:FindFirstChild(skinName)
+    local cameraFolder = skinFolder and skinFolder:FindFirstChild("Camera")
+    local factoryNew = cameraFolder and cameraFolder:FindFirstChild("Factory New")
+    if not factoryNew then return end
+
+    for _, appearance in ipairs(factoryNew:GetChildren()) do
+        if appearance:IsA("SurfaceAppearance") then
+            local targetPart = model:FindFirstChild(appearance.Name, true)
+            if targetPart and targetPart:IsA("BasePart") then
+                for _, old in ipairs(targetPart:GetChildren()) do
+                    if old:IsA("SurfaceAppearance") then old:Destroy() end
+                end
+                appearance:Clone().Parent = targetPart
+            end
+        end
+    end
 end
 
 local function hookBloxStrikeModules()
+    refreshGestioSkinData()
     pcall(function()
-        if not getgc then return end
-        for _, v in ipairs(getgc(true)) do
-            if type(v) == "table" then
-                if rawget(v, "EquippedMelee") ~= nil then
-                    v.EquippedMelee = GestioConfig.selectedKnifeType
+        if type(getgc) ~= "function" then return end
+        for _, obj in ipairs(getgc(true)) do
+            if type(obj) == "table" then
+                if rawget(obj, "EquippedMelee") ~= nil and GestioConfig.skinChangerEnabled then
+                    obj.EquippedMelee = GestioConfig.selectedKnifeType
                 end
-                if rawget(v, "MeleeSkin") ~= nil then
-                    v.MeleeSkin = GestioConfig.selectedSkin
+                if rawget(obj, "MeleeSkin") ~= nil and GestioConfig.skinChangerEnabled then
+                    obj.MeleeSkin = GestioConfig.selectedSkin
                 end
-                if rawget(v, "Knife") ~= nil and type(v.Knife) == "table" then
-                    v.Knife.Name = GestioConfig.selectedKnifeType
-                    v.Knife.Skin = GestioConfig.selectedSkin
+                if rawget(obj, "Knife") ~= nil and type(obj.Knife) == "table" and GestioConfig.skinChangerEnabled then
+                    obj.Knife.Name = GestioConfig.selectedKnifeType
+                    obj.Knife.Skin = GestioConfig.selectedSkin
                 end
             end
         end
     end)
-end
-
-local function applyTextureToPart(child, textureId)
-    pcall(function()
-        if child:IsA("MeshPart") then
-            child.TextureID = textureId
-        elseif child:IsA("SpecialMesh") then
-            child.TextureId = textureId
-        end
-        local sa = child:FindFirstChildOfClass("SurfaceAppearance")
-        if sa then
-            pcall(function() sa.ColorMap = textureId end)
-        end
-    end)
-end
-
-local function isKnifeTarget(name)
-    name = (name or ""):lower()
-    return name:find("knife") or name:find("melee") or name:find("blade")
-        or name:find("karambit") or name:find("bayonet") or name:find("dagger")
-        or name:find("huntsman") or name:find("arms") or name:find("viewmodel")
-        or name:find("weapon")
 end
 
 local function scanAndMorphKnives(root)
     if not GestioConfig.skinChangerEnabled or not root then return end
-    local textureId = getSkinTextureId()
-    pcall(function()
-        for _, obj in ipairs(root:GetDescendants()) do
-            if isKnifeTarget(obj.Name) or isKnifeTarget(obj.ClassName) then
-                if obj:IsA("MeshPart") or obj:IsA("SpecialMesh") then
-                    applyTextureToPart(obj, textureId)
-                end
-                for _, child in ipairs(obj:GetDescendants()) do
-                    if child:IsA("MeshPart") or child:IsA("SpecialMesh") then
-                        applyTextureToPart(child, textureId)
-                    end
-                end
+    refreshGestioSkinData()
+    if not skinData.SkinsRoot then return end
+
+    local weaponModel = getCurrentWeaponModel()
+    if weaponModel then
+        local selectedWeapon = weaponModel.Name
+        if isBaseKnife(selectedWeapon) then
+            selectedWeapon = GestioConfig.selectedKnifeType
+        end
+        local selectedSkin = GestioConfig.weaponSkinSelections[selectedWeapon]
+            or (selectedWeapon == GestioConfig.selectedKnifeType and GestioConfig.selectedSkin)
+            or "Default"
+        applySurfaceAppearanceSkin(weaponModel, selectedWeapon, selectedSkin)
+    end
+end
+
+local function applyGestioGloves()
+    if not GestioConfig.gloveChangerEnabled then return end
+    refreshGestioSkinData()
+    if not skinData.SkinsRoot then return end
+
+    local cam = Workspace.CurrentCamera or camera
+    if not cam then return end
+    local arms
+    for _, child in ipairs(cam:GetChildren()) do
+        if child:IsA("Model") and (child.Name:match("Arms") or child:FindFirstChild("Right Arm")) then
+            arms = child
+            break
+        end
+    end
+    if not arms then return end
+
+    local leftArm = arms:FindFirstChild("Left Arm")
+    local rightArm = arms:FindFirstChild("Right Arm")
+    local leftGlove = leftArm and leftArm:FindFirstChild("Glove")
+    local rightGlove = rightArm and rightArm:FindFirstChild("Glove")
+    if not leftGlove or not rightGlove then return end
+
+    local gloveFolder = skinData.SkinsRoot:FindFirstChild(GestioConfig.selectedGloveModel)
+    local skinFolder = gloveFolder and gloveFolder:FindFirstChild(GestioConfig.selectedGloveSkin)
+    local cameraFolder = skinFolder and skinFolder:FindFirstChild("Camera")
+    local factoryNew = cameraFolder and cameraFolder:FindFirstChild("Factory New")
+    if not factoryNew then return end
+
+    for _, glove in ipairs({leftGlove, rightGlove}) do
+        for _, old in ipairs(glove:GetChildren()) do
+            if old:IsA("SurfaceAppearance") then old:Destroy() end
+        end
+        for _, appearance in ipairs(factoryNew:GetChildren()) do
+            if appearance:IsA("SurfaceAppearance") then
+                appearance:Clone().Parent = glove
             end
         end
-    end)
+    end
 end
+
+-- Compatibility with the existing Gestio render scanner.
+task.spawn(function()
+    while true do
+        task.wait(0.5)
+        pcall(function()
+            if GestioConfig.skinChangerEnabled then
+                hookBloxStrikeModules()
+                scanAndMorphKnives(camera)
+                if player and player.Character then scanAndMorphKnives(player.Character) end
+                scanAndMorphKnives(Workspace)
+            end
+            if GestioConfig.gloveChangerEnabled then
+                applyGestioGloves()
+            end
+        end)
+    end
+end)
 
 -- ==========================================
 -- TRIGGERBOT & MOVEMENT STATE
@@ -2409,9 +2503,10 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         end
     end
 
-    if GestioConfig.silentAimEnabled or GestioConfig.pSilentEnabled then
-        -- Keep a live target for both Silent Aim and pSilent.
-        -- ShootWeapon also resolves the target again at fire time.
+    if GestioConfig.silentAimEnabled then
+        -- Cache only the current target for legacy camera/mouse hooks.
+        -- Actual ShootWeapon interception resolves its own target at fire time
+        -- and performs Hit Chance once per shot.
         silentAimResolved = getSilentAimTarget()
     else
         silentAimResolved = nil
@@ -3593,33 +3688,77 @@ function buildGestioUI()
             addInspectorSlider(6, "Recoil Dampener", 0.1, 1.0, GestioConfig.recoilStrength, true, function(v)
                 GestioConfig.recoilStrength = v
             end)
-        elseif moduleName == "Knife Changer" then
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 200)
-            addInspectorChoice(6, "Knife Type", knifeTypeNames, GestioConfig.selectedKnifeType, function(selected)
+        elseif moduleName == "Skin Changer" or moduleName == "Knife Changer" then
+            refreshGestioSkinData()
+            local knifeModels = {"Karambit", "Butterfly Knife", "Flip Knife", "Gut Knife", "M9 Bayonet", "Skeleton Knife", "Stiletto Knife"}
+            local gloveModels = {}
+            for name in pairs(skinData.GloveSelections) do gloveModels[#gloveModels + 1] = name end
+            table.sort(gloveModels)
+
+            insContent.CanvasSize = UDim2.new(0, 0, 0, 520)
+            addInspectorToggle(6, "Weapon Skins", GestioConfig.skinChangerEnabled, function(v)
+                GestioConfig.skinChangerEnabled = v
+                if v then hookBloxStrikeModules() end
+            end)
+            addInspectorToggle(32, "Glove Changer", GestioConfig.gloveChangerEnabled, function(v)
+                GestioConfig.gloveChangerEnabled = v
+            end)
+
+            addInspectorChoice(64, "Knife Model", knifeModels, GestioConfig.selectedKnifeType, function(selected)
                 GestioConfig.selectedKnifeType = selected
+                GestioConfig.weaponSkinSelections[selected] = GestioConfig.weaponSkinSelections[selected] or GestioConfig.selectedSkin
+                GestioConfig.selectedSkin = GestioConfig.weaponSkinSelections[selected] or "Default"
                 hookBloxStrikeModules()
                 scanAndMorphKnives(camera)
-                if player and player.Character then scanAndMorphKnives(player.Character) end
-                openInspectorFor("Knife Changer")
+                openInspectorFor("Skin Changer")
             end)
-            
-            local availableSkins = {}
-            if knifeSkinCatalog[GestioConfig.selectedKnifeType] then
-                for sName in pairs(knifeSkinCatalog[GestioConfig.selectedKnifeType]) do
-                    table.insert(availableSkins, sName)
-                end
-                table.sort(availableSkins)
-            else
-                availableSkins = {"Vanilla", "Fade", "Doppler", "Lore"}
-            end
-            
-            addInspectorChoice(44, "Skin Pattern", availableSkins, GestioConfig.selectedSkin, function(selected)
+
+            local knifeSkins = skinData.SkinSelections[GestioConfig.selectedKnifeType] or {"Default"}
+            addInspectorChoice(100, "Knife Skin", knifeSkins, GestioConfig.selectedSkin, function(selected)
                 GestioConfig.selectedSkin = selected
-                hookBloxStrikeModules()
+                GestioConfig.weaponSkinSelections[GestioConfig.selectedKnifeType] = selected
                 scanAndMorphKnives(camera)
-                if player and player.Character then scanAndMorphKnives(player.Character) end
             end)
-            addInspectorToggle(86, "Auto Re-morph", true, function(v) end)
+
+            if #gloveModels > 0 then
+                addInspectorChoice(136, "Glove Model", gloveModels, GestioConfig.selectedGloveModel, function(selected)
+                    GestioConfig.selectedGloveModel = selected
+                    local choices = skinData.GloveSelections[selected] or {"Default"}
+                    GestioConfig.selectedGloveSkin = choices[1] or "Default"
+                    applyGestioGloves()
+                    openInspectorFor("Skin Changer")
+                end)
+
+                local gloveSkins = skinData.GloveSelections[GestioConfig.selectedGloveModel] or {"Default"}
+                addInspectorChoice(172, "Glove Skin", gloveSkins, GestioConfig.selectedGloveSkin, function(selected)
+                    GestioConfig.selectedGloveSkin = selected
+                    applyGestioGloves()
+                end)
+            end
+
+            local weaponNames = {}
+            for weaponName in pairs(skinData.SkinSelections) do
+                if not (weaponName:match("Glove") or weaponName:match("Gloves") or weaponName == "Hand Wraps") then
+                    weaponNames[#weaponNames + 1] = weaponName
+                end
+            end
+            table.sort(weaponNames)
+
+            local y = 208
+            for _, weaponName in ipairs(weaponNames) do
+                if y > 500 then break end
+                local choices = skinData.SkinSelections[weaponName]
+                if choices and #choices > 0 then
+                    addInspectorChoice(y, weaponName, choices, GestioConfig.weaponSkinSelections[weaponName] or choices[1], function(selected)
+                        GestioConfig.weaponSkinSelections[weaponName] = selected
+                        if weaponName == GestioConfig.selectedKnifeType then
+                            GestioConfig.selectedSkin = selected
+                        end
+                        scanAndMorphKnives(camera)
+                    end)
+                    y = y + 36
+                end
+            end
         elseif moduleName == "Third Person" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 115)
             addInspectorSlider(6, "Distance", 5, 25, GestioConfig.thirdPersonDistance, false, function(v)
@@ -3833,14 +3972,17 @@ function buildGestioUI()
     createModuleCard(bGrid, "Bullet Trail", "bulletTrailEnabled", nil, false)
     createModuleCard(bGrid, "Bullet Flash", "bulletFlashEnabled", nil, false)
 
-    local sGrid = makeCategorySection(sPage, "Cosmetic Engine", 1, 1)
-    createModuleCard(sGrid, "Knife Changer", "skinChangerEnabled", function(v)
+    local sGrid = makeCategorySection(sPage, "Cosmetic Engine", 1, 2)
+    createModuleCard(sGrid, "Skin Changer", "skinChangerEnabled", function(v)
         if v then
             hookBloxStrikeModules()
             scanAndMorphKnives(camera)
             if player and player.Character then scanAndMorphKnives(player.Character) end
             scanAndMorphKnives(Workspace)
         end
+    end, true)
+    createModuleCard(sGrid, "Glove Changer", "gloveChangerEnabled", function(v)
+        if v then applyGestioGloves() end
     end, true)
 
     local envGrid = makeCategorySection(envPage, "Atmosphere", 1, 4)
@@ -4099,8 +4241,77 @@ Workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
 end)
 
 -- ==========================================
+-- MEMESENSE-STYLE SEND HOOK FALLBACK FOR SILENT AIM
+-- ==========================================
+local memesenseSilentSendHooked = false
+local function setupMemesenseSilentSendHook()
+    if memesenseSilentSendHooked then return end
+    if type(getgc) ~= "function" or type(hookfunction) ~= "function" then return end
+
+    local sendFunc = nil
+    local shootContainer = nil
+    pcall(function()
+        for _, obj in next, getgc(true) do
+            if type(obj) == "table" and rawget(obj, "shoot") and typeof(obj.shoot) == "function" then
+                for _, uv in pairs(debug.getupvalues(obj.shoot)) do
+                    if type(uv) == "table" then
+                        local inventory = rawget(uv, "Inventory")
+                        local shootWeapon = inventory and rawget(inventory, "ShootWeapon")
+                        if type(shootWeapon) == "table" and typeof(shootWeapon.Send) == "function" then
+                            sendFunc = shootWeapon.Send
+                            shootContainer = shootWeapon
+                            break
+                        end
+                    end
+                end
+            end
+            if sendFunc then break end
+        end
+    end)
+
+    if type(sendFunc) ~= "function" then return end
+    if shootContainer and rawget(shootContainer, "__GestioMemeSilentHooked") then
+        memesenseSilentSendHooked = true
+        return
+    end
+
+    local oldSend
+    oldSend = hookfunction(sendFunc, function(...)
+        local args = {...}
+        if GestioConfig.silentAimEnabled and type(args[1]) == "table" and type(args[1].Bullets) == "table" then
+            local targetPart = getSilentAimTarget and getSilentAimTarget() or silentAimResolved
+            if targetPart then
+                local chance = math.clamp(tonumber(GestioConfig.silentAimHitChance) or 100, 0, 100)
+                local allowed = chance >= 100 or math.random(1, 100) <= chance
+                if allowed then
+                    silentAimResolved = targetPart
+                    for _, bullet in pairs(args[1].Bullets) do
+                        if type(bullet) == "table" and type(bullet.Hits) == "table" then
+                            for _, hitData in pairs(bullet.Hits) do
+                                if type(hitData) == "table" then
+                                    hitData.Instance = targetPart
+                                    hitData.Position = targetPart.Position
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+        return oldSend(unpack(args))
+    end)
+
+    if shootContainer then rawset(shootContainer, "__GestioMemeSilentHooked", true) end
+    memesenseSilentSendHooked = true
+end
+
+-- ==========================================
 -- ENGINE LAUNCH
 -- ==========================================
 setupSilentAimHooks()
 setupBloxStrikeShootHook()
+task.spawn(function()
+    task.wait(1)
+    setupMemesenseSilentSendHook()
+end)
 buildGestioUI()
