@@ -2199,7 +2199,11 @@ visRayParams.FilterType = Enum.RaycastFilterType.Exclude
 visRayParams.IgnoreWater = true
 
 function isTargetVisible(originPos, targetPart, targetChar)
-    if not GestioConfig.visibleCheck or GestioConfig.wallbangEnabled then return true end
+    if GestioConfig.wallbangEnabled then return true end
+    -- Silent Aim must respect walls unless Wallbang is explicitly enabled.
+    if not GestioConfig.visibleCheck then
+        -- Keep regular visibility checks independent from the user-facing toggle.
+    end
     local myChar = player.Character
     visRayParams.FilterDescendantsInstances = {myChar, camera}
     local dir = targetPart.Position - originPos
