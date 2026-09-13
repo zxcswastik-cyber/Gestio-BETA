@@ -194,7 +194,6 @@ local CoreGui = game:GetService("CoreGui")
 local Lighting = game:GetService("Lighting")
 local Workspace = game:GetService("Workspace")
 local Stats = game:GetService("Stats")
-local StarterGui = game:GetService("StarterGui")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local VirtualInputManager = nil
 pcall(function()
@@ -594,7 +593,6 @@ local function setupBloxStrikeShootHook()
 end
 
 -- MemeSense weapon mechanics: disable the weapon's recoil/spread generators at source.
-local captureRecoilValue
 local memesenseWeaponModsHooked = false
 local function setupMemeSenseWeaponMods()
     if memesenseWeaponModsHooked then return end
@@ -624,9 +622,7 @@ local function setupMemeSenseWeaponMods()
                     local old
                     old = hookfunction(kickFn, function(...)
                         if GestioConfig.noRecoilEnabled then return end
-                        local results = {old(...)}
-                        captureRecoilValue(results[1])
-                        return table.unpack(results)
+                        return old(...)
                     end)
                     hookedFunctions[kickFn] = true
                     hookedMethods[obj] = true
@@ -669,28 +665,8 @@ end
 -- STABLE RCS & RECOIL
 -- ==========================================
 local noRecoil = {
-    isShooting = false,
-    lastPitch = 0,
-    lastYaw = 0,
-    recoilTime = 0
+    isShooting = false
 }
-
-captureRecoilValue = function(value)
-    local pitch, yaw
-    if typeof(value) == "Vector2" then
-        yaw, pitch = value.X, value.Y
-    elseif typeof(value) == "Vector3" then
-        yaw, pitch = value.X, value.Y
-    elseif typeof(value) == "CFrame" then
-        local x, y = value:ToOrientation()
-        pitch, yaw = x, y
-    end
-    if type(pitch) == "number" and type(yaw) == "number" then
-        noRecoil.lastPitch = pitch
-        noRecoil.lastYaw = yaw
-        noRecoil.recoilTime = tick()
-    end
-end
 
 local fireStartConn = UserInputService.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -1373,17 +1349,12 @@ local function enforceNativeThirdPerson()
     if not cam then return end
     local _, hum = getThirdPersonTarget()
     local distance = getThirdPersonDistance()
-    local height = math.clamp(tonumber(GestioConfig.thirdPersonHeight) or 0, -1, 5)
 
     pcall(function()
-        -- Native Classic camera keeps Blox Strike stable; CameraOffset is
-        -- re-applied here so the Height slider is actually respected.
+        -- This is the core MemeSense method: Classic + fixed zoom.
         player.CameraMode = Enum.CameraMode.Classic
         player.CameraMaxZoomDistance = distance
         player.CameraMinZoomDistance = distance
-        if hum then
-            hum.CameraOffset = Vector3.new(0, height, 0)
-        end
     end)
 
     pcall(function()
@@ -2417,6 +2388,10 @@ visRayParams.IgnoreWater = true
 
 function isTargetVisible(originPos, targetPart, targetChar)
     if GestioConfig.wallbangEnabled then return true end
+    -- Silent Aim must respect walls unless Wallbang is explicitly enabled.
+    if not GestioConfig.visibleCheck then
+        -- Keep regular visibility checks independent from the user-facing toggle.
+    end
     local myChar = player.Character
     visRayParams.FilterDescendantsInstances = {myChar, camera}
     local dir = targetPart.Position - originPos
@@ -2472,16 +2447,12 @@ function getClosestTarget()
         local cPart = currentAimTarget.Part
         if isEntityAlive(cChar, cHum) and cPart and cPart.Parent then
             local predPos = getKinematicAimPosition(cPart)
-            if GestioConfig.visibleCheck and not isTargetVisible(camPos, cPart, cChar) then
-                currentAimTarget = nil
-            else
-                local toTarget = (predPos - camPos).Unit
+            local toTarget = (predPos - camPos).Unit
             local angle = math.acos(math.clamp(camLook:Dot(toTarget), -1, 1))
             
-                if angle <= (maxAngleRad * 1.15) then
-                    currentAimTarget.AimPosition = predPos
-                    return currentAimTarget
-                end
+            if angle <= (maxAngleRad * 1.15) then
+                currentAimTarget.AimPosition = predPos
+                return currentAimTarget
             end
         end
     end
@@ -2498,9 +2469,6 @@ function getClosestTarget()
             if isEntityAlive(char, hum) then
                 local hitPart = getTargetHitbox(char)
                 if hitPart then
-                    if GestioConfig.visibleCheck and not isTargetVisible(camPos, hitPart, char) then
-                        continue
-                    end
                     local aimPos = getKinematicAimPosition(hitPart)
                     local toTarget = (aimPos - camPos).Unit
                     local angle = math.acos(math.clamp(camLook:Dot(toTarget), -1, 1))
@@ -2543,8 +2511,6 @@ function getRageTarget()
     local cam = Workspace.CurrentCamera or camera
     if not cam then return nil end
     local camPos = cam.CFrame.Position
-    local camLook = cam.CFrame.LookVector
-    local maxAngleRad = math.rad(math.clamp(tonumber(GestioConfig.rageFov) or 360, 1, 360) * 0.5)
 
     local bestTarget = nil
     local bestScore = math.huge
@@ -2560,11 +2526,6 @@ function getRageTarget()
                 if hitPart then
                     if GestioConfig.wallbangEnabled or isVisibleThroughWalls(hitPart, char) then
                         local aimPos = getKinematicAimPosition(hitPart)
-                        local toTarget = (aimPos - camPos).Unit
-                        local angle = math.acos(math.clamp(camLook:Dot(toTarget), -1, 1))
-                        if angle > maxAngleRad then
-                            continue
-                        end
                         local score = math.huge
                         
                         if GestioConfig.rageTargetMode == "Distance" then
@@ -3100,17 +3061,8 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     -- No Recoil is now handled at the weapon source (MemeSense hooks).
     -- Keep camera compensation only for the optional RCS module.
     if GestioConfig.rcsEnabled and noRecoil.isShooting then
-        local strength = math.clamp(GestioConfig.rcsStrength / 100, 0, 1)
-        local pitchComp = ((noRecoil.lastPitch ~= 0 and noRecoil.lastPitch or 0.004) * strength * GestioConfig.rcsPitchFactor)
-        local yawComp = ((noRecoil.lastYaw ~= 0 and noRecoil.lastYaw or 0) * strength * GestioConfig.rcsYawFactor)
-        if tick() - noRecoil.recoilTime > 0.20 then
-            yawComp = 0
-            pitchComp = 0.004 * strength * GestioConfig.rcsPitchFactor
-        end
-        camera.CFrame = camera.CFrame * CFrame.Angles(-pitchComp, -yawComp, 0)
-    else
-        noRecoil.lastPitch = 0
-        noRecoil.lastYaw = 0
+        local comp = ((GestioConfig.rcsStrength / 100) * 0.004 * GestioConfig.rcsPitchFactor)
+        camera.CFrame = camera.CFrame * CFrame.Angles(-comp, 0, 0)
     end
 
     -- RAGEBOT & AIMBOT EXECUTION
@@ -4502,17 +4454,6 @@ function buildGestioUI()
         end
     end
 
-    local function GestioNotify(title, text, duration)
-        if not GestioConfig.settingsShowNotifications then return end
-        pcall(function()
-            StarterGui:SetCore("SendNotification", {
-                Title = tostring(title or "Gestio"),
-                Text = tostring(text or ""),
-                Duration = tonumber(duration) or 2
-            })
-        end)
-    end
-
     local function createModuleCard(parentGrid, title, configKey, onToggle, hasSettings)
         local card = Instance.new("Frame", parentGrid)
         card.BackgroundColor3 = currentTheme.CardBg
@@ -4563,9 +4504,6 @@ function buildGestioUI()
             GestioConfig[configKey] = newState
             updateCardVisual(newState)
             if onToggle then onToggle(newState) end
-            if configKey ~= "settingsShowNotifications" then
-                GestioNotify("Gestio", title .. (newState and "  ON" or "  OFF"), 1.2)
-            end
         end)
 
         if hasSettings then
