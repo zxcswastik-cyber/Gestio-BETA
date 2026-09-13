@@ -35,6 +35,7 @@ local GestioConfig = {
     grenadeEspEnabled = false,
     jumpCircleEnabled = false,
     antiFlashEnabled = true,
+    noSmokeEnabled = false,
     fullBrightEnabled = false,
     removeFogEnabled = true,
     nightModeEnabled = false,
@@ -84,6 +85,9 @@ local GestioConfig = {
     recoilStrength = 0.85,
     noRecoilEnabled = false,
     noSpreadEnabled = false,
+    firerateEnabled = false,
+    firerateValue = 0.01,
+    instantReloadEnabled = false,
     rcsStrength = 60,
     rcsPitchFactor = 1.0,
     rcsYawFactor = 1.0,
@@ -153,6 +157,25 @@ local GestioConfig = {
     weaponChamsColorR = 210,
     weaponChamsColorG = 45,
     weaponChamsColorB = 55,
+    chamsMaterialEnabled = false,
+    chamsVisibleMaterial = "ForceField",
+    chamsHiddenMaterial = "Neon",
+    chamsVisibleTransparency = 0.10,
+    chamsHiddenTransparency = 0.25,
+    chamsVisibleColorR = 80,
+    chamsVisibleColorG = 255,
+    chamsVisibleColorB = 120,
+    chamsHiddenColorR = 255,
+    chamsHiddenColorG = 55,
+    chamsHiddenColorB = 65,
+    espDetailedEnabled = false,
+    espNameEnabled = true,
+    espHealthTextEnabled = false,
+    espDistanceEnabled = true,
+    espWeaponEnabled = true,
+    espSkeletonEnabled = false,
+    espSkeletonThickness = 1.5,
+    espSkeletonRainbow = false,
     scopeFovEnabled = false,
     scopeFov = 70,
     scopeCrosshairLength = 85,
@@ -592,74 +615,198 @@ local function setupBloxStrikeShootHook()
     end)
 end
 
--- MemeSense weapon mechanics: disable the weapon's recoil/spread generators at source.
+-- ==========================================
+-- MEMESENSE WEAPON MODS
+-- ==========================================
 local memesenseWeaponModsHooked = false
+local memesenseWeaponHookedFunctions = setmetatable({}, {__mode = "k"})
+local memesenseFirerateObjects = {}
+local memesenseFirerateOriginal = setmetatable({}, {__mode = "k"})
+local memesenseReloadHooked = setmetatable({}, {__mode = "k"})
+local memesenseReloadLastWeapon = nil
+
 local function setupMemeSenseWeaponMods()
-    if memesenseWeaponModsHooked then return end
     if type(getgc) ~= "function" or type(hookfunction) ~= "function" then return end
 
-    local hookedMethods = setmetatable({}, {__mode = "k"})
-    local hookedFunctions = setmetatable({}, {__mode = "k"})
-
-    local hookCount = 0
+    local found = 0
     pcall(function()
         for _, obj in next, getgc(true) do
             if type(obj) == "table" then
+                local fireRate = rawget(obj, "FireRate")
+                if fireRate ~= nil and not memesenseFirerateOriginal[obj] then
+                    memesenseFirerateOriginal[obj] = fireRate
+                    table.insert(memesenseFirerateObjects, obj)
+                    found += 1
+                end
+
                 local recoilFn = rawget(obj, "setWeaponRecoil")
-                if type(recoilFn) == "function" and not hookedFunctions[recoilFn] then
+                if type(recoilFn) == "function" and not memesenseWeaponHookedFunctions[recoilFn] then
                     local old
                     old = hookfunction(recoilFn, function(...)
                         if GestioConfig.noRecoilEnabled then return end
                         return old(...)
                     end)
-                    hookedFunctions[recoilFn] = true
-                    hookedMethods[obj] = true
-                    hookCount += 1
+                    memesenseWeaponHookedFunctions[recoilFn] = true
+                    found += 1
                 end
 
                 local kickFn = rawget(obj, "weaponKick")
-                if type(kickFn) == "function" and not hookedFunctions[kickFn] then
+                if type(kickFn) == "function" and not memesenseWeaponHookedFunctions[kickFn] then
                     local old
                     old = hookfunction(kickFn, function(...)
                         if GestioConfig.noRecoilEnabled then return end
                         return old(...)
                     end)
-                    hookedFunctions[kickFn] = true
-                    hookedMethods[obj] = true
-                    hookCount += 1
+                    memesenseWeaponHookedFunctions[kickFn] = true
+                    found += 1
                 end
 
                 local spreadFn = rawget(obj, "getTrueSpread")
-                if type(spreadFn) == "function" and not hookedFunctions[spreadFn] then
+                if type(spreadFn) == "function" and not memesenseWeaponHookedFunctions[spreadFn] then
                     local old
                     old = hookfunction(spreadFn, function(...)
-                        if GestioConfig.noSpreadEnabled or GestioConfig.noRecoilEnabled then return 0 end
+                        if GestioConfig.noSpreadEnabled then return 0 end
                         return old(...)
                     end)
-                    hookedFunctions[spreadFn] = true
-                    hookedMethods[obj] = true
-                    hookCount += 1
+                    memesenseWeaponHookedFunctions[spreadFn] = true
+                    found += 1
                 end
-            elseif type(obj) == "function" and not hookedFunctions[obj] then
+            elseif type(obj) == "function" and not memesenseWeaponHookedFunctions[obj] then
                 local info
                 pcall(function() info = debug.getinfo(obj) end)
                 local name = info and info.name
+
                 if name == "calculateRecoilOffset" then
                     local old
                     old = hookfunction(obj, function(...)
                         if GestioConfig.noRecoilEnabled then return UDim2.new() end
                         return old(...)
                     end)
-                    hookedFunctions[obj] = true
-                    hookCount += 1
+                    memesenseWeaponHookedFunctions[obj] = true
+                    found += 1
+                elseif name == "Flash" then
+                    local old
+                    old = hookfunction(obj, function(...)
+                        if GestioConfig.antiFlashEnabled then return end
+                        return old(...)
+                    end)
+                    memesenseWeaponHookedFunctions[obj] = true
+                    found += 1
+                end
+            end
+
+            -- Exact MemeSense ShootWeapon.Send discovery chain is kept in the
+            -- dedicated Silent Aim hook; this scan only handles weapon mechanics.
+        end
+    end)
+
+    -- Mark the scan complete; a short retry pass below catches modules that initialize later.
+    memesenseWeaponModsHooked = true
+end
+
+-- Dedicated smoke hook. Kept separate so Anti Flash never accidentally disables smoke.
+local memesenseSmokeHooked = false
+local function setupMemeSenseSmokeHook()
+    if memesenseSmokeHooked or type(getgc) ~= "function" or type(hookfunction) ~= "function" then return end
+    pcall(function()
+        for _, obj in next, getgc(true) do
+            if type(obj) == "function" then
+                local info
+                pcall(function() info = debug.getinfo(obj) end)
+                if info and info.name == "CreateVoxel" then
+                    local uv
+                    pcall(function() uv = debug.getupvalue(obj, 1) end)
+                    if tostring(uv) == "Smoke" then
+                        local old
+                        old = hookfunction(obj, function(...)
+                            if GestioConfig.noSmokeEnabled then return end
+                            return old(...)
+                        end)
+                        memesenseSmokeHooked = true
+                        break
+                    end
                 end
             end
         end
     end)
-    -- Some executors expose getgc before the game's weapon modules are fully
-    -- initialized. Only lock the scan after at least one source function was found.
-    memesenseWeaponModsHooked = hookCount > 0
 end
+
+-- Instant Reload: speed up only the game's known reload animation tracks.
+local function hookGestioReloadAnimation(animModule)
+    if not animModule or memesenseReloadHooked[animModule] then return end
+    if type(animModule.play) ~= "function" then return end
+    memesenseReloadHooked[animModule] = true
+    pcall(function()
+        local origPlay = animModule.play
+        animModule.play = function(selfAnim, animName, ...)
+            local track = origPlay(selfAnim, animName, ...)
+            local reloadNames = {
+                Reload = true, ReloadStart = true, ReloadAction = true, ReloadEnd = true
+            }
+            if track and reloadNames[animName] then
+                task.defer(function()
+                    pcall(function()
+                        if GestioConfig.instantReloadEnabled and track.IsPlaying then
+                            track:AdjustSpeed(199)
+                        end
+                    end)
+                end)
+            end
+            return track
+        end
+    end)
+end
+
+local function setupGestioInstantReload()
+    pcall(function()
+        local IC = require(game:GetService("ReplicatedStorage").Controllers.InventoryController)
+        local weapon = IC.peekCurrentEquippedForMovement and IC.peekCurrentEquippedForMovement() or nil
+        if weapon and weapon ~= memesenseReloadLastWeapon then
+            memesenseReloadLastWeapon = weapon
+            if weapon.Viewmodel and weapon.Viewmodel.Animation then hookGestioReloadAnimation(weapon.Viewmodel.Animation) end
+            if weapon.CharacterAnimator then hookGestioReloadAnimation(weapon.CharacterAnimator) end
+        end
+        if weapon and GestioConfig.instantReloadEnabled and weapon.IsReloading then
+            if weapon.Viewmodel and weapon.Viewmodel.Animation and weapon.Viewmodel.Animation.Animations then
+                for name, track in pairs(weapon.Viewmodel.Animation.Animations) do
+                    if (name == "Reload" or name == "ReloadStart" or name == "ReloadAction" or name == "ReloadEnd") and track.IsPlaying then
+                        track:AdjustSpeed(199)
+                    end
+                end
+            end
+            if weapon.CharacterAnimator and weapon.CharacterAnimator.Animations then
+                for name, track in pairs(weapon.CharacterAnimator.Animations) do
+                    if (name == "Reload" or name == "ReloadStart" or name == "ReloadAction" or name == "ReloadEnd") and track.IsPlaying then
+                        track:AdjustSpeed(199)
+                    end
+                end
+            end
+        end
+    end)
+end
+
+-- ==========================================
+-- WEAPON MODS UPDATE LOOP
+-- ==========================================
+table.insert(connections, RunService.Heartbeat:Connect(function()
+    pcall(function()
+        if type(setreadonly) == "function" then
+            for i, obj in ipairs(memesenseFirerateObjects) do
+                if obj and memesenseFirerateOriginal[obj] ~= nil then
+                    setreadonly(obj, false)
+                    if GestioConfig.firerateEnabled then
+                        rawset(obj, "FireRate", math.max(tonumber(GestioConfig.firerateValue) or 0.01, 0.001))
+                    else
+                        rawset(obj, "FireRate", memesenseFirerateOriginal[obj])
+                    end
+                    setreadonly(obj, true)
+                end
+            end
+        end
+        setupGestioInstantReload()
+        setupMemeSenseSmokeHook()
+    end)
+end))
 
 -- ==========================================
 -- STABLE RCS & RECOIL
@@ -2681,6 +2828,23 @@ function getOrCreateScreenEsp(plr)
     tagLabel.TextSize = GestioConfig.espTextSize
     tagLabel.Font = Enum.Font.GothamBold
 
+    local skeletonBones = {
+        {"Head", "UpperTorso"}, {"UpperTorso", "LowerTorso"},
+        {"UpperTorso", "LeftUpperArm"}, {"LeftUpperArm", "LeftLowerArm"}, {"LeftLowerArm", "LeftHand"},
+        {"UpperTorso", "RightUpperArm"}, {"RightUpperArm", "RightLowerArm"}, {"RightLowerArm", "RightHand"},
+        {"LowerTorso", "LeftUpperLeg"}, {"LeftUpperLeg", "LeftLowerLeg"}, {"LeftLowerLeg", "LeftFoot"},
+        {"LowerTorso", "RightUpperLeg"}, {"RightUpperLeg", "RightLowerLeg"}, {"RightLowerLeg", "RightFoot"},
+    }
+    local skeletonLines = {}
+    for i = 1, #skeletonBones do
+        local line = Instance.new("Frame", overlayContainer)
+        line.Name = "Skeleton_" .. plr.Name .. "_" .. i
+        line.BorderSizePixel = 0
+        line.AnchorPoint = Vector2.new(0.5, 0.5)
+        line.Visible = false
+        table.insert(skeletonLines, line)
+    end
+
     local data = {
         Box = box,
         BoxStroke = stroke,
@@ -2690,6 +2854,8 @@ function getOrCreateScreenEsp(plr)
         TagCard = tagCard,
         TagCardStroke = cardStroke,
         TagLabel = tagLabel,
+        SkeletonLines = skeletonLines,
+        SkeletonBones = skeletonBones,
         LastText = ""
     }
     screenEspCache[plr] = data
@@ -2709,6 +2875,7 @@ table.insert(connections, Players.PlayerRemoving:Connect(function(plr)
             cache.Box:Destroy()
             cache.HealthBarBg:Destroy()
             cache.TagCard:Destroy()
+            for _, line in ipairs(cache.SkeletonLines or {}) do line:Destroy() end
             for _, corner in pairs(cache.Corners) do
                 corner.H:Destroy()
                 corner.V:Destroy()
@@ -2717,6 +2884,36 @@ table.insert(connections, Players.PlayerRemoving:Connect(function(plr)
         screenEspCache[plr] = nil
     end
 end))
+
+local function updateSkeletonLines(esp, char, enabled, color)
+    local lines = esp.SkeletonLines
+    if not enabled or not char then
+        for _, line in ipairs(lines or {}) do line.Visible = false end
+        return
+    end
+    for i, bone in ipairs(esp.SkeletonBones or {}) do
+        local a = char:FindFirstChild(bone[1])
+        local b = char:FindFirstChild(bone[2])
+        local line = lines[i]
+        if a and b and a:IsA("BasePart") and b:IsA("BasePart") then
+            local pa, va = camera:WorldToViewportPoint(a.Position)
+            local pb, vb = camera:WorldToViewportPoint(b.Position)
+            if pa.Z > 0 and pb.Z > 0 and (va or vb) then
+                local p1 = Vector2.new(pa.X, pa.Y)
+                local p2 = Vector2.new(pb.X, pb.Y)
+                local delta = p2 - p1
+                local len = delta.Magnitude
+                if len > 1 and len < 1000 then
+                    line.Size = UDim2.fromOffset(len, math.clamp(GestioConfig.espSkeletonThickness or 1.5, 1, 4))
+                    line.Position = UDim2.fromOffset((p1.X + p2.X) * 0.5, (p1.Y + p2.Y) * 0.5)
+                    line.Rotation = math.deg(math.atan2(delta.Y, delta.X))
+                    line.BackgroundColor3 = color
+                    line.Visible = true
+                else line.Visible = false end
+            else line.Visible = false end
+        else line.Visible = false end
+    end
+end
 
 -- ==========================================
 -- TACTICAL ESP SCREEN RENDER LOOP
@@ -2736,7 +2933,7 @@ function renderTacticalOverlay()
         local isEnemy = isTargetEnemy(plr, char)
         local isAlive = isEntityAlive(char, hum)
 
-        if isEnemy and isAlive and rootPart and (GestioConfig.nametagsEnabled or GestioConfig.boxEspEnabled or GestioConfig.cornerBoxEnabled) then
+        if isEnemy and isAlive and rootPart and (GestioConfig.espDetailedEnabled or GestioConfig.nametagsEnabled or GestioConfig.boxEspEnabled or GestioConfig.cornerBoxEnabled) then
             local dist = (rootPart.Position - camPos).Magnitude
 
             if dist <= GestioConfig.espMaxDist then
@@ -2854,26 +3051,24 @@ function renderTacticalOverlay()
                         esp.HealthBarBg.Visible = false
                     end
 
-                    if GestioConfig.nametagsEnabled then
+                    if GestioConfig.nametagsEnabled or GestioConfig.espDetailedEnabled then
                         esp.TagCard.BackgroundTransparency = GestioConfig.tagTransparency
                         esp.TagCardStroke.Color = currentTheme.Border
                         esp.TagLabel.TextSize = GestioConfig.espTextSize
 
                         local baseName = plr.DisplayName or plr.Name
-                        local infoText = baseName
+                        local infoText = (not GestioConfig.espDetailedEnabled or GestioConfig.espNameEnabled) and baseName or ""
                         
-                        if GestioConfig.espShowDistance then
+                        if (GestioConfig.espShowDistance and (not GestioConfig.espDetailedEnabled or GestioConfig.espDistanceEnabled)) then
                             infoText = string.format("%s [%dm]", infoText, math.floor(dist))
                         end
-                        if GestioConfig.espShowHealth and hum then
+                        if GestioConfig.espShowHealth and hum and (not GestioConfig.espDetailedEnabled or GestioConfig.espHealthTextEnabled) then
                             local curHealth = math.floor(hum.Health)
-                            infoText = string.format("%s [%dHP]", infoText, curHealth > 0 and curHealth or 100)
+                            infoText = string.format("%s [%dHP]", infoText, math.max(curHealth, 0))
                         end
-                        if GestioConfig.tagShowWeapon then
+                        if GestioConfig.tagShowWeapon and (not GestioConfig.espDetailedEnabled or GestioConfig.espWeaponEnabled) then
                             local tool = char:FindFirstChildOfClass("Tool")
-                            if tool then
-                                infoText = string.format("%s {%s}", infoText, tool.Name)
-                            end
+                            if tool then infoText = string.format("%s {%s}", infoText, tool.Name) end
                         end
 
                         if esp.LastText ~= infoText then
@@ -2883,7 +3078,14 @@ function renderTacticalOverlay()
 
                         esp.TagCard.Position = UDim2.new(0, topScreen.X, 0, topScreen.Y - 4)
                         esp.TagCard.Visible = true
-                    else
+                    end
+
+                    local skeletonColor = currentTheme.Enemy_Accent
+                    if GestioConfig.espSkeletonRainbow then
+                        skeletonColor = Color3.fromHSV((tick() % 4) / 4, 0.85, 1)
+                    end
+                    updateSkeletonLines(esp, char, GestioConfig.espDetailedEnabled and GestioConfig.espSkeletonEnabled, skeletonColor)
+                else
                         esp.TagCard.Visible = false
                     end
                 else
@@ -2894,6 +3096,7 @@ function renderTacticalOverlay()
                         corner.V.Visible = false
                     end
                     esp.TagCard.Visible = false
+                    updateSkeletonLines(esp, char, false, currentTheme.Enemy_Accent)
                 end
             else
                 esp.Box.Visible = false
@@ -2903,6 +3106,7 @@ function renderTacticalOverlay()
                     corner.V.Visible = false
                 end
                 esp.TagCard.Visible = false
+                updateSkeletonLines(esp, char, false, currentTheme.Enemy_Accent)
             end
         else
             esp.Box.Visible = false
@@ -2912,9 +3116,65 @@ function renderTacticalOverlay()
                 corner.V.Visible = false
             end
             esp.TagCard.Visible = false
+            updateSkeletonLines(esp, char, false, currentTheme.Enemy_Accent)
         end
     end
 end
+
+local materialChamsState = setmetatable({}, {__mode = "k"})
+local function restoreMaterialChams()
+    for part, st in pairs(materialChamsState) do
+        if part and part.Parent then
+            pcall(function()
+                part.Material = st.Material
+                part.Color = st.Color
+                part.Transparency = st.Transparency
+                part.Reflectance = st.Reflectance
+            end)
+        end
+        materialChamsState[part] = nil
+    end
+end
+
+local function updateMaterialChams()
+    if not GestioConfig.chamsMaterialEnabled then
+        if next(materialChamsState) then restoreMaterialChams() end
+        return
+    end
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= player and plr.Character then
+            local char = plr.Character
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            local root = char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso")
+            local head = char:FindFirstChild("Head")
+            if root and isEntityAlive(char, hum) and (not GestioConfig.chamsTeamCheck or not isAlly(plr) or GestioConfig.chamsShowTeammates) then
+                local visible = isVisibleThroughWalls(head or root, char)
+                local materialName = visible and GestioConfig.chamsVisibleMaterial or GestioConfig.chamsHiddenMaterial
+                local material = Enum.Material[materialName] or Enum.Material.ForceField
+                local col = visible and rgb(GestioConfig.chamsVisibleColorR, GestioConfig.chamsVisibleColorG, GestioConfig.chamsVisibleColorB)
+                    or rgb(GestioConfig.chamsHiddenColorR, GestioConfig.chamsHiddenColorG, GestioConfig.chamsHiddenColorB)
+                local trans = math.clamp(tonumber(visible and GestioConfig.chamsVisibleTransparency or GestioConfig.chamsHiddenTransparency) or 0.2, 0, 1)
+                for _, part in ipairs(char:GetDescendants()) do
+                    if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+                        if not materialChamsState[part] then
+                            materialChamsState[part] = {Material=part.Material, Color=part.Color, Transparency=part.Transparency, Reflectance=part.Reflectance}
+                        end
+                        pcall(function()
+                            part.Material = material
+                            part.Color = col
+                            part.Transparency = trans
+                            if material ~= Enum.Material.Metal then part.Reflectance = 0 end
+                        end)
+                    end
+                end
+            end
+        end
+    end
+end
+
+task.spawn(function()
+    while task.wait(0.12) do pcall(updateMaterialChams) end
+end)
 
 -- ==========================================
 -- 3D ESP & CHAMS PIPELINE
@@ -3032,6 +3292,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         isWeaponScoped = scope ~= nil and scope.Visible == true
     end)
     pcall(updateCustomScope)
+    -- Weapon hooks are scanned lazily and throttled so getgc is never walked every frame.
     if not memesenseWeaponModsHooked then
         setupMemeSenseWeaponMods()
     end
@@ -3229,111 +3490,29 @@ end))
 
 -- ==========================================
 -- ANTI-AIM ROTATION LOOP
--- Body faces away from the local camera while the
--- local camera remains completely independent.
--- During a shot, the neck briefly follows the
--- camera aim direction, then immediately returns
--- to the anti-aim pose.
 -- ==========================================
-local antiAimFireUntil = 0
-local antiAimNeckC0 = nil
-local antiAimNeck = nil
-local antiAimLastChar = nil
-
-local function markAntiAimShot()
-    -- Short enough to be visually almost instantaneous, but long enough
-    -- to cover the firing frame on fast weapons.
-    antiAimFireUntil = math.max(antiAimFireUntil, tick() + 0.055)
-end
-
-table.insert(connections, UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-    if input.UserInputType == Enum.UserInputType.MouseButton1
-        or input.UserInputType == Enum.UserInputType.Touch then
-        markAntiAimShot()
-    end
-end))
-
 table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     local char = player.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
     local hum = char and char:FindFirstChildOfClass("Humanoid")
-    local cam = Workspace.CurrentCamera or camera
 
     if not GestioConfig.antiAimEnabled then
         if hum and savedAutoRotate ~= nil then
             hum.AutoRotate = savedAutoRotate
             savedAutoRotate = nil
         end
-
-        if antiAimNeck and antiAimNeckC0 then
-            pcall(function() antiAimNeck.C0 = antiAimNeckC0 end)
-        end
-        antiAimNeck = nil
-        antiAimNeckC0 = nil
-        antiAimLastChar = nil
         return
     end
 
-    if not hrp or not hum or hum.Health <= 0 or not cam then return end
+    if not hrp or not hum or hum.Health <= 0 then return end
 
     if savedAutoRotate == nil then
         savedAutoRotate = hum.AutoRotate
         hum.AutoRotate = false
     end
 
-    -- Find the neck once per character. Works with both R6 and R15.
-    if antiAimLastChar ~= char then
-        antiAimLastChar = char
-        antiAimNeck = nil
-        antiAimNeckC0 = nil
-
-        local torso = char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso")
-        if torso then
-            local neck = torso:FindFirstChild("Neck")
-            if neck and neck:IsA("Motor6D") then
-                antiAimNeck = neck
-                antiAimNeckC0 = neck.C0
-            end
-        end
-    end
-
-    -- Camera horizontal direction. Ignore vertical camera pitch for the body.
-    local look = cam.CFrame.LookVector
-    local flatLook = Vector3.new(look.X, 0, look.Z)
-    if flatLook.Magnitude < 0.001 then
-        flatLook = hrp.CFrame.LookVector * Vector3.new(1, 0, 1)
-    end
-    flatLook = flatLook.Unit
-
-    -- Anti-aim body: exactly 180 degrees away from where the local camera looks.
-    local bodyLook = -flatLook
-    local bodyCF = CFrame.lookAt(hrp.Position, hrp.Position + bodyLook, Vector3.yAxis)
-    hrp.CFrame = bodyCF
-
-    local shootingWindow = tick() < antiAimFireUntil or noRecoil.isShooting
-
-    if antiAimNeck and antiAimNeckC0 then
-        if shootingWindow then
-            -- Brief firing pose: turn the head toward the exact camera aim.
-            -- The body stays anti-aimed, so the local camera never gets forced around.
-            local head = char:FindFirstChild("Head")
-            if head then
-                local toAim = cam.CFrame.LookVector
-                local localDir = head.CFrame:VectorToObjectSpace(toAim)
-                local yaw = math.atan2(-localDir.X, -localDir.Z)
-                local pitch = math.asin(math.clamp(localDir.Y, -1, 1))
-
-                -- Limit extreme neck movement so animations do not tear.
-                yaw = math.clamp(yaw, math.rad(-80), math.rad(80))
-                pitch = math.clamp(pitch, math.rad(-55), math.rad(55))
-                antiAimNeck.C0 = antiAimNeckC0 * CFrame.Angles(-pitch, yaw, 0)
-            end
-        else
-            -- Head tilted backwards for the normal anti-aim pose.
-            antiAimNeck.C0 = antiAimNeckC0 * CFrame.Angles(math.rad(-55), 0, 0)
-        end
-    end
+    currentSpinAngle = (currentSpinAngle + (GestioConfig.spinSpeed * dt * 60)) % 360
+    hrp.CFrame = CFrame.new(hrp.Position) * CFrame.Angles(0, math.rad(currentSpinAngle), 0)
 end))
 
 -- ==========================================
@@ -4322,17 +4501,49 @@ function buildGestioUI()
             addInspectorChoice(38, "Target Mode", {"Distance", "Health"}, GestioConfig.rageTargetMode, function(v) GestioConfig.rageTargetMode = v end)
             addInspectorSlider(76, "Rage FOV", 10, 360, GestioConfig.rageFov, false, function(v) GestioConfig.rageFov = v end)
         elseif moduleName == "Chams" then
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 240)
+            insContent.CanvasSize = UDim2.new(0, 0, 0, 430)
             addInspectorSlider(6, "Fill Alpha", 0.0, 1.0, GestioConfig.chamsFillTransparency, true, function(v) GestioConfig.chamsFillTransparency = v end)
             addInspectorSlider(38, "Outline Alpha", 0.0, 1.0, GestioConfig.chamsOutlineTransparency, true, function(v) GestioConfig.chamsOutlineTransparency = v end)
             addInspectorToggle(76, "Team Check", GestioConfig.chamsTeamCheck, function(v) GestioConfig.chamsTeamCheck = v end)
             addInspectorToggle(102, "Show Teammates", GestioConfig.chamsShowTeammates, function(v) GestioConfig.chamsShowTeammates = v end)
             addInspectorToggle(128, "Occlusion Color (Walls)", GestioConfig.chamsOcclusion, function(v) GestioConfig.chamsOcclusion = v end)
+            addInspectorToggle(154, "Material Chams", GestioConfig.chamsMaterialEnabled, function(v) GestioConfig.chamsMaterialEnabled = v end)
+            addInspectorChoice(180, "Visible Material", {"ForceField","Neon","Glass","Metal","SmoothPlastic"}, GestioConfig.chamsVisibleMaterial, function(v) GestioConfig.chamsVisibleMaterial=v end)
+            addInspectorChoice(216, "Hidden Material", {"Neon","ForceField","Glass","Metal","SmoothPlastic"}, GestioConfig.chamsHiddenMaterial, function(v) GestioConfig.chamsHiddenMaterial=v end)
+            addInspectorSlider(252, "Visible Alpha", 0, 1, GestioConfig.chamsVisibleTransparency, true, function(v) GestioConfig.chamsVisibleTransparency=v end)
+            addInspectorSlider(284, "Hidden Alpha", 0, 1, GestioConfig.chamsHiddenTransparency, true, function(v) GestioConfig.chamsHiddenTransparency=v end)
+            addInspectorSlider(316, "Visible Red", 0, 255, GestioConfig.chamsVisibleColorR, false, function(v) GestioConfig.chamsVisibleColorR=v end)
+            addInspectorSlider(348, "Visible Green", 0, 255, GestioConfig.chamsVisibleColorG, false, function(v) GestioConfig.chamsVisibleColorG=v end)
+            addInspectorSlider(380, "Visible Blue", 0, 255, GestioConfig.chamsVisibleColorB, false, function(v) GestioConfig.chamsVisibleColorB=v end)
         elseif moduleName == "No Recoil" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 110)
             addInspectorSlider(6, "Recoil Dampener", 0.1, 1.0, GestioConfig.recoilStrength, true, function(v)
                 GestioConfig.recoilStrength = v
             end)
+        elseif moduleName == "No Spread" then
+            insContent.CanvasSize = UDim2.new(0,0,0,90)
+            addInspectorToggle(6, "Enabled", GestioConfig.noSpreadEnabled, function(v) GestioConfig.noSpreadEnabled=v end)
+        elseif moduleName == "Firerate" then
+            insContent.CanvasSize = UDim2.new(0,0,0,100)
+            addInspectorToggle(6, "Enabled", GestioConfig.firerateEnabled, function(v) GestioConfig.firerateEnabled=v end)
+            addInspectorSlider(32, "Delay", 0.001, 1, GestioConfig.firerateValue, true, function(v) GestioConfig.firerateValue=v end)
+        elseif moduleName == "Instant Reload" then
+            insContent.CanvasSize = UDim2.new(0,0,0,80)
+            addInspectorToggle(6, "Enabled", GestioConfig.instantReloadEnabled, function(v) GestioConfig.instantReloadEnabled=v end)
+        elseif moduleName == "Player ESP" then
+            insContent.CanvasSize = UDim2.new(0,0,0,260)
+            addInspectorToggle(6, "Enabled", GestioConfig.espDetailedEnabled, function(v) GestioConfig.espDetailedEnabled=v end)
+            addInspectorToggle(32, "Name", GestioConfig.espNameEnabled, function(v) GestioConfig.espNameEnabled=v end)
+            addInspectorToggle(58, "Health Text", GestioConfig.espHealthTextEnabled, function(v) GestioConfig.espHealthTextEnabled=v end)
+            addInspectorToggle(84, "Distance", GestioConfig.espDistanceEnabled, function(v) GestioConfig.espDistanceEnabled=v end)
+            addInspectorToggle(110, "Weapon Name", GestioConfig.espWeaponEnabled, function(v) GestioConfig.espWeaponEnabled=v end)
+            addInspectorToggle(136, "Skeleton", GestioConfig.espSkeletonEnabled, function(v) GestioConfig.espSkeletonEnabled=v end)
+            addInspectorToggle(162, "Skeleton Rainbow", GestioConfig.espSkeletonRainbow, function(v) GestioConfig.espSkeletonRainbow=v end)
+            addInspectorSlider(188, "Skeleton Thickness", 1, 4, GestioConfig.espSkeletonThickness, true, function(v) GestioConfig.espSkeletonThickness=v end)
+        elseif moduleName == "No Flash / Smoke" then
+            insContent.CanvasSize = UDim2.new(0,0,0,100)
+            addInspectorToggle(6, "No Flashbang", GestioConfig.antiFlashEnabled, function(v) GestioConfig.antiFlashEnabled=v end)
+            addInspectorToggle(32, "No Smoke", GestioConfig.noSmokeEnabled, function(v) GestioConfig.noSmokeEnabled=v end)
         elseif moduleName == "Skin Changer" or moduleName == "Knife Changer" then
             refreshGestioSkinData()
             local knifeModels = {"Karambit", "Butterfly Knife", "Flip Knife", "Gut Knife", "M9 Bayonet", "Skeleton Knife", "Stiletto Knife"}
@@ -4616,6 +4827,8 @@ function buildGestioUI()
     local cGrid2 = makeCategorySection(cPage, "Weapon Mechanics", 2, 2)
     createModuleCard(cGrid2, "No Recoil", "noRecoilEnabled", nil, true)
     createModuleCard(cGrid2, "No Spread", "noSpreadEnabled", nil, true)
+    createModuleCard(cGrid2, "Firerate", "firerateEnabled", nil, true)
+    createModuleCard(cGrid2, "Instant Reload", "instantReloadEnabled", nil, true)
     createModuleCard(cGrid2, "Anti-Aim", "antiAimEnabled", nil, true)
 
     local mGrid = makeCategorySection(mPage, "Locomotion", 1, 4)
@@ -4627,6 +4840,7 @@ function buildGestioUI()
     local eGrid = makeCategorySection(ePage, "Visual Overlays", 1, 4)
     createModuleCard(eGrid, "Chams", "chamsEnabled", nil, true)
     createModuleCard(eGrid, "Nametags", "nametagsEnabled", nil, true)
+    createModuleCard(eGrid, "Player ESP", "espDetailedEnabled", nil, true)
     createModuleCard(eGrid, "Box Overlay", "boxEspEnabled", nil, true)
     createModuleCard(eGrid, "Grenade ESP", "grenadeEspEnabled", nil, true)
 
@@ -4671,6 +4885,7 @@ function buildGestioUI()
         if not v then restoreLightingState() end
     end, false)
     createModuleCard(envGrid, "Anti Flash", "antiFlashEnabled", nil, false)
+    createModuleCard(envGrid, "No Flash / Smoke", "noSmokeEnabled", nil, true)
 
     local micsGrid = makeCategorySection(micsPage, "Utilities", 1, 3)
     createModuleCard(micsGrid, "Hitmarker", "hitmarkerEnabled", nil, true)
@@ -4979,84 +5194,137 @@ end
 -- CameraType = Scriptable or writes camera.CFrame.
 
 -- ==========================================
--- MEMESENSE-STYLE SEND HOOK FALLBACK FOR SILENT AIM
+-- ==========================================
+-- MEMESENSE-STYLE SEND HOOK FOR SILENT AIM (FIXED)
+-- Uses the same chain as the supplied MemeSense source:
+-- shoot() -> Inventory.ShootWeapon.Send -> data.Bullets
 -- ==========================================
 local memesenseSilentSendHooked = false
-local function setupMemesenseSilentSendHook()
-    if memesenseSilentSendHooked then return end
-    if type(getgc) ~= "function" or type(hookfunction) ~= "function" then return end
+local memesenseSilentSendFunction = nil
 
-    local sendFunc = nil
-    local shootContainer = nil
+local function findMemesenseSendFunction()
+    if type(getgc) ~= "function" then return nil end
+    if type(hookfunction) ~= "function" then return nil end
+
+    local found = nil
     pcall(function()
         for _, obj in next, getgc(true) do
             if type(obj) == "table" and rawget(obj, "shoot") and typeof(obj.shoot) == "function" then
-                for _, uv in pairs(debug.getupvalues(obj.shoot)) do
-                    if type(uv) == "table" then
-                        local inventory = rawget(uv, "Inventory")
-                        local shootWeapon = inventory and rawget(inventory, "ShootWeapon")
-                        if type(shootWeapon) == "table" and typeof(shootWeapon.Send) == "function" then
-                            sendFunc = shootWeapon.Send
-                            shootContainer = shootWeapon
-                            break
+                local ok, upvalues = pcall(debug.getupvalues, obj.shoot)
+                if ok and type(upvalues) == "table" then
+                    for _, uv in pairs(upvalues) do
+                        if type(uv) == "table" then
+                            local inventory = rawget(uv, "Inventory")
+                            local shootWeapon = inventory and rawget(inventory, "ShootWeapon")
+                            if type(shootWeapon) == "table" and typeof(shootWeapon.Send) == "function" then
+                                found = shootWeapon.Send
+                                break
+                            end
                         end
                     end
                 end
             end
-            if sendFunc then break end
+            if found then break end
         end
     end)
+    return found
+end
 
-    if type(sendFunc) ~= "function" then return end
-    if shootContainer and rawget(shootContainer, "__GestioMemeSilentHooked") then
+local function applySilentToBulletPayload(payload)
+    if not GestioConfig.silentAimEnabled then return false end
+    if type(payload) ~= "table" or type(payload.Bullets) ~= "table" then return false end
+
+    local targetPart = getSilentAimTarget and getSilentAimTarget() or silentAimResolved
+    if not targetPart or not targetPart.Parent then return false end
+
+    local targetChar = targetPart:FindFirstAncestorOfClass("Model")
+    local targetHum = targetChar and targetChar:FindFirstChildOfClass("Humanoid")
+    if not isEntityAlive(targetChar, targetHum) then return false end
+
+    local chance = math.clamp(tonumber(GestioConfig.silentAimHitChance) or 100, 0, 100)
+    if chance < 100 and math.random(1, 100) > chance then
+        return false
+    end
+
+    local cam = Workspace.CurrentCamera or camera
+    local fallbackOrigin = cam and cam.CFrame.Position or Vector3.zero
+    local aimPos = getKinematicAimPosition(targetPart) or targetPart.Position
+    local applied = false
+
+    for _, bullet in pairs(payload.Bullets) do
+        if type(bullet) == "table" then
+            -- The important part: calculate direction from the bullet's own origin,
+            -- not from the camera. This matches the MemeSense source architecture.
+            local direction, origin = getSilentAimShotDirection(bullet, aimPos, fallbackOrigin)
+            if direction and typeof(origin) == "Vector3" then
+                bullet.Direction = direction
+                applied = true
+            end
+
+            -- Keep the hit payload synchronized with the same target.
+            if type(bullet.Hits) == "table" then
+                for _, hitData in pairs(bullet.Hits) do
+                    if type(hitData) == "table" then
+                        hitData.Instance = targetPart
+                        hitData.Position = aimPos
+                    end
+                end
+            end
+
+            bullet.__GestioSilentApplied = true
+
+            if GestioConfig.wallbangEnabled then
+                bullet.Penetration = 9999
+                bullet.Wallbang = true
+                bullet.IgnoreEnvironment = true
+            end
+        end
+    end
+
+    if applied then
+        silentAimResolved = targetPart
+    end
+    return applied
+end
+
+local function installMemesenseSilentSendHook()
+    if memesenseSilentSendHooked then return true end
+    local sendFunc = findMemesenseSendFunction()
+    if type(sendFunc) ~= "function" then return false end
+
+    -- Avoid stacking hooks on the same function.
+    if memesenseSilentSendFunction == sendFunc then
         memesenseSilentSendHooked = true
-        return
+        return true
     end
 
     local oldSend
-    oldSend = hookfunction(sendFunc, function(...)
-        local args = {...}
-        if GestioConfig.silentAimEnabled and type(args[1]) == "table" and type(args[1].Bullets) == "table" then
-            local targetPart = getSilentAimTarget and getSilentAimTarget() or silentAimResolved
-            if targetPart then
-                local chance = math.clamp(tonumber(GestioConfig.silentAimHitChance) or 100, 0, 100)
-                local alreadyApplied = false
-                for _, bullet in pairs(args[1].Bullets) do
-                    if type(bullet) == "table" and bullet.__GestioSilentApplied then
-                        alreadyApplied = true
-                        break
-                    end
-                end
-                local allowed = alreadyApplied or chance >= 100 or math.random(1, 100) <= chance
-                if allowed then
-                    silentAimResolved = targetPart
-                    local cam = Workspace.CurrentCamera or camera
-                    local fallback = cam and cam.CFrame.Position or Vector3.zero
-                    local _, aimPos = silentAimCamPosAim(targetPart)
-                    for _, bullet in pairs(args[1].Bullets) do
-                        if type(bullet) == "table" then
-                            local direction, origin = getSilentAimShotDirection(bullet, aimPos or targetPart.Position, fallback)
-                            if direction then bullet.Direction = direction end
-                            if type(bullet.Hits) == "table" then
-                                for _, hitData in pairs(bullet.Hits) do
-                                    if type(hitData) == "table" then
-                                        hitData.Instance = targetPart
-                                        hitData.Position = targetPart.Position
-                                    end
-                                end
-                            end
-                            bullet.__GestioSilentApplied = true
-                        end
-                    end
-                end
+    local ok = pcall(function()
+        oldSend = hookfunction(sendFunc, function(...)
+            local args = {...}
+            if type(args[1]) == "table" then
+                pcall(applySilentToBulletPayload, args[1])
             end
-        end
-        return oldSend(unpack(args))
+            return oldSend(table.unpack(args))
+        end)
     end)
 
-    if shootContainer then rawset(shootContainer, "__GestioMemeSilentHooked", true) end
-    memesenseSilentSendHooked = true
+    if ok and type(oldSend) == "function" then
+        memesenseSilentSendFunction = sendFunc
+        memesenseSilentSendHooked = true
+        return true
+    end
+    return false
 end
+
+-- The game can recreate InventoryController after round/respawn.
+-- Retry the exact MemeSense Send discovery instead of assuming it exists at t=1s.
+task.spawn(function()
+    for _ = 1, 20 do
+        if installMemesenseSilentSendHook() then break end
+        task.wait(0.5)
+    end
+end)
 
 -- ==========================================
 -- ENGINE LAUNCH / MEMESENSE VISUAL EXTENSION
@@ -5064,6 +5332,14 @@ end
 setupSilentAimHooks()
 setupBloxStrikeShootHook()
 setupMemeSenseWeaponMods()
+task.spawn(function()
+    -- Blox Strike can initialize weapon closures after the first getgc pass.
+    for _ = 1, 20 do
+        task.wait(0.5)
+        pcall(setupMemeSenseWeaponMods)
+        pcall(setupMemeSenseSmokeHook)
+    end
+end)
 task.spawn(function()
     task.wait(1)
     setupMemesenseSilentSendHook()
