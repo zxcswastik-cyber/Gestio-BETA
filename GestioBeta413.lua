@@ -42,6 +42,17 @@ local GestioConfig = {
     rageAutoFire = true,
     bulletTrailEnabled = true,
     bulletFlashEnabled = true,
+    weaponChamsEnabled = false,
+    customScopeEnabled = false,
+    scopeRemoveOriginal = false,
+    scopeCrosshairEnabled = true,
+    scopeDynamicGap = false,
+    worldSkyboxEnabled = false,
+    worldPostFXEnabled = false,
+    settingsShowFps = false,
+    settingsShowNotifications = true,
+    settingsCompactMode = false,
+    menuKey = "RightShift",
 
     -- Sliders & Values
     rageFov = 360,
@@ -117,6 +128,38 @@ local GestioConfig = {
     nightPreset = "Midnight",
     nightBrightness = 0.2,
     nightClockTime = 0.0,
+    worldSkyboxPreset = "Night",
+    worldFogStart = 0,
+    worldFogEnd = 100000,
+    worldExposure = 0,
+    worldSaturation = 0,
+    worldContrast = 0,
+    worldColorR = 255,
+    worldColorG = 255,
+    worldColorB = 255,
+    bulletTracerStyle = "Block",
+    bulletTracerDuration = 0.65,
+    bulletTracerWidth = 0.08,
+    bulletTracerRainbow = false,
+    bulletImpactEnabled = false,
+    bulletImpactSize = 0.35,
+    bulletTracerColorR = 255,
+    bulletTracerColorG = 25,
+    bulletTracerColorB = 35,
+    weaponChamsMode = "Glass",
+    weaponChamsTransparency = 0.15,
+    weaponChamsReflectance = 0.6,
+    weaponChamsColorR = 210,
+    weaponChamsColorG = 45,
+    weaponChamsColorB = 55,
+    scopeFovEnabled = false,
+    scopeFov = 70,
+    scopeCrosshairLength = 85,
+    scopeCrosshairThickness = 2,
+    scopeCrosshairGap = 8,
+    scopeCrosshairColorR = 255,
+    scopeCrosshairColorG = 255,
+    scopeCrosshairColorB = 255,
     selectedKnifeType = "Butterfly Knife",
     selectedSkin = "Fade",
     gloveChangerEnabled = false,
@@ -299,6 +342,14 @@ local lastTargetSwitchTick = 0
 local TARGET_HYSTERESIS_TIME = 0.12
 local aimboneIndex = 1
 
+local function rgb(r,g,b)
+    return Color3.fromRGB(
+        math.clamp(math.floor(tonumber(r) or 255), 0, 255),
+        math.clamp(math.floor(tonumber(g) or 255), 0, 255),
+        math.clamp(math.floor(tonumber(b) or 255), 0, 255)
+    )
+end
+
 local silentAimResolved = nil
 -- Forward declarations: the shoot hook is defined before the Silent Aim helpers.
 local getSilentAimTarget
@@ -339,36 +390,50 @@ local function setupBloxStrikeShootHook()
                         local trail = Instance.new("Part")
                         trail.Anchored = true
                         trail.CanCollide = false
+                        trail.CanTouch = false
+                        trail.CanQuery = false
                         trail.CastShadow = false
-                        trail.Material = Enum.Material.Neon
-                        trail.Color = Color3.fromRGB(255, 20, 20)
-                        trail.Size = Vector3.new(0.08, 0.08, dist)
-                        trail.CFrame = CFrame.lookAt(origin, bulletEnd) * CFrame.new(0, 0, -dist / 2)
+                        trail.Material = (GestioConfig.bulletTracerStyle == "Cylinder") and Enum.Material.Neon or Enum.Material.Neon
+                        trail.Color = GestioConfig.bulletTracerRainbow and Color3.fromHSV((os.clock()*0.35)%1,0.9,1) or rgb(GestioConfig.bulletTracerColorR,GestioConfig.bulletTracerColorG,GestioConfig.bulletTracerColorB)
+                        local width = math.clamp(tonumber(GestioConfig.bulletTracerWidth) or 0.08, 0.02, 0.5)
+                        if GestioConfig.bulletTracerStyle == "Cylinder" then
+                            trail.Shape = Enum.PartType.Cylinder
+                            trail.Size = Vector3.new(dist, width, width)
+                            trail.CFrame = CFrame.lookAt(origin, bulletEnd) * CFrame.Angles(0, math.rad(90), 0) * CFrame.new(-dist/2,0,0)
+                        else
+                            trail.Size = Vector3.new(width, width, dist)
+                            trail.CFrame = CFrame.lookAt(origin, bulletEnd) * CFrame.new(0, 0, -dist / 2)
+                        end
                         trail.Parent = Workspace
-                        
-                        TweenService:Create(trail, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = Vector3.new(0, 0, dist), Transparency = 1}):Play()
-                        task.delay(0.15, function() pcall(function() trail:Destroy() end) end)
+                        local duration = math.clamp(tonumber(GestioConfig.bulletTracerDuration) or 0.65, 0.05, 10)
+                        TweenService:Create(trail, TweenInfo.new(duration, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Transparency = 1}):Play()
+                        task.delay(duration + 0.05, function() pcall(function() trail:Destroy() end) end)
+                    end
+
+                    if GestioConfig.bulletImpactEnabled then
+                        local impact = Instance.new("Part")
+                        impact.Anchored = true; impact.CanCollide = false; impact.CanTouch = false; impact.CanQuery = false; impact.CastShadow = false
+                        impact.Shape = Enum.PartType.Ball
+                        impact.Material = Enum.Material.Neon
+                        impact.Color = GestioConfig.bulletTracerRainbow and Color3.fromHSV((os.clock()*0.35)%1,0.9,1) or rgb(GestioConfig.bulletTracerColorR,GestioConfig.bulletTracerColorG,GestioConfig.bulletTracerColorB)
+                        local sz = math.clamp(tonumber(GestioConfig.bulletImpactSize) or 0.35, 0.05, 2)
+                        impact.Size = Vector3.new(sz,sz,sz)
+                        impact.CFrame = CFrame.new(bulletEnd)
+                        impact.Parent = Workspace
+                        TweenService:Create(impact, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size=Vector3.zero, Transparency=1}):Play()
+                        task.delay(0.4, function() pcall(function() impact:Destroy() end) end)
                     end
 
                     if GestioConfig.bulletFlashEnabled then
                         local flash = Instance.new("Part")
-                        flash.Anchored = true
-                        flash.CanCollide = false
-                        flash.CastShadow = false
+                        flash.Anchored = true; flash.CanCollide = false; flash.CanTouch = false; flash.CanQuery = false; flash.CastShadow = false
                         flash.Material = Enum.Material.Neon
-                        flash.Color = Color3.fromRGB(255, 80, 80)
+                        flash.Color = rgb(255,80,80)
                         flash.Shape = Enum.PartType.Ball
-                        flash.Size = Vector3.new(0.6, 0.6, 0.6)
-                        flash.CFrame = CFrame.new(bulletEnd)
+                        flash.Size = Vector3.new(0.6,0.6,0.6)
+                        flash.CFrame = CFrame.new(origin)
                         flash.Parent = Workspace
-                        
-                        local s = Instance.new("Sound")
-                        s.SoundId = "rbxassetid://9113089896"
-                        s.Volume = 0.2
-                        s.Parent = flash
-                        s:Play()
-
-                        TweenService:Create(flash, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = Vector3.new(0, 0, 0), Transparency = 1}):Play()
+                        TweenService:Create(flash, TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size=Vector3.zero, Transparency=1}):Play()
                         task.delay(0.15, function() pcall(function() flash:Destroy() end) end)
                     end
                 end
@@ -1240,6 +1305,7 @@ function applyNightPreset(presetName)
         if not GestioConfig.removeFogEnabled then
             Lighting.FogColor = fogLibrary[presetName] or cfg.FogColor
         end
+        updateWorldChanger()
     end
 end
 
@@ -1251,9 +1317,272 @@ function restoreLightingState()
         Lighting.Ambient = defaultLighting.Ambient
         Lighting.OutdoorAmbient = defaultLighting.OutdoorAmbient
         Lighting.FogEnd = defaultLighting.FogEnd
+        Lighting.FogStart = defaultLighting.FogStart or 0
         Lighting.FogColor = defaultLighting.FogColor
+        Lighting.ExposureCompensation = 0
+        restoreWorldSkybox()
+        local fx = Lighting:FindFirstChild("GestioWorldColorFX")
+        if fx then fx:Destroy() end
     end)
 end
+
+-- ==========================================
+-- MEMESENSE-STYLE WORLD / WEAPON VISUALS
+-- ==========================================
+local worldSkyboxData = {
+    ["Night"] = {"rbxassetid://1514717643","rbxassetid://1514716936","rbxassetid://1514715910","rbxassetid://1514714945","rbxassetid://1514714011","rbxassetid://1514713374"},
+    ["Ocean Sunset"] = {"rbxassetid://17525686840","rbxassetid://17525678473","rbxassetid://17525684686","rbxassetid://17525680663","rbxassetid://17525682665","rbxassetid://17525674545"},
+    ["My Summer Car"] = {"rbxassetid://16648590964","rbxassetid://16648617436","rbxassetid://16648595424","rbxassetid://16648566370","rbxassetid://16648577071","rbxassetid://16648598180"},
+    ["Minecraft"] = {"http://www.roblox.com/asset/?id=8735166756","http://www.roblox.com/asset/?id=8735166707","http://www.roblox.com/asset/?id=8735231668","http://www.roblox.com/asset/?id=8735166755","http://www.roblox.com/asset/?id=8735166751","http://www.roblox.com/asset/?id=8735166729"},
+    ["Deep Space"] = {"http://www.roblox.com/asset/?id=159248188","http://www.roblox.com/asset/?id=159248183","http://www.roblox.com/asset/?id=159248187","http://www.roblox.com/asset/?id=159248173","http://www.roblox.com/asset/?id=159248192","http://www.roblox.com/asset/?id=159248176"},
+    ["Clouded Sky"] = {"http://www.roblox.com/asset/?id=252760981","http://www.roblox.com/asset/?id=252763035","http://www.roblox.com/asset/?id=252761439","http://www.roblox.com/asset/?id=252760980","http://www.roblox.com/asset/?id=252760986","http://www.roblox.com/asset/?id=252762652"},
+    ["City"] = {"http://www.roblox.com/asset/?id=9134792889","http://www.roblox.com/asset/?id=9134791975","http://www.roblox.com/asset/?id=9134793457","http://www.roblox.com/asset/?id=9134791234","http://www.roblox.com/asset/?id=9134790419","http://www.roblox.com/asset/?id=9134791633"}
+}
+
+local originalSkybox = nil
+local originalPostFX = nil
+local weaponChamsState = setmetatable({}, {__mode = "k"})
+local weaponChamsHighlights = setmetatable({}, {__mode = "k"})
+local scopeSavedFov = nil
+local scopeSavedSize = nil
+local scopeGui = nil
+local scopeContainer = nil
+
+local function getWeaponModel()
+    local cam = Workspace.CurrentCamera or camera
+    if not cam then return nil end
+    for _, child in ipairs(cam:GetChildren()) do
+        if child:IsA("Model") then
+            if child.Name == "Viewmodel" then continue end
+            if child.Name:lower():find("light") then continue end
+            local weapon = child:FindFirstChild("Weapon")
+            if weapon and weapon:IsA("Model") then return weapon end
+            if child:FindFirstChildOfClass("Humanoid") == nil then return child end
+        end
+    end
+    return nil
+end
+
+local function restoreWeaponChams()
+    for part, state in pairs(weaponChamsState) do
+        if part and part.Parent and state then
+            pcall(function()
+                part.Material = state.Material
+                part.Color = state.Color
+                part.Transparency = state.Transparency
+                part.Reflectance = state.Reflectance
+            end)
+        end
+        weaponChamsState[part] = nil
+    end
+    for part, h in pairs(weaponChamsHighlights) do
+        if h and h.Parent then pcall(function() h:Destroy() end) end
+        weaponChamsHighlights[part] = nil
+    end
+end
+
+local function updateWeaponChams()
+    if not GestioConfig.weaponChamsEnabled then
+        restoreWeaponChams()
+        return
+    end
+    local model = getWeaponModel()
+    if not model then
+        restoreWeaponChams()
+        return
+    end
+    local mode = GestioConfig.weaponChamsMode or "Glass"
+    local col = rgb(GestioConfig.weaponChamsColorR, GestioConfig.weaponChamsColorG, GestioConfig.weaponChamsColorB)
+    local seen = {}
+    for _, part in ipairs(model:GetDescendants()) do
+        if part:IsA("BasePart") and part.Name ~= "Hitbox" and part.Name ~= "HumanoidRootPart" and not part:FindFirstAncestor("ViewmodelLight") then
+            seen[part] = true
+            if not weaponChamsState[part] then
+                weaponChamsState[part] = {Material=part.Material, Color=part.Color, Transparency=part.Transparency, Reflectance=part.Reflectance}
+            end
+            pcall(function()
+                if mode == "Highlight" then
+                    local h = weaponChamsHighlights[part]
+                    if not h or not h.Parent then
+                        h = Instance.new("Highlight")
+                        h.Name = "GestioWeaponChams"
+                        h.Adornee = part
+                        h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                        h.FillTransparency = 0
+                        h.OutlineTransparency = 1
+                        h.Parent = part
+                        weaponChamsHighlights[part] = h
+                    end
+                    h.FillColor = col
+                else
+                    local m = mode == "Glass" and Enum.Material.Glass
+                        or mode == "ForceField" and Enum.Material.ForceField
+                        or mode == "Metal" and Enum.Material.Metal
+                        or Enum.Material.Neon
+                    part.Material = m
+                    part.Color = col
+                    part.Transparency = mode == "Glass" and math.clamp(GestioConfig.weaponChamsTransparency or 0.15,0,1) or 0
+                    part.Reflectance = mode == "Metal" and math.clamp(GestioConfig.weaponChamsReflectance or 0.6,0,1) or 0
+                    local h = weaponChamsHighlights[part]
+                    if h then h:Destroy(); weaponChamsHighlights[part] = nil end
+                end
+            end)
+        end
+    end
+    for part, state in pairs(weaponChamsState) do
+        if not seen[part] then
+            if part and part.Parent then
+                pcall(function()
+                    part.Material=state.Material; part.Color=state.Color; part.Transparency=state.Transparency; part.Reflectance=state.Reflectance
+                end)
+            end
+            weaponChamsState[part] = nil
+        end
+    end
+end
+
+local function applyWorldSkybox()
+    local data = worldSkyboxData[GestioConfig.worldSkyboxPreset]
+    if not data or not GestioConfig.worldSkyboxEnabled then return end
+    pcall(function()
+        if not originalSkybox then
+            originalSkybox = Lighting:FindFirstChildOfClass("Sky")
+            if originalSkybox then originalSkybox = originalSkybox:Clone() end
+        end
+        local sky = Lighting:FindFirstChild("GestioWorldSky")
+        if not sky then
+            sky = Instance.new("Sky")
+            sky.Name = "GestioWorldSky"
+            sky.Parent = Lighting
+        end
+        sky.SkyboxBk, sky.SkyboxDn, sky.SkyboxFt = data[1], data[2], data[3]
+        sky.SkyboxLf, sky.SkyboxRt, sky.SkyboxUp = data[4], data[5], data[6]
+    end)
+end
+
+local function restoreWorldSkybox()
+    pcall(function()
+        local sky = Lighting:FindFirstChild("GestioWorldSky")
+        if sky then sky:Destroy() end
+        if originalSkybox then
+            originalSkybox.Parent = Lighting
+            originalSkybox = nil
+        end
+    end)
+end
+
+local function updateWorldPostFX()
+    if not GestioConfig.worldPostFXEnabled then
+        local fx = Lighting:FindFirstChild("GestioWorldColorFX")
+        if fx then fx:Destroy() end
+        Lighting.ExposureCompensation = 0
+        return
+    end
+    local fx = Lighting:FindFirstChild("GestioWorldColorFX")
+    if not fx then
+        fx = Instance.new("ColorCorrectionEffect")
+        fx.Name = "GestioWorldColorFX"
+        fx.Parent = Lighting
+    end
+    fx.Saturation = math.clamp(GestioConfig.worldSaturation or 0, -1, 1)
+    fx.Contrast = math.clamp(GestioConfig.worldContrast or 0, -1, 1)
+    fx.TintColor = rgb(GestioConfig.worldColorR, GestioConfig.worldColorG, GestioConfig.worldColorB)
+    Lighting.ExposureCompensation = math.clamp(GestioConfig.worldExposure or 0, -5, 5)
+end
+
+local function updateWorldChanger()
+    if not GestioConfig.nightModeEnabled then
+        restoreWorldSkybox()
+        local fx = Lighting:FindFirstChild("GestioWorldColorFX")
+        if fx then fx:Destroy() end
+        return
+    end
+    if GestioConfig.worldSkyboxEnabled then applyWorldSkybox() else restoreWorldSkybox() end
+    updateWorldPostFX()
+    if GestioConfig.worldFogEnd and GestioConfig.worldFogEnd > 0 then
+        Lighting.FogStart = math.max(0, GestioConfig.worldFogStart or 0)
+        Lighting.FogEnd = math.max(Lighting.FogStart + 1, GestioConfig.worldFogEnd)
+    end
+end
+
+-- Scope overlay adapted from MemeSense: FOV override, removable scope and configurable crosshair.
+local function findSniperScope()
+    local pg = player and player:FindFirstChildOfClass("PlayerGui")
+    if not pg then return nil end
+    local main = pg:FindFirstChild("MainGui")
+    local gameplay = main and main:FindFirstChild("Gameplay")
+    local middle = gameplay and gameplay:FindFirstChild("Middle")
+    return middle and middle:FindFirstChild("SniperScope") or nil
+end
+
+local function ensureScopeGui()
+    if scopeGui and scopeGui.Parent then return end
+    scopeGui = Instance.new("ScreenGui")
+    scopeGui.Name = "GestioCustomScope"
+    scopeGui.ResetOnSpawn = false
+    scopeGui.IgnoreGuiInset = true
+    pcall(function() scopeGui.Parent = targetGui end)
+    if not scopeGui.Parent then scopeGui.Parent = CoreGui end
+    scopeContainer = Instance.new("Frame")
+    scopeContainer.BackgroundTransparency = 1
+    scopeContainer.AnchorPoint = Vector2.new(0.5,0.5)
+    scopeContainer.Position = UDim2.fromScale(0.5,0.5)
+    scopeContainer.Size = UDim2.fromOffset(0,0)
+    scopeContainer.Parent = scopeGui
+    for name,anchor in pairs({Left=Vector2.new(1,.5),Right=Vector2.new(0,.5),Top=Vector2.new(.5,1),Bottom=Vector2.new(.5,0)}) do
+        local f=Instance.new("Frame")
+        f.Name=name; f.AnchorPoint=anchor; f.BorderSizePixel=0; f.Parent=scopeContainer
+    end
+    local dot=Instance.new("Frame")
+    dot.Name="Dot"; dot.AnchorPoint=Vector2.new(.5,.5); dot.BorderSizePixel=0; dot.Parent=scopeContainer
+end
+
+local function updateCustomScope()
+    ensureScopeGui()
+    local scope = findSniperScope()
+    local scoped = scope and scope.Visible == true
+    if scope and scopeSavedSize == nil then scopeSavedSize = scope.Size end
+    if scope and GestioConfig.scopeRemoveOriginal and scoped then
+        scope.Size = UDim2.fromOffset(0,0)
+    elseif scope and scopeSavedSize and not GestioConfig.scopeRemoveOriginal then
+        scope.Size = scopeSavedSize
+    elseif scope and scopeSavedSize and not scoped then
+        scope.Size = scopeSavedSize
+    end
+    local cam = Workspace.CurrentCamera or camera
+    if GestioConfig.customScopeEnabled and scoped then
+        if GestioConfig.scopeFovEnabled and cam then
+            if scopeSavedFov == nil then scopeSavedFov = cam.FieldOfView end
+            cam.FieldOfView = math.clamp(GestioConfig.scopeFov or 70, 10, 120)
+        end
+        scopeContainer.Visible = GestioConfig.scopeCrosshairEnabled
+        local col = rgb(GestioConfig.scopeCrosshairColorR,GestioConfig.scopeCrosshairColorG,GestioConfig.scopeCrosshairColorB)
+        local len = math.clamp(GestioConfig.scopeCrosshairLength or 85, 2, 500)
+        local thick = math.clamp(GestioConfig.scopeCrosshairThickness or 2, 1, 8)
+        local gap = math.clamp(GestioConfig.scopeCrosshairGap or 8, 0, 100)
+        local dynamic = GestioConfig.scopeDynamicGap and math.clamp((1/(cam and cam.FieldOfView or 70))*700, 2, 30) or 0
+        gap = gap + dynamic
+        local l=scopeContainer.Left; local r=scopeContainer.Right; local t=scopeContainer.Top; local b=scopeContainer.Bottom; local d=scopeContainer.Dot
+        for _,f in ipairs({l,r,t,b,d}) do f.BackgroundColor3=col end
+        l.Size=UDim2.fromOffset(len,thick); l.Position=UDim2.fromOffset(-gap,0)
+        r.Size=UDim2.fromOffset(len,thick); r.Position=UDim2.fromOffset(gap,0)
+        t.Size=UDim2.fromOffset(thick,len); t.Position=UDim2.fromOffset(0,-gap)
+        b.Size=UDim2.fromOffset(thick,len); b.Position=UDim2.fromOffset(0,gap)
+        d.Size=UDim2.fromOffset(thick*2,thick*2); d.Position=UDim2.fromOffset(0,0); d.Visible=true
+    else
+        scopeContainer.Visible=false
+        if scopeSavedFov and cam then cam.FieldOfView=scopeSavedFov end
+        scopeSavedFov=nil
+    end
+end
+
+table.insert(connections, RunService.RenderStepped:Connect(function()
+    pcall(function()
+        updateWeaponChams()
+        updateCustomScope()
+        if GestioConfig.nightModeEnabled then updateWorldChanger() end
+    end)
+end))
 
 -- ==========================================
 -- JUMP CIRCLE RENDER ENGINE (GROUND CONTOUR)
@@ -3165,6 +3494,21 @@ function buildGestioUI()
         masterFrame.Visible = not masterFrame.Visible 
     end
 
+    UI_Bind_Registry.settingsCompactMode = function(v)
+        if v then
+            masterFrame.Size = UDim2.new(0.78, 0, 0.70, 0)
+        else
+            masterFrame.Size = UDim2.new(0.90, 0, 0.82, 0)
+        end
+    end
+
+    table.insert(connections, UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        if gameProcessed then return end
+        local keyName = GestioConfig.menuKey or "RightShift"
+        local keyCode = Enum.KeyCode[keyName]
+        if keyCode and input.KeyCode == keyCode then toggleMenu() end
+    end))
+
     local btnDrag, btnStartPos, btnInputStart = false, nil, nil
     local bInBegan = openBtn.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -3844,18 +4188,55 @@ function buildGestioUI()
             addInspectorToggle(76, "Corner Box", GestioConfig.cornerBoxEnabled, function(v) GestioConfig.cornerBoxEnabled = v end)
             addInspectorToggle(108, "Health Bar", GestioConfig.healthBarEnabled, function(v) GestioConfig.healthBarEnabled = v end)
         elseif moduleName == "World Changer" then
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 330)
+            insContent.CanvasSize = UDim2.new(0, 0, 0, 520)
             addInspectorChoice(6, "World Preset", {"Midnight", "Nebula", "DeepBlood", "CyberPurple", "EmeraldNight", "PitchBlack"}, GestioConfig.nightPreset, function(selected)
                 applyNightPreset(selected)
             end)
-            addInspectorSlider(48, "Brightness", 0.0, 2.0, GestioConfig.nightBrightness, true, function(v) 
-                GestioConfig.nightBrightness = v 
-                if GestioConfig.nightModeEnabled then Lighting.Brightness = v end
-            end)
-            addInspectorSlider(80, "Clock Time", 0.0, 24.0, GestioConfig.nightClockTime, true, function(v) 
-                GestioConfig.nightClockTime = v 
-                if GestioConfig.nightModeEnabled then Lighting.ClockTime = v end
-            end)
+            addInspectorSlider(48, "Brightness", 0.0, 5.0, GestioConfig.nightBrightness, true, function(v) GestioConfig.nightBrightness=v; if GestioConfig.nightModeEnabled then Lighting.Brightness=v end end)
+            addInspectorSlider(80, "Clock Time", 0.0, 24.0, GestioConfig.nightClockTime, true, function(v) GestioConfig.nightClockTime=v; if GestioConfig.nightModeEnabled then Lighting.ClockTime=v end end)
+            addInspectorToggle(112, "Custom Skybox", GestioConfig.worldSkyboxEnabled, function(v) GestioConfig.worldSkyboxEnabled=v; updateWorldChanger() end)
+            addInspectorChoice(138, "Skybox", {"Night","Ocean Sunset","My Summer Car","Minecraft","Deep Space","Clouded Sky","City"}, GestioConfig.worldSkyboxPreset, function(v) GestioConfig.worldSkyboxPreset=v; updateWorldChanger() end)
+            addInspectorSlider(174, "Fog Start", 0, 5000, GestioConfig.worldFogStart, false, function(v) GestioConfig.worldFogStart=v; updateWorldChanger() end)
+            addInspectorSlider(206, "Fog End", 50, 100000, GestioConfig.worldFogEnd, false, function(v) GestioConfig.worldFogEnd=v; updateWorldChanger() end)
+            addInspectorToggle(238, "Post FX", GestioConfig.worldPostFXEnabled, function(v) GestioConfig.worldPostFXEnabled=v; updateWorldPostFX() end)
+            addInspectorSlider(264, "Exposure", -3, 3, GestioConfig.worldExposure, true, function(v) GestioConfig.worldExposure=v; updateWorldPostFX() end)
+            addInspectorSlider(296, "Saturation", -1, 1, GestioConfig.worldSaturation, true, function(v) GestioConfig.worldSaturation=v; updateWorldPostFX() end)
+            addInspectorSlider(328, "Contrast", -1, 1, GestioConfig.worldContrast, true, function(v) GestioConfig.worldContrast=v; updateWorldPostFX() end)
+            addInspectorSlider(360, "Tint Red", 0, 255, GestioConfig.worldColorR, false, function(v) GestioConfig.worldColorR=v; updateWorldPostFX() end)
+            addInspectorSlider(392, "Tint Green", 0, 255, GestioConfig.worldColorG, false, function(v) GestioConfig.worldColorG=v; updateWorldPostFX() end)
+            addInspectorSlider(424, "Tint Blue", 0, 255, GestioConfig.worldColorB, false, function(v) GestioConfig.worldColorB=v; updateWorldPostFX() end)
+        elseif moduleName == "Bullet Trail" then
+            insContent.CanvasSize = UDim2.new(0,0,0,260)
+            addInspectorChoice(6,"Tracer Style", {"Block","Cylinder"}, GestioConfig.bulletTracerStyle, function(v) GestioConfig.bulletTracerStyle=v end)
+            addInspectorSlider(38,"Duration",0.05,3,GestioConfig.bulletTracerDuration,true,function(v) GestioConfig.bulletTracerDuration=v end)
+            addInspectorSlider(70,"Width",0.02,0.5,GestioConfig.bulletTracerWidth,true,function(v) GestioConfig.bulletTracerWidth=v end)
+            addInspectorToggle(102,"Rainbow",GestioConfig.bulletTracerRainbow,function(v) GestioConfig.bulletTracerRainbow=v end)
+            addInspectorToggle(128,"Bullet Impacts",GestioConfig.bulletImpactEnabled,function(v) GestioConfig.bulletImpactEnabled=v end)
+            addInspectorSlider(154,"Impact Size",0.05,1.5,GestioConfig.bulletImpactSize,true,function(v) GestioConfig.bulletImpactSize=v end)
+            addInspectorSlider(186,"Tracer Red",0,255,GestioConfig.bulletTracerColorR,false,function(v) GestioConfig.bulletTracerColorR=v end)
+            addInspectorSlider(218,"Tracer Green",0,255,GestioConfig.bulletTracerColorG,false,function(v) GestioConfig.bulletTracerColorG=v end)
+            addInspectorSlider(250,"Tracer Blue",0,255,GestioConfig.bulletTracerColorB,false,function(v) GestioConfig.bulletTracerColorB=v end)
+        elseif moduleName == "Weapon Chams" then
+            insContent.CanvasSize = UDim2.new(0,0,0,300)
+            addInspectorChoice(6,"Mode",{"Glass","ForceField","Metal","Neon","Highlight"},GestioConfig.weaponChamsMode,function(v) GestioConfig.weaponChamsMode=v end)
+            addInspectorSlider(38,"Transparency",0,1,GestioConfig.weaponChamsTransparency,true,function(v) GestioConfig.weaponChamsTransparency=v end)
+            addInspectorSlider(70,"Reflectance",0,1,GestioConfig.weaponChamsReflectance,true,function(v) GestioConfig.weaponChamsReflectance=v end)
+            addInspectorSlider(102,"Red",0,255,GestioConfig.weaponChamsColorR,false,function(v) GestioConfig.weaponChamsColorR=v end)
+            addInspectorSlider(134,"Green",0,255,GestioConfig.weaponChamsColorG,false,function(v) GestioConfig.weaponChamsColorG=v end)
+            addInspectorSlider(166,"Blue",0,255,GestioConfig.weaponChamsColorB,false,function(v) GestioConfig.weaponChamsColorB=v end)
+        elseif moduleName == "Custom Scope" then
+            insContent.CanvasSize = UDim2.new(0,0,0,340)
+            addInspectorToggle(6,"Remove Original Scope",GestioConfig.scopeRemoveOriginal,function(v) GestioConfig.scopeRemoveOriginal=v end)
+            addInspectorToggle(32,"Custom FOV",GestioConfig.scopeFovEnabled,function(v) GestioConfig.scopeFovEnabled=v end)
+            addInspectorSlider(58,"Scope FOV",10,120,GestioConfig.scopeFov,false,function(v) GestioConfig.scopeFov=v end)
+            addInspectorToggle(90,"Scope Crosshair",GestioConfig.scopeCrosshairEnabled,function(v) GestioConfig.scopeCrosshairEnabled=v end)
+            addInspectorToggle(116,"Dynamic Gap",GestioConfig.scopeDynamicGap,function(v) GestioConfig.scopeDynamicGap=v end)
+            addInspectorSlider(142,"Length",5,300,GestioConfig.scopeCrosshairLength,false,function(v) GestioConfig.scopeCrosshairLength=v end)
+            addInspectorSlider(174,"Thickness",1,8,GestioConfig.scopeCrosshairThickness,false,function(v) GestioConfig.scopeCrosshairThickness=v end)
+            addInspectorSlider(206,"Gap",0,60,GestioConfig.scopeCrosshairGap,false,function(v) GestioConfig.scopeCrosshairGap=v end)
+            addInspectorSlider(238,"Red",0,255,GestioConfig.scopeCrosshairColorR,false,function(v) GestioConfig.scopeCrosshairColorR=v end)
+            addInspectorSlider(270,"Green",0,255,GestioConfig.scopeCrosshairColorG,false,function(v) GestioConfig.scopeCrosshairColorG=v end)
+            addInspectorSlider(302,"Blue",0,255,GestioConfig.scopeCrosshairColorB,false,function(v) GestioConfig.scopeCrosshairColorB=v end)
         elseif moduleName == "RCS" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 240)
             addInspectorSlider(6, "RCS Strength", 10, 100, GestioConfig.rcsStrength, false, function(v) GestioConfig.rcsStrength = v end)
@@ -3968,9 +4349,10 @@ function buildGestioUI()
         end
     end, true)
 
-    local bGrid = makeCategorySection(ePage, "Bullet Effects", 3, 2)
-    createModuleCard(bGrid, "Bullet Trail", "bulletTrailEnabled", nil, false)
+    local bGrid = makeCategorySection(ePage, "Bullet Effects", 3, 3)
+    createModuleCard(bGrid, "Bullet Trail", "bulletTrailEnabled", nil, true)
     createModuleCard(bGrid, "Bullet Flash", "bulletFlashEnabled", nil, false)
+    createModuleCard(bGrid, "Weapon Chams", "weaponChamsEnabled", nil, true)
 
     local sGrid = makeCategorySection(sPage, "Cosmetic Engine", 1, 2)
     createModuleCard(sGrid, "Skin Changer", "skinChangerEnabled", function(v)
@@ -3987,8 +4369,9 @@ function buildGestioUI()
 
     local envGrid = makeCategorySection(envPage, "Atmosphere", 1, 4)
     createModuleCard(envGrid, "World Changer", "nightModeEnabled", function(v)
-        if v then applyNightPreset(GestioConfig.nightPreset) else restoreLightingState() end
+        if v then applyNightPreset(GestioConfig.nightPreset); updateWorldChanger() else restoreLightingState() end
     end, true)
+    createModuleCard(envGrid, "Custom Scope", "customScopeEnabled", nil, true)
     createModuleCard(envGrid, "FullBright", "fullBrightEnabled", function(v)
         if not v and not GestioConfig.nightModeEnabled then restoreLightingState() end
     end, false)
@@ -4040,6 +4423,61 @@ function buildGestioUI()
         currentTheme = themeLibrary[chosenName]
         themeBtn.Text = "THEME: " .. currentTheme.Name
         refreshHitmarkerTheme()
+    end)
+
+    local settingsGrid = makeCategorySection(setsPage, "Interface", 2, 2)
+    createModuleCard(settingsGrid, "Show FPS", "settingsShowFps", nil, false)
+    createModuleCard(settingsGrid, "Notifications", "settingsShowNotifications", nil, false)
+    createModuleCard(settingsGrid, "Compact Mode", "settingsCompactMode", function(v)
+        if UI_Bind_Registry.settingsCompactMode then UI_Bind_Registry.settingsCompactMode(v) end
+    end, false)
+
+    local keyCard = Instance.new("Frame", settingsGrid)
+    keyCard.Size = UDim2.new(1,0,0,42)
+    keyCard.BackgroundColor3 = currentTheme.CardBg
+    keyCard.BorderSizePixel = 0
+    Instance.new("UICorner", keyCard).CornerRadius = UDim.new(0,6)
+    local keyBtn = Instance.new("TextButton", keyCard)
+    keyBtn.Size = UDim2.new(1,-10,0,24)
+    keyBtn.Position = UDim2.new(0,5,0,9)
+    keyBtn.BackgroundColor3 = currentTheme.Sidebar
+    keyBtn.Text = "MENU KEY: " .. (GestioConfig.menuKey or "RightShift")
+    keyBtn.TextColor3 = currentTheme.Accent
+    keyBtn.TextSize = 8
+    keyBtn.Font = Enum.Font.GothamBold
+    Instance.new("UICorner", keyBtn).CornerRadius = UDim.new(0,4)
+    local menuKeys={"RightShift","LeftControl","RightControl","F6","F7","F8","F9","F10"}
+    local menuKeyIndex=1
+    for i,k in ipairs(menuKeys) do if k==GestioConfig.menuKey then menuKeyIndex=i break end end
+    bindTouch(keyBtn,function()
+        menuKeyIndex=(menuKeyIndex%#menuKeys)+1
+        GestioConfig.menuKey=menuKeys[menuKeyIndex]
+        keyBtn.Text="MENU KEY: "..GestioConfig.menuKey
+    end)
+
+    local fpsLabel = Instance.new("TextLabel", setsPage)
+    fpsLabel.Size = UDim2.new(1,0,0,22)
+    fpsLabel.LayoutOrder = 3
+    fpsLabel.BackgroundTransparency = 1
+    fpsLabel.Text = "FPS: --"
+    fpsLabel.TextColor3 = currentTheme.TextSecondary
+    fpsLabel.TextSize = 8
+    fpsLabel.Font = Enum.Font.GothamBold
+    fpsLabel.TextXAlignment = Enum.TextXAlignment.Left
+    fpsLabel.Visible = false
+    task.spawn(function()
+        local last=tick(); local frames=0
+        while task.wait(0.25) do
+            if not fpsLabel or not fpsLabel.Parent then break end
+            frames=frames+1
+            local now=tick()
+            if now-last >= 0.5 then
+                local fps=math.floor(frames/(now-last)+0.5)
+                fpsLabel.Text="FPS: "..fps
+                fpsLabel.Visible=GestioConfig.settingsShowFps
+                frames=0; last=now
+            end
+        end
     end)
 
     local cfgSection = Instance.new("Frame", setsPage)
@@ -4170,6 +4608,10 @@ function buildGestioUI()
             end
             updateMobileSlideVisibility()
             refreshThirdPerson()
+            if UI_Bind_Registry.settingsCompactMode then UI_Bind_Registry.settingsCompactMode(GestioConfig.settingsCompactMode) end
+            updateWeaponChams()
+            updateCustomScope()
+            updateWorldPostFX()
             if GestioConfig.nightModeEnabled then
                 applyNightPreset(GestioConfig.nightPreset)
             else
@@ -4306,7 +4748,7 @@ local function setupMemesenseSilentSendHook()
 end
 
 -- ==========================================
--- ENGINE LAUNCH
+-- ENGINE LAUNCH / MEMESENSE VISUAL EXTENSION
 -- ==========================================
 setupSilentAimHooks()
 setupBloxStrikeShootHook()
