@@ -43,19 +43,6 @@ local GestioConfig = {
     bulletTrailEnabled = true,
     bulletFlashEnabled = true,
 
-    -- Advanced Bullet Tracer
-    bulletTracerCoreWidth = 0.08,
-    bulletTracerGlowWidth = 0.25,
-    bulletTracerLength = 8,
-    bulletTracerSpeed = 800,
-    bulletTracerFadeTime = 0.15,
-    bulletTracerBloomPower = 0,
-    bulletTracerLightBrightness = 0.5,
-    bulletTracerLightRange = 12,
-    bulletTracerParticles = true,
-    bulletTracerParticleRate = 120,
-    bulletTracerSound = true,
-
     -- Sliders & Values
     rageFov = 360,
     rageTargetMode = "Distance",
@@ -73,6 +60,7 @@ local GestioConfig = {
     silentAimTeamCheck = true,
     silentAimVisibleCheck = false,
     silentAimAimHead = true,
+    pSilentEnabled = false,
     wallbangEnabled = false,
     showSilentFovCircle = true,
 
@@ -141,7 +129,6 @@ local UI_Bind_Registry = {}
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
-local Debris = game:GetService("Debris")
 local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
 local Lighting = game:GetService("Lighting")
@@ -309,199 +296,81 @@ local TARGET_HYSTERESIS_TIME = 0.12
 local aimboneIndex = 1
 
 local silentAimResolved = nil
+-- Forward declarations: the shoot hook is defined before the Silent Aim helpers.
 local getSilentAimTarget
 local silentAimCamPosAim
+local silentAimHooked = false
+local silentAimCamHooked = false
 local bloxStrikeShootHooked = false
-
-local function createAdvancedBulletTracer(origin, direction, distance)
-    local cfg = GestioConfig
-    if not origin or not direction or distance <= 0 then return end
-
-    direction = direction.Unit
-
-    local settings = {
-        CoreWidth = math.max(0.02, tonumber(cfg.bulletTracerCoreWidth) or 0.08),
-        GlowWidth = math.max(0.04, tonumber(cfg.bulletTracerGlowWidth) or 0.25),
-        Length = math.max(0.5, tonumber(cfg.bulletTracerLength) or 8),
-        Speed = math.max(50, tonumber(cfg.bulletTracerSpeed) or 800),
-        FadeTime = math.max(0.03, tonumber(cfg.bulletTracerFadeTime) or 0.15),
-        BloomPower = math.max(0, tonumber(cfg.bulletTracerBloomPower) or 0),
-        LightBrightness = math.max(0, tonumber(cfg.bulletTracerLightBrightness) or 0.5),
-        LightRange = math.max(1, tonumber(cfg.bulletTracerLightRange) or 12),
-        ParticleRate = math.max(1, tonumber(cfg.bulletTracerParticleRate) or 120)
-    }
-
-    local folder = bulletTracerFolder
-    if not folder or not folder.Parent then
-        folder = Instance.new("Folder")
-        folder.Name = "Gestio_AdvancedBulletTracers"
-        folder.Parent = Workspace.CurrentCamera or Workspace
-        bulletTracerFolder = folder
-    end
-
-    local length = math.min(settings.Length, math.max(0.5, distance))
-    local travelTime = distance / settings.Speed
-
-    local function makePart(name, width, lengthMult, transparency, color)
-        local part = Instance.new("Part")
-        part.Name = name
-        part.Anchored = true
-        part.CanCollide = false
-        part.CanTouch = false
-        part.CanQuery = false
-        part.CastShadow = false
-        part.Material = Enum.Material.Neon
-        part.Color = color
-        part.Transparency = transparency
-        part.Size = Vector3.new(width, width, math.max(0.5, length * lengthMult))
-        part.Parent = folder
-        return part
-    end
-
-    local core = makePart(
-        "TracerCore",
-        settings.CoreWidth,
-        1,
-        0,
-        Color3.fromRGB(255, 20, 20)
-    )
-
-    local glow = makePart(
-        "TracerGlow",
-        settings.GlowWidth,
-        1.2,
-        0.5,
-        Color3.fromRGB(255, 50, 50)
-    )
-
-    local outer = makePart(
-        "TracerOuter",
-        settings.GlowWidth * 1.8,
-        1.4,
-        0.75,
-        Color3.fromRGB(180, 0, 0)
-    )
-
-    local midpoint = origin + direction * (length * 0.5)
-    local initialCF = CFrame.lookAt(midpoint, midpoint + direction)
-
-    core.CFrame = initialCF
-    glow.CFrame = initialCF
-    outer.CFrame = initialCF
-
-    local attachment0 = Instance.new("Attachment")
-    attachment0.Name = "TrailStart"
-    attachment0.Parent = core
-
-    local attachment1 = Instance.new("Attachment")
-    attachment1.Name = "TrailEnd"
-    attachment1.Position = Vector3.new(0, 0, -length * 0.5)
-    attachment1.Parent = core
-
-    local trail = Instance.new("Trail")
-    trail.Name = "NeonAfterImage"
-    trail.Attachment0 = attachment0
-    trail.Attachment1 = attachment1
-    trail.Color = ColorSequence.new{
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 20, 20)),
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 50, 50)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(180, 0, 0))
-    }
-    trail.Transparency = NumberSequence.new{
-        NumberSequenceKeypoint.new(0, 0.25),
-        NumberSequenceKeypoint.new(1, 1)
-    }
-    trail.Lifetime = 0.12
-    trail.MinLength = 0.05
-    trail.FaceCamera = true
-    trail.WidthScale = NumberSequence.new{
-        NumberSequenceKeypoint.new(0, 1),
-        NumberSequenceKeypoint.new(0.5, 0.7),
-        NumberSequenceKeypoint.new(1, 0)
-    }
-    trail.LightEmission = 1
-    trail.LightInfluence = 0
-    trail.Parent = core
-
-    if cfg.bulletTracerParticles then
-        local emitter = Instance.new("ParticleEmitter")
-        emitter.Name = "DistortionParticles"
-        emitter.Texture = "rbxasset://textures/particles/smoke_main.dds"
-        emitter.Color = ColorSequence.new(Color3.fromRGB(255, 20, 20))
-        emitter.LightEmission = 1
-        emitter.LightInfluence = 0
-        emitter.Size = NumberSequence.new{
-            NumberSequenceKeypoint.new(0, 0.55),
-            NumberSequenceKeypoint.new(1, 0)
-        }
-        emitter.Transparency = NumberSequence.new{
-            NumberSequenceKeypoint.new(0, 0.65),
-            NumberSequenceKeypoint.new(1, 1)
-        }
-        emitter.Lifetime = NumberRange.new(0.08, 0.15)
-        emitter.Rate = settings.ParticleRate
-        emitter.Speed = NumberRange.new(2, 4)
-        emitter.SpreadAngle = Vector2.new(15, 15)
-        emitter.Rotation = NumberRange.new(-180, 180)
-        emitter.RotSpeed = NumberRange.new(-200, 200)
-        emitter.Enabled = true
-        emitter.Parent = core
-    end
-
-    local light = Instance.new("PointLight")
-    light.Name = "TracerLight"
-    light.Color = Color3.fromRGB(255, 20, 20)
-    light.Brightness = settings.LightBrightness
-    light.Range = settings.LightRange
-    light.Shadows = false
-    light.Parent = core
-
-    local targetPosition = origin + direction * distance
-    local targetCenter = targetPosition - direction * (length * 0.5)
-    local targetCF = CFrame.lookAt(targetCenter, targetCenter + direction)
-
-    local tweenInfo = TweenInfo.new(
-        math.max(0.01, travelTime),
-        Enum.EasingStyle.Linear,
-        Enum.EasingDirection.Out
-    )
-
-    TweenService:Create(core, tweenInfo, {CFrame = targetCF}):Play()
-    TweenService:Create(glow, tweenInfo, {CFrame = targetCF}):Play()
-    TweenService:Create(outer, tweenInfo, {CFrame = targetCF}):Play()
-
-    task.delay(math.max(0.01, travelTime), function()
-        if not core or not core.Parent then return end
-
-        local fadeInfo = TweenInfo.new(
-            settings.FadeTime,
-            Enum.EasingStyle.Quad,
-            Enum.EasingDirection.In
-        )
-
-        TweenService:Create(core, fadeInfo, {Transparency = 1}):Play()
-        TweenService:Create(glow, fadeInfo, {Transparency = 1}):Play()
-        TweenService:Create(outer, fadeInfo, {Transparency = 1}):Play()
-        TweenService:Create(light, fadeInfo, {Brightness = 0}):Play()
-
-        for _, child in ipairs(core:GetChildren()) do
-            if child:IsA("ParticleEmitter") then
-                child.Enabled = false
-            end
-        end
-    end)
-
-    task.delay(math.max(0.1, travelTime + settings.FadeTime + 0.08), function()
-        pcall(function()
-            if core then core:Destroy() end
-            if glow then glow:Destroy() end
-            if outer then outer:Destroy() end
-        end)
-    end)
-end
 
 local function setupBloxStrikeShootHook()
     if bloxStrikeShootHooked then return end
+    
+    pcall(function()
+        UserInputService.InputBegan:Connect(function(input, gameProcessed)
+            if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
+                local char = player.Character
+                local tool = char and char:FindFirstChildOfClass("Tool")
+                
+                if (GestioConfig.bulletTrailEnabled or GestioConfig.bulletFlashEnabled) and tool then
+                    local cam = Workspace.CurrentCamera or camera
+                    if not cam then return end
+                    
+                    local origin = cam.CFrame.Position
+                    local muzzle = tool:FindFirstChild("Muzzle") or tool:FindFirstChild("Handle")
+                    if muzzle and muzzle:IsA("BasePart") then
+                        origin = muzzle.Position
+                    end
+
+                    local rayParams = RaycastParams.new()
+                    rayParams.FilterType = Enum.RaycastFilterType.Exclude
+                    rayParams.FilterDescendantsInstances = {player.Character, camera}
+                    rayParams.IgnoreWater = true
+                    
+                    local hit = Workspace:Raycast(origin, cam.CFrame.LookVector * 500, rayParams)
+                    local bulletEnd = hit and hit.Position or (origin + cam.CFrame.LookVector * 500)
+                    local dist = (origin - bulletEnd).Magnitude
+
+                    if GestioConfig.bulletTrailEnabled then
+                        local trail = Instance.new("Part")
+                        trail.Anchored = true
+                        trail.CanCollide = false
+                        trail.CastShadow = false
+                        trail.Material = Enum.Material.Neon
+                        trail.Color = Color3.fromRGB(255, 20, 20)
+                        trail.Size = Vector3.new(0.08, 0.08, dist)
+                        trail.CFrame = CFrame.lookAt(origin, bulletEnd) * CFrame.new(0, 0, -dist / 2)
+                        trail.Parent = Workspace
+                        
+                        TweenService:Create(trail, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = Vector3.new(0, 0, dist), Transparency = 1}):Play()
+                        task.delay(0.15, function() pcall(function() trail:Destroy() end) end)
+                    end
+
+                    if GestioConfig.bulletFlashEnabled then
+                        local flash = Instance.new("Part")
+                        flash.Anchored = true
+                        flash.CanCollide = false
+                        flash.CastShadow = false
+                        flash.Material = Enum.Material.Neon
+                        flash.Color = Color3.fromRGB(255, 80, 80)
+                        flash.Shape = Enum.PartType.Ball
+                        flash.Size = Vector3.new(0.6, 0.6, 0.6)
+                        flash.CFrame = CFrame.new(bulletEnd)
+                        flash.Parent = Workspace
+                        
+                        local s = Instance.new("Sound")
+                        s.SoundId = "rbxassetid://9113089896"
+                        s.Volume = 0.2
+                        s.Parent = flash
+                        s:Play()
+
+                        TweenService:Create(flash, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = Vector3.new(0, 0, 0), Transparency = 1}):Play()
+                        task.delay(0.15, function() pcall(function() flash:Destroy() end) end)
+                    end
+                end
+            end
+        end)
+    end)
 
     pcall(function()
         local controllers = ReplicatedStorage:FindFirstChild("Controllers")
@@ -518,102 +387,48 @@ local function setupBloxStrikeShootHook()
 
         local originalShootWeapon = inventoryController.ShootWeapon
         inventoryController.ShootWeapon = function(self, data, ...)
-            if type(data) == "table" and type(data.Bullets) == "table" then
-                -- 1. Silent Aim: intercept bullet directions at ShootWeapon
-                if GestioConfig.silentAimEnabled then
-                    local shotTarget = getSilentAimTarget and getSilentAimTarget() or nil
-                    local shotAllowed = true
+            if GestioConfig.silentAimEnabled
+                and type(data) == "table"
+                and type(data.Bullets) == "table" then
 
-                    if GestioConfig.silentAimHitChance < 100 then
-                        shotAllowed = math.random(1, 100) <= math.clamp(GestioConfig.silentAimHitChance, 0, 100)
-                    end
+                -- Resolve the target at the actual weapon call instead of relying only
+                -- on the RenderStepped snapshot. This removes frame-rate dependent
+                -- target staleness for automatic weapons and multi-pellet shots.
+                local shotTarget = getSilentAimTarget and getSilentAimTarget() or nil
+                local shotAllowed = true
 
-                    if shotTarget and shotAllowed then
-                        local camPos, aimPos = silentAimCamPosAim(shotTarget)
-                        if camPos and aimPos then
-                            for _, bullet in pairs(data.Bullets) do
-                                if type(bullet) == "table" then
-                                    local bulletOrigin = bullet.Origin or bullet.StartingPoint or bullet.Position or camPos
-                                    if typeof(bulletOrigin) == "CFrame" then bulletOrigin = bulletOrigin.Position end
-
-                                    if typeof(bulletOrigin) == "Vector3" then
-                                        local delta = aimPos - bulletOrigin
-                                        if delta.Magnitude > 0.001 then
-                                            bullet.Direction = delta.Unit
-                                        end
-
-                                        if GestioConfig.wallbangEnabled then
-                                            bullet.Penetration = 9999
-                                            bullet.Wallbang = true
-                                            bullet.IgnoreEnvironment = true
-                                        end
-                                    end
-                                end
-                            end
-                        end
-                    end
+                -- Hit chance is evaluated once per actual ShootWeapon invocation.
+                -- A single invocation may contain multiple pellets; they share the
+                -- same decision so one shot is not partially modified.
+                if GestioConfig.silentAimHitChance < 100 then
+                    shotAllowed = math.random(1, 100) <= math.clamp(GestioConfig.silentAimHitChance, 0, 100)
                 end
 
-                -- 2. Tracers Logic
-                if GestioConfig.bulletTrailEnabled or GestioConfig.bulletFlashEnabled then
-                    local cam = Workspace.CurrentCamera or camera
-                    for _, bullet in pairs(data.Bullets) do
-                        if type(bullet) == "table" then
-                            local bOrigin = bullet.Origin or bullet.StartingPoint or bullet.Position
-                            if typeof(bOrigin) == "CFrame" then bOrigin = bOrigin.Position end
-                            local bDir = bullet.Direction
+                if shotTarget and shotAllowed then
+                    local camPos, aimPos = silentAimCamPosAim(shotTarget)
+                    if camPos and aimPos then
+                        for _, bullet in pairs(data.Bullets) do
+                            if type(bullet) == "table" then
+                                local origin = bullet.Origin
+                                    or bullet.StartingPoint
+                                    or bullet.Position
+                                    or camPos
 
-                            if typeof(bOrigin) == "Vector3" and typeof(bDir) == "Vector3" then
-                                local tracerOrigin = bOrigin
-                                if cam and (bOrigin - cam.CFrame.Position).Magnitude < 2 then
-                                    tracerOrigin = (cam.CFrame * CFrame.new(0, -0.4, -2.5)).Position
+                                if typeof(origin) == "CFrame" then
+                                    origin = origin.Position
                                 end
 
-                                local rayParams = RaycastParams.new()
-                                rayParams.FilterType = Enum.RaycastFilterType.Exclude
-                                rayParams.FilterDescendantsInstances = {player.Character, cam, bulletTracerFolder}
-                                rayParams.IgnoreWater = true
-
-                                local maxDistance = 500
-                                local hit = Workspace:Raycast(tracerOrigin, bDir.Unit * maxDistance, rayParams)
-                                local bulletEnd = hit and hit.Position or (tracerOrigin + bDir.Unit * maxDistance)
-                                local distance = (bulletEnd - tracerOrigin).Magnitude
-
-                                if GestioConfig.bulletTrailEnabled then
-                                    createAdvancedBulletTracer(tracerOrigin, bulletEnd - tracerOrigin, distance)
-                                end
-
-                                if GestioConfig.bulletFlashEnabled then
-                                    local flash = Instance.new("Part")
-                                    flash.Name = "TracerImpactFlash"
-                                    flash.Anchored = true
-                                    flash.CanCollide = false
-                                    flash.CanTouch = false
-                                    flash.CanQuery = false
-                                    flash.CastShadow = false
-                                    flash.Material = Enum.Material.Neon
-                                    flash.Color = Color3.fromRGB(255, 80, 80)
-                                    flash.Shape = Enum.PartType.Ball
-                                    flash.Size = Vector3.new(0.6, 0.6, 0.6)
-                                    flash.CFrame = CFrame.new(bulletEnd)
-                                    flash.Parent = bulletTracerFolder or Workspace
-
-                                    if GestioConfig.bulletTracerSound then
-                                        local sound = Instance.new("Sound")
-                                        sound.Name = "ImpactSound"
-                                        sound.SoundId = "rbxassetid://9113089896"
-                                        sound.Volume = 0.2
-                                        sound.Parent = flash
-                                        pcall(function() sound:Play() end)
+                                if typeof(origin) == "Vector3" then
+                                    local delta = aimPos - origin
+                                    if delta.Magnitude > 0.001 then
+                                        bullet.Direction = delta.Unit
                                     end
 
-                                    TweenService:Create(
-                                        flash,
-                                        TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-                                        {Size = Vector3.zero, Transparency = 1}
-                                    ):Play()
-
-                                    Debris:AddItem(flash, 0.2)
+                                    if GestioConfig.wallbangEnabled then
+                                        bullet.Penetration = 9999
+                                        bullet.Wallbang = true
+                                        bullet.IgnoreEnvironment = true
+                                    end
                                 end
                             end
                         end
@@ -776,13 +591,110 @@ end
 
 silentAimCamPosAim = function(targetPart)
     targetPart = targetPart or silentAimResolved
-    if not (GestioConfig.silentAimEnabled and targetPart) then return nil end
+
+    -- pSilent and classic Silent Aim share the same target/prediction pipeline.
+    if not ((GestioConfig.silentAimEnabled or GestioConfig.pSilentEnabled) and targetPart) then
+        return nil
+    end
+
     local cam = Workspace.CurrentCamera or camera
     if not cam then return nil end
+
     local camPos = cam.CFrame.Position
     local aimPos = getKinematicAimPosition(targetPart)
 
+    -- getKinematicAimPosition() is the single source of prediction.
+    -- Do not apply a second lateral lead here.
     return camPos, aimPos
+end
+
+local function setupSilentAimHooks()
+    if silentAimHooked and silentAimCamHooked then return end
+
+    if not silentAimHooked and hookmetamethod then
+        pcall(function()
+            local mouse = player:GetMouse()
+            local oldIndex
+            oldIndex = hookmetamethod(mouse, "__index", function(self, key)
+                if GestioConfig.silentAimEnabled and silentAimResolved and (key == "Hit" or key == "UnitRay") then
+                    local camPos, aimPos = silentAimCamPosAim()
+                    if camPos then
+                        if key == "Hit" then
+                            return CFrame.new(camPos, aimPos)
+                        else
+                            return Ray.new(camPos, (aimPos - camPos).Unit)
+                        end
+                    end
+                end
+                return oldIndex(self, key)
+            end)
+        end)
+        silentAimHooked = true
+    end
+
+    if not silentAimCamHooked and hookmetamethod and getnamecallmethod then
+        pcall(function()
+            local oldNamecall
+            oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
+                local method = getnamecallmethod()
+                local args = {...}
+
+                if GestioConfig.silentAimEnabled and silentAimResolved and noRecoil.isShooting
+                    and self == camera
+                    and (method == "ViewportPointToRay" or method == "ScreenPointToRay") then
+                    local camPos, aimPos = silentAimCamPosAim()
+                    if camPos then
+                        return Ray.new(camPos, (aimPos - camPos).Unit)
+                    end
+                end
+
+                if GestioConfig.pSilentEnabled and silentAimResolved and self == Workspace then
+                    local camPos, aimPos = silentAimCamPosAim()
+                    if aimPos then
+                        if method == "Raycast" then
+                            local origin = args[1]
+                            local originalDirection = args[2]
+                            if typeof(origin) == "Vector3" and typeof(originalDirection) == "Vector3" then
+                                local magnitude = originalDirection.Magnitude
+                                local delta = aimPos - origin
+                                if magnitude > 0 and delta.Magnitude > 0.001 then
+                                    args[2] = delta.Unit * magnitude
+                                    if GestioConfig.wallbangEnabled then
+                                        local wbParams = RaycastParams.new()
+                                        wbParams.FilterType = Enum.RaycastFilterType.Include
+                                        local charList = {}
+                                        for _, plr in ipairs(Players:GetPlayers()) do
+                                            if plr.Character then
+                                                table.insert(charList, plr.Character)
+                                            end
+                                        end
+                                        wbParams.FilterDescendantsInstances = charList
+                                        wbParams.IgnoreWater = true
+                                        args[3] = wbParams
+                                    end
+                                    return oldNamecall(self, unpack(args))
+                                end
+                            end
+                        elseif method == "FindPartOnRay"
+                            or method == "FindPartOnRayWithIgnoreList"
+                            or method == "FindPartOnRayWithWhitelist" then
+                            local oldRay = args[1]
+                            if typeof(oldRay) == "Ray" then
+                                local delta = aimPos - oldRay.Origin
+                                if delta.Magnitude > 0.001 then
+                                    args[1] = Ray.new(oldRay.Origin, delta.Unit * oldRay.Direction.Magnitude)
+                                    return oldNamecall(self, unpack(args))
+                                end
+                            end
+                        end
+                    end
+                end
+
+                return oldNamecall(self, ...)
+            end)
+        end)
+        silentAimCamHooked = true
+    end
 end
 
 -- ==========================================
@@ -996,10 +908,6 @@ mainContainer.Parent = targetGui
 
 local overlayContainer = Instance.new("Folder", mainContainer)
 overlayContainer.Name = "Gestio_2DOverlay"
-
-local bulletTracerFolder = Instance.new("Folder")
-bulletTracerFolder.Name = "Gestio_AdvancedBulletTracers"
-bulletTracerFolder.Parent = Workspace.CurrentCamera or Workspace
 
 local grenadeContainer = Instance.new("Folder", mainContainer)
 grenadeContainer.Name = "Gestio_GrenadeOverlay"
@@ -1518,10 +1426,8 @@ function cleanup()
     pcall(function() hitmarkerGui:Destroy() end)
     
     pcall(function()
-        if bulletTracerFolder then
-            bulletTracerFolder:Destroy()
-            bulletTracerFolder = nil
-        end
+        if bulletTrail then bulletTrail:Destroy() end
+        if bulletFlash then bulletFlash:Destroy() end
     end)
     
     if genv then genv.GestioShowHitmarker = nil end
@@ -2506,7 +2412,9 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         end
     end
 
-    if GestioConfig.silentAimEnabled then
+    if GestioConfig.silentAimEnabled or GestioConfig.pSilentEnabled then
+        -- Both Silent Aim and pSilent need a live target cache.
+        -- ShootWeapon still resolves its own target at fire time.
         silentAimResolved = getSilentAimTarget()
     else
         silentAimResolved = nil
@@ -2517,6 +2425,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         camera.CFrame = camera.CFrame * CFrame.Angles(-comp, 0, 0)
     end
 
+    -- RAGEBOT & AIMBOT EXECUTION
     if GestioConfig.rageBotEnabled then
         local target = getRageTarget()
         if target and target.Part and target.Part.Parent then
@@ -3668,6 +3577,7 @@ function buildGestioUI()
             addInspectorToggle(96, "Visible Check", GestioConfig.silentAimVisibleCheck, function(v) GestioConfig.silentAimVisibleCheck = v end)
             addInspectorToggle(122, "Aim Head", GestioConfig.silentAimAimHead, function(v) GestioConfig.silentAimAimHead = v end)
             addInspectorToggle(148, "Show Silent FOV", GestioConfig.showSilentFovCircle, function(v) GestioConfig.showSilentFovCircle = v end)
+            addInspectorToggle(174, "pSilent (Raycast)", GestioConfig.pSilentEnabled, function(v) GestioConfig.pSilentEnabled = v end)
             addInspectorToggle(200, "Advanced Wallbang", GestioConfig.wallbangEnabled, function(v) GestioConfig.wallbangEnabled = v end)
         elseif moduleName == "RageBot" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 150)
@@ -4194,5 +4104,6 @@ end)
 -- ==========================================
 -- ENGINE LAUNCH
 -- ==========================================
+setupSilentAimHooks()
 setupBloxStrikeShootHook()
 buildGestioUI()
