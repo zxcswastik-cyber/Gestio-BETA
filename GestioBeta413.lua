@@ -5327,21 +5327,10 @@ task.spawn(function()
 end)
 
 -- ==========================================
--- ENGINE LAUNCH / MEMESENSE VISUAL EXTENSION
+-- SAFE ENGINE LAUNCH
 -- ==========================================
-setupSilentAimHooks()
-setupBloxStrikeShootHook()
-setupMemeSenseWeaponMods()
-task.spawn(function()
-    -- Blox Strike can initialize weapon closures after the first getgc pass.
-    for _ = 1, 20 do
-        task.wait(0.5)
-        pcall(setupMemeSenseWeaponMods)
-        pcall(setupMemeSenseSmokeHook)
-    end
-end)
-task.spawn(function()
-    task.wait(1)
-    setupMemesenseSilentSendHook()
-end)
-buildGestioUI()
+-- Boot fix: start only the stable Gestio/UI engine first.
+-- MemeSense weapon hooks are intentionally disabled here so a missing
+-- executor API cannot abort the entire script during injection.
+pcall(setupSilentAimHooks)
+pcall(buildGestioUI)
