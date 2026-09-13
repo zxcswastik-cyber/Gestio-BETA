@@ -3229,29 +3229,111 @@ end))
 
 -- ==========================================
 -- ANTI-AIM ROTATION LOOP
+-- Body faces away from the local camera while the
+-- local camera remains completely independent.
+-- During a shot, the neck briefly follows the
+-- camera aim direction, then immediately returns
+-- to the anti-aim pose.
 -- ==========================================
+local antiAimFireUntil = 0
+local antiAimNeckC0 = nil
+local antiAimNeck = nil
+local antiAimLastChar = nil
+
+local function markAntiAimShot()
+    -- Short enough to be visually almost instantaneous, but long enough
+    -- to cover the firing frame on fast weapons.
+    antiAimFireUntil = math.max(antiAimFireUntil, tick() + 0.055)
+end
+
+table.insert(connections, UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
+        markAntiAimShot()
+    end
+end))
+
 table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     local char = player.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
     local hum = char and char:FindFirstChildOfClass("Humanoid")
+    local cam = Workspace.CurrentCamera or camera
 
     if not GestioConfig.antiAimEnabled then
         if hum and savedAutoRotate ~= nil then
             hum.AutoRotate = savedAutoRotate
             savedAutoRotate = nil
         end
+
+        if antiAimNeck and antiAimNeckC0 then
+            pcall(function() antiAimNeck.C0 = antiAimNeckC0 end)
+        end
+        antiAimNeck = nil
+        antiAimNeckC0 = nil
+        antiAimLastChar = nil
         return
     end
 
-    if not hrp or not hum or hum.Health <= 0 then return end
+    if not hrp or not hum or hum.Health <= 0 or not cam then return end
 
     if savedAutoRotate == nil then
         savedAutoRotate = hum.AutoRotate
         hum.AutoRotate = false
     end
 
-    currentSpinAngle = (currentSpinAngle + (GestioConfig.spinSpeed * dt * 60)) % 360
-    hrp.CFrame = CFrame.new(hrp.Position) * CFrame.Angles(0, math.rad(currentSpinAngle), 0)
+    -- Find the neck once per character. Works with both R6 and R15.
+    if antiAimLastChar ~= char then
+        antiAimLastChar = char
+        antiAimNeck = nil
+        antiAimNeckC0 = nil
+
+        local torso = char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso")
+        if torso then
+            local neck = torso:FindFirstChild("Neck")
+            if neck and neck:IsA("Motor6D") then
+                antiAimNeck = neck
+                antiAimNeckC0 = neck.C0
+            end
+        end
+    end
+
+    -- Camera horizontal direction. Ignore vertical camera pitch for the body.
+    local look = cam.CFrame.LookVector
+    local flatLook = Vector3.new(look.X, 0, look.Z)
+    if flatLook.Magnitude < 0.001 then
+        flatLook = hrp.CFrame.LookVector * Vector3.new(1, 0, 1)
+    end
+    flatLook = flatLook.Unit
+
+    -- Anti-aim body: exactly 180 degrees away from where the local camera looks.
+    local bodyLook = -flatLook
+    local bodyCF = CFrame.lookAt(hrp.Position, hrp.Position + bodyLook, Vector3.yAxis)
+    hrp.CFrame = bodyCF
+
+    local shootingWindow = tick() < antiAimFireUntil or noRecoil.isShooting
+
+    if antiAimNeck and antiAimNeckC0 then
+        if shootingWindow then
+            -- Brief firing pose: turn the head toward the exact camera aim.
+            -- The body stays anti-aimed, so the local camera never gets forced around.
+            local head = char:FindFirstChild("Head")
+            if head then
+                local toAim = cam.CFrame.LookVector
+                local localDir = head.CFrame:VectorToObjectSpace(toAim)
+                local yaw = math.atan2(-localDir.X, -localDir.Z)
+                local pitch = math.asin(math.clamp(localDir.Y, -1, 1))
+
+                -- Limit extreme neck movement so animations do not tear.
+                yaw = math.clamp(yaw, math.rad(-80), math.rad(80))
+                pitch = math.clamp(pitch, math.rad(-55), math.rad(55))
+                antiAimNeck.C0 = antiAimNeckC0 * CFrame.Angles(-pitch, yaw, 0)
+            end
+        else
+            -- Head tilted backwards for the normal anti-aim pose.
+            antiAimNeck.C0 = antiAimNeckC0 * CFrame.Angles(math.rad(-55), 0, 0)
+        end
+    end
 end))
 
 -- ==========================================
