@@ -387,7 +387,7 @@ local function setupBloxStrikeShootHook()
 
         local originalShootWeapon = inventoryController.ShootWeapon
         inventoryController.ShootWeapon = function(self, data, ...)
-            if GestioConfig.silentAimEnabled
+            if (GestioConfig.silentAimEnabled or GestioConfig.pSilentEnabled)
                 and type(data) == "table"
                 and type(data.Bullets) == "table" then
 
@@ -591,8 +591,6 @@ end
 
 silentAimCamPosAim = function(targetPart)
     targetPart = targetPart or silentAimResolved
-
-    -- pSilent and classic Silent Aim share the same target/prediction pipeline.
     if not ((GestioConfig.silentAimEnabled or GestioConfig.pSilentEnabled) and targetPart) then
         return nil
     end
@@ -603,8 +601,7 @@ silentAimCamPosAim = function(targetPart)
     local camPos = cam.CFrame.Position
     local aimPos = getKinematicAimPosition(targetPart)
 
-    -- getKinematicAimPosition() is the single source of prediction.
-    -- Do not apply a second lateral lead here.
+    -- One target -> one predicted point -> one final shot direction.
     return camPos, aimPos
 end
 
@@ -2413,8 +2410,8 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     end
 
     if GestioConfig.silentAimEnabled or GestioConfig.pSilentEnabled then
-        -- Both Silent Aim and pSilent need a live target cache.
-        -- ShootWeapon still resolves its own target at fire time.
+        -- Keep a live target for both Silent Aim and pSilent.
+        -- ShootWeapon also resolves the target again at fire time.
         silentAimResolved = getSilentAimTarget()
     else
         silentAimResolved = nil
