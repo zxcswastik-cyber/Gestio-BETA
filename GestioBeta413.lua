@@ -83,7 +83,6 @@ local GestioConfig = {
     scopeDynamicGap = false,
     worldSkyboxEnabled = false,
     worldPostFXEnabled = false,
-    settingsShowFps = false,
     settingsShowNotifications = true,
     settingsCompactMode = false,
     menuKey = "RightShift",
@@ -371,6 +370,178 @@ local themeLibrary = {
 }
 
 local currentTheme = themeLibrary["Charcoal Crimson"]
+
+
+-- ==========================================
+-- GESTIO NOTIFICATION CENTER
+-- Sleek red/black toast system matching the menu.
+-- ==========================================
+local GestioNotificationGui = nil
+local GestioNotificationHolder = nil
+local GestioNotificationSerial = 0
+
+local function ensureGestioNotifications()
+    if GestioNotificationGui and GestioNotificationGui.Parent and GestioNotificationHolder and GestioNotificationHolder.Parent then
+        return true
+    end
+
+    pcall(function()
+        local old = targetGui:FindFirstChild("GestioNotificationsGui")
+        if old then old:Destroy() end
+    end)
+
+    GestioNotificationGui = Instance.new("ScreenGui")
+    GestioNotificationGui.Name = "GestioNotificationsGui"
+    GestioNotificationGui.ResetOnSpawn = false
+    GestioNotificationGui.IgnoreGuiInset = true
+    GestioNotificationGui.DisplayOrder = 250
+    GestioNotificationGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    GestioNotificationGui.Parent = targetGui
+
+    GestioNotificationHolder = Instance.new("Frame")
+    GestioNotificationHolder.Name = "NotificationHolder"
+    GestioNotificationHolder.AnchorPoint = Vector2.new(1, 1)
+    GestioNotificationHolder.Position = UDim2.new(1, -18, 1, -18)
+    GestioNotificationHolder.Size = UDim2.new(0, 300, 1, -36)
+    GestioNotificationHolder.BackgroundTransparency = 1
+    GestioNotificationHolder.Parent = GestioNotificationGui
+
+    local layout = Instance.new("UIListLayout")
+    layout.FillDirection = Enum.FillDirection.Vertical
+    layout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+    layout.VerticalAlignment = Enum.VerticalAlignment.Bottom
+    layout.Padding = UDim.new(0, 8)
+    layout.Parent = GestioNotificationHolder
+
+    return true
+end
+
+function GestioNotify(title, message, kind, duration)
+    if GestioConfig.settingsShowNotifications == false then return end
+    if not ensureGestioNotifications() then return end
+
+    GestioNotificationSerial = GestioNotificationSerial + 1
+    local serial = GestioNotificationSerial
+    title = tostring(title or "Gestio")
+    message = tostring(message or "")
+    duration = tonumber(duration) or 2.5
+
+    local accent = currentTheme.Accent
+    if kind == "success" then
+        accent = Color3.fromRGB(75, 190, 105)
+    elseif kind == "warning" then
+        accent = Color3.fromRGB(225, 165, 55)
+    elseif kind == "error" then
+        accent = Color3.fromRGB(225, 65, 70)
+    end
+
+    local card = Instance.new("Frame")
+    card.Name = "Toast_" .. serial
+    card.Size = UDim2.new(1, 0, 0, 64)
+    card.BackgroundColor3 = currentTheme.Background
+    card.BackgroundTransparency = 0.04
+    card.BorderSizePixel = 0
+    card.ClipsDescendants = true
+    card.LayoutOrder = serial
+    card.Parent = GestioNotificationHolder
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = card
+
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = currentTheme.Border
+    stroke.Thickness = 1
+    stroke.Transparency = 0.05
+    stroke.Parent = card
+
+    local accentBar = Instance.new("Frame")
+    accentBar.Size = UDim2.new(0, 3, 1, -14)
+    accentBar.Position = UDim2.new(0, 7, 0, 7)
+    accentBar.BackgroundColor3 = accent
+    accentBar.BorderSizePixel = 0
+    accentBar.Parent = card
+    Instance.new("UICorner", accentBar).CornerRadius = UDim.new(0, 2)
+
+    local icon = Instance.new("TextLabel")
+    icon.Size = UDim2.new(0, 28, 0, 28)
+    icon.Position = UDim2.new(0, 17, 0, 10)
+    icon.BackgroundColor3 = currentTheme.Sidebar
+    icon.BackgroundTransparency = 0.1
+    icon.Text = kind == "error" and "!" or kind == "warning" and "!" or "✓"
+    icon.TextColor3 = accent
+    icon.TextSize = 14
+    icon.Font = Enum.Font.GothamBold
+    icon.Parent = card
+    Instance.new("UICorner", icon).CornerRadius = UDim.new(1, 0)
+
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.Size = UDim2.new(1, -62, 0, 19)
+    titleLabel.Position = UDim2.new(0, 53, 0, 8)
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.Text = title
+    titleLabel.TextColor3 = currentTheme.TextPrimary
+    titleLabel.TextSize = 9
+    titleLabel.Font = Enum.Font.GothamBold
+    titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    titleLabel.Parent = card
+
+    local msgLabel = Instance.new("TextLabel")
+    msgLabel.Size = UDim2.new(1, -62, 0, 25)
+    msgLabel.Position = UDim2.new(0, 53, 0, 27)
+    msgLabel.BackgroundTransparency = 1
+    msgLabel.Text = message
+    msgLabel.TextColor3 = currentTheme.TextSecondary
+    msgLabel.TextSize = 8
+    msgLabel.Font = Enum.Font.Gotham
+    msgLabel.TextWrapped = true
+    msgLabel.TextXAlignment = Enum.TextXAlignment.Left
+    msgLabel.TextYAlignment = Enum.TextYAlignment.Top
+    msgLabel.Parent = card
+
+    local progress = Instance.new("Frame")
+    progress.Size = UDim2.new(1, -14, 0, 2)
+    progress.Position = UDim2.new(0, 7, 1, -5)
+    progress.BackgroundColor3 = currentTheme.Sidebar
+    progress.BorderSizePixel = 0
+    progress.Parent = card
+
+    local fill = Instance.new("Frame")
+    fill.Size = UDim2.new(1, 0, 1, 0)
+    fill.BackgroundColor3 = accent
+    fill.BorderSizePixel = 0
+    fill.Parent = progress
+
+    card.Position = UDim2.new(1, 24, 0, 0)
+    card.BackgroundTransparency = 1
+    titleLabel.TextTransparency = 1
+    msgLabel.TextTransparency = 1
+    icon.TextTransparency = 1
+    accentBar.BackgroundTransparency = 1
+
+    TweenService:Create(card, TweenInfo.new(0.28, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+        Position = UDim2.new(0, 0, 0, 0), BackgroundTransparency = 0.04
+    }):Play()
+    TweenService:Create(titleLabel, TweenInfo.new(0.2), {TextTransparency = 0}):Play()
+    TweenService:Create(msgLabel, TweenInfo.new(0.2), {TextTransparency = 0}):Play()
+    TweenService:Create(icon, TweenInfo.new(0.2), {TextTransparency = 0}):Play()
+    TweenService:Create(accentBar, TweenInfo.new(0.2), {BackgroundTransparency = 0}):Play()
+    TweenService:Create(fill, TweenInfo.new(duration, Enum.EasingStyle.Linear), {Size = UDim2.new(0, 0, 1, 0)}):Play()
+
+    task.delay(duration, function()
+        if not card or not card.Parent then return end
+        local out = TweenService:Create(card, TweenInfo.new(0.24, Enum.EasingStyle.Quint, Enum.EasingDirection.In), {
+            Position = UDim2.new(1, 24, 0, 0), BackgroundTransparency = 1
+        })
+        out:Play()
+        TweenService:Create(titleLabel, TweenInfo.new(0.18), {TextTransparency = 1}):Play()
+        TweenService:Create(msgLabel, TweenInfo.new(0.18), {TextTransparency = 1}):Play()
+        TweenService:Create(icon, TweenInfo.new(0.18), {TextTransparency = 1}):Play()
+        TweenService:Create(accentBar, TweenInfo.new(0.18), {BackgroundTransparency = 1}):Play()
+        out.Completed:Wait()
+        if card then card:Destroy() end
+    end)
+end
 
 -- ==========================================
 -- COMBAT ENGINE STATE VARIABLES
@@ -2029,6 +2200,7 @@ function cleanup()
     pcall(function() if targetGui:FindFirstChild("GestioToggleGui") then targetGui.GestioToggleGui:Destroy() end end)
     pcall(function() if targetGui:FindFirstChild("GestioFovGui") then targetGui.GestioFovGui:Destroy() end end)
     pcall(function() if targetGui:FindFirstChild("GestioWatermarkGui") then targetGui.GestioWatermarkGui:Destroy() end end)
+    pcall(function() if targetGui:FindFirstChild("GestioNotificationsGui") then targetGui.GestioNotificationsGui:Destroy() end end)
     pcall(function() if targetGui:FindFirstChild("GestioMainContainer") then targetGui.GestioMainContainer:Destroy() end end)
 end
 
@@ -3981,7 +4153,11 @@ function buildGestioUI()
 
     local function makeCategorySection(page, title, layoutOrder, cardCount)
         local count = cardCount or 4
-        local rows = math.ceil(count / 4)
+        -- The current mobile content width fits 3 cards per row.
+        -- Calculate section height from the real column count so cards
+        -- never spill into the next category.
+        local columns = 3
+        local rows = math.max(1, math.ceil(count / columns))
         local gridHeight = rows * 80
         local totalHeight = 22 + gridHeight
 
@@ -4662,6 +4838,9 @@ function buildGestioUI()
             GestioConfig[configKey] = newState
             updateCardVisual(newState)
             if onToggle then onToggle(newState) end
+            if configKey ~= "settingsShowNotifications" then
+                GestioNotify(title, newState and "Enabled" or "Disabled", newState and "success" or "warning", 1.8)
+            end
         end)
 
         if hasSettings then
@@ -4796,7 +4975,6 @@ function buildGestioUI()
     end)
 
     local settingsGrid = makeCategorySection(setsPage, "Interface", 2, 2)
-    createModuleCard(settingsGrid, "Show FPS", "settingsShowFps", nil, false)
     createModuleCard(settingsGrid, "Notifications", "settingsShowNotifications", nil, false)
     createModuleCard(settingsGrid, "Compact Mode", "settingsCompactMode", function(v)
         if UI_Bind_Registry.settingsCompactMode then UI_Bind_Registry.settingsCompactMode(v) end
@@ -4823,31 +5001,6 @@ function buildGestioUI()
         menuKeyIndex=(menuKeyIndex%#menuKeys)+1
         GestioConfig.menuKey=menuKeys[menuKeyIndex]
         keyBtn.Text="MENU KEY: "..GestioConfig.menuKey
-    end)
-
-    local fpsLabel = Instance.new("TextLabel", setsPage)
-    fpsLabel.Size = UDim2.new(1,0,0,22)
-    fpsLabel.LayoutOrder = 3
-    fpsLabel.BackgroundTransparency = 1
-    fpsLabel.Text = "FPS: --"
-    fpsLabel.TextColor3 = currentTheme.TextSecondary
-    fpsLabel.TextSize = 8
-    fpsLabel.Font = Enum.Font.GothamBold
-    fpsLabel.TextXAlignment = Enum.TextXAlignment.Left
-    fpsLabel.Visible = false
-    task.spawn(function()
-        local last=tick(); local frames=0
-        while task.wait(0.25) do
-            if not fpsLabel or not fpsLabel.Parent then break end
-            frames=frames+1
-            local now=tick()
-            if now-last >= 0.5 then
-                local fps=math.floor(frames/(now-last)+0.5)
-                fpsLabel.Text="FPS: "..fps
-                fpsLabel.Visible=GestioConfig.settingsShowFps
-                frames=0; last=now
-            end
-        end
     end)
 
     local cfgSection = Instance.new("Frame", setsPage)
@@ -5375,3 +5528,140 @@ local function GestioApplySkeetTabAccent(button, active)
         end
     end)
 end
+
+-- ==========================================
+-- GESTIO CONFIG SYSTEM v2
+-- Named profiles, save/load/delete/reset, export/import.
+-- Uses executor file APIs when available.
+-- ==========================================
+local GestioConfigSystem = {}
+GestioConfigSystem.Folder = "Gestio"
+GestioConfigSystem.ActiveName = "Default"
+
+local function cfgFileAPI()
+    return type(isfile)=="function" and type(readfile)=="function" and type(writefile)=="function"
+end
+
+local function cfgSafeName(name)
+    name=tostring(name or "Default"):gsub("[^%w%-%_ ]",""):sub(1,48)
+    return name~="" and name or "Default"
+end
+
+local function cfgPath(name)
+    return GestioConfigSystem.Folder.."/"..cfgSafeName(name)..".json"
+end
+
+local function cfgJSONEncode(v)
+    local ok,res=pcall(function() return game:GetService("HttpService"):JSONEncode(v) end)
+    return ok and res or nil
+end
+
+local function cfgJSONDecode(v)
+    local ok,res=pcall(function() return game:GetService("HttpService"):JSONDecode(v) end)
+    return ok and res or nil
+end
+
+local function cfgEnsureFolder()
+    if type(makefolder)=="function" and type(isfolder)=="function" then
+        pcall(function() if not isfolder(GestioConfigSystem.Folder) then makefolder(GestioConfigSystem.Folder) end end)
+    end
+end
+
+local function cfgSerialize()
+    local out={}
+    for k,v in pairs(GestioConfig) do
+        local t=typeof(v)
+        if t=="boolean" or t=="number" or t=="string" then
+            out[k]=v
+        elseif t=="Color3" then
+            out[k]={__type="Color3",r=v.R,g=v.G,b=v.B}
+        elseif t=="UDim2" then
+            out[k]={__type="UDim2",xs=v.X.Scale,xo=v.X.Offset,ys=v.Y.Scale,yo=v.Y.Offset}
+        end
+    end
+    return out
+end
+
+local function cfgApply(data)
+    if type(data)~="table" then return false end
+    for k,v in pairs(data) do
+        if GestioConfig[k]~=nil then
+            pcall(function()
+                if type(v)=="table" and v.__type=="Color3" then
+                    GestioConfig[k]=Color3.new(tonumber(v.r) or 1,tonumber(v.g) or 1,tonumber(v.b) or 1)
+                elseif type(v)=="table" and v.__type=="UDim2" then
+                    GestioConfig[k]=UDim2.new(tonumber(v.xs) or 0,tonumber(v.xo) or 0,tonumber(v.ys) or 0,tonumber(v.yo) or 0)
+                else GestioConfig[k]=v end
+            end)
+        end
+    end
+    return true
+end
+
+function GestioConfigSystem.Save(name)
+    if not cfgFileAPI() then return false,"File API unavailable" end
+    name=cfgSafeName(name or GestioConfigSystem.ActiveName)
+    cfgEnsureFolder()
+    local raw=cfgJSONEncode({schema=2,product="Gestio",name=name,savedAt=os.time(),settings=cfgSerialize()})
+    if not raw then return false,"JSON encode failed" end
+    local ok,err=pcall(function() writefile(cfgPath(name),raw) end)
+    if ok then GestioConfigSystem.ActiveName=name end
+    return ok,ok and "Saved" or tostring(err)
+end
+
+function GestioConfigSystem.Load(name)
+    if not cfgFileAPI() then return false,"File API unavailable" end
+    name=cfgSafeName(name or GestioConfigSystem.ActiveName)
+    local path=cfgPath(name)
+    if not isfile(path) then return false,"Config not found" end
+    local ok,raw=pcall(readfile,path)
+    if not ok then return false,"Read failed" end
+    local data=cfgJSONDecode(raw)
+    if type(data)~="table" or type(data.settings)~="table" then return false,"Invalid config" end
+    cfgApply(data.settings)
+    GestioConfigSystem.ActiveName=name
+    return true,"Loaded"
+end
+
+function GestioConfigSystem.Delete(name)
+    if type(delfile)~="function" then return false,"Delete API unavailable" end
+    name=cfgSafeName(name or GestioConfigSystem.ActiveName)
+    local path=cfgPath(name)
+    if not isfile(path) then return false,"Config not found" end
+    local ok,err=pcall(delfile,path)
+    return ok,ok and "Deleted" or tostring(err)
+end
+
+function GestioConfigSystem.List()
+    local out={}
+    if type(listfiles)~="function" then return out end
+    cfgEnsureFolder()
+    local ok,files=pcall(listfiles,GestioConfigSystem.Folder)
+    if ok and type(files)=="table" then
+        for _,path in ipairs(files) do
+            local n=tostring(path):match("([^/\\]+)%.json$")
+            if n then table.insert(out,n) end
+        end
+    end
+    table.sort(out)
+    return out
+end
+
+function GestioConfigSystem.Reset()
+    for k,v in pairs(GestioConfigDefaults or {}) do pcall(function() GestioConfig[k]=v end) end
+    return true,"Reset"
+end
+
+function GestioConfigSystem.Export()
+    return cfgJSONEncode({schema=2,product="Gestio",name=GestioConfigSystem.ActiveName,settings=cfgSerialize()})
+end
+
+function GestioConfigSystem.Import(raw,name)
+    local data=cfgJSONDecode(raw)
+    if type(data)~="table" or type(data.settings)~="table" then return false,"Invalid import" end
+    cfgApply(data.settings)
+    GestioConfigSystem.ActiveName=cfgSafeName(name or data.name or "Imported")
+    return true,"Imported"
+end
+
+getgenv().GestioConfigSystem=GestioConfigSystem
