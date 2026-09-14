@@ -1,6 +1,9 @@
 pcall(function()
-    if getgenv and getgenv().GestioRunning then
-        getgenv().GestioRunning()
+    if type(getgenv) == "function" then
+        local env = getgenv()
+        if env and type(env.GestioRunning) == "function" then
+            env.GestioRunning()
+        end
     end
 end)
 
@@ -6159,4 +6162,6 @@ function GestioConfigSystem.Import(raw,name)
     return true,"Imported"
 end
 
-getgenv().GestioConfigSystem=GestioConfigSystem
+if type(getgenv) == "function" then
+    pcall(function() getgenv().GestioConfigSystem = GestioConfigSystem end)
+end
