@@ -84,6 +84,8 @@ local GestioConfig = {
     recoilStrength = 0.85,
     noRecoilEnabled = false,
     noSpreadEnabled = false,
+    fireRateEnabled = false,
+    fireRate = 0.01,
     rcsStrength = 60,
     rcsPitchFactor = 1.0,
     rcsYawFactor = 1.0,
@@ -147,14 +149,16 @@ local GestioConfig = {
     bulletTracerColorR = 255,
     bulletTracerColorG = 25,
     bulletTracerColorB = 35,
-    weaponChamsMode = "Glass",
-    weaponChamsTransparency = 0.15,
-    weaponChamsReflectance = 0.6,
+    weaponChamsMode = "Crystal",
+    weaponChamsTransparency = 0.22,
+    weaponChamsReflectance = 0.75,
     weaponChamsColorR = 210,
     weaponChamsColorG = 45,
     weaponChamsColorB = 55,
     scopeFovEnabled = false,
     scopeFov = 70,
+    customFovEnabled = false,
+    customFov = 90,
     scopeCrosshairLength = 85,
     scopeCrosshairThickness = 2,
     scopeCrosshairGap = 8,
@@ -1169,122 +1173,108 @@ if genv then
 end
 
 -- ==========================================
--- MOBILE + PC THIRD PERSON CONTROLLER
+-- MEMESENSE-STYLE THIRD PERSON CONTROLLER
 -- ==========================================
 local isThirdPersonActive = false
-local thirdPersonTargetCFrame = nil
 local thirdPersonSaved = nil
 
 local function getThirdPersonTarget()
     local char = player.Character
     local hum = char and char:FindFirstChildOfClass("Humanoid")
-    local hrp = char and char:FindFirstChild("HumanoidRootPart")
-    if not char or not hum or not hrp or hum.Health <= 0 then return nil end
-    return hrp, hum
+    if not char or not hum or hum.Health <= 0 then return nil, nil end
+    return char, hum
 end
 
 local function restoreThirdPerson()
     isThirdPersonActive = false
-    thirdPersonTargetCFrame = nil
 
     local char = player.Character
     local hum = char and char:FindFirstChildOfClass("Humanoid")
 
-    if hum and thirdPersonSaved then
-        hum.CameraOffset = thirdPersonSaved.cameraOffset
+    if camera and thirdPersonSaved then
+        camera.CameraMinZoomDistance = thirdPersonSaved.minZoom
+        camera.CameraMaxZoomDistance = thirdPersonSaved.maxZoom
+    end
+
+    if player and thirdPersonSaved then
+        pcall(function()
+            player.CameraMode = thirdPersonSaved.cameraMode
+        end)
     end
 
     if camera then
-        if thirdPersonSaved then
-            camera.CameraMinZoomDistance = thirdPersonSaved.minZoom
-            camera.CameraMaxZoomDistance = thirdPersonSaved.maxZoom
-        end
         camera.CameraType = Enum.CameraType.Custom
-        if hum then camera.CameraSubject = hum end
+        if hum then
+            camera.CameraSubject = hum
+        end
     end
 
     thirdPersonSaved = nil
 end
 
-function applyThirdPerson(dt)
+function applyThirdPerson()
     if not GestioConfig.thirdPersonEnabled then
-        if isThirdPersonActive then restoreThirdPerson() end
+        if isThirdPersonActive then
+            restoreThirdPerson()
+        end
         return
     end
 
     camera = Workspace.CurrentCamera or camera
     if not camera then return end
 
-    local hrp, hum = getThirdPersonTarget()
-    if not hrp then
-        if isThirdPersonActive then restoreThirdPerson() end
+    local char, hum = getThirdPersonTarget()
+    if not char then
+        if isThirdPersonActive then
+            restoreThirdPerson()
+        end
         return
     end
 
     if not isThirdPersonActive then
         thirdPersonSaved = {
-            cameraOffset = hum.CameraOffset,
+            cameraMode = player.CameraMode,
             minZoom = camera.CameraMinZoomDistance,
             maxZoom = camera.CameraMaxZoomDistance
         }
         isThirdPersonActive = true
     end
 
-    -- Mobile uses Roblox's native Custom camera. This keeps the
-    -- touchscreen joystick/jump/buttons and touch-look pipeline intact.
-    if UserInputService.TouchEnabled then
-        camera.CameraType = Enum.CameraType.Custom
-        camera.CameraSubject = hum
+    -- MemeSense behavior:
+    -- use Roblox's native third-person camera instead of forcing
+    -- a Scriptable camera. This preserves touch-look, joystick and
+    -- the game's normal camera pipeline on both mobile and PC.
+    pcall(function()
+        player.CameraMode = Enum.CameraMode.Classic
+    end)
 
-        local distance = math.max(4, tonumber(GestioConfig.thirdPersonDistance) or 12)
-        local height = tonumber(GestioConfig.thirdPersonHeight) or 1.5
-        local offset = tonumber(GestioConfig.thirdPersonOffset) or 2.5
+    local distance = math.clamp(
+        tonumber(GestioConfig.thirdPersonDistance) or 12,
+        5,
+        50
+    )
 
-        camera.CameraMinZoomDistance = distance
-        camera.CameraMaxZoomDistance = distance
-        hum.CameraOffset = Vector3.new(offset, height, 0)
-        return
-    end
-
-    -- Desktop keeps the controlled Scriptable camera.
-    camera.CameraType = Enum.CameraType.Scriptable
-    camera.CameraSubject = nil
-
-    local targetPos = hrp.Position + Vector3.new(0, GestioConfig.thirdPersonHeight, 0)
-    local look = camera.CFrame.LookVector
-    local flatLook = Vector3.new(look.X, 0, look.Z)
-
-    if flatLook.Magnitude < 0.001 then
-        flatLook = Vector3.new(0, 0, -1)
-    else
-        flatLook = flatLook.Unit
-    end
-
-    local right = Vector3.new(-flatLook.Z, 0, flatLook.X)
-    local distance = math.max(2, tonumber(GestioConfig.thirdPersonDistance) or 12)
-    local shoulder = tonumber(GestioConfig.thirdPersonOffset) or 2.5
-
-    local desiredPos = targetPos - flatLook * distance + right * shoulder
-    local desiredCF = CFrame.lookAt(desiredPos, targetPos)
-
-    local alpha = math.clamp((dt or 1/60) * 14, 0, 1)
-    thirdPersonTargetCFrame = thirdPersonTargetCFrame
-        and thirdPersonTargetCFrame:Lerp(desiredCF, alpha)
-        or desiredCF
-
-    camera.CFrame = thirdPersonTargetCFrame
+    camera.CameraMinZoomDistance = distance
+    camera.CameraMaxZoomDistance = distance
+    camera.CameraType = Enum.CameraType.Custom
+    camera.CameraSubject = hum
 end
 
 function setThirdPersonEnabled(enabled)
-    GestioConfig.thirdPersonEnabled = enabled
+    GestioConfig.thirdPersonEnabled = enabled and true or false
+
     if not enabled then
         restoreThirdPerson()
     else
-        thirdPersonTargetCFrame = nil
+        isThirdPersonActive = false
+        thirdPersonSaved = nil
     end
 end
 
 function refreshThirdPerson()
+    if GestioConfig.thirdPersonEnabled then
+        applyThirdPerson()
+    end
 end
 
 -- ==========================================
@@ -1342,102 +1332,227 @@ local worldSkyboxData = {
 
 local originalSkybox = nil
 local originalPostFX = nil
-local weaponChamsState = setmetatable({}, {__mode = "k"})
-local weaponChamsHighlights = setmetatable({}, {__mode = "k"})
-local scopeSavedFov = nil
-local scopeSavedSize = nil
-local scopeGui = nil
-local scopeContainer = nil
+local weaponVisualState = setmetatable({}, {__mode = "k"})
+local weaponGlowObjects = setmetatable({}, {__mode = "k"})
 
-local function getWeaponModel()
+-- Weapon visual engine.
+-- Supports the five visual variants used by the reference implementation,
+-- while keeping Gestio's own configuration/state system and restoring every
+-- property that was changed when the module is disabled or the weapon changes.
+if GestioConfig.weaponChamsMode == "Crystal" then GestioConfig.weaponChamsMode = "Glass" end
+if GestioConfig.weaponChamsMode == "Field" then GestioConfig.weaponChamsMode = "ForceField" end
+if GestioConfig.weaponChamsMode == "Chrome" then GestioConfig.weaponChamsMode = "Metal" end
+if GestioConfig.weaponChamsMode == "Glow" then GestioConfig.weaponChamsMode = "Highlight" end
+
+local function resolveWeaponModel()
     local cam = Workspace.CurrentCamera or camera
     if not cam then return nil end
+
+    local directCandidates = {}
     for _, child in ipairs(cam:GetChildren()) do
         if child:IsA("Model") then
-            if child.Name == "Viewmodel" then continue end
-            if child.Name:lower():find("light") then continue end
-            local weapon = child:FindFirstChild("Weapon")
-            if weapon and weapon:IsA("Model") then return weapon end
-            if child:FindFirstChildOfClass("Humanoid") == nil then return child end
+            local lower = child.Name:lower()
+            if not lower:find("light") and lower ~= "arms" and lower ~= "arms1" and lower ~= "arms2" then
+                local weapon = child:FindFirstChild("Weapon")
+                if weapon and weapon:IsA("Model") then
+                    return weapon
+                end
+                table.insert(directCandidates, child)
+            end
         end
     end
+
+    -- Some Blox Strike builds put the weapon one level deeper in the
+    -- viewmodel. Prefer an explicit Weapon model before falling back.
+    for _, root in ipairs(directCandidates) do
+        for _, node in ipairs(root:GetDescendants()) do
+            if node:IsA("Model") and node.Name == "Weapon" then
+                return node
+            end
+        end
+    end
+
+    -- Fallback: use a camera child that actually contains renderable parts,
+    -- but do not mistake the arms/light containers for the weapon.
+    for _, root in ipairs(directCandidates) do
+        local lower = root.Name:lower()
+        if lower ~= "viewmodel" and not lower:find("viewmodel") then
+            if root:FindFirstChildWhichIsA("BasePart", true) then
+                return root
+            end
+        end
+    end
+
     return nil
 end
 
-local function restoreWeaponChams()
-    for part, state in pairs(weaponChamsState) do
-        if part and part.Parent and state then
-            pcall(function()
-                part.Material = state.Material
-                part.Color = state.Color
-                part.Transparency = state.Transparency
-                part.Reflectance = state.Reflectance
-            end)
+local function saveWeaponPartState(part)
+    if weaponVisualState[part] then return end
+    local state = {
+        material = part.Material,
+        color = part.Color,
+        transparency = part.Transparency,
+        reflectance = part.Reflectance,
+        children = {}
+    }
+
+    -- The reference removes SurfaceAppearance/Texture/Decal for most modes.
+    -- Gestio keeps backups so switching the module off never permanently
+    -- destroys the weapon's original appearance.
+    for _, child in ipairs(part:GetChildren()) do
+        if child:IsA("SurfaceAppearance") or child:IsA("Texture") or child:IsA("Decal") then
+            local ok, clone = pcall(function() return child:Clone() end)
+            if ok and clone then
+                table.insert(state.children, clone)
+            end
         end
-        weaponChamsState[part] = nil
     end
-    for part, h in pairs(weaponChamsHighlights) do
-        if h and h.Parent then pcall(function() h:Destroy() end) end
-        weaponChamsHighlights[part] = nil
+    weaponVisualState[part] = state
+end
+
+local function restoreWeaponPart(part, state)
+    if not part or not state then return end
+    pcall(function()
+        part.Material = state.material
+        part.Color = state.color
+        part.Transparency = state.transparency
+        part.Reflectance = state.reflectance
+    end)
+
+    pcall(function()
+        for _, child in ipairs(part:GetChildren()) do
+            if child:IsA("SurfaceAppearance") or child:IsA("Texture") or child:IsA("Decal") then
+                child:Destroy()
+            end
+        end
+        for _, clone in ipairs(state.children or {}) do
+            if clone then clone:Clone().Parent = part end
+        end
+    end)
+end
+
+local function clearWeaponVisuals()
+    for part, state in pairs(weaponVisualState) do
+        if part and part.Parent then
+            restoreWeaponPart(part, state)
+        end
+        weaponVisualState[part] = nil
+    end
+    for part, obj in pairs(weaponGlowObjects) do
+        if obj and obj.Parent then pcall(function() obj:Destroy() end) end
+        weaponGlowObjects[part] = nil
     end
 end
 
-local function updateWeaponChams()
+local function clearWeaponGlow(part)
+    local glow = weaponGlowObjects[part]
+    if glow then
+        pcall(function() glow:Destroy() end)
+        weaponGlowObjects[part] = nil
+    end
+end
+
+local function setWeaponVisuals()
     if not GestioConfig.weaponChamsEnabled then
-        restoreWeaponChams()
+        clearWeaponVisuals()
         return
     end
-    local model = getWeaponModel()
+
+    local model = resolveWeaponModel()
     if not model then
-        restoreWeaponChams()
+        clearWeaponVisuals()
         return
     end
-    local mode = GestioConfig.weaponChamsMode or "Glass"
-    local col = rgb(GestioConfig.weaponChamsColorR, GestioConfig.weaponChamsColorG, GestioConfig.weaponChamsColorB)
-    local seen = {}
+
+    local style = GestioConfig.weaponChamsMode or "Glass"
+    local validStyles = {
+        Glass = true,
+        ForceField = true,
+        Metal = true,
+        Highlight = true,
+        Neon = true,
+    }
+    if not validStyles[style] then style = "Glass" end
+
+    local tint = rgb(
+        GestioConfig.weaponChamsColorR,
+        GestioConfig.weaponChamsColorG,
+        GestioConfig.weaponChamsColorB
+    )
+    local activeParts = {}
+
     for _, part in ipairs(model:GetDescendants()) do
-        if part:IsA("BasePart") and part.Name ~= "Hitbox" and part.Name ~= "HumanoidRootPart" and not part:FindFirstAncestor("ViewmodelLight") then
-            seen[part] = true
-            if not weaponChamsState[part] then
-                weaponChamsState[part] = {Material=part.Material, Color=part.Color, Transparency=part.Transparency, Reflectance=part.Reflectance}
-            end
+        if part:IsA("BasePart")
+            and part.Name ~= "Hitbox"
+            and part.Name ~= "HumanoidRootPart"
+            and part.Name ~= "ViewmodelLight"
+            and not part:FindFirstAncestor("ViewmodelLight")
+        then
+            activeParts[part] = true
+            saveWeaponPartState(part)
+
             pcall(function()
-                if mode == "Highlight" then
-                    local h = weaponChamsHighlights[part]
+                if style == "Highlight" then
+                    local h = weaponGlowObjects[part]
                     if not h or not h.Parent then
                         h = Instance.new("Highlight")
                         h.Name = "GestioWeaponChams"
                         h.Adornee = part
-                        h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
                         h.FillTransparency = 0
                         h.OutlineTransparency = 1
+                        h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
                         h.Parent = part
-                        weaponChamsHighlights[part] = h
+                        weaponGlowObjects[part] = h
                     end
-                    h.FillColor = col
+                    h.FillColor = tint
                 else
-                    local m = mode == "Glass" and Enum.Material.Glass
-                        or mode == "ForceField" and Enum.Material.ForceField
-                        or mode == "Metal" and Enum.Material.Metal
-                        or Enum.Material.Neon
-                    part.Material = m
-                    part.Color = col
-                    part.Transparency = mode == "Glass" and math.clamp(GestioConfig.weaponChamsTransparency or 0.15,0,1) or 0
-                    part.Reflectance = mode == "Metal" and math.clamp(GestioConfig.weaponChamsReflectance or 0.6,0,1) or 0
-                    local h = weaponChamsHighlights[part]
-                    if h then h:Destroy(); weaponChamsHighlights[part] = nil end
+                    clearWeaponGlow(part)
+
+                    -- Match the reference behavior: remove surface overlays for
+                    -- material-based variants so the selected material is visible.
+                    for _, child in ipairs(part:GetChildren()) do
+                        if child:IsA("SurfaceAppearance") or child:IsA("Texture") or child:IsA("Decal") then
+                            child:Destroy()
+                        end
+                    end
+
+                    if style == "Glass" then
+                        part.Material = Enum.Material.Glass
+                        part.Color = tint
+                        part.Transparency = math.clamp(
+                            tonumber(GestioConfig.weaponChamsTransparency) or 0.4, 0, 1
+                        )
+                        part.Reflectance = 0
+                    elseif style == "ForceField" then
+                        part.Material = Enum.Material.ForceField
+                        part.Color = tint
+                        part.Transparency = 0
+                        part.Reflectance = 0
+                    elseif style == "Metal" then
+                        part.Material = Enum.Material.Metal
+                        part.Color = tint
+                        part.Reflectance = math.clamp(
+                            tonumber(GestioConfig.weaponChamsReflectance) or 1.0, 0, 1
+                        )
+                        part.Transparency = 0
+                    elseif style == "Neon" then
+                        part.Material = Enum.Material.Neon
+                        part.Color = tint
+                        part.Transparency = 0
+                        part.Reflectance = 0
+                    end
                 end
             end)
         end
     end
-    for part, state in pairs(weaponChamsState) do
-        if not seen[part] then
-            if part and part.Parent then
-                pcall(function()
-                    part.Material=state.Material; part.Color=state.Color; part.Transparency=state.Transparency; part.Reflectance=state.Reflectance
-                end)
-            end
-            weaponChamsState[part] = nil
+
+    -- Restore parts belonging to the previous weapon/model and remove stale
+    -- Highlight instances when the weapon is switched or rebuilt.
+    for part, state in pairs(weaponVisualState) do
+        if not activeParts[part] then
+            if part and part.Parent then restoreWeaponPart(part, state) end
+            weaponVisualState[part] = nil
+            clearWeaponGlow(part)
         end
     end
 end
@@ -1579,8 +1694,15 @@ end
 
 table.insert(connections, RunService.RenderStepped:Connect(function()
     pcall(function()
-        updateWeaponChams()
+        setWeaponVisuals()
         updateCustomScope()
+        -- MemeSense Custom FOV: apply the camera FOV every render frame while enabled.
+        if GestioConfig.customFovEnabled then
+            local cam = Workspace.CurrentCamera or camera
+            if cam then
+                cam.FieldOfView = math.clamp(tonumber(GestioConfig.customFov) or 90, 70, 120)
+            end
+        end
         if GestioConfig.nightModeEnabled then updateWorldChanger() end
     end)
 end))
@@ -2363,50 +2485,72 @@ function getRageTarget()
 end
 
 -- ==========================================
--- TRIGGERBOT PROCESSING LOGIC
+-- MEMESENSE-STYLE TRIGGERBOT (ADAPTED)
+-- Raycast from the exact camera center, 1000-stud range,
+-- enemy/team/alive checks, then fire the equipped Tool.
 -- ==========================================
 local triggerRayParams = RaycastParams.new()
 triggerRayParams.FilterType = Enum.RaycastFilterType.Exclude
 triggerRayParams.IgnoreWater = true
 
+local function triggerbotFire(vp)
+    pcall(function()
+        local myChar = player.Character
+        local equippedTool = myChar and myChar:FindFirstChildOfClass("Tool")
+        if equippedTool then
+            equippedTool:Activate()
+            return
+        end
+
+        -- Same fallback idea as MemeSense: simulate a short primary click.
+        if VirtualInputManager then
+            VirtualInputManager:SendMouseButtonEvent(vp.X * 0.5, vp.Y * 0.5, 0, true, game, 0)
+            task.wait(0.01)
+            VirtualInputManager:SendMouseButtonEvent(vp.X * 0.5, vp.Y * 0.5, 0, false, game, 0)
+        end
+    end)
+end
+
 function runMobileTriggerbot()
     if not GestioConfig.triggerbotEnabled then return end
+
+    local cam = Workspace.CurrentCamera or camera
+    if not cam then return end
+
     local now = tick()
     if (now - lastTriggerTick) < triggerbotDelay then return end
 
-    local vp = camera.ViewportSize
-    local ray = camera:ViewportPointToRay(vp.X * 0.5, vp.Y * 0.5)
-    triggerRayParams.FilterDescendantsInstances = {player.Character, camera}
-    
-    local res = Workspace:Raycast(ray.Origin, ray.Direction * 1000, triggerRayParams)
-    if res and res.Instance then
-        local hitChar = res.Instance.Parent
-        local hitPlr = Players:GetPlayerFromCharacter(hitChar)
-        if not hitPlr and hitChar and hitChar.Parent then
-            hitPlr = Players:GetPlayerFromCharacter(hitChar.Parent)
-            hitChar = hitChar.Parent
-        end
+    local vp = cam.ViewportSize
+    local origin = cam.CFrame.Position
+    local direction = cam.CFrame.LookVector * 1000
 
-        if hitPlr and isTargetEnemy(hitPlr, hitChar) then
-            local hum = hitChar:FindFirstChildOfClass("Humanoid")
-            if isEntityAlive(hitChar, hum) then
-                if triggerbotHeadOnly and res.Instance.Name ~= "Head" then return end
-                lastTriggerTick = now
-                if triggerbotMobileAutoFire then
-                    pcall(function()
-                        local myChar = player.Character
-                        local equippedTool = myChar and myChar:FindFirstChildOfClass("Tool")
-                        if equippedTool then
-                            equippedTool:Activate()
-                        elseif VirtualInputManager then
-                            pcall(function() VirtualInputManager:SendMouseButtonEvent(vp.X * 0.5, vp.Y * 0.5, 0, true, game, 0) end)
-                            task.wait(0.01)
-                            pcall(function() VirtualInputManager:SendMouseButtonEvent(vp.X * 0.5, vp.Y * 0.5, 0, false, game, 0) end)
-                        end
-                    end)
-                end
-            end
-        end
+    -- MemeSense excludes only the local character for its primary ray.
+    triggerRayParams.FilterDescendantsInstances = {player.Character}
+
+    local result = Workspace:Raycast(origin, direction, triggerRayParams)
+    if not result or not result.Instance then return end
+
+    local hitModel = result.Instance:FindFirstAncestorOfClass("Model")
+    if not hitModel then return end
+
+    local hitPlayer = Players:GetPlayerFromCharacter(hitModel)
+    if not hitPlayer or hitPlayer == player then return end
+
+    local _, onScreen = cam:WorldToViewportPoint(result.Instance.Position)
+    if not onScreen then return end
+
+    -- Match MemeSense's explicit dead/invincible/team gates.
+    if hitModel:GetAttribute("Dead") or hitModel:GetAttribute("Invincible") then return end
+
+    local hum = hitModel:FindFirstChildOfClass("Humanoid")
+    if hum and hum.Health <= 0 then return end
+
+    if not isTargetEnemy(hitPlayer, hitModel) then return end
+    if triggerbotHeadOnly and result.Instance.Name ~= "Head" then return end
+
+    lastTriggerTick = now
+    if triggerbotMobileAutoFire then
+        triggerbotFire(vp)
     end
 end
 
@@ -4038,6 +4182,14 @@ function buildGestioUI()
             addInspectorToggle(6, "MemeSense Spread Hook", GestioConfig.noSpreadEnabled, function(v)
                 GestioConfig.noSpreadEnabled = v
             end)
+        elseif moduleName == "FireRate" then
+            insContent.CanvasSize = UDim2.new(0, 0, 0, 105)
+            addInspectorToggle(6, "Enable FireRate", GestioConfig.fireRateEnabled, function(v)
+                GestioConfig.fireRateEnabled = v
+            end)
+            addInspectorSlider(38, "FireRate", 0.01, 1.0, GestioConfig.fireRate, true, function(v)
+                GestioConfig.fireRate = math.clamp(tonumber(v) or 0.01, 0.01, 1.0)
+            end)
         elseif moduleName == "Skin Changer" or moduleName == "Knife Changer" then
             refreshGestioSkinData()
             local knifeModels = {"Karambit", "Butterfly Knife", "Flip Knife", "Gut Knife", "M9 Bayonet", "Skeleton Knife", "Stiletto Knife"}
@@ -4224,12 +4376,16 @@ function buildGestioUI()
             addInspectorSlider(250,"Tracer Blue",0,255,GestioConfig.bulletTracerColorB,false,function(v) GestioConfig.bulletTracerColorB=v end)
         elseif moduleName == "Weapon Chams" then
             insContent.CanvasSize = UDim2.new(0,0,0,300)
-            addInspectorChoice(6,"Mode",{"Glass","ForceField","Metal","Neon","Highlight"},GestioConfig.weaponChamsMode,function(v) GestioConfig.weaponChamsMode=v end)
-            addInspectorSlider(38,"Transparency",0,1,GestioConfig.weaponChamsTransparency,true,function(v) GestioConfig.weaponChamsTransparency=v end)
-            addInspectorSlider(70,"Reflectance",0,1,GestioConfig.weaponChamsReflectance,true,function(v) GestioConfig.weaponChamsReflectance=v end)
-            addInspectorSlider(102,"Red",0,255,GestioConfig.weaponChamsColorR,false,function(v) GestioConfig.weaponChamsColorR=v end)
-            addInspectorSlider(134,"Green",0,255,GestioConfig.weaponChamsColorG,false,function(v) GestioConfig.weaponChamsColorG=v end)
-            addInspectorSlider(166,"Blue",0,255,GestioConfig.weaponChamsColorB,false,function(v) GestioConfig.weaponChamsColorB=v end)
+            addInspectorChoice(6,"Style",{"Glass","ForceField","Metal","Highlight","Neon"},GestioConfig.weaponChamsMode,function(v) GestioConfig.weaponChamsMode=v end)
+            addInspectorSlider(38,"Fade",0,1,GestioConfig.weaponChamsTransparency,true,function(v) GestioConfig.weaponChamsTransparency=v end)
+            addInspectorSlider(70,"Surface",0,1,GestioConfig.weaponChamsReflectance,true,function(v) GestioConfig.weaponChamsReflectance=v end)
+            addInspectorSlider(102,"Tone R",0,255,GestioConfig.weaponChamsColorR,false,function(v) GestioConfig.weaponChamsColorR=v end)
+            addInspectorSlider(134,"Tone G",0,255,GestioConfig.weaponChamsColorG,false,function(v) GestioConfig.weaponChamsColorG=v end)
+            addInspectorSlider(166,"Tone B",0,255,GestioConfig.weaponChamsColorB,false,function(v) GestioConfig.weaponChamsColorB=v end)
+        elseif moduleName == "Custom FOV" then
+            insContent.CanvasSize = UDim2.new(0,0,0,120)
+            addInspectorToggle(6,"Enable Custom FOV",GestioConfig.customFovEnabled,function(v) GestioConfig.customFovEnabled=v end)
+            addInspectorSlider(38,"FOV Amount",70,120,GestioConfig.customFov,false,function(v) GestioConfig.customFov=v end)
         elseif moduleName == "Custom Scope" then
             insContent.CanvasSize = UDim2.new(0,0,0,340)
             addInspectorToggle(6,"Remove Original Scope",GestioConfig.scopeRemoveOriginal,function(v) GestioConfig.scopeRemoveOriginal=v end)
@@ -4328,9 +4484,10 @@ function buildGestioUI()
     createModuleCard(cGrid, "RCS", "rcsEnabled", nil, true)
     createModuleCard(cGrid, "RageBot", "rageBotEnabled", nil, true)
 
-    local cGrid2 = makeCategorySection(cPage, "Weapon Mechanics", 2, 3)
+    local cGrid2 = makeCategorySection(cPage, "Weapon Mechanics", 2, 4)
     createModuleCard(cGrid2, "No Recoil", "noRecoilEnabled", nil, true)
     createModuleCard(cGrid2, "No Spread", "noSpreadEnabled", nil, true)
+    createModuleCard(cGrid2, "FireRate", "fireRateEnabled", nil, true)
     createModuleCard(cGrid2, "Anti-Aim", "antiAimEnabled", nil, true)
 
     local mGrid = makeCategorySection(mPage, "Locomotion", 1, 4)
@@ -4374,11 +4531,12 @@ function buildGestioUI()
         if v then applyGestioGloves() end
     end, true)
 
-    local envGrid = makeCategorySection(envPage, "Atmosphere", 1, 4)
+    local envGrid = makeCategorySection(envPage, "Atmosphere", 1, 5)
     createModuleCard(envGrid, "World Changer", "nightModeEnabled", function(v)
         if v then applyNightPreset(GestioConfig.nightPreset); updateWorldChanger() else restoreLightingState() end
     end, true)
     createModuleCard(envGrid, "Custom Scope", "customScopeEnabled", nil, true)
+    createModuleCard(envGrid, "Custom FOV", "customFovEnabled", nil, true)
     createModuleCard(envGrid, "FullBright", "fullBrightEnabled", function(v)
         if not v and not GestioConfig.nightModeEnabled then restoreLightingState() end
     end, false)
@@ -4616,7 +4774,7 @@ function buildGestioUI()
             updateMobileSlideVisibility()
             refreshThirdPerson()
             if UI_Bind_Registry.settingsCompactMode then UI_Bind_Registry.settingsCompactMode(GestioConfig.settingsCompactMode) end
-            updateWeaponChams()
+            setWeaponVisuals()
             updateCustomScope()
             updateWorldPostFX()
             if GestioConfig.nightModeEnabled then
@@ -4641,9 +4799,47 @@ function buildGestioUI()
 end
 
 -- ==========================================
--- CAMERA PROTECTION HOOK
+-- MEMESENSE-STYLE THIRD PERSON PROTECTION
 -- ==========================================
 local thirdPersonCameraConnection
+local thirdPersonMetaInstalled = false
+
+local function installThirdPersonProtection()
+    if thirdPersonMetaInstalled then return end
+    if type(getrawmetatable) ~= "function" or type(setreadonly) ~= "function" then return end
+    if type(newcclosure) ~= "function" then return end
+
+    pcall(function()
+        local mt = getrawmetatable(game)
+        if not mt then return end
+
+        local oldNewIndex = mt.__newindex
+        if type(oldNewIndex) ~= "function" then return end
+
+        setreadonly(mt, false)
+        mt.__newindex = newcclosure(function(self, key, value)
+            if self == player and GestioConfig.thirdPersonEnabled then
+                local distance = math.clamp(
+                    tonumber(GestioConfig.thirdPersonDistance) or 12,
+                    5,
+                    50
+                )
+
+                if key == "CameraMode" then
+                    return oldNewIndex(self, key, Enum.CameraMode.Classic)
+                elseif key == "CameraMaxZoomDistance" then
+                    return oldNewIndex(self, key, distance)
+                elseif key == "CameraMinZoomDistance" then
+                    return oldNewIndex(self, key, distance)
+                end
+            end
+
+            return oldNewIndex(self, key, value)
+        end)
+        setreadonly(mt, true)
+        thirdPersonMetaInstalled = true
+    end)
+end
 
 local function reconnectThirdPersonCamera()
     if thirdPersonCameraConnection then
@@ -4656,19 +4852,21 @@ local function reconnectThirdPersonCamera()
     thirdPersonCameraConnection = camera:GetPropertyChangedSignal("CameraType"):Connect(function()
         if not GestioConfig.thirdPersonEnabled or not camera then return end
 
-        -- Never fight the native mobile camera.
-        if UserInputService.TouchEnabled then
-            if camera.CameraType ~= Enum.CameraType.Custom then
-                camera.CameraType = Enum.CameraType.Custom
-            end
-            return
+        -- MemeSense keeps the native Custom camera pipeline.
+        if camera.CameraType ~= Enum.CameraType.Custom then
+            camera.CameraType = Enum.CameraType.Custom
         end
 
-        if camera.CameraType ~= Enum.CameraType.Scriptable then
-            camera.CameraType = Enum.CameraType.Scriptable
+        local char, hum = getThirdPersonTarget()
+        if hum then
+            camera.CameraSubject = hum
         end
     end)
 end
+
+task.spawn(function()
+    installThirdPersonProtection()
+end)
 
 reconnectThirdPersonCamera()
 
@@ -4677,27 +4875,99 @@ Workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
     reconnectThirdPersonCamera()
 
     if GestioConfig.thirdPersonEnabled and camera then
-        local char = player.Character
-        local hum = char and char:FindFirstChildOfClass("Humanoid")
-
-        if UserInputService.TouchEnabled then
-            camera.CameraType = Enum.CameraType.Custom
-            if hum then camera.CameraSubject = hum end
-        else
-            camera.CameraType = Enum.CameraType.Scriptable
-        end
+        applyThirdPerson()
     end
 end)
 
 -- ==========================================
--- MEMESENSE WEAPON RECOIL / SPREAD (ADAPTED)
--- Only the No Recoil + No Spread logic from the supplied MemeSense source.
--- No FireRate / Flash / Smoke / Silent-Aim logic is included here.
--- Hooks are installed once, after the UI has been built, and every probe is
--- isolated so a missing executor primitive cannot abort Gestio startup.
+-- MEMESENSE WEAPON MODS (ADAPTED)
+-- MemeSense No Recoil + No Spread + FireRate logic only.
+-- FireRate follows the source approach: discover weapon tables containing
+-- FireRate, remember their original values, and periodically write the
+-- configured interval while the Gestio toggle is enabled.
 -- ==========================================
 local memesenseRecoilSpreadInstalled = false
+local memesenseFireRateInstalled = false
+local memesenseFireRateObjects = {}
+local memesenseFireRateOriginal = {}
+local memesenseFireRateScanDone = false
 local memesenseRecoilSpreadRetrying = false
+
+local function scanMemesenseFireRateObjects()
+    if memesenseFireRateScanDone then return #memesenseFireRateObjects > 0 end
+    if type(getgc) ~= "function" then return false end
+
+    local found = false
+    pcall(function()
+        for _, obj in next, getgc(true) do
+            if type(obj) == "table" then
+                local fireRate = rawget(obj, "FireRate")
+                if type(fireRate) == "number" then
+                    local already = false
+                    for _, existing in ipairs(memesenseFireRateObjects) do
+                        if existing == obj then
+                            already = true
+                            break
+                        end
+                    end
+                    if not already then
+                        table.insert(memesenseFireRateObjects, obj)
+                        memesenseFireRateOriginal[obj] = fireRate
+                        found = true
+                    end
+                end
+            end
+        end
+    end)
+
+    memesenseFireRateScanDone = true
+    return found or #memesenseFireRateObjects > 0
+end
+
+local function restoreMemesenseFireRates()
+    for _, obj in ipairs(memesenseFireRateObjects) do
+        pcall(function()
+            if type(setreadonly) == "function" then setreadonly(obj, false) end
+            local original = memesenseFireRateOriginal[obj]
+            if type(original) == "number" then
+                rawset(obj, "FireRate", original)
+            end
+            if type(setreadonly) == "function" then setreadonly(obj, true) end
+        end)
+    end
+end
+
+local function applyMemesenseFireRate()
+    local value = math.max(tonumber(GestioConfig.fireRate) or 0.01, 0.01)
+    for _, obj in ipairs(memesenseFireRateObjects) do
+        pcall(function()
+            if type(setreadonly) == "function" then setreadonly(obj, false) end
+            rawset(obj, "FireRate", value)
+            if type(setreadonly) == "function" then setreadonly(obj, true) end
+        end)
+    end
+end
+
+task.spawn(function()
+    while task.wait(0.05) do
+        pcall(function()
+            if not memesenseFireRateScanDone then
+                scanMemesenseFireRateObjects()
+            end
+
+            if GestioConfig.fireRateEnabled then
+                if #memesenseFireRateObjects == 0 then
+                    -- The game can create weapon data after injection/respawn.
+                    memesenseFireRateScanDone = false
+                    scanMemesenseFireRateObjects()
+                end
+                applyMemesenseFireRate()
+            else
+                restoreMemesenseFireRates()
+            end
+        end)
+    end
+end)
 
 local function installMemesenseRecoilSpread()
     if memesenseRecoilSpreadInstalled then return true end
