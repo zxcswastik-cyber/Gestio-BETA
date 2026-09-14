@@ -4,6 +4,40 @@ pcall(function()
     end
 end)
 
+
+-- ==========================================
+-- SKEET-INSPIRED ICON SYSTEM
+-- Self-contained monochrome/red navigation glyphs.
+-- ==========================================
+local GestioSkeetIcons = {
+    Combat = "⌁",
+    Visuals = "◉",
+    Players = "♙",
+    World = "◈",
+    Movement = "↯",
+    Misc = "⚙",
+    Config = "▣",
+    Scripts = "⌘",
+    Search = "⌕",
+    Settings = "⚙",
+    Info = "ⓘ",
+}
+
+local function GestioIcon(parent, glyph, size, color)
+    local label = Instance.new("TextLabel")
+    label.Name = "SkeetIcon"
+    label.BackgroundTransparency = 1
+    label.Size = UDim2.new(0, size or 18, 0, size or 18)
+    label.Text = glyph or "•"
+    label.Font = Enum.Font.GothamBold
+    label.TextSize = math.max(12, math.floor((size or 18) * 0.78))
+    label.TextColor3 = color or Color3.fromRGB(180, 40, 50)
+    label.TextXAlignment = Enum.TextXAlignment.Center
+    label.TextYAlignment = Enum.TextYAlignment.Center
+    label.Parent = parent
+    return label
+end
+
 -- ==========================================
 -- CENTRAL CONFIGURATION SYSTEM
 -- ==========================================
@@ -178,7 +212,7 @@ local UI_Bind_Registry = {}
 -- ==========================================
 -- SYSTEM SERVICES IMPORT
 -- ==========================================
-local Players = game:GetService("Players")
+local Players = game:GetService("♙  Players")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -5318,3 +5352,26 @@ task.spawn(function()
     setupMemesenseSilentSendHook()
 end)
 buildGestioUI()
+
+
+-- Skeet-style active navigation accent.
+local function GestioApplySkeetTabAccent(button, active)
+    pcall(function()
+        local accent = button:FindFirstChild("SkeetActiveAccent")
+        if active then
+            if not accent then
+                accent = Instance.new("Frame")
+                accent.Name = "SkeetActiveAccent"
+                accent.BorderSizePixel = 0
+                accent.AnchorPoint = Vector2.new(0, 0.5)
+                accent.Position = UDim2.new(0, 0, 0.5, 0)
+                accent.Size = UDim2.new(0, 2, 0, 22)
+                accent.BackgroundColor3 = Color3.fromRGB(220, 45, 55)
+                accent.Parent = button
+            end
+            accent.Visible = true
+        elseif accent then
+            accent.Visible = false
+        end
+    end)
+end
