@@ -2485,13 +2485,129 @@ function getRageTarget()
 end
 
 -- ==========================================
--- MEMESENSE-STYLE TRIGGERBOT (ADAPTED)
--- Raycast from the exact camera center, 1000-stud range,
--- enemy/team/alive checks, then fire the equipped Tool.
+-- TRIGGERBOT + MATERIAL/THICKNESS PENETRATION
+-- Target remains FOV/camera-center based. If the first ray hits a wall,
+-- determine whether that exact surface can be penetrated before firing.
 -- ==========================================
 local triggerRayParams = RaycastParams.new()
 triggerRayParams.FilterType = Enum.RaycastFilterType.Exclude
 triggerRayParams.IgnoreWater = true
+
+-- Conservative BloxStrike material limits adapted from the existing
+-- MemeSense penetration model. Values are maximum accumulated thickness.
+local triggerMaterialLimits = {
+    [Enum.Material.Asphalt] = 0.25, [Enum.Material.Basalt] = 0.25,
+    [Enum.Material.Brick] = 0.25, [Enum.Material.Cobblestone] = 0.25,
+    [Enum.Material.Concrete] = 0.25, [Enum.Material.CrackedLava] = 0.25,
+    [Enum.Material.DiamondPlate] = 0.25, [Enum.Material.Foil] = 0.25,
+    [Enum.Material.Glacier] = 0.25, [Enum.Material.Granite] = 0.25,
+    [Enum.Material.Grass] = 0.25, [Enum.Material.Ground] = 0.25,
+    [Enum.Material.Ice] = 0.25, [Enum.Material.LeafyGrass] = 0.25,
+    [Enum.Material.Limestone] = 0.25, [Enum.Material.Marble] = 0.25,
+    [Enum.Material.Metal] = 0.25, [Enum.Material.Mud] = 0.25,
+    [Enum.Material.Pavement] = 0.25, [Enum.Material.Rock] = 0.25,
+    [Enum.Material.Salt] = 0.25, [Enum.Material.Sand] = 0.25,
+    [Enum.Material.Sandstone] = 0.25, [Enum.Material.Slate] = 0.25,
+    [Enum.Material.Snow] = 0.25, [Enum.Material.ForceField] = 0.25,
+    [Enum.Material.Neon] = 0.25, [Enum.Material.CorrodedMetal] = 0.25,
+    [Enum.Material.Pebble] = 0.25, [Enum.Material.CeramicTiles] = 0.25,
+    [Enum.Material.Plaster] = 0.25,
+    [Enum.Material.Plastic] = 7, [Enum.Material.SmoothPlastic] = 7,
+    [Enum.Material.Wood] = 7, [Enum.Material.WoodPlanks] = 7,
+    [Enum.Material.Cardboard] = 7, [Enum.Material.Glass] = 100,
+    [Enum.Material.Fabric] = 100,
+}
+
+local triggerMaterialVariantLimits = {
+    IndoorWall = 0.25,
+    ["Sandy Brick"] = 0.25,
+}
+
+local function triggerIsCharacterPart(part, targetModel)
+    return part and targetModel and part:IsDescendantOf(targetModel)
+end
+
+local function triggerFindTargetAlongRay(origin, direction, targetModel)
+    local params = RaycastParams.new()
+    params.FilterType = Enum.RaycastFilterType.Exclude
+    params.IgnoreWater = true
+    local filter = {player.Character}
+    params.FilterDescendantsInstances = filter
+
+    local currentOrigin = origin
+    local remaining = direction.Unit * math.min(direction.Magnitude, 1000)
+    local accumulated = {}
+    local steps = 0
+
+    while remaining.Magnitude > 0.05 and steps < 100 do
+        steps += 1
+        local hit = Workspace:Raycast(currentOrigin, remaining, params)
+        if not hit or not hit.Instance then
+            return nil
+        end
+
+        if triggerIsCharacterPart(hit.Instance, targetModel) then
+            return hit
+        end
+
+        local part = hit.Instance
+        if not part:IsA("BasePart") then
+            table.insert(filter, part)
+            params.FilterDescendantsInstances = filter
+            currentOrigin = hit.Position + remaining.Unit * 0.01
+            remaining = direction.Unit * math.max(0, (origin + direction.Unit * math.min(direction.Magnitude, 1000) - currentOrigin).Magnitude)
+            continue
+        end
+
+        -- Find the exit point through THIS exact hit part.
+        local backParams = RaycastParams.new()
+        backParams.FilterType = Enum.RaycastFilterType.Include
+        backParams.IgnoreWater = true
+        backParams.FilterDescendantsInstances = {part}
+
+        local farPoint = hit.Position + remaining.Unit * 1000
+        local exitHit = Workspace:Raycast(farPoint, hit.Position - farPoint, backParams)
+        if not exitHit then
+            return nil
+        end
+
+        local thickness = (hit.Position - exitHit.Position).Magnitude
+        local variant = part.MaterialVariant
+        local limit = triggerMaterialVariantLimits[variant]
+        local key = variant ~= "" and variant or part.Material
+
+        if limit then
+            accumulated[key] = (accumulated[key] or 0) + thickness
+            if accumulated[key] > limit then
+                return nil
+            end
+        else
+            limit = triggerMaterialLimits[part.Material]
+            if limit == nil then
+                -- Unknown surfaces are treated conservatively rather than
+                -- allowing a blind shot through an arbitrary map object.
+                limit = 0.25
+            end
+            accumulated[key] = (accumulated[key] or 0) + thickness
+            if accumulated[key] > limit then
+                return nil
+            end
+        end
+
+        table.insert(filter, part)
+        params.FilterDescendantsInstances = filter
+
+        local endPoint = origin + direction.Unit * math.min(direction.Magnitude, 1000)
+        currentOrigin = exitHit.Position + direction.Unit * 0.01
+        local left = (endPoint - currentOrigin).Magnitude
+        if left <= 0.05 then
+            return nil
+        end
+        remaining = direction.Unit * left
+    end
+
+    return nil
+end
 
 local function triggerbotFire(vp)
     pcall(function()
@@ -2502,7 +2618,6 @@ local function triggerbotFire(vp)
             return
         end
 
-        -- Same fallback idea as MemeSense: simulate a short primary click.
         if VirtualInputManager then
             VirtualInputManager:SendMouseButtonEvent(vp.X * 0.5, vp.Y * 0.5, 0, true, game, 0)
             task.wait(0.01)
@@ -2522,36 +2637,65 @@ function runMobileTriggerbot()
 
     local vp = cam.ViewportSize
     local origin = cam.CFrame.Position
-    local direction = cam.CFrame.LookVector * 1000
+    local rayDirection = cam.CFrame.LookVector * 1000
 
-    -- MemeSense excludes only the local character for its primary ray.
+    -- First pass: only consider whatever is actually under the FOV center.
     triggerRayParams.FilterDescendantsInstances = {player.Character}
+    local first = Workspace:Raycast(origin, rayDirection, triggerRayParams)
+    if not first or not first.Instance then return end
 
-    local result = Workspace:Raycast(origin, direction, triggerRayParams)
-    if not result or not result.Instance then return end
+    local firstModel = first.Instance:FindFirstAncestorOfClass("Model")
+    local firstPlayer = firstModel and Players:GetPlayerFromCharacter(firstModel)
 
-    local hitModel = result.Instance:FindFirstAncestorOfClass("Model")
-    if not hitModel then return end
+    if firstPlayer and firstPlayer ~= player then
+        local _, onScreen = cam:WorldToViewportPoint(first.Instance.Position)
+        if not onScreen then return end
+        if firstModel:GetAttribute("Dead") or firstModel:GetAttribute("Invincible") then return end
+        local hum = firstModel:FindFirstChildOfClass("Humanoid")
+        if hum and hum.Health <= 0 then return end
+        if not isTargetEnemy(firstPlayer, firstModel) then return end
+        if triggerbotHeadOnly and first.Instance.Name ~= "Head" then return end
 
-    local hitPlayer = Players:GetPlayerFromCharacter(hitModel)
-    if not hitPlayer or hitPlayer == player then return end
+        lastTriggerTick = now
+        if triggerbotMobileAutoFire then triggerbotFire(vp) end
+        return
+    end
 
-    local _, onScreen = cam:WorldToViewportPoint(result.Instance.Position)
-    if not onScreen then return end
+    -- Wall hit: find enemy candidates near the FOV center, then test the
+    -- exact camera -> candidate line for material + physical penetration.
+    local bestTarget, bestScreenDistance = nil, math.huge
+    for _, hitPlayer in ipairs(Players:GetPlayers()) do
+        if hitPlayer ~= player and isTargetEnemy(hitPlayer, hitPlayer.Character) then
+            local char = hitPlayer.Character
+            local hum = char and char:FindFirstChildOfClass("Humanoid")
+            if char and hum and hum.Health > 0 and not char:GetAttribute("Dead") and not char:GetAttribute("Invincible") then
+                local targetPart = char:FindFirstChild("Head") or char:FindFirstChild("UpperTorso") or char:FindFirstChild("HumanoidRootPart")
+                if targetPart then
+                    if not triggerbotHeadOnly or targetPart.Name == "Head" then
+                        local screenPos, onScreen = cam:WorldToViewportPoint(targetPart.Position)
+                        if onScreen and screenPos.Z > 0 then
+                            local center = Vector2.new(vp.X * 0.5, vp.Y * 0.5)
+                            local dist = (Vector2.new(screenPos.X, screenPos.Y) - center).Magnitude
+                            local fovRadius = tonumber(GestioConfig.triggerbotFov) or tonumber(GestioConfig.aimFov) or 160
+                            if dist <= fovRadius and dist < bestScreenDistance then
+                                bestScreenDistance = dist
+                                bestTarget = {Player = hitPlayer, Model = char, Part = targetPart}
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
 
-    -- Match MemeSense's explicit dead/invincible/team gates.
-    if hitModel:GetAttribute("Dead") or hitModel:GetAttribute("Invincible") then return end
+    if not bestTarget then return end
 
-    local hum = hitModel:FindFirstChildOfClass("Humanoid")
-    if hum and hum.Health <= 0 then return end
-
-    if not isTargetEnemy(hitPlayer, hitModel) then return end
-    if triggerbotHeadOnly and result.Instance.Name ~= "Head" then return end
+    local targetDirection = bestTarget.Part.Position - origin
+    local confirmed = triggerFindTargetAlongRay(origin, targetDirection, bestTarget.Model)
+    if not confirmed then return end
 
     lastTriggerTick = now
-    if triggerbotMobileAutoFire then
-        triggerbotFire(vp)
-    end
+    if triggerbotMobileAutoFire then triggerbotFire(vp) end
 end
 
 -- ==========================================
