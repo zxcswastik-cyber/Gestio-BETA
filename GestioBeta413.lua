@@ -2135,7 +2135,7 @@ function getOrCreateGrenadeUI(nadeInstance)
     lbl.AutomaticSize = Enum.AutomaticSize.X
     lbl.Size = UDim2.new(0, 0, 1, 0)
     lbl.BackgroundTransparency = 1
-    lbl.TextSize = 7.5
+    lbl.TextSize = 9
     lbl.Font = Enum.Font.GothamBold
     lbl.TextColor3 = Color3.fromRGB(255, 255, 255)
 
@@ -3764,20 +3764,20 @@ function buildGestioUI()
 
     local masterFrame = Instance.new("Frame", screenGui)
     masterFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-    masterFrame.Size = UDim2.new(0.90, 0, 0.82, 0)
+    masterFrame.Size = UDim2.new(0.96, 0, 0.88, 0)
     masterFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
     masterFrame.BackgroundTransparency = 1
     masterFrame.Visible = true
 
     local sizeConstraint = Instance.new("UISizeConstraint", masterFrame)
-    sizeConstraint.MaxSize = Vector2.new(740, 320)
-    sizeConstraint.MinSize = Vector2.new(300, 200)
+    sizeConstraint.MaxSize = Vector2.new(980, 520)
+    sizeConstraint.MinSize = Vector2.new(340, 220)
 
     local masterLayout = Instance.new("UIListLayout", masterFrame)
     masterLayout.FillDirection = Enum.FillDirection.Horizontal
     masterLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
     masterLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-    masterLayout.Padding = UDim.new(0, 6)
+    masterLayout.Padding = UDim.new(0, 8)
 
     local function toggleMenu() 
         masterFrame.Visible = not masterFrame.Visible 
@@ -3785,9 +3785,9 @@ function buildGestioUI()
 
     UI_Bind_Registry.settingsCompactMode = function(v)
         if v then
-            masterFrame.Size = UDim2.new(0.78, 0, 0.70, 0)
+            masterFrame.Size = UDim2.new(0.84, 0, 0.74, 0)
         else
-            masterFrame.Size = UDim2.new(0.90, 0, 0.82, 0)
+            masterFrame.Size = UDim2.new(0.96, 0, 0.88, 0)
         end
     end
 
@@ -3832,13 +3832,21 @@ function buildGestioUI()
     table.insert(connections, bInEnded)
 
     local mainFrame = Instance.new("Frame", masterFrame)
-    mainFrame.Size = UDim2.new(0.58, 0, 1, 0)
+    mainFrame.Size = UDim2.new(0.63, 0, 1, 0)
     mainFrame.BackgroundColor3 = currentTheme.Background
     mainFrame.BorderSizePixel = 0
     mainFrame.ZIndex = 5
     Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 8)
     local mainStroke = Instance.new("UIStroke", mainFrame)
     mainStroke.Color = currentTheme.Border
+
+    local mainAccent = Instance.new("Frame", mainFrame)
+    mainAccent.Size = UDim2.new(1, -18, 0, 2)
+    mainAccent.Position = UDim2.new(0, 9, 0, 2)
+    mainAccent.BackgroundColor3 = currentTheme.Accent
+    mainAccent.BorderSizePixel = 0
+    mainAccent.ZIndex = 20
+    Instance.new("UICorner", mainAccent).CornerRadius = UDim.new(1, 0)
 
     local bgGridFolder = Instance.new("Folder", mainFrame)
     bgGridFolder.Name = "GestioBackgroundGrid"
@@ -3859,7 +3867,7 @@ function buildGestioUI()
     end
 
     local sidebar = Instance.new("ScrollingFrame", mainFrame)
-    sidebar.Size = UDim2.new(0, 75, 1, -8)
+    sidebar.Size = UDim2.new(0, 92, 1, -8)
     sidebar.Position = UDim2.new(0, 4, 0, 4)
     sidebar.BackgroundColor3 = currentTheme.Sidebar
     sidebar.BorderSizePixel = 0
@@ -3879,11 +3887,11 @@ function buildGestioUI()
     sbPad.PaddingBottom = UDim.new(0, 4)
 
     local logoBtn = Instance.new("TextButton", sidebar)
-    logoBtn.Size = UDim2.new(0.9, 0, 0, 24)
+    logoBtn.Size = UDim2.new(0.9, 0, 0, 36)
     logoBtn.BackgroundTransparency = 1
     logoBtn.Text = "Gestio"
     logoBtn.TextColor3 = currentTheme.Accent
-    logoBtn.TextSize = 11
+    logoBtn.TextSize = 13
     logoBtn.Font = Enum.Font.GothamBold
     logoBtn.ZIndex = 7
     logoBtn.LayoutOrder = 1
@@ -3891,11 +3899,11 @@ function buildGestioUI()
 
     local function createNavBtn(order, txt)
         local b = Instance.new("TextButton", sidebar)
-        b.Size = UDim2.new(0.88, 0, 0, 19)
+        b.Size = UDim2.new(0.88, 0, 0, 28)
         b.BackgroundColor3 = currentTheme.Sidebar
         b.TextColor3 = currentTheme.TextSecondary
         b.Text = txt
-        b.TextSize = 7.5
+        b.TextSize = 8
         b.Font = Enum.Font.GothamBold
         b.ZIndex = 7
         b.LayoutOrder = order
@@ -3915,8 +3923,8 @@ function buildGestioUI()
 
     local function makePageContainer()
         local c = Instance.new("ScrollingFrame", mainFrame)
-        c.Size = UDim2.new(1, -84, 1, -12)
-        c.Position = UDim2.new(0, 80, 0, 6)
+        c.Size = UDim2.new(1, -101, 1, -12)
+        c.Position = UDim2.new(0, 96, 0, 6)
         c.BackgroundTransparency = 1
         c.ScrollBarThickness = 2
         c.CanvasSize = UDim2.new(0, 0, 0, 900)
@@ -3940,7 +3948,7 @@ function buildGestioUI()
     local function makeCategorySection(page, title, layoutOrder, cardCount)
         local count = cardCount or 4
         local rows = math.ceil(count / 4)
-        local gridHeight = rows * 64
+        local gridHeight = rows * 80
         local totalHeight = 22 + gridHeight
 
         local sectionContainer = Instance.new("Frame", page)
@@ -3953,8 +3961,16 @@ function buildGestioUI()
         headerLabel.Size = UDim2.new(1, 0, 0, 18)
         headerLabel.BackgroundTransparency = 1
         headerLabel.Text = title:upper()
-        headerLabel.TextColor3 = currentTheme.Accent
-        headerLabel.TextSize = 8.5
+        headerLabel.TextColor3 = currentTheme.TextPrimary
+        local headerAccent = Instance.new("Frame", sectionContainer)
+        headerAccent.Size = UDim2.new(0, 3, 0, 12)
+        headerAccent.Position = UDim2.new(0, 0, 0, 3)
+        headerAccent.BackgroundColor3 = currentTheme.Accent
+        headerAccent.BorderSizePixel = 0
+        headerAccent.ZIndex = 8
+        Instance.new("UICorner", headerAccent).CornerRadius = UDim.new(1, 0)
+        headerLabel.Position = UDim2.new(0, 9, 0, 0)
+        headerLabel.TextSize = 9
         headerLabel.Font = Enum.Font.GothamBold
         headerLabel.TextXAlignment = Enum.TextXAlignment.Left
         headerLabel.ZIndex = 7
@@ -3966,8 +3982,8 @@ function buildGestioUI()
         gridFrame.ZIndex = 6
 
         local grid = Instance.new("UIGridLayout", gridFrame)
-        grid.CellSize = UDim2.new(0, 58, 0, 58)
-        grid.CellPadding = UDim2.new(0, 6, 0, 6)
+        grid.CellSize = UDim2.new(0, 108, 0, 72)
+        grid.CellPadding = UDim2.new(0, 8, 0, 8)
 
         return gridFrame
     end
@@ -4007,13 +4023,21 @@ function buildGestioUI()
     bindTouch(setsBtn, function() switch("SETS") end)
 
     local inspectorPanel = Instance.new("Frame", masterFrame)
-    inspectorPanel.Size = UDim2.new(0.40, 0, 1, 0)
+    inspectorPanel.Size = UDim2.new(0.35, 0, 1, 0)
     inspectorPanel.BackgroundColor3 = currentTheme.Background
     inspectorPanel.BorderSizePixel = 0
     inspectorPanel.ZIndex = 5
     Instance.new("UICorner", inspectorPanel).CornerRadius = UDim.new(0, 8)
     local insStroke = Instance.new("UIStroke", inspectorPanel)
     insStroke.Color = currentTheme.Border
+
+    local insAccent = Instance.new("Frame", inspectorPanel)
+    insAccent.Size = UDim2.new(1, -20, 0, 2)
+    insAccent.Position = UDim2.new(0, 10, 0, 2)
+    insAccent.BackgroundColor3 = currentTheme.Accent
+    insAccent.BorderSizePixel = 0
+    insAccent.ZIndex = 20
+    Instance.new("UICorner", insAccent).CornerRadius = UDim.new(1, 0)
 
     local insGridFolder = Instance.new("Folder", inspectorPanel)
     insGridFolder.Name = "GestioInspectorGrid"
@@ -4555,6 +4579,7 @@ function buildGestioUI()
         local card = Instance.new("Frame", parentGrid)
         card.BackgroundColor3 = currentTheme.CardBg
         card.BorderSizePixel = 0
+        card.ClipsDescendants = true
         card.ZIndex = 7
         Instance.new("UICorner", card).CornerRadius = UDim.new(0, 6)
 
@@ -4564,26 +4589,28 @@ function buildGestioUI()
         stroke.Thickness = initialVal and 1.2 or 0.8
 
         local lbl = Instance.new("TextLabel", card)
-        lbl.Size = UDim2.new(1, -6, 0, 22)
-        lbl.Position = UDim2.new(0, 3, 0, 4)
+        lbl.Size = UDim2.new(1, -14, 0, 30)
+        lbl.Position = UDim2.new(0, 7, 0, 7)
         lbl.BackgroundTransparency = 1
         lbl.Text = title
         lbl.TextColor3 = initialVal and currentTheme.TextPrimary or currentTheme.TextSecondary
-        lbl.TextSize = 7.5
+        lbl.TextSize = 9
         lbl.Font = Enum.Font.GothamBold
         lbl.TextWrapped = true
+        lbl.TextXAlignment = Enum.TextXAlignment.Left
+        lbl.TextYAlignment = Enum.TextYAlignment.Top
         lbl.ZIndex = 8
 
         local btn = Instance.new("TextButton", card)
-        btn.Size = UDim2.new(1, -8, 0, 20)
-        btn.Position = UDim2.new(0, 4, 1, -24)
+        btn.Size = UDim2.new(0, 46, 0, 18)
+        btn.Position = UDim2.new(0, 7, 1, -25)
         btn.BackgroundColor3 = initialVal and currentTheme.Accent or currentTheme.Sidebar
         btn.Text = initialVal and "ON" or "OFF"
         btn.TextColor3 = initialVal and Color3.fromRGB(255, 255, 255) or currentTheme.TextSecondary
-        btn.TextSize = 7.5
+        btn.TextSize = 7
         btn.Font = Enum.Font.GothamBold
         btn.ZIndex = 8
-        Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
+        Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 7)
 
         local function updateCardVisual(val)
             btn.BackgroundColor3 = val and currentTheme.Accent or currentTheme.Sidebar
@@ -4605,12 +4632,12 @@ function buildGestioUI()
 
         if hasSettings then
             local setBtn = Instance.new("TextButton", card)
-            setBtn.Size = UDim2.new(0, 14, 0, 14)
-            setBtn.Position = UDim2.new(1, -16, 0, 2)
+            setBtn.Size = UDim2.new(0, 22, 0, 22)
+            setBtn.Position = UDim2.new(1, -25, 0, 4)
             setBtn.BackgroundTransparency = 1
-            setBtn.Text = "*"
+            setBtn.Text = "⋮"
             setBtn.TextColor3 = currentTheme.TextSecondary
-            setBtn.TextSize = 8
+            setBtn.TextSize = 13
             setBtn.Font = Enum.Font.GothamBold
             setBtn.ZIndex = 9
             bindTouch(setBtn, function()
