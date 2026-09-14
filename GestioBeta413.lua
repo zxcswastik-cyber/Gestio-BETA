@@ -81,6 +81,18 @@ local GestioConfig = {
     scopeRemoveOriginal = false,
     scopeCrosshairEnabled = true,
     scopeDynamicGap = false,
+    scopeCrosshairStyle = "Cross",
+    scopeCrosshairLeft = true,
+    scopeCrosshairRight = true,
+    scopeCrosshairTop = true,
+    scopeCrosshairBottom = true,
+    scopeCrosshairDot = true,
+    scopeCrosshairOpacity = 0,
+    scopeCrosshairOutline = false,
+    scopeCrosshairOutlineThickness = 1,
+    scopeCrosshairOutlineR = 0,
+    scopeCrosshairOutlineG = 0,
+    scopeCrosshairOutlineB = 0,
     worldSkyboxEnabled = false,
     worldPostFXEnabled = false,
     settingsShowNotifications = true,
@@ -205,6 +217,15 @@ local GestioConfig = {
     selectedGloveSkin = "Default",
     weaponSkinSelections = {}
 }
+
+-- Immutable startup snapshot used by Settings > Config Manager > RESET.
+local function deepCopyConfigValue(v)
+    if type(v) ~= "table" then return v end
+    local out = {}
+    for k,val in pairs(v) do out[k] = deepCopyConfigValue(val) end
+    return out
+end
+local GestioConfigDefaults = deepCopyConfigValue(GestioConfig)
 
 local UI_Bind_Registry = {}
 
@@ -1863,33 +1884,88 @@ local function updateCustomScope()
     local scope = findSniperScope()
     local scoped = scope and scope.Visible == true
     if scope and scopeSavedSize == nil then scopeSavedSize = scope.Size end
-    if scope and GestioConfig.scopeRemoveOriginal and scoped then
-        scope.Size = UDim2.fromOffset(0,0)
-    elseif scope and scopeSavedSize and not GestioConfig.scopeRemoveOriginal then
-        scope.Size = scopeSavedSize
-    elseif scope and scopeSavedSize and not scoped then
-        scope.Size = scopeSavedSize
+
+    -- Never permanently alter the game's original scope size.
+    if scope then
+        if GestioConfig.scopeRemoveOriginal and scoped then
+            scope.Size = UDim2.fromOffset(0,0)
+        elseif scopeSavedSize then
+            scope.Size = scopeSavedSize
+        end
     end
+
     local cam = Workspace.CurrentCamera or camera
     if GestioConfig.customScopeEnabled and scoped then
         if GestioConfig.scopeFovEnabled and cam then
             if scopeSavedFov == nil then scopeSavedFov = cam.FieldOfView end
-            cam.FieldOfView = math.clamp(GestioConfig.scopeFov or 70, 10, 120)
+            cam.FieldOfView = math.clamp(tonumber(GestioConfig.scopeFov) or 70, 10, 120)
         end
-        scopeContainer.Visible = GestioConfig.scopeCrosshairEnabled
-        local col = rgb(GestioConfig.scopeCrosshairColorR,GestioConfig.scopeCrosshairColorG,GestioConfig.scopeCrosshairColorB)
-        local len = math.clamp(GestioConfig.scopeCrosshairLength or 85, 2, 500)
-        local thick = math.clamp(GestioConfig.scopeCrosshairThickness or 2, 1, 8)
-        local gap = math.clamp(GestioConfig.scopeCrosshairGap or 8, 0, 100)
+
+        local enabled = GestioConfig.scopeCrosshairEnabled ~= false
+        scopeContainer.Visible = enabled
+        if not enabled then return end
+
+        local col = rgb(GestioConfig.scopeCrosshairColorR, GestioConfig.scopeCrosshairColorG, GestioConfig.scopeCrosshairColorB)
+        local len = math.clamp(tonumber(GestioConfig.scopeCrosshairLength) or 85, 2, 500)
+        local thick = math.clamp(tonumber(GestioConfig.scopeCrosshairThickness) or 2, 1, 12)
+        local gap = math.clamp(tonumber(GestioConfig.scopeCrosshairGap) or 8, 0, 150)
         local dynamic = GestioConfig.scopeDynamicGap and math.clamp((1/(cam and cam.FieldOfView or 70))*700, 2, 30) or 0
         gap = gap + dynamic
-        local l=scopeContainer.Left; local r=scopeContainer.Right; local t=scopeContainer.Top; local b=scopeContainer.Bottom; local d=scopeContainer.Dot
-        for _,f in ipairs({l,r,t,b,d}) do f.BackgroundColor3=col end
-        l.Size=UDim2.fromOffset(len,thick); l.Position=UDim2.fromOffset(-gap,0)
-        r.Size=UDim2.fromOffset(len,thick); r.Position=UDim2.fromOffset(gap,0)
-        t.Size=UDim2.fromOffset(thick,len); t.Position=UDim2.fromOffset(0,-gap)
-        b.Size=UDim2.fromOffset(thick,len); b.Position=UDim2.fromOffset(0,gap)
-        d.Size=UDim2.fromOffset(thick*2,thick*2); d.Position=UDim2.fromOffset(0,0); d.Visible=true
+        local opacity = math.clamp(tonumber(GestioConfig.scopeCrosshairOpacity) or 0, 0, 1)
+        local style = GestioConfig.scopeCrosshairStyle or "Cross"
+
+        local l=scopeContainer.Left; local r=scopeContainer.Right
+        local t=scopeContainer.Top; local b=scopeContainer.Bottom; local d=scopeContainer.Dot
+        local arms = {l,r,t,b,d}
+
+        for _,f in ipairs(arms) do
+            f.BackgroundColor3 = col
+            f.BackgroundTransparency = opacity
+            f.BorderSizePixel = 0
+            f.Visible = false
+            local st = f:FindFirstChild("ScopeOutline")
+            if not st then
+                st = Instance.new("UIStroke")
+                st.Name = "ScopeOutline"
+                st.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+                st.Parent = f
+            end
+            st.Enabled = GestioConfig.scopeCrosshairOutline == true
+            st.Thickness = math.clamp(tonumber(GestioConfig.scopeCrosshairOutlineThickness) or 1, 1, 6)
+            st.Color = rgb(GestioConfig.scopeCrosshairOutlineR,GestioConfig.scopeCrosshairOutlineG,GestioConfig.scopeCrosshairOutlineB)
+            st.Transparency = opacity
+        end
+
+        local function show(f, size, pos, rotation)
+            f.Size=size; f.Position=pos; f.Rotation=rotation or 0; f.Visible=true
+        end
+
+        -- Style presets: Cross, T, X and Dot. Individual arms still remain toggleable.
+        if style == "X" then
+            local xLen = math.max(2, len * 0.72)
+            if GestioConfig.scopeCrosshairLeft ~= false then show(l,UDim2.fromOffset(xLen,thick),UDim2.fromOffset(-gap,-gap),45) end
+            if GestioConfig.scopeCrosshairRight ~= false then show(r,UDim2.fromOffset(xLen,thick),UDim2.fromOffset(gap,-gap),-45) end
+            if GestioConfig.scopeCrosshairTop ~= false then show(t,UDim2.fromOffset(xLen,thick),UDim2.fromOffset(-gap,gap),-45) end
+            if GestioConfig.scopeCrosshairBottom ~= false then show(b,UDim2.fromOffset(xLen,thick),UDim2.fromOffset(gap,gap),45) end
+        elseif style == "T" then
+            if GestioConfig.scopeCrosshairTop ~= false then show(t,UDim2.fromOffset(thick,len),UDim2.fromOffset(0,gap),0) end
+            if GestioConfig.scopeCrosshairLeft ~= false then show(l,UDim2.fromOffset(len,thick),UDim2.fromOffset(-gap,0),0) end
+            if GestioConfig.scopeCrosshairRight ~= false then show(r,UDim2.fromOffset(len,thick),UDim2.fromOffset(gap,0),0) end
+            -- Bottom can be independently disabled/enabled; enabled means a short lower arm.
+            if GestioConfig.scopeCrosshairBottom ~= false then show(b,UDim2.fromOffset(thick,math.max(2,len*0.55)),UDim2.fromOffset(0,gap),0) end
+        elseif style == "Dot" then
+            -- Only the center dot is drawn for Dot style.
+        else -- Cross
+            if GestioConfig.scopeCrosshairLeft ~= false then show(l,UDim2.fromOffset(len,thick),UDim2.fromOffset(-gap,0),0) end
+            if GestioConfig.scopeCrosshairRight ~= false then show(r,UDim2.fromOffset(len,thick),UDim2.fromOffset(gap,0),0) end
+            if GestioConfig.scopeCrosshairTop ~= false then show(t,UDim2.fromOffset(thick,len),UDim2.fromOffset(0,-gap),0) end
+            if GestioConfig.scopeCrosshairBottom ~= false then show(b,UDim2.fromOffset(thick,len),UDim2.fromOffset(0,gap),0) end
+        end
+
+        d.Size=UDim2.fromOffset(math.max(1,thick*2),math.max(1,thick*2))
+        d.Position=UDim2.fromOffset(0,0)
+        d.Rotation=0
+        d.Visible = GestioConfig.scopeCrosshairDot ~= false
     else
         scopeContainer.Visible=false
         if scopeSavedFov and cam then cam.FieldOfView=scopeSavedFov end
@@ -4765,18 +4841,28 @@ function buildGestioUI()
             addInspectorToggle(6,"Enable Custom FOV",GestioConfig.customFovEnabled,function(v) GestioConfig.customFovEnabled=v end)
             addInspectorSlider(38,"FOV Amount",70,120,GestioConfig.customFov,false,function(v) GestioConfig.customFov=v end)
         elseif moduleName == "Custom Scope" then
-            insContent.CanvasSize = UDim2.new(0,0,0,340)
+            insContent.CanvasSize = UDim2.new(0, 0, 0, 600)
             addInspectorToggle(6,"Remove Original Scope",GestioConfig.scopeRemoveOriginal,function(v) GestioConfig.scopeRemoveOriginal=v end)
             addInspectorToggle(32,"Custom FOV",GestioConfig.scopeFovEnabled,function(v) GestioConfig.scopeFovEnabled=v end)
             addInspectorSlider(58,"Scope FOV",10,120,GestioConfig.scopeFov,false,function(v) GestioConfig.scopeFov=v end)
             addInspectorToggle(90,"Scope Crosshair",GestioConfig.scopeCrosshairEnabled,function(v) GestioConfig.scopeCrosshairEnabled=v end)
-            addInspectorToggle(116,"Dynamic Gap",GestioConfig.scopeDynamicGap,function(v) GestioConfig.scopeDynamicGap=v end)
-            addInspectorSlider(142,"Length",5,300,GestioConfig.scopeCrosshairLength,false,function(v) GestioConfig.scopeCrosshairLength=v end)
-            addInspectorSlider(174,"Thickness",1,8,GestioConfig.scopeCrosshairThickness,false,function(v) GestioConfig.scopeCrosshairThickness=v end)
-            addInspectorSlider(206,"Gap",0,60,GestioConfig.scopeCrosshairGap,false,function(v) GestioConfig.scopeCrosshairGap=v end)
-            addInspectorSlider(238,"Red",0,255,GestioConfig.scopeCrosshairColorR,false,function(v) GestioConfig.scopeCrosshairColorR=v end)
-            addInspectorSlider(270,"Green",0,255,GestioConfig.scopeCrosshairColorG,false,function(v) GestioConfig.scopeCrosshairColorG=v end)
-            addInspectorSlider(302,"Blue",0,255,GestioConfig.scopeCrosshairColorB,false,function(v) GestioConfig.scopeCrosshairColorB=v end)
+            addInspectorChoice(116,"Style",{"Cross","T","X","Dot"},GestioConfig.scopeCrosshairStyle or "Cross",function(v) GestioConfig.scopeCrosshairStyle=v end)
+            addInspectorToggle(148,"Left Arm",GestioConfig.scopeCrosshairLeft,function(v) GestioConfig.scopeCrosshairLeft=v end)
+            addInspectorToggle(174,"Right Arm",GestioConfig.scopeCrosshairRight,function(v) GestioConfig.scopeCrosshairRight=v end)
+            addInspectorToggle(200,"Top Arm",GestioConfig.scopeCrosshairTop,function(v) GestioConfig.scopeCrosshairTop=v end)
+            addInspectorToggle(226,"Bottom Arm",GestioConfig.scopeCrosshairBottom,function(v) GestioConfig.scopeCrosshairBottom=v end)
+            addInspectorToggle(252,"Center Dot",GestioConfig.scopeCrosshairDot,function(v) GestioConfig.scopeCrosshairDot=v end)
+            addInspectorToggle(278,"Dynamic Gap",GestioConfig.scopeDynamicGap,function(v) GestioConfig.scopeDynamicGap=v end)
+            addInspectorSlider(304,"Length",5,300,GestioConfig.scopeCrosshairLength,false,function(v) GestioConfig.scopeCrosshairLength=v end)
+            addInspectorSlider(336,"Thickness",1,12,GestioConfig.scopeCrosshairThickness,false,function(v) GestioConfig.scopeCrosshairThickness=v end)
+            addInspectorSlider(368,"Gap",0,80,GestioConfig.scopeCrosshairGap,false,function(v) GestioConfig.scopeCrosshairGap=v end)
+            addInspectorSlider(400,"Opacity",0,1,GestioConfig.scopeCrosshairOpacity or 0,true,function(v) GestioConfig.scopeCrosshairOpacity=v end)
+            addInspectorSlider(432,"Red",0,255,GestioConfig.scopeCrosshairColorR,false,function(v) GestioConfig.scopeCrosshairColorR=v end)
+            addInspectorSlider(464,"Green",0,255,GestioConfig.scopeCrosshairColorG,false,function(v) GestioConfig.scopeCrosshairColorG=v end)
+            addInspectorSlider(496,"Blue",0,255,GestioConfig.scopeCrosshairColorB,false,function(v) GestioConfig.scopeCrosshairColorB=v end)
+            addInspectorToggle(528,"Reticle Outline",GestioConfig.scopeCrosshairOutline,function(v) GestioConfig.scopeCrosshairOutline=v end)
+            addInspectorSlider(554,"Outline Size",1,6,GestioConfig.scopeCrosshairOutlineThickness or 1,false,function(v) GestioConfig.scopeCrosshairOutlineThickness=v end)
+
         elseif moduleName == "RCS" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 240)
             addInspectorSlider(6, "RCS Strength", 10, 100, GestioConfig.rcsStrength, false, function(v) GestioConfig.rcsStrength = v end)
@@ -5004,7 +5090,7 @@ function buildGestioUI()
     end)
 
     local cfgSection = Instance.new("Frame", setsPage)
-    cfgSection.Size = UDim2.new(1, 0, 0, 210)
+    cfgSection.Size = UDim2.new(1, 0, 0, 235)
     cfgSection.BackgroundTransparency = 1
     cfgSection.LayoutOrder = 2
     cfgSection.ZIndex = 6
@@ -5019,7 +5105,7 @@ function buildGestioUI()
     cfgHeader.TextXAlignment = Enum.TextXAlignment.Left
 
     local cfgCard = Instance.new("Frame", cfgSection)
-    cfgCard.Size = UDim2.new(1, 0, 0, 185)
+    cfgCard.Size = UDim2.new(1, 0, 0, 210)
     cfgCard.Position = UDim2.new(0, 0, 0, 20)
     cfgCard.BackgroundColor3 = currentTheme.CardBg
     cfgCard.BorderSizePixel = 0
@@ -5070,8 +5156,28 @@ function buildGestioUI()
     Instance.new("UICorner", btnDel).CornerRadius = UDim.new(0, 4)
 
     local cfgList = Instance.new("ScrollingFrame", cfgCard)
-    cfgList.Size = UDim2.new(1, -16, 0, 115)
-    cfgList.Position = UDim2.new(0, 8, 0, 62)
+    local btnReset = Instance.new("TextButton", cfgCard)
+    btnReset.Size = UDim2.new(0.31, 0, 0, 20)
+    btnReset.Position = UDim2.new(0, 8, 0, 62)
+    btnReset.BackgroundColor3 = currentTheme.Sidebar
+    btnReset.Text = "RESET DEFAULTS"
+    btnReset.TextColor3 = currentTheme.Accent
+    btnReset.TextSize = 7.5
+    btnReset.Font = Enum.Font.GothamBold
+    Instance.new("UICorner", btnReset).CornerRadius = UDim.new(0, 4)
+
+    local activeCfgLabel = Instance.new("TextLabel", cfgCard)
+    activeCfgLabel.Size = UDim2.new(0.62, -8, 0, 20)
+    activeCfgLabel.Position = UDim2.new(0.38, 0, 0, 62)
+    activeCfgLabel.BackgroundTransparency = 1
+    activeCfgLabel.Text = "ACTIVE: none"
+    activeCfgLabel.TextColor3 = currentTheme.TextSecondary
+    activeCfgLabel.TextSize = 7.5
+    activeCfgLabel.Font = Enum.Font.GothamBold
+    activeCfgLabel.TextXAlignment = Enum.TextXAlignment.Right
+
+    cfgList.Size = UDim2.new(1, -16, 0, 90)
+    cfgList.Position = UDim2.new(0, 8, 0, 86)
     cfgList.BackgroundColor3 = currentTheme.Sidebar
     cfgList.BorderSizePixel = 0
     cfgList.ScrollBarThickness = 2
@@ -5115,6 +5221,7 @@ function buildGestioUI()
         local ok, data = pcall(function() return HttpService:JSONEncode(GestioConfig) end)
         if ok then
             writefile(cfgFolder .. "/" .. name .. ".json", data)
+            activeCfgLabel.Text = "ACTIVE: " .. name
             refreshConfigList()
         end
     end
@@ -5140,6 +5247,7 @@ function buildGestioUI()
             else
                 restoreLightingState()
             end
+            activeCfgLabel.Text = "ACTIVE: " .. name
         end
     end
 
@@ -5152,6 +5260,11 @@ function buildGestioUI()
     bindTouch(btnSave, function() saveConfig(nameBox.Text) end)
     bindTouch(btnLoad, function() loadConfig(nameBox.Text) end)
     bindTouch(btnDel, function() deleteConfig(nameBox.Text) end)
+    bindTouch(btnReset, function()
+        for k,v in pairs(GestioConfigDefaults) do GestioConfig[k] = deepCopyConfigValue(v) end
+        updateMobileSlideVisibility(); refreshThirdPerson(); setWeaponVisuals(); updateCustomScope(); updateWorldPostFX()
+        activeCfgLabel.Text = "ACTIVE: DEFAULTS"
+    end)
 
     refreshConfigList()
 end
@@ -5535,7 +5648,7 @@ end
 -- Uses executor file APIs when available.
 -- ==========================================
 local GestioConfigSystem = {}
-GestioConfigSystem.Folder = "Gestio"
+GestioConfigSystem.Folder = "GestioConfigs"
 GestioConfigSystem.ActiveName = "Default"
 
 local function cfgFileAPI()
