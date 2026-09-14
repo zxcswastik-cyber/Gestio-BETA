@@ -46,6 +46,28 @@ local HttpService = game:GetService("HttpService")
 local GestioConfig = {
     -- Toggles
     antiAfkEnabled = true,
+    noFallDamageEnabled = false,
+    spectatorListEnabled = false,
+    spectatorCounterEnabled = true,
+    spectatorHideEmpty = false,
+    spectatorNameMode = "Display name",
+    animationsEnabled = false,
+    animationLoop = true,
+    animationSpeed = 1.0,
+    animationId = "73593666217037",
+    customHandsEnabled = false,
+    customHandsX = 0,
+    customHandsY = 0,
+    customHandsZ = 0,
+    customHandsPitch = 0,
+    customHandsYaw = 0,
+    customHandsRoll = 0,
+    uiScale = 1.0,
+    watermarkEnabled = true,
+    watermarkShowFPS = true,
+    watermarkShowPing = true,
+    watermarkShowName = false,
+    watermarkText = "GESTIO",
     aimbotEnabled = false,
     predictionEnabled = true,
     silentAimEnabled = false,
@@ -191,6 +213,12 @@ local GestioConfig = {
     bulletTracerRainbow = false,
     bulletImpactEnabled = false,
     bulletImpactSize = 0.35,
+    cubeCheckerEnabled = false,
+    cubeCheckerRainbow = false,
+    cubeCheckerSize = 1.5,
+    cubeCheckerDistance = 20,
+    cubeCheckerLineThickness = 0.04,
+    cubeCheckerTransparency = 0.2,
     bulletTracerColorR = 255,
     bulletTracerColorG = 25,
     bulletTracerColorB = 35,
@@ -1199,6 +1227,202 @@ task.spawn(function()
 end)
 
 -- ==========================================
+-- EXTRA GESTIO MODULES
+-- Skin/knife/gloves are already handled above.
+-- These modules are intentionally self-contained so they do not
+-- interfere with the existing aim/ESP/render engines.
+-- ==========================================
+
+local noFallLastCharacter = nil
+local animationTrack = nil
+local animationObject = nil
+local spectatorGui = nil
+local spectatorFrame = nil
+local spectatorListLabel = nil
+local spectatorCounterLabel = nil
+local handsLastModel = nil
+local handsLastPivot = nil
+
+local function setNoFallDamage(enabled)
+    if not enabled then return end
+    local char = player and player.Character
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    if not hum then return end
+    pcall(function()
+        hum:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+        hum:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
+    end)
+end
+
+local function stopGestioAnimation()
+    if animationTrack then
+        pcall(function() animationTrack:Stop(0.12) end)
+        animationTrack = nil
+    end
+    if animationObject then
+        pcall(function() animationObject:Destroy() end)
+        animationObject = nil
+    end
+end
+
+local function playGestioAnimation()
+    stopGestioAnimation()
+    if not GestioConfig.animationsEnabled then return end
+    local char = player and player.Character
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    if not hum then return end
+    local animator = hum:FindFirstChildOfClass("Animator")
+    if not animator then
+        animator = Instance.new("Animator")
+        animator.Parent = hum
+    end
+    local id = tostring(GestioConfig.animationId or ""):match("%d+")
+    if not id then return end
+    animationObject = Instance.new("Animation")
+    animationObject.Name = "GestioAnimation"
+    animationObject.AnimationId = "rbxassetid://" .. id
+    local ok, track = pcall(function() return animator:LoadAnimation(animationObject) end)
+    if not ok or not track then
+        stopGestioAnimation()
+        return
+    end
+    animationTrack = track
+    animationTrack.Priority = Enum.AnimationPriority.Action
+    animationTrack.Looped = GestioConfig.animationLoop
+    animationTrack:Play(0.15, 1, math.clamp(GestioConfig.animationSpeed, 0.1, 3))
+end
+
+local function getSpectatorNames()
+    local names = {}
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= player and plr:GetAttribute("IsSpectating") == true then
+            names[#names + 1] = plr
+        end
+    end
+    table.sort(names, function(a,b) return a.Name:lower() < b.Name:lower() end)
+    return names
+end
+
+local function buildSpectatorGui()
+    if spectatorGui and spectatorGui.Parent then return end
+    spectatorGui = Instance.new("ScreenGui")
+    spectatorGui.Name = "GestioSpectatorGui"
+    spectatorGui.ResetOnSpawn = false
+    spectatorGui.IgnoreGuiInset = true
+    spectatorGui.DisplayOrder = 21
+    spectatorGui.Parent = targetGui
+
+    spectatorFrame = Instance.new("Frame", spectatorGui)
+    spectatorFrame.Size = UDim2.new(0, 210, 0, 120)
+    spectatorFrame.Position = UDim2.new(1, -224, 0, 92)
+    spectatorFrame.BackgroundColor3 = currentTheme.Background
+    spectatorFrame.BorderSizePixel = 0
+    spectatorFrame.Visible = false
+    Instance.new("UICorner", spectatorFrame).CornerRadius = UDim.new(0, 6)
+    local stroke = Instance.new("UIStroke", spectatorFrame)
+    stroke.Color = currentTheme.Border
+    stroke.Thickness = 1
+
+    local title = Instance.new("TextLabel", spectatorFrame)
+    title.Size = UDim2.new(1, -12, 0, 22)
+    title.Position = UDim2.new(0, 6, 0, 4)
+    title.BackgroundTransparency = 1
+    title.Text = "SPECTATORS"
+    title.TextColor3 = currentTheme.Accent
+    title.TextSize = 9
+    title.Font = Enum.Font.GothamBold
+    title.TextXAlignment = Enum.TextXAlignment.Left
+
+    spectatorCounterLabel = Instance.new("TextLabel", spectatorFrame)
+    spectatorCounterLabel.Size = UDim2.new(1, -12, 0, 18)
+    spectatorCounterLabel.Position = UDim2.new(0, 6, 0, 24)
+    spectatorCounterLabel.BackgroundTransparency = 1
+    spectatorCounterLabel.TextColor3 = currentTheme.TextSecondary
+    spectatorCounterLabel.TextSize = 8
+    spectatorCounterLabel.Font = Enum.Font.GothamBold
+    spectatorCounterLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+    spectatorListLabel = Instance.new("TextLabel", spectatorFrame)
+    spectatorListLabel.Size = UDim2.new(1, -12, 1, -48)
+    spectatorListLabel.Position = UDim2.new(0, 6, 0, 44)
+    spectatorListLabel.BackgroundTransparency = 1
+    spectatorListLabel.TextColor3 = currentTheme.TextPrimary
+    spectatorListLabel.TextSize = 8
+    spectatorListLabel.Font = Enum.Font.Gotham
+    spectatorListLabel.TextWrapped = true
+    spectatorListLabel.TextXAlignment = Enum.TextXAlignment.Left
+    spectatorListLabel.TextYAlignment = Enum.TextYAlignment.Top
+end
+
+local function updateSpectatorGui()
+    buildSpectatorGui()
+    local names = getSpectatorNames()
+    local watching = player and player:GetAttribute("Spectators")
+    if type(watching) ~= "number" then watching = nil end
+    spectatorFrame.Visible = GestioConfig.spectatorListEnabled and not (GestioConfig.spectatorHideEmpty and #names == 0 and not watching)
+    spectatorCounterLabel.Visible = GestioConfig.spectatorCounterEnabled
+    spectatorCounterLabel.Text = "Watching you: " .. (watching and tostring(math.floor(watching)) or "?")
+    local lines = {}
+    for _, plr in ipairs(names) do
+        if GestioConfig.spectatorNameMode == "Username" then
+            lines[#lines+1] = plr.Name
+        elseif GestioConfig.spectatorNameMode == "Both" and plr.DisplayName ~= plr.Name then
+            lines[#lines+1] = plr.DisplayName .. "  @" .. plr.Name
+        else
+            lines[#lines+1] = plr.DisplayName
+        end
+    end
+    spectatorListLabel.Text = #lines > 0 and table.concat(lines, "\n") or "No active spectators"
+    spectatorFrame.Size = UDim2.new(0, 210, 0, math.max(88, 64 + math.min(#lines, 8) * 14))
+end
+
+local function applyGestioHandsOffset()
+    if not GestioConfig.customHandsEnabled then
+        handsLastModel = nil
+        handsLastPivot = nil
+        return
+    end
+    local cam = Workspace.CurrentCamera or camera
+    if not cam then return end
+    local model = getCurrentWeaponModel()
+    if not model or not model:IsA("Model") then return end
+    if handsLastModel ~= model then
+        handsLastModel = model
+        handsLastPivot = model:GetPivot()
+    end
+    local original = model:GetPivot()
+    local offset = CFrame.new(GestioConfig.customHandsX, GestioConfig.customHandsY, GestioConfig.customHandsZ)
+        * CFrame.Angles(math.rad(GestioConfig.customHandsPitch), math.rad(GestioConfig.customHandsYaw), math.rad(GestioConfig.customHandsRoll))
+    pcall(function()
+        model:PivotTo(cam.CFrame * offset * cam.CFrame:ToObjectSpace(original))
+    end)
+end
+
+-- Lightweight background update for the extra modules.
+table.insert(connections, RunService.RenderStepped:Connect(function()
+    if GestioConfig.noFallDamageEnabled then
+        local char = player and player.Character
+        if char ~= noFallLastCharacter then
+            noFallLastCharacter = char
+            setNoFallDamage(true)
+        end
+        setNoFallDamage(true)
+    end
+    if GestioConfig.spectatorListEnabled then
+        updateSpectatorGui()
+    elseif spectatorFrame then
+        spectatorFrame.Visible = false
+    end
+    if GestioConfig.customHandsEnabled then
+        applyGestioHandsOffset()
+    end
+    if animationTrack and animationTrack.IsPlaying then
+        animationTrack.Looped = GestioConfig.animationLoop
+        pcall(function() animationTrack:AdjustSpeed(math.clamp(GestioConfig.animationSpeed, 0.1, 3)) end)
+    end
+end))
+
+-- ==========================================
 -- TRIGGERBOT & MOVEMENT STATE
 -- ==========================================
 local triggerbotDelay = 0.02
@@ -1847,6 +2071,75 @@ local function updateWorldChanger()
     end
 end
 
+-- ==========================================================================
+-- [ CUBE CHECKER ]
+-- MemeSense-style camera-ray surface marker.
+-- ==========================================================================
+do
+    local cubePart = Instance.new("Part")
+    cubePart.Name = "Gestio_CubeChecker"
+    cubePart.Anchored = true
+    cubePart.CanCollide = false
+    cubePart.CanTouch = false
+    cubePart.CanQuery = false
+    cubePart.CastShadow = false
+    cubePart.Material = Enum.Material.Neon
+    cubePart.Transparency = 0.98
+    cubePart.Size = Vector3.new(1.5, 1.5, 0.01)
+
+    local cubeOutline = Instance.new("SelectionBox")
+    cubeOutline.Name = "CubeCheckerOutline"
+    cubeOutline.Adornee = cubePart
+    cubeOutline.Color3 = Color3.fromRGB(210, 45, 55)
+    cubeOutline.LineThickness = 0.04
+    cubeOutline.Transparency = 0.2
+    cubeOutline.Parent = cubePart
+
+    local cubeRayParams = RaycastParams.new()
+    cubeRayParams.FilterType = Enum.RaycastFilterType.Exclude
+    cubeRayParams.IgnoreWater = true
+
+    RunService.RenderStepped:Connect(function()
+        pcall(function()
+            if not GestioConfig.cubeCheckerEnabled then
+                cubePart.Parent = nil
+                return
+            end
+
+            local cam = Workspace.CurrentCamera
+            if not cam then
+                cubePart.Parent = nil
+                return
+            end
+
+            local distance = math.clamp(tonumber(GestioConfig.cubeCheckerDistance) or 20, 1, 200)
+            local size = math.clamp(tonumber(GestioConfig.cubeCheckerSize) or 1.5, 0.1, 10)
+            local lineThickness = math.clamp(tonumber(GestioConfig.cubeCheckerLineThickness) or 0.04, 0.01, 0.2)
+            local outlineTransparency = math.clamp(tonumber(GestioConfig.cubeCheckerTransparency) or 0.2, 0, 1)
+            local col = GestioConfig.cubeCheckerRainbow
+                and Color3.fromHSV((os.clock() * 0.2) % 1, 1, 1)
+                or rgb(GestioConfig.bulletTracerColorR, GestioConfig.bulletTracerColorG, GestioConfig.bulletTracerColorB)
+
+            cubeRayParams.FilterDescendantsInstances = {player.Character, cubePart}
+            local origin = cam.CFrame.Position
+            local result = Workspace:Raycast(origin, cam.CFrame.LookVector * distance, cubeRayParams)
+
+            if not result then
+                cubePart.Parent = nil
+                return
+            end
+
+            cubePart.Size = Vector3.new(size, size, 0.01)
+            cubePart.Color = col
+            cubePart.CFrame = CFrame.lookAt(result.Position + result.Normal * 0.02, result.Position + result.Normal)
+            cubeOutline.Color3 = col
+            cubeOutline.LineThickness = lineThickness
+            cubeOutline.Transparency = outlineTransparency
+            cubePart.Parent = Workspace
+        end)
+    end)
+end
+
 -- Scope overlay adapted from MemeSense: FOV override, removable scope and configurable crosshair.
 local function findSniperScope()
     local pg = player and player:FindFirstChildOfClass("PlayerGui")
@@ -2277,6 +2570,8 @@ function cleanup()
     pcall(function() if targetGui:FindFirstChild("GestioFovGui") then targetGui.GestioFovGui:Destroy() end end)
     pcall(function() if targetGui:FindFirstChild("GestioWatermarkGui") then targetGui.GestioWatermarkGui:Destroy() end end)
     pcall(function() if targetGui:FindFirstChild("GestioNotificationsGui") then targetGui.GestioNotificationsGui:Destroy() end end)
+    pcall(function() if spectatorGui then spectatorGui:Destroy() end end)
+    stopGestioAnimation()
     pcall(function() if targetGui:FindFirstChild("GestioMainContainer") then targetGui.GestioMainContainer:Destroy() end end)
 end
 
@@ -3380,9 +3675,20 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
                 pingVal = math.floor(serverStats["Data Ping"]:GetValue())
             end
         end)
-        wmMetrics.Text = string.format("FPS: %d | PING: %dms", currentFps, pingVal)
+        local parts = {}
+        if GestioConfig.watermarkShowFPS then table.insert(parts, string.format("FPS: %d", currentFps)) end
+        if GestioConfig.watermarkShowPing then table.insert(parts, string.format("PING: %dms", pingVal)) end
+        wmMetrics.Text = table.concat(parts, " | ")
         fpsCounter = 0
         lastFpsUpdate = nowTick
+    end
+    wmCard.Visible = GestioConfig.watermarkEnabled
+    wmTitle.Text = GestioConfig.watermarkText or "GESTIO"
+    if GestioConfig.watermarkShowName then
+        wmTitle.Text = (GestioConfig.watermarkText or "GESTIO") .. " • " .. player.Name
+    end
+    wmMetrics.Visible = GestioConfig.watermarkShowFPS or GestioConfig.watermarkShowPing
+    wmDivider.Visible = wmMetrics.Visible
     end
 
     if fovFrame then
@@ -4749,6 +5055,38 @@ function buildGestioUI()
                     if glow then glow.Thickness = GestioConfig.hitmarkerGlow and 2.5 or 0 end
                 end
             end)
+        elseif moduleName == "Watermark" then
+            insContent.CanvasSize = UDim2.new(0, 0, 0, 170)
+            addInspectorToggle(6, "Show FPS", GestioConfig.watermarkShowFPS, function(v) GestioConfig.watermarkShowFPS = v end)
+            addInspectorToggle(34, "Show Ping", GestioConfig.watermarkShowPing, function(v) GestioConfig.watermarkShowPing = v end)
+            addInspectorToggle(62, "Show Name", GestioConfig.watermarkShowName, function(v) GestioConfig.watermarkShowName = v end)
+            addInspectorChoice(90, "Style", {"GESTIO", "GESTIO • Player"}, GestioConfig.watermarkShowName and "GESTIO • Player" or "GESTIO", function(v) GestioConfig.watermarkShowName = (v == "GESTIO • Player") end)
+            addInspectorToggle(126, "Accent Mode", true, function(v) end)
+        elseif moduleName == "No Fall Damage" then
+            insContent.CanvasSize = UDim2.new(0, 0, 0, 90)
+            addInspectorToggle(6, "Disable Ragdoll/Fall", GestioConfig.noFallDamageEnabled, function(v) GestioConfig.noFallDamageEnabled = v end)
+        elseif moduleName == "Spectator List" then
+            insContent.CanvasSize = UDim2.new(0, 0, 0, 150)
+            addInspectorToggle(6, "Watcher Counter", GestioConfig.spectatorCounterEnabled, function(v) GestioConfig.spectatorCounterEnabled = v end)
+            addInspectorToggle(34, "Hide When Empty", GestioConfig.spectatorHideEmpty, function(v) GestioConfig.spectatorHideEmpty = v end)
+            addInspectorChoice(62, "Name Mode", {"Username", "Display name", "Both"}, GestioConfig.spectatorNameMode, function(v) GestioConfig.spectatorNameMode = v end)
+            addInspectorSlider(98, "Panel Width", 150, 350, 210, false, function(v) if spectatorFrame then spectatorFrame.Size = UDim2.new(0, v, spectatorFrame.Size.Y.Scale, spectatorFrame.Size.Y.Offset) end end)
+        elseif moduleName == "Animations" then
+            insContent.CanvasSize = UDim2.new(0, 0, 0, 190)
+            addInspectorToggle(6, "Loop", GestioConfig.animationLoop, function(v) GestioConfig.animationLoop = v end)
+            addInspectorSlider(34, "Speed", 0.1, 3.0, GestioConfig.animationSpeed, true, function(v) GestioConfig.animationSpeed = v end)
+            addInspectorChoice(68, "Preset", {"Take The L"}, "Take The L", function(v)
+                if v == "Take The L" then GestioConfig.animationId = "73593666217037" end
+            end)
+            addInspectorToggle(104, "Restart", false, function(v) if v then playGestioAnimation() end end)
+        elseif moduleName == "Custom Hands" then
+            insContent.CanvasSize = UDim2.new(0, 0, 0, 250)
+            addInspectorSlider(6, "X Offset", -2, 2, GestioConfig.customHandsX, true, function(v) GestioConfig.customHandsX = v end)
+            addInspectorSlider(38, "Y Offset", -2, 2, GestioConfig.customHandsY, true, function(v) GestioConfig.customHandsY = v end)
+            addInspectorSlider(70, "Z Offset", -2, 2, GestioConfig.customHandsZ, true, function(v) GestioConfig.customHandsZ = v end)
+            addInspectorSlider(102, "Pitch", -45, 45, GestioConfig.customHandsPitch, false, function(v) GestioConfig.customHandsPitch = v end)
+            addInspectorSlider(134, "Yaw", -45, 45, GestioConfig.customHandsYaw, false, function(v) GestioConfig.customHandsYaw = v end)
+            addInspectorSlider(166, "Roll", -90, 90, GestioConfig.customHandsRoll, false, function(v) GestioConfig.customHandsRoll = v end)
         elseif moduleName == "Anti-Aim" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 100)
             addInspectorSlider(6, "Spin Speed", 10, 150, GestioConfig.spinSpeed, false, function(v) 
@@ -4828,6 +5166,16 @@ function buildGestioUI()
             addInspectorSlider(186,"Tracer Red",0,255,GestioConfig.bulletTracerColorR,false,function(v) GestioConfig.bulletTracerColorR=v end)
             addInspectorSlider(218,"Tracer Green",0,255,GestioConfig.bulletTracerColorG,false,function(v) GestioConfig.bulletTracerColorG=v end)
             addInspectorSlider(250,"Tracer Blue",0,255,GestioConfig.bulletTracerColorB,false,function(v) GestioConfig.bulletTracerColorB=v end)
+        elseif moduleName == "Cube Checker" then
+            insContent.CanvasSize = UDim2.new(0,0,0,270)
+            addInspectorToggle(6,"Rainbow",GestioConfig.cubeCheckerRainbow,function(v) GestioConfig.cubeCheckerRainbow=v end)
+            addInspectorSlider(38,"Cube Size",0.1,5,GestioConfig.cubeCheckerSize,true,function(v) GestioConfig.cubeCheckerSize=v end)
+            addInspectorSlider(70,"Max Distance",1,100,GestioConfig.cubeCheckerDistance,false,function(v) GestioConfig.cubeCheckerDistance=v end)
+            addInspectorSlider(102,"Outline Thickness",0.01,0.2,GestioConfig.cubeCheckerLineThickness,true,function(v) GestioConfig.cubeCheckerLineThickness=v end)
+            addInspectorSlider(134,"Outline Fade",0,1,GestioConfig.cubeCheckerTransparency,true,function(v) GestioConfig.cubeCheckerTransparency=v end)
+            addInspectorSlider(166,"Color Red",0,255,GestioConfig.bulletTracerColorR,false,function(v) GestioConfig.bulletTracerColorR=v end)
+            addInspectorSlider(198,"Color Green",0,255,GestioConfig.bulletTracerColorG,false,function(v) GestioConfig.bulletTracerColorG=v end)
+            addInspectorSlider(230,"Color Blue",0,255,GestioConfig.bulletTracerColorB,false,function(v) GestioConfig.bulletTracerColorB=v end)
         elseif moduleName == "Weapon Chams" then
             insContent.CanvasSize = UDim2.new(0,0,0,300)
             addInspectorChoice(6,"Style",{"Glass","ForceField","Metal","Highlight","Neon"},GestioConfig.weaponChamsMode,function(v) GestioConfig.weaponChamsMode=v end)
@@ -4965,6 +5313,7 @@ function buildGestioUI()
     createModuleCard(mGrid, "Slide", "slideEnabled", function() updateMobileSlideVisibility() end, true)
     createModuleCard(mGrid, "Flight", "flightEnabled", nil, false)
     createModuleCard(mGrid, "Speed Boost", "speedEnabled", nil, false)
+    createModuleCard(mGrid, "No Fall Damage", "noFallDamageEnabled", nil, true)
 
     local eGrid = makeCategorySection(ePage, "Visual Overlays", 1, 4)
     createModuleCard(eGrid, "Chams", "chamsEnabled", nil, true)
@@ -4986,6 +5335,7 @@ function buildGestioUI()
     local bGrid = makeCategorySection(ePage, "Bullet Effects", 3, 3)
     createModuleCard(bGrid, "Bullet Trail", "bulletTrailEnabled", nil, true)
     createModuleCard(bGrid, "Bullet Flash", "bulletFlashEnabled", nil, false)
+    createModuleCard(bGrid, "Cube Checker", "cubeCheckerEnabled", nil, true)
     createModuleCard(bGrid, "Weapon Chams", "weaponChamsEnabled", nil, true)
 
     local sGrid = makeCategorySection(sPage, "Cosmetic Engine", 1, 2)
@@ -5019,6 +5369,9 @@ function buildGestioUI()
     createModuleCard(micsGrid, "Hitmarker", "hitmarkerEnabled", nil, true)
     createModuleCard(micsGrid, "Third Person", "thirdPersonEnabled", function(v) setThirdPersonEnabled(v) end, true)
     createModuleCard(micsGrid, "Anti AFK", "antiAfkEnabled", function(v) setAntiAfkEnabled(v) end, false)
+    createModuleCard(micsGrid, "Spectator List", "spectatorListEnabled", function(v) if v then buildSpectatorGui() end end, true)
+    createModuleCard(micsGrid, "Animations", "animationsEnabled", function(v) if v then playGestioAnimation() else stopGestioAnimation() end end, true)
+    createModuleCard(micsGrid, "Custom Hands", "customHandsEnabled", nil, true)
 
     -- CONFIG & THEMES
     local cfgFolder = "GestioConfigs"
@@ -5060,11 +5413,40 @@ function buildGestioUI()
         refreshHitmarkerTheme()
     end)
 
-    local settingsGrid = makeCategorySection(setsPage, "Interface", 2, 2)
+    local settingsGrid = makeCategorySection(setsPage, "Interface", 2, 3)
     createModuleCard(settingsGrid, "Notifications", "settingsShowNotifications", nil, false)
+    local uiScaleCard = Instance.new("Frame", settingsGrid)
+    uiScaleCard.Size = UDim2.new(1,0,0,50)
+    uiScaleCard.BackgroundColor3 = currentTheme.CardBg
+    uiScaleCard.BorderSizePixel = 0
+    Instance.new("UICorner", uiScaleCard).CornerRadius = UDim.new(0,6)
+    local uiScaleBtn = Instance.new("TextButton", uiScaleCard)
+    uiScaleBtn.Size = UDim2.new(1,-12,0,24)
+    uiScaleBtn.Position = UDim2.new(0,6,0.5,-12)
+    uiScaleBtn.BackgroundColor3 = currentTheme.Sidebar
+    uiScaleBtn.Text = "UI SCALE: 100%"
+    uiScaleBtn.TextColor3 = currentTheme.Accent
+    uiScaleBtn.TextSize = 8
+    uiScaleBtn.Font = Enum.Font.GothamBold
+    Instance.new("UICorner", uiScaleBtn).CornerRadius = UDim.new(0,4)
+    local scaleValues = {0.8, 0.9, 1.0, 1.1, 1.2}
+    local scaleIndex = 3
+    local scaleObject = Instance.new("UIScale", masterFrame)
+    scaleObject.Scale = GestioConfig.uiScale or 1
+    for i,v in ipairs(scaleValues) do if math.abs(v-scaleObject.Scale)<0.01 then scaleIndex=i end end
+    uiScaleBtn.Text = "UI SCALE: " .. math.floor(scaleObject.Scale*100) .. "%"
+    bindTouch(uiScaleBtn, function()
+        scaleIndex = (scaleIndex % #scaleValues) + 1
+        scaleObject.Scale = scaleValues[scaleIndex]
+        GestioConfig.uiScale = scaleObject.Scale
+        uiScaleBtn.Text = "UI SCALE: " .. math.floor(scaleObject.Scale*100) .. "%"
+    end)
+
     createModuleCard(settingsGrid, "Compact Mode", "settingsCompactMode", function(v)
         if UI_Bind_Registry.settingsCompactMode then UI_Bind_Registry.settingsCompactMode(v) end
     end, false)
+
+    createModuleCard(settingsGrid, "Watermark", "watermarkEnabled", nil, true)
 
     local keyCard = Instance.new("Frame", settingsGrid)
     keyCard.Size = UDim2.new(1,0,0,42)
