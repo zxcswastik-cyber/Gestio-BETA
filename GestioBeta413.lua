@@ -83,7 +83,6 @@ local GestioConfig = {
 
     recoilStrength = 0.85,
     noRecoilEnabled = false,
-    noSpreadEnabled = false,
     rcsStrength = 60,
     rcsPitchFactor = 1.0,
     rcsYawFactor = 1.0,
@@ -168,18 +167,6 @@ local GestioConfig = {
     selectedGloveSkin = "Default",
     weaponSkinSelections = {}
 }
-
--- MemeSense-style configuration baseline: immutable defaults snapshot.
-local function deepCopyConfig(value)
-    if type(value) ~= "table" then return value end
-    local copy = {}
-    for k, v in pairs(value) do
-        copy[k] = deepCopyConfig(v)
-    end
-    return copy
-end
-
-local GestioConfigDefaults = deepCopyConfig(GestioConfig)
 
 local UI_Bind_Registry = {}
 
@@ -371,107 +358,97 @@ local silentAimHooked = false
 local silentAimCamHooked = false
 local bloxStrikeShootHooked = false
 
-local function getBulletOrigin(bullet, fallback)
-    local origin = bullet and (bullet.Origin or bullet.StartingPoint or bullet.Position) or fallback
-    if typeof(origin) == "CFrame" then origin = origin.Position end
-    return typeof(origin) == "Vector3" and origin or fallback
-end
-
-local function getBulletEnd(bullet, origin, maxDistance)
-    maxDistance = maxDistance or 1000
-    if type(bullet) == "table" and type(bullet.Hits) == "table" then
-        for _, hitData in pairs(bullet.Hits) do
-            if type(hitData) == "table" and typeof(hitData.Position) == "Vector3" then
-                return hitData.Position
-            end
-        end
-    end
-    local dir = bullet and bullet.Direction
-    if typeof(dir) == "CFrame" then dir = dir.LookVector end
-    if typeof(dir) ~= "Vector3" or dir.Magnitude < 0.001 then
-        local cam = Workspace.CurrentCamera or camera
-        dir = cam and cam.CFrame.LookVector or Vector3.new(0, 0, -1)
-    end
-    dir = dir.Unit
-    local params = RaycastParams.new()
-    params.FilterType = Enum.RaycastFilterType.Exclude
-    params.FilterDescendantsInstances = {player.Character, camera}
-    params.IgnoreWater = true
-    local hit = Workspace:Raycast(origin, dir * maxDistance, params)
-    return hit and hit.Position or (origin + dir * maxDistance)
-end
-
-local function createGestioBulletTracer(startPos, endPos)
-    if not GestioConfig.bulletTrailEnabled or typeof(startPos) ~= "Vector3" or typeof(endPos) ~= "Vector3" then return end
-    local distance = (endPos - startPos).Magnitude
-    if distance < 0.05 then return end
-
-    local tracer = Instance.new("Part")
-    tracer.Name = "Gestio_BulletTracer"
-    tracer.Anchored = true
-    tracer.CanCollide = false
-    tracer.CanTouch = false
-    tracer.CanQuery = false
-    tracer.CastShadow = false
-    tracer.Material = Enum.Material.Neon
-    tracer.Color = GestioConfig.bulletTracerRainbow
-        and Color3.fromHSV((os.clock() * 0.35) % 1, 0.9, 1)
-        or rgb(GestioConfig.bulletTracerColorR, GestioConfig.bulletTracerColorG, GestioConfig.bulletTracerColorB)
-
-    local width = math.clamp(tonumber(GestioConfig.bulletTracerWidth) or 0.08, 0.02, 0.5)
-    if GestioConfig.bulletTracerStyle == "Cylinder" then
-        tracer.Shape = Enum.PartType.Cylinder
-        tracer.Size = Vector3.new(distance, width, width)
-        tracer.CFrame = CFrame.lookAt(startPos, endPos)
-            * CFrame.Angles(0, math.rad(90), 0)
-            * CFrame.new(-distance / 2, 0, 0)
-    else
-        tracer.Size = Vector3.new(width, width, distance)
-        tracer.CFrame = CFrame.lookAt(startPos, endPos) * CFrame.new(0, 0, -distance / 2)
-    end
-    tracer.Parent = Workspace
-
-    local duration = math.clamp(tonumber(GestioConfig.bulletTracerDuration) or 0.65, 0.05, 10)
-    TweenService:Create(tracer, TweenInfo.new(duration, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Transparency = 1}):Play()
-    task.delay(duration + 0.05, function()
-        pcall(function() tracer:Destroy() end)
-    end)
-end
-
-local function createGestioBulletImpact(position)
-    if not GestioConfig.bulletImpactEnabled or typeof(position) ~= "Vector3" then return end
-    local impact = Instance.new("Part")
-    impact.Name = "Gestio_BulletImpact"
-    impact.Anchored = true
-    impact.CanCollide = false
-    impact.CanTouch = false
-    impact.CanQuery = false
-    impact.CastShadow = false
-    impact.Shape = Enum.PartType.Ball
-    impact.Material = Enum.Material.Neon
-    impact.Color = GestioConfig.bulletTracerRainbow
-        and Color3.fromHSV((os.clock() * 0.35) % 1, 0.9, 1)
-        or rgb(GestioConfig.bulletTracerColorR, GestioConfig.bulletTracerColorG, GestioConfig.bulletTracerColorB)
-    local size = math.clamp(tonumber(GestioConfig.bulletImpactSize) or 0.35, 0.05, 2)
-    impact.Size = Vector3.new(size, size, size)
-    impact.CFrame = CFrame.new(position)
-    impact.Parent = Workspace
-    TweenService:Create(impact, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        Size = Vector3.zero,
-        Transparency = 1
-    }):Play()
-    task.delay(0.4, function() pcall(function() impact:Destroy() end) end)
-end
-
 local function setupBloxStrikeShootHook()
     if bloxStrikeShootHooked then return end
+    
+    pcall(function()
+        UserInputService.InputBegan:Connect(function(input, gameProcessed)
+            if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
+                local char = player.Character
+                local tool = char and char:FindFirstChildOfClass("Tool")
+                
+                if (GestioConfig.bulletTrailEnabled or GestioConfig.bulletFlashEnabled) and tool then
+                    local cam = Workspace.CurrentCamera or camera
+                    if not cam then return end
+                    
+                    local origin = cam.CFrame.Position
+                    local muzzle = tool:FindFirstChild("Muzzle") or tool:FindFirstChild("Handle")
+                    if muzzle and muzzle:IsA("BasePart") then
+                        origin = muzzle.Position
+                    end
+
+                    local rayParams = RaycastParams.new()
+                    rayParams.FilterType = Enum.RaycastFilterType.Exclude
+                    rayParams.FilterDescendantsInstances = {player.Character, camera}
+                    rayParams.IgnoreWater = true
+                    
+                    local hit = Workspace:Raycast(origin, cam.CFrame.LookVector * 500, rayParams)
+                    local bulletEnd = hit and hit.Position or (origin + cam.CFrame.LookVector * 500)
+                    local dist = (origin - bulletEnd).Magnitude
+
+                    if GestioConfig.bulletTrailEnabled then
+                        local trail = Instance.new("Part")
+                        trail.Anchored = true
+                        trail.CanCollide = false
+                        trail.CanTouch = false
+                        trail.CanQuery = false
+                        trail.CastShadow = false
+                        trail.Material = (GestioConfig.bulletTracerStyle == "Cylinder") and Enum.Material.Neon or Enum.Material.Neon
+                        trail.Color = GestioConfig.bulletTracerRainbow and Color3.fromHSV((os.clock()*0.35)%1,0.9,1) or rgb(GestioConfig.bulletTracerColorR,GestioConfig.bulletTracerColorG,GestioConfig.bulletTracerColorB)
+                        local width = math.clamp(tonumber(GestioConfig.bulletTracerWidth) or 0.08, 0.02, 0.5)
+                        if GestioConfig.bulletTracerStyle == "Cylinder" then
+                            trail.Shape = Enum.PartType.Cylinder
+                            trail.Size = Vector3.new(dist, width, width)
+                            trail.CFrame = CFrame.lookAt(origin, bulletEnd) * CFrame.Angles(0, math.rad(90), 0) * CFrame.new(-dist/2,0,0)
+                        else
+                            trail.Size = Vector3.new(width, width, dist)
+                            trail.CFrame = CFrame.lookAt(origin, bulletEnd) * CFrame.new(0, 0, -dist / 2)
+                        end
+                        trail.Parent = Workspace
+                        local duration = math.clamp(tonumber(GestioConfig.bulletTracerDuration) or 0.65, 0.05, 10)
+                        TweenService:Create(trail, TweenInfo.new(duration, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Transparency = 1}):Play()
+                        task.delay(duration + 0.05, function() pcall(function() trail:Destroy() end) end)
+                    end
+
+                    if GestioConfig.bulletImpactEnabled then
+                        local impact = Instance.new("Part")
+                        impact.Anchored = true; impact.CanCollide = false; impact.CanTouch = false; impact.CanQuery = false; impact.CastShadow = false
+                        impact.Shape = Enum.PartType.Ball
+                        impact.Material = Enum.Material.Neon
+                        impact.Color = GestioConfig.bulletTracerRainbow and Color3.fromHSV((os.clock()*0.35)%1,0.9,1) or rgb(GestioConfig.bulletTracerColorR,GestioConfig.bulletTracerColorG,GestioConfig.bulletTracerColorB)
+                        local sz = math.clamp(tonumber(GestioConfig.bulletImpactSize) or 0.35, 0.05, 2)
+                        impact.Size = Vector3.new(sz,sz,sz)
+                        impact.CFrame = CFrame.new(bulletEnd)
+                        impact.Parent = Workspace
+                        TweenService:Create(impact, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size=Vector3.zero, Transparency=1}):Play()
+                        task.delay(0.4, function() pcall(function() impact:Destroy() end) end)
+                    end
+
+                    if GestioConfig.bulletFlashEnabled then
+                        local flash = Instance.new("Part")
+                        flash.Anchored = true; flash.CanCollide = false; flash.CanTouch = false; flash.CanQuery = false; flash.CastShadow = false
+                        flash.Material = Enum.Material.Neon
+                        flash.Color = rgb(255,80,80)
+                        flash.Shape = Enum.PartType.Ball
+                        flash.Size = Vector3.new(0.6,0.6,0.6)
+                        flash.CFrame = CFrame.new(origin)
+                        flash.Parent = Workspace
+                        TweenService:Create(flash, TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size=Vector3.zero, Transparency=1}):Play()
+                        task.delay(0.15, function() pcall(function() flash:Destroy() end) end)
+                    end
+                end
+            end
+        end)
+    end)
+
     pcall(function()
         local controllers = ReplicatedStorage:FindFirstChild("Controllers")
         local moduleScript = controllers and controllers:FindFirstChild("InventoryController")
         if not moduleScript then return end
 
         local inventoryController = require(moduleScript)
-        if type(inventoryController) ~= "table" or type(inventoryController.ShootWeapon) ~= "function" then return end
+        if type(inventoryController) ~= "table" then return end
+        if type(inventoryController.ShootWeapon) ~= "function" then return end
         if rawget(inventoryController, "__GestioShootHooked") then
             bloxStrikeShootHooked = true
             return
@@ -479,186 +456,72 @@ local function setupBloxStrikeShootHook()
 
         local originalShootWeapon = inventoryController.ShootWeapon
         inventoryController.ShootWeapon = function(self, data, ...)
-            if type(data) == "table" and type(data.Bullets) == "table" then
-                -- Tracers now use the game's real bullet payload instead of mouse input.
-                -- This also works when shooting from third person and with automatic weapons.
-                if (not GestioConfig.silentAimEnabled) and (GestioConfig.bulletTrailEnabled or GestioConfig.bulletImpactEnabled or GestioConfig.bulletFlashEnabled) then
-                    local cam = Workspace.CurrentCamera or camera
-                    local fallback = cam and cam.CFrame.Position or Vector3.zero
-                    for _, bullet in pairs(data.Bullets) do
-                        if type(bullet) == "table" then
-                            local origin = getBulletOrigin(bullet, fallback)
-                            local bulletEnd = getBulletEnd(bullet, origin, 1000)
-                            createGestioBulletTracer(origin, bulletEnd)
-                            createGestioBulletImpact(bulletEnd)
-                            if GestioConfig.bulletFlashEnabled then
-                                local flash = Instance.new("Part")
-                                flash.Name = "Gestio_MuzzleFlash"
-                                flash.Anchored = true
-                                flash.CanCollide = false
-                                flash.CanTouch = false
-                                flash.CanQuery = false
-                                flash.CastShadow = false
-                                flash.Material = Enum.Material.Neon
-                                flash.Color = rgb(255, 80, 80)
-                                flash.Shape = Enum.PartType.Ball
-                                flash.Size = Vector3.new(0.6, 0.6, 0.6)
-                                flash.CFrame = CFrame.new(origin)
-                                flash.Parent = Workspace
-                                TweenService:Create(flash, TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                                    Size = Vector3.zero,
-                                    Transparency = 1
-                                }):Play()
-                                task.delay(0.15, function() pcall(function() flash:Destroy() end) end)
-                            end
-                        end
-                    end
+            if GestioConfig.silentAimEnabled
+                and type(data) == "table"
+                and type(data.Bullets) == "table" then
+
+                -- Resolve the target at the actual weapon call instead of relying only
+                -- on the RenderStepped snapshot. This removes frame-rate dependent
+                -- target staleness for automatic weapons and multi-pellet shots.
+                local shotTarget = getSilentAimTarget and getSilentAimTarget() or nil
+                local shotAllowed = true
+
+                -- Hit chance is evaluated once per actual ShootWeapon invocation.
+                -- A single invocation may contain multiple pellets; they share the
+                -- same decision so one shot is not partially modified.
+                if GestioConfig.silentAimHitChance < 100 then
+                    shotAllowed = math.random(1, 100) <= math.clamp(GestioConfig.silentAimHitChance, 0, 100)
                 end
 
-                if GestioConfig.silentAimEnabled then
-                    local shotTarget = getSilentAimTarget and getSilentAimTarget() or nil
-                    local shotAllowed = true
-                    if GestioConfig.silentAimHitChance < 100 then
-                        shotAllowed = math.random(1, 100) <= math.clamp(GestioConfig.silentAimHitChance, 0, 100)
-                    end
-                    if shotTarget and shotAllowed then
-                        local camPos, aimPos = silentAimCamPosAim(shotTarget)
-                        if camPos and aimPos then
-                            for _, bullet in pairs(data.Bullets) do
-                                if type(bullet) == "table" then
-                                    local direction, origin = getSilentAimShotDirection(bullet, aimPos, camPos)
-                                    if direction and typeof(origin) == "Vector3" then
-                                        -- Direction is based on the actual bullet origin. This is
-                                        -- important in native Classic third person.
-                                        bullet.Direction = direction
-                                        bullet.__GestioSilentApplied = true
-                                        if type(bullet.Hits) == "table" then
-                                            for _, hitData in pairs(bullet.Hits) do
-                                                if type(hitData) == "table" then
-                                                    hitData.Instance = shotTarget
-                                                    hitData.Position = shotTarget.Position
-                                                end
+                if shotTarget and shotAllowed then
+                    local camPos, aimPos = silentAimCamPosAim(shotTarget)
+                    if camPos and aimPos then
+                        for _, bullet in pairs(data.Bullets) do
+                            if type(bullet) == "table" then
+                                local origin = bullet.Origin
+                                    or bullet.StartingPoint
+                                    or bullet.Position
+                                    or camPos
+
+                                if typeof(origin) == "CFrame" then
+                                    origin = origin.Position
+                                end
+
+                                if typeof(origin) == "Vector3" then
+                                    local delta = aimPos - origin
+                                    if delta.Magnitude > 0.001 then
+                                        -- Keep Gestio's direction rewrite.
+                                        bullet.Direction = delta.Unit
+                                    end
+
+                                    -- MemeSense-style authoritative hit payload rewrite.
+                                    if type(bullet.Hits) == "table" then
+                                        for _, hitData in pairs(bullet.Hits) do
+                                            if type(hitData) == "table" then
+                                                hitData.Instance = shotTarget
+                                                hitData.Position = shotTarget.Position
                                             end
                                         end
-                                        if GestioConfig.wallbangEnabled then
-                                            bullet.Penetration = 9999
-                                            bullet.Wallbang = true
-                                            bullet.IgnoreEnvironment = true
-                                        end
+                                    end
+
+                                    if GestioConfig.wallbangEnabled then
+                                        bullet.Penetration = 9999
+                                        bullet.Wallbang = true
+                                        bullet.IgnoreEnvironment = true
                                     end
                                 end
                             end
                         end
                     end
                 end
-
-                -- Render the tracer from the final, already-modified bullet payload.
-                -- This keeps tracer direction synchronized with Silent Aim.
-                if GestioConfig.silentAimEnabled and (GestioConfig.bulletTrailEnabled or GestioConfig.bulletImpactEnabled or GestioConfig.bulletFlashEnabled) then
-                    local cam = Workspace.CurrentCamera or camera
-                    local fallback = cam and cam.CFrame.Position or Vector3.zero
-                    for _, bullet in pairs(data.Bullets) do
-                        if type(bullet) == "table" then
-                            local origin = getBulletOrigin(bullet, fallback)
-                            local bulletEnd = getBulletEnd(bullet, origin, 1000)
-                            createGestioBulletTracer(origin, bulletEnd)
-                            createGestioBulletImpact(bulletEnd)
-                            if GestioConfig.bulletFlashEnabled then
-                                local flash = Instance.new("Part")
-                                flash.Name = "Gestio_MuzzleFlash"
-                                flash.Anchored = true
-                                flash.CanCollide = false
-                                flash.CanTouch = false
-                                flash.CanQuery = false
-                                flash.CastShadow = false
-                                flash.Material = Enum.Material.Neon
-                                flash.Color = rgb(255, 80, 80)
-                                flash.Shape = Enum.PartType.Ball
-                                flash.Size = Vector3.new(0.6, 0.6, 0.6)
-                                flash.CFrame = CFrame.new(origin)
-                                flash.Parent = Workspace
-                                TweenService:Create(flash, TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = Vector3.zero, Transparency = 1}):Play()
-                                task.delay(0.15, function() pcall(function() flash:Destroy() end) end)
-                            end
-                        end
-                    end
-                end
             end
+
             return originalShootWeapon(self, data, ...)
         end
 
         rawset(inventoryController, "__GestioShootHooked", true)
         bloxStrikeShootHooked = true
     end)
-end
-
--- MemeSense weapon mechanics: disable the weapon's recoil/spread generators at source.
-local memesenseWeaponModsHooked = false
-local function setupMemeSenseWeaponMods()
-    if memesenseWeaponModsHooked then return end
-    if type(getgc) ~= "function" or type(hookfunction) ~= "function" then return end
-
-    local hookedMethods = setmetatable({}, {__mode = "k"})
-    local hookedFunctions = setmetatable({}, {__mode = "k"})
-
-    local hookCount = 0
-    pcall(function()
-        for _, obj in next, getgc(true) do
-            if type(obj) == "table" then
-                local recoilFn = rawget(obj, "setWeaponRecoil")
-                if type(recoilFn) == "function" and not hookedFunctions[recoilFn] then
-                    local old
-                    old = hookfunction(recoilFn, function(...)
-                        if GestioConfig.noRecoilEnabled then return end
-                        return old(...)
-                    end)
-                    hookedFunctions[recoilFn] = true
-                    hookedMethods[obj] = true
-                    hookCount += 1
-                end
-
-                local kickFn = rawget(obj, "weaponKick")
-                if type(kickFn) == "function" and not hookedFunctions[kickFn] then
-                    local old
-                    old = hookfunction(kickFn, function(...)
-                        if GestioConfig.noRecoilEnabled then return end
-                        return old(...)
-                    end)
-                    hookedFunctions[kickFn] = true
-                    hookedMethods[obj] = true
-                    hookCount += 1
-                end
-
-                local spreadFn = rawget(obj, "getTrueSpread")
-                if type(spreadFn) == "function" and not hookedFunctions[spreadFn] then
-                    local old
-                    old = hookfunction(spreadFn, function(...)
-                        if GestioConfig.noSpreadEnabled or GestioConfig.noRecoilEnabled then return 0 end
-                        return old(...)
-                    end)
-                    hookedFunctions[spreadFn] = true
-                    hookedMethods[obj] = true
-                    hookCount += 1
-                end
-            elseif type(obj) == "function" and not hookedFunctions[obj] then
-                local info
-                pcall(function() info = debug.getinfo(obj) end)
-                local name = info and info.name
-                if name == "calculateRecoilOffset" then
-                    local old
-                    old = hookfunction(obj, function(...)
-                        if GestioConfig.noRecoilEnabled then return UDim2.new() end
-                        return old(...)
-                    end)
-                    hookedFunctions[obj] = true
-                    hookCount += 1
-                end
-            end
-        end
-    end)
-    -- Some executors expose getgc before the game's weapon modules are fully
-    -- initialized. Only lock the scan after at least one source function was found.
-    memesenseWeaponModsHooked = hookCount > 0
 end
 
 -- ==========================================
@@ -850,12 +713,7 @@ local function setupSilentAimHooks()
                 local method = getnamecallmethod()
                 local args = {...}
 
-                -- In native third person the final ShootWeapon payload is the
-                -- authoritative place to redirect the shot. Do not also replace
-                -- the camera ray here, otherwise the game can build a muzzle ray
-                -- from the camera position and the result becomes offset.
-                if GestioConfig.silentAimEnabled and silentAimResolved
-                    and not GestioConfig.thirdPersonEnabled
+                if GestioConfig.silentAimEnabled and silentAimResolved and noRecoil.isShooting
                     and self == camera
                     and (method == "ViewportPointToRay" or method == "ScreenPointToRay") then
                     local camPos, aimPos = silentAimCamPosAim()
@@ -1310,12 +1168,11 @@ if genv then
 end
 
 -- ==========================================
--- MEMESENSE-STYLE NATIVE THIRD PERSON
+-- MOBILE + PC THIRD PERSON CONTROLLER
 -- ==========================================
 local isThirdPersonActive = false
+local thirdPersonTargetCFrame = nil
 local thirdPersonSaved = nil
-local thirdPersonCameraConnection = nil
-local thirdPersonPlayerGuardInstalled = false
 
 local function getThirdPersonTarget()
     local char = player.Character
@@ -1325,72 +1182,26 @@ local function getThirdPersonTarget()
     return hrp, hum
 end
 
-local function getThirdPersonDistance()
-    return math.clamp(tonumber(GestioConfig.thirdPersonDistance) or 10, 5, 50)
-end
-
--- In third person the camera is behind the character. Target selection still
--- uses the camera center, but the final bullet direction is always rebuilt
--- from the bullet's real origin (muzzle/origin) to the predicted target.
--- This prevents the camera-to-target vector from being reused as a muzzle vector.
-local function getSilentAimShotDirection(bullet, aimPos, fallbackOrigin)
-    local origin = getBulletOrigin(bullet, fallbackOrigin)
-    if typeof(origin) ~= "Vector3" or typeof(aimPos) ~= "Vector3" then
-        return nil, origin
-    end
-    local delta = aimPos - origin
-    if delta.Magnitude <= 0.001 then return nil, origin end
-    return delta.Unit, origin
-end
-
-local function enforceNativeThirdPerson()
-    if not GestioConfig.thirdPersonEnabled then return end
-    local cam = Workspace.CurrentCamera
-    if not cam then return end
-    local _, hum = getThirdPersonTarget()
-    local distance = getThirdPersonDistance()
-
-    pcall(function()
-        -- This is the core MemeSense method: Classic + fixed zoom.
-        player.CameraMode = Enum.CameraMode.Classic
-        player.CameraMaxZoomDistance = distance
-        player.CameraMinZoomDistance = distance
-    end)
-
-    pcall(function()
-        cam.CameraType = Enum.CameraType.Custom
-        if hum then cam.CameraSubject = hum end
-    end)
-end
-
 local function restoreThirdPerson()
     isThirdPersonActive = false
+    thirdPersonTargetCFrame = nil
 
-    if thirdPersonCameraConnection then
-        thirdPersonCameraConnection:Disconnect()
-        thirdPersonCameraConnection = nil
-    end
-
-    local cam = Workspace.CurrentCamera
     local char = player.Character
     local hum = char and char:FindFirstChildOfClass("Humanoid")
 
     if hum and thirdPersonSaved then
-        pcall(function() hum.CameraOffset = thirdPersonSaved.cameraOffset end)
+        hum.CameraOffset = thirdPersonSaved.cameraOffset
     end
 
-    if cam then
-        pcall(function()
-            if thirdPersonSaved then
-                cam.CameraMinZoomDistance = thirdPersonSaved.minZoom
-                cam.CameraMaxZoomDistance = thirdPersonSaved.maxZoom
-            end
-            cam.CameraType = Enum.CameraType.Custom
-            if hum then cam.CameraSubject = hum end
-        end)
+    if camera then
+        if thirdPersonSaved then
+            camera.CameraMinZoomDistance = thirdPersonSaved.minZoom
+            camera.CameraMaxZoomDistance = thirdPersonSaved.maxZoom
+        end
+        camera.CameraType = Enum.CameraType.Custom
+        if hum then camera.CameraSubject = hum end
     end
 
-    pcall(function() player.CameraMode = Enum.CameraMode.LockFirstPerson end)
     thirdPersonSaved = nil
 end
 
@@ -1400,9 +1211,11 @@ function applyThirdPerson(dt)
         return
     end
 
-    local cam = Workspace.CurrentCamera
-    local _, hum = getThirdPersonTarget()
-    if not cam or not hum then
+    camera = Workspace.CurrentCamera or camera
+    if not camera then return end
+
+    local hrp, hum = getThirdPersonTarget()
+    if not hrp then
         if isThirdPersonActive then restoreThirdPerson() end
         return
     end
@@ -1410,98 +1223,68 @@ function applyThirdPerson(dt)
     if not isThirdPersonActive then
         thirdPersonSaved = {
             cameraOffset = hum.CameraOffset,
-            minZoom = cam.CameraMinZoomDistance,
-            maxZoom = cam.CameraMaxZoomDistance
+            minZoom = camera.CameraMinZoomDistance,
+            maxZoom = camera.CameraMaxZoomDistance
         }
         isThirdPersonActive = true
     end
 
-    -- Do not use CameraOffset/Scriptable CFrame here. Blox Strike's camera
-    -- controller can overwrite those values; native Classic mode is stable.
-    enforceNativeThirdPerson()
+    -- Mobile uses Roblox's native Custom camera. This keeps the
+    -- touchscreen joystick/jump/buttons and touch-look pipeline intact.
+    if UserInputService.TouchEnabled then
+        camera.CameraType = Enum.CameraType.Custom
+        camera.CameraSubject = hum
+
+        local distance = math.max(4, tonumber(GestioConfig.thirdPersonDistance) or 12)
+        local height = tonumber(GestioConfig.thirdPersonHeight) or 1.5
+        local offset = tonumber(GestioConfig.thirdPersonOffset) or 2.5
+
+        camera.CameraMinZoomDistance = distance
+        camera.CameraMaxZoomDistance = distance
+        hum.CameraOffset = Vector3.new(offset, height, 0)
+        return
+    end
+
+    -- Desktop keeps the controlled Scriptable camera.
+    camera.CameraType = Enum.CameraType.Scriptable
+    camera.CameraSubject = nil
+
+    local targetPos = hrp.Position + Vector3.new(0, GestioConfig.thirdPersonHeight, 0)
+    local look = camera.CFrame.LookVector
+    local flatLook = Vector3.new(look.X, 0, look.Z)
+
+    if flatLook.Magnitude < 0.001 then
+        flatLook = Vector3.new(0, 0, -1)
+    else
+        flatLook = flatLook.Unit
+    end
+
+    local right = Vector3.new(-flatLook.Z, 0, flatLook.X)
+    local distance = math.max(2, tonumber(GestioConfig.thirdPersonDistance) or 12)
+    local shoulder = tonumber(GestioConfig.thirdPersonOffset) or 2.5
+
+    local desiredPos = targetPos - flatLook * distance + right * shoulder
+    local desiredCF = CFrame.lookAt(desiredPos, targetPos)
+
+    local alpha = math.clamp((dt or 1/60) * 14, 0, 1)
+    thirdPersonTargetCFrame = thirdPersonTargetCFrame
+        and thirdPersonTargetCFrame:Lerp(desiredCF, alpha)
+        or desiredCF
+
+    camera.CFrame = thirdPersonTargetCFrame
 end
 
 function setThirdPersonEnabled(enabled)
     GestioConfig.thirdPersonEnabled = enabled
-    if enabled then
-        isThirdPersonActive = false
-        thirdPersonSaved = nil
-        enforceNativeThirdPerson()
-    else
+    if not enabled then
         restoreThirdPerson()
+    else
+        thirdPersonTargetCFrame = nil
     end
 end
 
 function refreshThirdPerson()
-    if GestioConfig.thirdPersonEnabled then
-        enforceNativeThirdPerson()
-    end
 end
-
--- MemeSense protects the LocalPlayer camera properties from the game's own
--- first-person controller. Install the same protection for Gestio.
-local function installThirdPersonPlayerGuard()
-    if thirdPersonPlayerGuardInstalled then return end
-    if not (getrawmetatable and setreadonly and newcclosure) then return end
-
-    local ok = pcall(function()
-        local mt = getrawmetatable(game)
-        local oldNewIndex = mt.__newindex
-        setreadonly(mt, false)
-        mt.__newindex = newcclosure(function(self, key, value)
-            if self == player and GestioConfig.thirdPersonEnabled then
-                local distance = getThirdPersonDistance()
-                if key == "CameraMode" then
-                    return oldNewIndex(self, key, Enum.CameraMode.Classic)
-                elseif key == "CameraMaxZoomDistance" then
-                    return oldNewIndex(self, key, distance)
-                elseif key == "CameraMinZoomDistance" then
-                    return oldNewIndex(self, key, distance)
-                end
-            end
-            return oldNewIndex(self, key, value)
-        end)
-        setreadonly(mt, true)
-        thirdPersonPlayerGuardInstalled = true
-    end)
-
-    if not ok then
-        pcall(function() setreadonly(getrawmetatable(game), true) end)
-    end
-end
-
-local function reconnectThirdPersonCamera()
-    if thirdPersonCameraConnection then
-        thirdPersonCameraConnection:Disconnect()
-        thirdPersonCameraConnection = nil
-    end
-    local cam = Workspace.CurrentCamera
-    if not cam then return end
-
-    thirdPersonCameraConnection = cam:GetPropertyChangedSignal("CameraType"):Connect(function()
-        if GestioConfig.thirdPersonEnabled then
-            enforceNativeThirdPerson()
-        end
-    end)
-end
-
-installThirdPersonPlayerGuard()
-reconnectThirdPersonCamera()
-
-player.CharacterAdded:Connect(function()
-    if not GestioConfig.thirdPersonEnabled then return end
-    task.defer(function()
-        task.wait()
-        enforceNativeThirdPerson()
-        reconnectThirdPersonCamera()
-    end)
-end)
-
-Workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
-    if not GestioConfig.thirdPersonEnabled then return end
-    reconnectThirdPersonCamera()
-    task.defer(enforceNativeThirdPerson)
-end)
 
 -- ==========================================
 -- LIGHTING & ATMOSPHERE FUNCTIONS
@@ -1560,6 +1343,10 @@ local originalSkybox = nil
 local originalPostFX = nil
 local weaponChamsState = setmetatable({}, {__mode = "k"})
 local weaponChamsHighlights = setmetatable({}, {__mode = "k"})
+local scopeSavedFov = nil
+local scopeSavedSize = nil
+local scopeGui = nil
+local scopeContainer = nil
 
 local function getWeaponModel()
     local cam = Workspace.CurrentCamera or camera
@@ -1718,12 +1505,7 @@ local function updateWorldChanger()
     end
 end
 
--- Native weapon scope remover adapted from MemeSense.
--- It does NOT create a custom crosshair and does NOT change camera FOV.
--- The weapon's own scope/zoom logic remains intact, including third person.
-local scopeOriginalState = nil
-local scopeRenderConnection = nil
-
+-- Scope overlay adapted from MemeSense: FOV override, removable scope and configurable crosshair.
 local function findSniperScope()
     local pg = player and player:FindFirstChildOfClass("PlayerGui")
     if not pg then return nil end
@@ -1733,44 +1515,74 @@ local function findSniperScope()
     return middle and middle:FindFirstChild("SniperScope") or nil
 end
 
-local function updateCustomScope()
-    local scope = findSniperScope()
-    if not scope then return false end
-
-    if not scopeOriginalState then
-        scopeOriginalState = {
-            Size = scope.Size,
-            Visible = scope.Visible,
-            Position = scope.Position,
-            AnchorPoint = scope.AnchorPoint
-        }
+local function ensureScopeGui()
+    if scopeGui and scopeGui.Parent then return end
+    scopeGui = Instance.new("ScreenGui")
+    scopeGui.Name = "GestioCustomScope"
+    scopeGui.ResetOnSpawn = false
+    scopeGui.IgnoreGuiInset = true
+    pcall(function() scopeGui.Parent = targetGui end)
+    if not scopeGui.Parent then scopeGui.Parent = CoreGui end
+    scopeContainer = Instance.new("Frame")
+    scopeContainer.BackgroundTransparency = 1
+    scopeContainer.AnchorPoint = Vector2.new(0.5,0.5)
+    scopeContainer.Position = UDim2.fromScale(0.5,0.5)
+    scopeContainer.Size = UDim2.fromOffset(0,0)
+    scopeContainer.Parent = scopeGui
+    for name,anchor in pairs({Left=Vector2.new(1,.5),Right=Vector2.new(0,.5),Top=Vector2.new(.5,1),Bottom=Vector2.new(.5,0)}) do
+        local f=Instance.new("Frame")
+        f.Name=name; f.AnchorPoint=anchor; f.BorderSizePixel=0; f.Parent=scopeContainer
     end
-
-    if GestioConfig.customScopeEnabled then
-        -- Keep the game's scope state/zoom logic alive, but collapse the
-        -- visual overlay. Blox Strike may recreate/reset Size every frame,
-        -- so this function is also called from the render loop.
-        if scope.Size ~= UDim2.fromOffset(0, 0) then
-            scope.Size = UDim2.fromOffset(0, 0)
-        end
-        return scope.Visible == true
-    else
-        if scopeOriginalState and scope.Size ~= scopeOriginalState.Size then
-            scope.Size = scopeOriginalState.Size
-        end
-    end
-    return scope.Visible == true
+    local dot=Instance.new("Frame")
+    dot.Name="Dot"; dot.AnchorPoint=Vector2.new(.5,.5); dot.BorderSizePixel=0; dot.Parent=scopeContainer
 end
 
--- Re-apply after the game's camera/UI update so the weapon's own scoped state
--- remains intact while the black SniperScope overlay stays collapsed.
--- Priority is deliberately high: Blox Strike can restore the Size during its
--- normal RenderStepped work.
-pcall(function()
-    RunService:BindToRenderStep("GestioScopeSuppress", 1000, function()
-        pcall(updateCustomScope)
+local function updateCustomScope()
+    ensureScopeGui()
+    local scope = findSniperScope()
+    local scoped = scope and scope.Visible == true
+    if scope and scopeSavedSize == nil then scopeSavedSize = scope.Size end
+    if scope and GestioConfig.scopeRemoveOriginal and scoped then
+        scope.Size = UDim2.fromOffset(0,0)
+    elseif scope and scopeSavedSize and not GestioConfig.scopeRemoveOriginal then
+        scope.Size = scopeSavedSize
+    elseif scope and scopeSavedSize and not scoped then
+        scope.Size = scopeSavedSize
+    end
+    local cam = Workspace.CurrentCamera or camera
+    if GestioConfig.customScopeEnabled and scoped then
+        if GestioConfig.scopeFovEnabled and cam then
+            if scopeSavedFov == nil then scopeSavedFov = cam.FieldOfView end
+            cam.FieldOfView = math.clamp(GestioConfig.scopeFov or 70, 10, 120)
+        end
+        scopeContainer.Visible = GestioConfig.scopeCrosshairEnabled
+        local col = rgb(GestioConfig.scopeCrosshairColorR,GestioConfig.scopeCrosshairColorG,GestioConfig.scopeCrosshairColorB)
+        local len = math.clamp(GestioConfig.scopeCrosshairLength or 85, 2, 500)
+        local thick = math.clamp(GestioConfig.scopeCrosshairThickness or 2, 1, 8)
+        local gap = math.clamp(GestioConfig.scopeCrosshairGap or 8, 0, 100)
+        local dynamic = GestioConfig.scopeDynamicGap and math.clamp((1/(cam and cam.FieldOfView or 70))*700, 2, 30) or 0
+        gap = gap + dynamic
+        local l=scopeContainer.Left; local r=scopeContainer.Right; local t=scopeContainer.Top; local b=scopeContainer.Bottom; local d=scopeContainer.Dot
+        for _,f in ipairs({l,r,t,b,d}) do f.BackgroundColor3=col end
+        l.Size=UDim2.fromOffset(len,thick); l.Position=UDim2.fromOffset(-gap,0)
+        r.Size=UDim2.fromOffset(len,thick); r.Position=UDim2.fromOffset(gap,0)
+        t.Size=UDim2.fromOffset(thick,len); t.Position=UDim2.fromOffset(0,-gap)
+        b.Size=UDim2.fromOffset(thick,len); b.Position=UDim2.fromOffset(0,gap)
+        d.Size=UDim2.fromOffset(thick*2,thick*2); d.Position=UDim2.fromOffset(0,0); d.Visible=true
+    else
+        scopeContainer.Visible=false
+        if scopeSavedFov and cam then cam.FieldOfView=scopeSavedFov end
+        scopeSavedFov=nil
+    end
+end
+
+table.insert(connections, RunService.RenderStepped:Connect(function()
+    pcall(function()
+        updateWeaponChams()
+        updateCustomScope()
+        if GestioConfig.nightModeEnabled then updateWorldChanger() end
     end)
-end)
+end))
 
 -- ==========================================
 -- JUMP CIRCLE RENDER ENGINE (GROUND CONTOUR)
@@ -2387,11 +2199,7 @@ visRayParams.FilterType = Enum.RaycastFilterType.Exclude
 visRayParams.IgnoreWater = true
 
 function isTargetVisible(originPos, targetPart, targetChar)
-    if GestioConfig.wallbangEnabled then return true end
-    -- Silent Aim must respect walls unless Wallbang is explicitly enabled.
-    if not GestioConfig.visibleCheck then
-        -- Keep regular visibility checks independent from the user-facing toggle.
-    end
+    if not GestioConfig.visibleCheck or GestioConfig.wallbangEnabled then return true end
     local myChar = player.Character
     visRayParams.FilterDescendantsInstances = {myChar, camera}
     local dir = targetPart.Position - originPos
@@ -2767,57 +2575,46 @@ function renderTacticalOverlay()
                             corner.V.Visible = false
                         end
                     elseif GestioConfig.cornerBoxEnabled then
-                        -- Clean 2D corner-box: four independent L-shaped corners.
-                        -- The solid Box frame is always hidden in this mode.
                         esp.Box.Visible = false
-
-                        local cornerX = math.clamp(boxWidth * 0.22, 6, 28)
-                        local cornerY = math.clamp(boxHeight * 0.22, 8, 34)
-                        local thick = math.clamp(GestioConfig.boxThickness, 1, 3)
-                        local rightX = boxPosX + boxWidth - cornerX
-                        local bottomY = boxPosY + boxHeight - thick
-                        local rightV = boxPosX + boxWidth - thick
-                        local bottomV = boxPosY + boxHeight - cornerY
+                        local lengthX = math.max(boxWidth * 0.25, 4)
+                        local lengthY = math.max(boxHeight * 0.25, 4)
+                        local thick = GestioConfig.boxThickness + 0.5
 
                         for _, corner in ipairs(esp.Corners) do
                             corner.H.BackgroundColor3 = sideColor
                             corner.V.BackgroundColor3 = sideColor
-                            corner.H.BackgroundTransparency = 0
-                            corner.V.BackgroundTransparency = 0
-                            corner.H.Visible = false
-                            corner.V.Visible = false
                         end
 
-                        -- Top-left
-                        esp.Corners[1].H.Size = UDim2.fromOffset(cornerX, thick)
-                        esp.Corners[1].H.Position = UDim2.fromOffset(boxPosX, boxPosY)
+                        esp.Corners[1].H.Size = UDim2.new(0, lengthX, 0, thick)
+                        esp.Corners[1].H.Position = UDim2.new(0, boxPosX, 0, boxPosY)
                         esp.Corners[1].H.Visible = true
-                        esp.Corners[1].V.Size = UDim2.fromOffset(thick, cornerY)
-                        esp.Corners[1].V.Position = UDim2.fromOffset(boxPosX, boxPosY)
+
+                        esp.Corners[1].V.Size = UDim2.new(0, thick, 0, lengthY)
+                        esp.Corners[1].V.Position = UDim2.new(0, boxPosX, 0, boxPosY)
                         esp.Corners[1].V.Visible = true
 
-                        -- Top-right
-                        esp.Corners[2].H.Size = UDim2.fromOffset(cornerX, thick)
-                        esp.Corners[2].H.Position = UDim2.fromOffset(rightX, boxPosY)
+                        esp.Corners[2].H.Size = UDim2.new(0, lengthX, 0, thick)
+                        esp.Corners[2].H.Position = UDim2.new(0, boxPosX + boxWidth - lengthX, 0, boxPosY)
                         esp.Corners[2].H.Visible = true
-                        esp.Corners[2].V.Size = UDim2.fromOffset(thick, cornerY)
-                        esp.Corners[2].V.Position = UDim2.fromOffset(rightV, boxPosY)
+
+                        esp.Corners[2].V.Size = UDim2.new(0, thick, 0, lengthY)
+                        esp.Corners[2].V.Position = UDim2.new(0, boxPosX + boxWidth - thick, 0, boxPosY)
                         esp.Corners[2].V.Visible = true
 
-                        -- Bottom-left
-                        esp.Corners[3].H.Size = UDim2.fromOffset(cornerX, thick)
-                        esp.Corners[3].H.Position = UDim2.fromOffset(boxPosX, bottomY)
+                        esp.Corners[3].H.Size = UDim2.new(0, lengthX, 0, thick)
+                        esp.Corners[3].H.Position = UDim2.new(0, boxPosX, 0, boxPosY + boxHeight - thick)
                         esp.Corners[3].H.Visible = true
-                        esp.Corners[3].V.Size = UDim2.fromOffset(thick, cornerY)
-                        esp.Corners[3].V.Position = UDim2.fromOffset(boxPosX, bottomV)
+
+                        esp.Corners[3].V.Size = UDim2.new(0, thick, 0, lengthY)
+                        esp.Corners[3].V.Position = UDim2.new(0, boxPosX, 0, boxPosY + boxHeight - lengthY)
                         esp.Corners[3].V.Visible = true
 
-                        -- Bottom-right
-                        esp.Corners[4].H.Size = UDim2.fromOffset(cornerX, thick)
-                        esp.Corners[4].H.Position = UDim2.fromOffset(rightX, bottomY)
+                        esp.Corners[4].H.Size = UDim2.new(0, lengthX, 0, thick)
+                        esp.Corners[4].H.Position = UDim2.new(0, boxPosX + boxWidth - lengthX, 0, boxPosY + boxHeight - thick)
                         esp.Corners[4].H.Visible = true
-                        esp.Corners[4].V.Size = UDim2.fromOffset(thick, cornerY)
-                        esp.Corners[4].V.Position = UDim2.fromOffset(rightV, bottomV)
+
+                        esp.Corners[4].V.Size = UDim2.new(0, thick, 0, lengthY)
+                        esp.Corners[4].V.Position = UDim2.new(0, boxPosX + boxWidth - thick, 0, boxPosY + boxHeight - lengthY)
                         esp.Corners[4].V.Visible = true
                     else
                         esp.Box.Visible = false
@@ -3026,22 +2823,8 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         end
     end
 
-    local isWeaponScoped = false
-    pcall(function()
-        local scope = findSniperScope()
-        isWeaponScoped = scope ~= nil and scope.Visible == true
-    end)
-    pcall(updateCustomScope)
-    if not memesenseWeaponModsHooked then
-        setupMemeSenseWeaponMods()
-    end
-
     if silentFovFrame then
-        -- The silent-FOV circle is an assist overlay, not the weapon scope.
-        -- Hide it while scoped so it cannot look like another scope reticle.
-        local isSilentFovVisible = GestioConfig.silentAimEnabled
-            and GestioConfig.showSilentFovCircle
-            and not isWeaponScoped
+        local isSilentFovVisible = GestioConfig.silentAimEnabled and GestioConfig.showSilentFovCircle
         silentFovFrame.Visible = isSilentFovVisible
         if isSilentFovVisible then
             local diameter = GestioConfig.silentAimFov * 2
@@ -3058,10 +2841,8 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         silentAimResolved = nil
     end
 
-    -- No Recoil is now handled at the weapon source (MemeSense hooks).
-    -- Keep camera compensation only for the optional RCS module.
-    if GestioConfig.rcsEnabled and noRecoil.isShooting then
-        local comp = ((GestioConfig.rcsStrength / 100) * 0.004 * GestioConfig.rcsPitchFactor)
+    if (GestioConfig.rcsEnabled or GestioConfig.noRecoilEnabled) and noRecoil.isShooting then
+        local comp = (GestioConfig.noRecoilEnabled and (GestioConfig.recoilStrength * 0.0035) or 0) + (GestioConfig.rcsEnabled and ((GestioConfig.rcsStrength / 100) * 0.004 * GestioConfig.rcsPitchFactor) or 0)
         camera.CFrame = camera.CFrame * CFrame.Angles(-comp, 0, 0)
     end
 
@@ -4443,9 +4224,19 @@ function buildGestioUI()
             addInspectorSlider(102,"Red",0,255,GestioConfig.weaponChamsColorR,false,function(v) GestioConfig.weaponChamsColorR=v end)
             addInspectorSlider(134,"Green",0,255,GestioConfig.weaponChamsColorG,false,function(v) GestioConfig.weaponChamsColorG=v end)
             addInspectorSlider(166,"Blue",0,255,GestioConfig.weaponChamsColorB,false,function(v) GestioConfig.weaponChamsColorB=v end)
-        elseif moduleName == "Remove Scope Overlay" then
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 80)
-            addInspectorToggle(6,"Remove Weapon Scope Overlay",GestioConfig.customScopeEnabled,function(v) GestioConfig.customScopeEnabled=v end)
+        elseif moduleName == "Custom Scope" then
+            insContent.CanvasSize = UDim2.new(0,0,0,340)
+            addInspectorToggle(6,"Remove Original Scope",GestioConfig.scopeRemoveOriginal,function(v) GestioConfig.scopeRemoveOriginal=v end)
+            addInspectorToggle(32,"Custom FOV",GestioConfig.scopeFovEnabled,function(v) GestioConfig.scopeFovEnabled=v end)
+            addInspectorSlider(58,"Scope FOV",10,120,GestioConfig.scopeFov,false,function(v) GestioConfig.scopeFov=v end)
+            addInspectorToggle(90,"Scope Crosshair",GestioConfig.scopeCrosshairEnabled,function(v) GestioConfig.scopeCrosshairEnabled=v end)
+            addInspectorToggle(116,"Dynamic Gap",GestioConfig.scopeDynamicGap,function(v) GestioConfig.scopeDynamicGap=v end)
+            addInspectorSlider(142,"Length",5,300,GestioConfig.scopeCrosshairLength,false,function(v) GestioConfig.scopeCrosshairLength=v end)
+            addInspectorSlider(174,"Thickness",1,8,GestioConfig.scopeCrosshairThickness,false,function(v) GestioConfig.scopeCrosshairThickness=v end)
+            addInspectorSlider(206,"Gap",0,60,GestioConfig.scopeCrosshairGap,false,function(v) GestioConfig.scopeCrosshairGap=v end)
+            addInspectorSlider(238,"Red",0,255,GestioConfig.scopeCrosshairColorR,false,function(v) GestioConfig.scopeCrosshairColorR=v end)
+            addInspectorSlider(270,"Green",0,255,GestioConfig.scopeCrosshairColorG,false,function(v) GestioConfig.scopeCrosshairColorG=v end)
+            addInspectorSlider(302,"Blue",0,255,GestioConfig.scopeCrosshairColorB,false,function(v) GestioConfig.scopeCrosshairColorB=v end)
         elseif moduleName == "RCS" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 240)
             addInspectorSlider(6, "RCS Strength", 10, 100, GestioConfig.rcsStrength, false, function(v) GestioConfig.rcsStrength = v end)
@@ -4533,7 +4324,6 @@ function buildGestioUI()
 
     local cGrid2 = makeCategorySection(cPage, "Weapon Mechanics", 2, 2)
     createModuleCard(cGrid2, "No Recoil", "noRecoilEnabled", nil, true)
-    createModuleCard(cGrid2, "No Spread", "noSpreadEnabled", nil, true)
     createModuleCard(cGrid2, "Anti-Aim", "antiAimEnabled", nil, true)
 
     local mGrid = makeCategorySection(mPage, "Locomotion", 1, 4)
@@ -4581,7 +4371,7 @@ function buildGestioUI()
     createModuleCard(envGrid, "World Changer", "nightModeEnabled", function(v)
         if v then applyNightPreset(GestioConfig.nightPreset); updateWorldChanger() else restoreLightingState() end
     end, true)
-    createModuleCard(envGrid, "Remove Scope Overlay", "customScopeEnabled", nil, true)
+    createModuleCard(envGrid, "Custom Scope", "customScopeEnabled", nil, true)
     createModuleCard(envGrid, "FullBright", "fullBrightEnabled", function(v)
         if not v and not GestioConfig.nightModeEnabled then restoreLightingState() end
     end, false)
@@ -4691,7 +4481,7 @@ function buildGestioUI()
     end)
 
     local cfgSection = Instance.new("Frame", setsPage)
-    cfgSection.Size = UDim2.new(1, 0, 0, 238)
+    cfgSection.Size = UDim2.new(1, 0, 0, 210)
     cfgSection.BackgroundTransparency = 1
     cfgSection.LayoutOrder = 2
     cfgSection.ZIndex = 6
@@ -4706,7 +4496,7 @@ function buildGestioUI()
     cfgHeader.TextXAlignment = Enum.TextXAlignment.Left
 
     local cfgCard = Instance.new("Frame", cfgSection)
-    cfgCard.Size = UDim2.new(1, 0, 0, 213)
+    cfgCard.Size = UDim2.new(1, 0, 0, 185)
     cfgCard.Position = UDim2.new(0, 0, 0, 20)
     cfgCard.BackgroundColor3 = currentTheme.CardBg
     cfgCard.BorderSizePixel = 0
@@ -4727,7 +4517,7 @@ function buildGestioUI()
     Instance.new("UICorner", nameBox).CornerRadius = UDim.new(0, 4)
 
     local btnSave = Instance.new("TextButton", cfgCard)
-    btnSave.Size = UDim2.new(0.24, -3, 0, 22)
+    btnSave.Size = UDim2.new(0.31, 0, 0, 22)
     btnSave.Position = UDim2.new(0, 8, 0, 36)
     btnSave.BackgroundColor3 = Color3.fromRGB(45, 120, 60)
     btnSave.Text = "SAVE"
@@ -4737,8 +4527,8 @@ function buildGestioUI()
     Instance.new("UICorner", btnSave).CornerRadius = UDim.new(0, 4)
 
     local btnLoad = Instance.new("TextButton", cfgCard)
-    btnLoad.Size = UDim2.new(0.24, -3, 0, 22)
-    btnLoad.Position = UDim2.new(0.25, 2, 0, 36)
+    btnLoad.Size = UDim2.new(0.31, 0, 0, 22)
+    btnLoad.Position = UDim2.new(0.345, 0, 0, 36)
     btnLoad.BackgroundColor3 = Color3.fromRGB(45, 80, 140)
     btnLoad.Text = "LOAD"
     btnLoad.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -4746,19 +4536,9 @@ function buildGestioUI()
     btnLoad.Font = Enum.Font.GothamBold
     Instance.new("UICorner", btnLoad).CornerRadius = UDim.new(0, 4)
 
-    local btnReset = Instance.new("TextButton", cfgCard)
-    btnReset.Size = UDim2.new(0.24, -3, 0, 22)
-    btnReset.Position = UDim2.new(0.50, 2, 0, 36)
-    btnReset.BackgroundColor3 = Color3.fromRGB(95, 95, 105)
-    btnReset.Text = "RESET"
-    btnReset.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btnReset.TextSize = 8
-    btnReset.Font = Enum.Font.GothamBold
-    Instance.new("UICorner", btnReset).CornerRadius = UDim.new(0, 4)
-
     local btnDel = Instance.new("TextButton", cfgCard)
-    btnDel.Size = UDim2.new(0.24, -3, 0, 22)
-    btnDel.Position = UDim2.new(0.75, -1, 0, 36)
+    btnDel.Size = UDim2.new(0.31, 0, 0, 22)
+    btnDel.Position = UDim2.new(0.69, -8, 0, 36)
     btnDel.BackgroundColor3 = Color3.fromRGB(140, 45, 45)
     btnDel.Text = "DELETE"
     btnDel.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -4767,65 +4547,27 @@ function buildGestioUI()
     Instance.new("UICorner", btnDel).CornerRadius = UDim.new(0, 4)
 
     local cfgList = Instance.new("ScrollingFrame", cfgCard)
-    cfgList.Size = UDim2.new(1, -16, 0, 139)
+    cfgList.Size = UDim2.new(1, -16, 0, 115)
     cfgList.Position = UDim2.new(0, 8, 0, 62)
     cfgList.BackgroundColor3 = currentTheme.Sidebar
     cfgList.BorderSizePixel = 0
     cfgList.ScrollBarThickness = 2
-    cfgList.CanvasSize = UDim2.new(0, 0, 0, 0)
     Instance.new("UICorner", cfgList).CornerRadius = UDim.new(0, 4)
 
     local cfgListLayout = Instance.new("UIListLayout", cfgList)
     cfgListLayout.Padding = UDim.new(0, 2)
 
-    local function applyConfigValues(values)
-        if type(values) ~= "table" then return end
-        for k in pairs(GestioConfig) do
-            if values[k] ~= nil then
-                GestioConfig[k] = values[k]
-            end
-        end
-
-        for k, v in pairs(GestioConfig) do
-            if UI_Bind_Registry[k] then
-                pcall(function() UI_Bind_Registry[k](v) end)
-            end
-        end
-
-        updateMobileSlideVisibility()
-        refreshThirdPerson()
-        if UI_Bind_Registry.settingsCompactMode then
-            pcall(function() UI_Bind_Registry.settingsCompactMode(GestioConfig.settingsCompactMode) end)
-        end
-        updateWeaponChams()
-        updateCustomScope()
-        setupMemeSenseWeaponMods()
-        updateWorldPostFX()
-        if GestioConfig.nightModeEnabled then
-            applyNightPreset(GestioConfig.nightPreset)
-        else
-            restoreLightingState()
-        end
-    end
-
     local function refreshConfigList()
         for _, c in ipairs(cfgList:GetChildren()) do
             if c:IsA("TextButton") then c:Destroy() end
         end
-
         local files = {}
         pcall(function()
-            if listfiles and isfolder and isfolder(cfgFolder) then
-                files = listfiles(cfgFolder)
-            elseif listfiles then
-                files = listfiles(cfgFolder)
-            end
+            if listfiles then files = listfiles(cfgFolder) end
         end)
-
-        table.sort(files, function(a, b) return tostring(a):lower() < tostring(b):lower() end)
         local totalH = 0
         for _, f in ipairs(files) do
-            local nm = tostring(f):match("([^/\\]+)%.json$")
+            local nm = f:match("([^/\\]+)%.json$")
             if nm then
                 local b = Instance.new("TextButton", cfgList)
                 b.Size = UDim2.new(1, -4, 0, 20)
@@ -4836,7 +4578,9 @@ function buildGestioUI()
                 b.TextSize = 8
                 b.Font = Enum.Font.GothamBold
                 Instance.new("UICorner", b).CornerRadius = UDim.new(0, 3)
-                bindTouch(b, function() nameBox.Text = nm end)
+                bindTouch(b, function()
+                    nameBox.Text = nm
+                end)
                 totalH = totalH + 22
             end
         end
@@ -4844,38 +4588,39 @@ function buildGestioUI()
     end
 
     local function saveConfig(name)
-        name = tostring(name or ""):gsub("^%s+", ""):gsub("%s+$", "")
         if name == "" or not writefile then return end
-        name = name:gsub("[\\/:*?]", "_"):gsub("[<>|]", "_")
         local ok, data = pcall(function() return HttpService:JSONEncode(GestioConfig) end)
-        if ok and data then
-            pcall(function()
-                if makefolder and not isfolder(cfgFolder) then makefolder(cfgFolder) end
-                writefile(cfgFolder .. "/" .. name .. ".json", data)
-            end)
+        if ok then
+            writefile(cfgFolder .. "/" .. name .. ".json", data)
             refreshConfigList()
         end
     end
 
     local function loadConfig(name)
-        name = tostring(name or ""):gsub("^%s+", ""):gsub("%s+$", "")
         if name == "" or not readfile then return end
         local ok, content = pcall(function() return readfile(cfgFolder .. "/" .. name .. ".json") end)
-        if not ok or type(content) ~= "string" then return end
+        if not ok then return end
         local ok2, data = pcall(function() return HttpService:JSONDecode(content) end)
         if ok2 and type(data) == "table" then
-            applyConfigValues(data)
+            for k, v in pairs(data) do
+                GestioConfig[k] = v
+                if UI_Bind_Registry[k] then UI_Bind_Registry[k](v) end
+            end
+            updateMobileSlideVisibility()
+            refreshThirdPerson()
+            if UI_Bind_Registry.settingsCompactMode then UI_Bind_Registry.settingsCompactMode(GestioConfig.settingsCompactMode) end
+            updateWeaponChams()
+            updateCustomScope()
+            updateWorldPostFX()
+            if GestioConfig.nightModeEnabled then
+                applyNightPreset(GestioConfig.nightPreset)
+            else
+                restoreLightingState()
+            end
         end
     end
 
-    local function resetConfig()
-        -- Reset only values represented by the current Gestio defaults snapshot.
-        applyConfigValues(deepCopyConfig(GestioConfigDefaults))
-        nameBox.Text = ""
-    end
-
     local function deleteConfig(name)
-        name = tostring(name or ""):gsub("^%s+", ""):gsub("%s+$", "")
         if name == "" or not delfile then return end
         pcall(function() delfile(cfgFolder .. "/" .. name .. ".json") end)
         refreshConfigList()
@@ -4883,7 +4628,6 @@ function buildGestioUI()
 
     bindTouch(btnSave, function() saveConfig(nameBox.Text) end)
     bindTouch(btnLoad, function() loadConfig(nameBox.Text) end)
-    bindTouch(btnReset, resetConfig)
     bindTouch(btnDel, function() deleteConfig(nameBox.Text) end)
 
     refreshConfigList()
@@ -4892,9 +4636,51 @@ end
 -- ==========================================
 -- CAMERA PROTECTION HOOK
 -- ==========================================
--- The native third-person controller above owns CameraMode/zoom.  The
--- RenderStepped loop only reapplies the native settings; it never sets
--- CameraType = Scriptable or writes camera.CFrame.
+local thirdPersonCameraConnection
+
+local function reconnectThirdPersonCamera()
+    if thirdPersonCameraConnection then
+        thirdPersonCameraConnection:Disconnect()
+        thirdPersonCameraConnection = nil
+    end
+
+    if not camera then return end
+
+    thirdPersonCameraConnection = camera:GetPropertyChangedSignal("CameraType"):Connect(function()
+        if not GestioConfig.thirdPersonEnabled or not camera then return end
+
+        -- Never fight the native mobile camera.
+        if UserInputService.TouchEnabled then
+            if camera.CameraType ~= Enum.CameraType.Custom then
+                camera.CameraType = Enum.CameraType.Custom
+            end
+            return
+        end
+
+        if camera.CameraType ~= Enum.CameraType.Scriptable then
+            camera.CameraType = Enum.CameraType.Scriptable
+        end
+    end)
+end
+
+reconnectThirdPersonCamera()
+
+Workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
+    camera = Workspace.CurrentCamera or camera
+    reconnectThirdPersonCamera()
+
+    if GestioConfig.thirdPersonEnabled and camera then
+        local char = player.Character
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+
+        if UserInputService.TouchEnabled then
+            camera.CameraType = Enum.CameraType.Custom
+            if hum then camera.CameraSubject = hum end
+        else
+            camera.CameraType = Enum.CameraType.Scriptable
+        end
+    end
+end)
 
 -- ==========================================
 -- MEMESENSE-STYLE SEND HOOK FALLBACK FOR SILENT AIM
@@ -4938,32 +4724,17 @@ local function setupMemesenseSilentSendHook()
             local targetPart = getSilentAimTarget and getSilentAimTarget() or silentAimResolved
             if targetPart then
                 local chance = math.clamp(tonumber(GestioConfig.silentAimHitChance) or 100, 0, 100)
-                local alreadyApplied = false
-                for _, bullet in pairs(args[1].Bullets) do
-                    if type(bullet) == "table" and bullet.__GestioSilentApplied then
-                        alreadyApplied = true
-                        break
-                    end
-                end
-                local allowed = alreadyApplied or chance >= 100 or math.random(1, 100) <= chance
+                local allowed = chance >= 100 or math.random(1, 100) <= chance
                 if allowed then
                     silentAimResolved = targetPart
-                    local cam = Workspace.CurrentCamera or camera
-                    local fallback = cam and cam.CFrame.Position or Vector3.zero
-                    local _, aimPos = silentAimCamPosAim(targetPart)
                     for _, bullet in pairs(args[1].Bullets) do
-                        if type(bullet) == "table" then
-                            local direction, origin = getSilentAimShotDirection(bullet, aimPos or targetPart.Position, fallback)
-                            if direction then bullet.Direction = direction end
-                            if type(bullet.Hits) == "table" then
-                                for _, hitData in pairs(bullet.Hits) do
-                                    if type(hitData) == "table" then
-                                        hitData.Instance = targetPart
-                                        hitData.Position = targetPart.Position
-                                    end
+                        if type(bullet) == "table" and type(bullet.Hits) == "table" then
+                            for _, hitData in pairs(bullet.Hits) do
+                                if type(hitData) == "table" then
+                                    hitData.Instance = targetPart
+                                    hitData.Position = targetPart.Position
                                 end
                             end
-                            bullet.__GestioSilentApplied = true
                         end
                     end
                 end
@@ -4981,7 +4752,6 @@ end
 -- ==========================================
 setupSilentAimHooks()
 setupBloxStrikeShootHook()
-setupMemeSenseWeaponMods()
 task.spawn(function()
     task.wait(1)
     setupMemesenseSilentSendHook()
