@@ -83,6 +83,7 @@ local GestioConfig = {
 
     recoilStrength = 0.85,
     noRecoilEnabled = false,
+    noSpreadEnabled = false,
     rcsStrength = 60,
     rcsPitchFactor = 1.0,
     rcsYawFactor = 1.0,
@@ -4032,6 +4033,11 @@ function buildGestioUI()
             addInspectorSlider(6, "Recoil Dampener", 0.1, 1.0, GestioConfig.recoilStrength, true, function(v)
                 GestioConfig.recoilStrength = v
             end)
+        elseif moduleName == "No Spread" then
+            insContent.CanvasSize = UDim2.new(0, 0, 0, 80)
+            addInspectorToggle(6, "MemeSense Spread Hook", GestioConfig.noSpreadEnabled, function(v)
+                GestioConfig.noSpreadEnabled = v
+            end)
         elseif moduleName == "Skin Changer" or moduleName == "Knife Changer" then
             refreshGestioSkinData()
             local knifeModels = {"Karambit", "Butterfly Knife", "Flip Knife", "Gut Knife", "M9 Bayonet", "Skeleton Knife", "Stiletto Knife"}
@@ -4322,8 +4328,9 @@ function buildGestioUI()
     createModuleCard(cGrid, "RCS", "rcsEnabled", nil, true)
     createModuleCard(cGrid, "RageBot", "rageBotEnabled", nil, true)
 
-    local cGrid2 = makeCategorySection(cPage, "Weapon Mechanics", 2, 2)
+    local cGrid2 = makeCategorySection(cPage, "Weapon Mechanics", 2, 3)
     createModuleCard(cGrid2, "No Recoil", "noRecoilEnabled", nil, true)
+    createModuleCard(cGrid2, "No Spread", "noSpreadEnabled", nil, true)
     createModuleCard(cGrid2, "Anti-Aim", "antiAimEnabled", nil, true)
 
     local mGrid = makeCategorySection(mPage, "Locomotion", 1, 4)
@@ -4680,6 +4687,119 @@ Workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
             camera.CameraType = Enum.CameraType.Scriptable
         end
     end
+end)
+
+-- ==========================================
+-- MEMESENSE WEAPON RECOIL / SPREAD (ADAPTED)
+-- Only the No Recoil + No Spread logic from the supplied MemeSense source.
+-- No FireRate / Flash / Smoke / Silent-Aim logic is included here.
+-- Hooks are installed once, after the UI has been built, and every probe is
+-- isolated so a missing executor primitive cannot abort Gestio startup.
+-- ==========================================
+local memesenseRecoilSpreadInstalled = false
+local memesenseRecoilSpreadRetrying = false
+
+local function installMemesenseRecoilSpread()
+    if memesenseRecoilSpreadInstalled then return true end
+    if type(getgc) ~= "function" or type(hookfunction) ~= "function" then
+        return false
+    end
+    if type(debug) ~= "table" or type(debug.getinfo) ~= "function" then
+        return false
+    end
+
+    local hookedSomething = false
+
+    pcall(function()
+        for _, obj in next, getgc(true) do
+            -- MemeSense: setWeaponRecoil -> suppress the recoil setter.
+            if type(obj) == "table" then
+                local setRecoil = rawget(obj, "setWeaponRecoil")
+                if typeof(setRecoil) == "function" then
+                    pcall(function()
+                        local oldSetRecoil
+                        oldSetRecoil = hookfunction(setRecoil, function(...)
+                            if GestioConfig.noRecoilEnabled then
+                                return
+                            end
+                            return oldSetRecoil(...)
+                        end)
+                        hookedSomething = true
+                    end)
+                end
+
+                -- MemeSense: weaponKick -> suppress the camera/weapon kick.
+                local weaponKick = rawget(obj, "weaponKick")
+                if typeof(weaponKick) == "function" then
+                    pcall(function()
+                        local oldKick
+                        oldKick = hookfunction(weaponKick, function(...)
+                            if GestioConfig.noRecoilEnabled then
+                                return
+                            end
+                            return oldKick(...)
+                        end)
+                        hookedSomething = true
+                    end)
+                end
+
+                -- MemeSense: getTrueSpread -> zero the calculated spread.
+                local getSpread = rawget(obj, "getTrueSpread")
+                if typeof(getSpread) == "function" then
+                    pcall(function()
+                        local oldSpread
+                        oldSpread = hookfunction(getSpread, function(...)
+                            if GestioConfig.noSpreadEnabled then
+                                return 0
+                            end
+                            return oldSpread(...)
+                        end)
+                        hookedSomething = true
+                    end)
+                end
+            end
+
+            -- MemeSense: calculateRecoilOffset -> return a neutral UDim2.
+            if type(obj) == "function" then
+                local info
+                pcall(function() info = debug.getinfo(obj) end)
+                if type(info) == "table" and info.name == "calculateRecoilOffset" then
+                    pcall(function()
+                        local oldCalc
+                        oldCalc = hookfunction(obj, function(...)
+                            if GestioConfig.noRecoilEnabled then
+                                return UDim2.new()
+                            end
+                            return oldCalc(...)
+                        end)
+                        hookedSomething = true
+                    end)
+                end
+            end
+        end
+    end)
+
+    if hookedSomething then
+        memesenseRecoilSpreadInstalled = true
+        return true
+    end
+    return false
+end
+
+-- Delay GC scanning until Gestio UI has finished building. This is intentionally
+-- separate from the launch path so unsupported executors don't block injection.
+task.spawn(function()
+    if memesenseRecoilSpreadRetrying then return end
+    memesenseRecoilSpreadRetrying = true
+
+    for _ = 1, 20 do
+        if installMemesenseRecoilSpread() then
+            break
+        end
+        task.wait(0.75)
+    end
+
+    memesenseRecoilSpreadRetrying = false
 end)
 
 -- ==========================================
