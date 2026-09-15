@@ -1,3 +1,5 @@
+-- GESTIO cleaned UI build
+-- Unified red/dark interface
 pcall(function()
     if type(getgenv) == "function" then
         local env = getgenv()
@@ -7,9 +9,8 @@ pcall(function()
     end
 end)
 
-
 -- ==========================================
--- GESTIO ICON
+-- Gestio UI layer
 -- ==========================================
 local GestioIcons = {
     Combat = "⌁",
@@ -354,74 +355,29 @@ local savedPos = (genv and genv.GestioSavedPos) or {
 local themeLibrary = {
     ["Charcoal Crimson"] = {
         Name = "Charcoal Crimson",
-        Background = Color3.fromRGB(24, 25, 28),
-        Sidebar = Color3.fromRGB(30, 32, 36),
-        CardBg = Color3.fromRGB(35, 38, 43),
-        Accent = Color3.fromRGB(210, 45, 55),
-        AccentHover = Color3.fromRGB(230, 60, 70),
-        TextPrimary = Color3.fromRGB(235, 238, 242),
-        TextSecondary = Color3.fromRGB(140, 145, 155),
-        Border = Color3.fromRGB(45, 48, 55),
-        GridSquare = Color3.fromRGB(30, 32, 36),
+        Background = Color3.fromRGB(18, 18, 22),
+        Sidebar = Color3.fromRGB(22, 22, 27),
+        CardBg = Color3.fromRGB(28, 28, 34),
+        Accent = Color3.fromRGB(220, 45, 55),
+        AccentHover = Color3.fromRGB(245, 65, 75),
+        TextPrimary = Color3.fromRGB(240, 240, 245),
+        TextSecondary = Color3.fromRGB(150, 150, 160),
+        Border = Color3.fromRGB(45, 45, 55),
+        GridSquare = Color3.fromRGB(25, 25, 30),
         Enemy_Accent = Color3.fromRGB(235, 75, 75),
         Enemy_Fill = Color3.fromRGB(220, 50, 50),
         Enemy_Hidden = Color3.fromRGB(120, 125, 135),
-        NametagTextColor = Color3.fromRGB(255, 255, 255),
-        HealthHigh = Color3.fromRGB(46, 204, 113),
-        HealthMid = Color3.fromRGB(241, 196, 15),
-        HealthLow = Color3.fromRGB(231, 76, 60),
-        MolotovColor = Color3.fromRGB(255, 95, 35),
-        SmokeColor = Color3.fromRGB(180, 185, 195),
-        HEColor = Color3.fromRGB(255, 45, 55)
-    },
-    ["Cyberpunk Neon"] = {
-        Name = "Cyberpunk Neon",
-        Background = Color3.fromRGB(15, 15, 22),
-        Sidebar = Color3.fromRGB(20, 20, 32),
-        CardBg = Color3.fromRGB(28, 28, 45),
-        Accent = Color3.fromRGB(0, 230, 255),
-        AccentHover = Color3.fromRGB(40, 240, 255),
-        TextPrimary = Color3.fromRGB(240, 245, 255),
-        TextSecondary = Color3.fromRGB(130, 140, 175),
-        Border = Color3.fromRGB(45, 50, 75),
-        GridSquare = Color3.fromRGB(22, 22, 36),
-        Enemy_Accent = Color3.fromRGB(255, 0, 128),
-        Enemy_Fill = Color3.fromRGB(200, 0, 100),
-        Enemy_Hidden = Color3.fromRGB(120, 125, 135),
-        NametagTextColor = Color3.fromRGB(255, 255, 255),
-        HealthHigh = Color3.fromRGB(0, 255, 200),
-        HealthMid = Color3.fromRGB(255, 220, 0),
-        HealthLow = Color3.fromRGB(255, 0, 90),
-        MolotovColor = Color3.fromRGB(255, 120, 0),
-        SmokeColor = Color3.fromRGB(140, 160, 210),
-        HEColor = Color3.fromRGB(255, 0, 90)
-    },
-    ["Gestio Red"] = {
-        Name = "Gestio Red",
-        Background = Color3.fromRGB(18, 24, 20),
-        Sidebar = Color3.fromRGB(22, 32, 26),
-        CardBg = Color3.fromRGB(28, 42, 34),
-        Accent = Color3.fromRGB(210, 45, 55),
-        AccentHover = Color3.fromRGB(230, 60, 70),
-        TextPrimary = Color3.fromRGB(235, 245, 240),
-        TextSecondary = Color3.fromRGB(135, 160, 145),
-        Border = Color3.fromRGB(40, 60, 48),
-        GridSquare = Color3.fromRGB(24, 34, 28),
-        Enemy_Accent = Color3.fromRGB(235, 75, 75),
-        Enemy_Fill = Color3.fromRGB(220, 50, 50),
-        Enemy_Hidden = Color3.fromRGB(120, 125, 135),
-        NametagTextColor = Color3.fromRGB(255, 255, 255),
-        HealthHigh = Color3.fromRGB(46, 204, 113),
-        HealthMid = Color3.fromRGB(241, 196, 15),
-        HealthLow = Color3.fromRGB(231, 76, 60),
-        MolotovColor = Color3.fromRGB(255, 100, 40),
-        SmokeColor = Color3.fromRGB(170, 190, 180),
-        HEColor = Color3.fromRGB(255, 50, 60)
+        NametagTextColor = Color3.fromRGB(255,255,255),
+        HealthHigh = Color3.fromRGB(70,200,110),
+        HealthMid = Color3.fromRGB(230,190,40),
+        HealthLow = Color3.fromRGB(230,70,70),
+        MolotovColor = Color3.fromRGB(255,95,35),
+        SmokeColor = Color3.fromRGB(180,185,195),
+        HEColor = Color3.fromRGB(255,45,55)
     }
 }
 
 local currentTheme = themeLibrary["Charcoal Crimson"]
-
 
 -- ==========================================
 -- GESTIO NOTIFICATION CENTER
@@ -4418,7 +4374,7 @@ function buildGestioUI()
     table.insert(connections, bInEnded)
 
     local mainFrame = Instance.new("Frame", masterFrame)
-    mainFrame.Size = UDim2.new(0.63, 0, 1, 0)
+    mainFrame.Size = UDim2.new(0.72, 0, 1, 0)
     mainFrame.BackgroundColor3 = currentTheme.Background
     mainFrame.BorderSizePixel = 0
     mainFrame.ZIndex = 5
@@ -4437,23 +4393,8 @@ function buildGestioUI()
     local bgGridFolder = Instance.new("Folder", mainFrame)
     bgGridFolder.Name = "GestioBackgroundGrid"
 
-    local gridRows = 12
-    local gridCols = 22
-    for r = 0, gridRows - 1 do
-        for c = 0, gridCols - 1 do
-            local square = Instance.new("Frame", bgGridFolder)
-            square.Size = UDim2.new(0, 20, 0, 20)
-            square.Position = UDim2.new(c / gridCols, 0, r / gridRows, 0)
-            square.BackgroundColor3 = currentTheme.Sidebar
-            square.BackgroundTransparency = 0.82
-            square.BorderSizePixel = 0
-            square.ZIndex = 5
-            Instance.new("UICorner", square).CornerRadius = UDim.new(0, 3)
-        end
-    end
-
     local sidebar = Instance.new("ScrollingFrame", mainFrame)
-    sidebar.Size = UDim2.new(0, 92, 1, -8)
+    sidebar.Size = UDim2.new(0, 110, 1, -8)
     sidebar.Position = UDim2.new(0, 4, 0, 4)
     sidebar.BackgroundColor3 = currentTheme.Sidebar
     sidebar.BorderSizePixel = 0
@@ -4475,7 +4416,7 @@ function buildGestioUI()
     local logoBtn = Instance.new("TextButton", sidebar)
     logoBtn.Size = UDim2.new(0.9, 0, 0, 36)
     logoBtn.BackgroundTransparency = 1
-    logoBtn.Text = "Gestio"
+    logoBtn.Text = "GESTIO"
     logoBtn.TextColor3 = currentTheme.Accent
     logoBtn.TextSize = 13
     logoBtn.Font = Enum.Font.GothamBold
@@ -4489,7 +4430,7 @@ function buildGestioUI()
         b.BackgroundColor3 = currentTheme.Sidebar
         b.TextColor3 = currentTheme.TextSecondary
         b.Text = txt
-        b.TextSize = 8
+        b.TextSize = 10
         b.Font = Enum.Font.GothamBold
         b.ZIndex = 7
         b.LayoutOrder = order
@@ -4500,9 +4441,9 @@ function buildGestioUI()
     local cBtn = createNavBtn(2, "COMBAT")
     local mBtn = createNavBtn(3, "MOVEMENT")
     local eBtn = createNavBtn(4, "ESP")
-    local sBtn = createNavBtn(5, "SKINS")
-    local envBtn = createNavBtn(6, "ENV")
-    local micsBtn = createNavBtn(7, "MICS")
+    local sBtn = createNavBtn(5, "ITEMS")
+    local envBtn = createNavBtn(6, "WORLD")
+    local micsBtn = createNavBtn(7, "MISC")
     local setsBtn = createNavBtn(8, "SETTINGS")
     cBtn.BackgroundColor3 = currentTheme.CardBg
     cBtn.TextColor3 = currentTheme.Accent
@@ -4591,12 +4532,12 @@ function buildGestioUI()
         cPage.Visible = (tab == "C")
         mPage.Visible = (tab == "M")
         ePage.Visible = (tab == "E")
-        sPage.Visible = (tab == "SKINS")
-        envPage.Visible = (tab == "ENV")
-        micsPage.Visible = (tab == "MICS")
+        sPage.Visible = (tab == "ITEMS")
+        envPage.Visible = (tab == "WORLD")
+        micsPage.Visible = (tab == "MISC")
         setsPage.Visible = (tab == "SETS")
 
-        local btns = {{cBtn, "C"}, {mBtn, "M"}, {eBtn, "E"}, {sBtn, "SKINS"}, {envBtn, "ENV"}, {micsBtn, "MICS"}, {setsBtn, "SETS"}}
+        local btns = {{cBtn, "C"}, {mBtn, "M"}, {eBtn, "E"}, {sBtn, "ITEMS"}, {envBtn, "WORLD"}, {micsBtn, "MISC"}, {setsBtn, "SETS"}}
         for _, item in ipairs(btns) do
             local on = (item[2] == tab)
             item[1].BackgroundColor3 = on and currentTheme.CardBg or currentTheme.Sidebar
@@ -4607,9 +4548,9 @@ function buildGestioUI()
     bindTouch(cBtn, function() switch("C") end)
     bindTouch(mBtn, function() switch("M") end)
     bindTouch(eBtn, function() switch("E") end)
-    bindTouch(sBtn, function() switch("SKINS") end)
-    bindTouch(envBtn, function() switch("ENV") end)
-    bindTouch(micsBtn, function() switch("MICS") end)
+    bindTouch(sBtn, function() switch("ITEMS") end)
+    bindTouch(envBtn, function() switch("WORLD") end)
+    bindTouch(micsBtn, function() switch("MISC") end)
     bindTouch(setsBtn, function() switch("SETS") end)
 
     local inspectorPanel = Instance.new("Frame", masterFrame)
@@ -4630,7 +4571,7 @@ function buildGestioUI()
     Instance.new("UICorner", insAccent).CornerRadius = UDim.new(1, 0)
 
     local insGridFolder = Instance.new("Folder", inspectorPanel)
-    insGridFolder.Name = "GestioInspectorGrid"
+    insGridFolder.Name = "GestioPanelGrid"
     for r = 0, gridRows - 1 do
         for c = 0, 12 do
             local square = Instance.new("Frame", insGridFolder)
@@ -4675,7 +4616,7 @@ function buildGestioUI()
     insContent.CanvasSize = UDim2.new(0, 0, 0, 650)
     insContent.ZIndex = 6
 
-    local function addInspectorSlider(y, txt, min, max, cur, isFloat, onChange)
+    local function addPanelSlider(y, txt, min, max, cur, isFloat, onChange)
         local lbl = Instance.new("TextLabel", insContent)
         lbl.Size = UDim2.new(0.86, 0, 0, 12)
         lbl.Position = UDim2.new(0.07, 0, 0, y)
@@ -4737,7 +4678,7 @@ function buildGestioUI()
         table.insert(connections, trInChanged)
     end
 
-    local function addInspectorToggle(y, txt, default, onToggle)
+    local function addPanelToggle(y, txt, default, onToggle)
         local f = Instance.new("Frame", insContent)
         f.Size = UDim2.new(0.86, 0, 0, 20)
         f.Position = UDim2.new(0.07, 0, 0, y)
@@ -4780,7 +4721,7 @@ function buildGestioUI()
         bindTouch(btn, executeToggle)
     end
 
-    local function addInspectorChoice(y, txt, choices, currentChoice, onSelect)
+    local function addPanelChoice(y, txt, choices, currentChoice, onSelect)
         local row = Instance.new("Frame", insContent)
         row.Size = UDim2.new(0.86, 0, 0, 28)
         row.Position = UDim2.new(0.07, 0, 0, y)
@@ -4893,59 +4834,59 @@ function buildGestioUI()
         bindTouch(dropdown, toggle)
     end
 
-    local function openInspectorFor(moduleName)
+    local function openPanelFor(moduleName)
         insHeader.Text = moduleName
         for _, child in pairs(insContent:GetChildren()) do child:Destroy() end
 
         if moduleName == "Tracking" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 580)
-            addInspectorSlider(6, "FOV Radius", 50, 400, GestioConfig.aimFov, false, function(v) GestioConfig.aimFov = v end)
-            addInspectorSlider(38, "Speed", 1.0, 50.0, GestioConfig.aimbotSpeed, true, function(v) GestioConfig.aimbotSpeed = v end)
-            addInspectorSlider(70, "Smoothness", 0.0, 0.95, GestioConfig.aimbotSmoothness, true, function(v) GestioConfig.aimbotSmoothness = v end)
-            addInspectorSlider(102, "Prediction Factor", 0.05, 0.3, GestioConfig.predictionFactor, true, function(v) GestioConfig.predictionFactor = v end)
-            addInspectorToggle(140, "Body Priority", GestioConfig.bodyAimOnly, function(v) GestioConfig.bodyAimOnly = v end)
-            addInspectorToggle(166, "Snap Lock Mode", GestioConfig.snapAimMode, function(v) GestioConfig.snapAimMode = v end)
-            addInspectorToggle(192, "Prediction", GestioConfig.predictionEnabled, function(v) GestioConfig.predictionEnabled = v end)
-            addInspectorToggle(218, "Show FOV Circle", GestioConfig.showFovCircle, function(v) GestioConfig.showFovCircle = v end)
-            addInspectorToggle(244, "Visibility Check", GestioConfig.visibleCheck, function(v) GestioConfig.visibleCheck = v end)
+            addPanelSlider(6, "FOV Radius", 50, 400, GestioConfig.aimFov, false, function(v) GestioConfig.aimFov = v end)
+            addPanelSlider(38, "Speed", 1.0, 50.0, GestioConfig.aimbotSpeed, true, function(v) GestioConfig.aimbotSpeed = v end)
+            addPanelSlider(70, "Smoothness", 0.0, 0.95, GestioConfig.aimbotSmoothness, true, function(v) GestioConfig.aimbotSmoothness = v end)
+            addPanelSlider(102, "Prediction Factor", 0.05, 0.3, GestioConfig.predictionFactor, true, function(v) GestioConfig.predictionFactor = v end)
+            addPanelToggle(140, "Body Priority", GestioConfig.bodyAimOnly, function(v) GestioConfig.bodyAimOnly = v end)
+            addPanelToggle(166, "Snap Lock Mode", GestioConfig.snapAimMode, function(v) GestioConfig.snapAimMode = v end)
+            addPanelToggle(192, "Prediction", GestioConfig.predictionEnabled, function(v) GestioConfig.predictionEnabled = v end)
+            addPanelToggle(218, "Show FOV Circle", GestioConfig.showFovCircle, function(v) GestioConfig.showFovCircle = v end)
+            addPanelToggle(244, "Visibility Check", GestioConfig.visibleCheck, function(v) GestioConfig.visibleCheck = v end)
         elseif moduleName == "Silent Aim" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 290)
-            addInspectorSlider(6, "FOV", 10, 360, GestioConfig.silentAimFov, false, function(v) GestioConfig.silentAimFov = v end)
-            addInspectorSlider(38, "Hit Chance", 1, 100, GestioConfig.silentAimHitChance, false, function(v) GestioConfig.silentAimHitChance = v end)
-            addInspectorToggle(70, "Team Check", GestioConfig.silentAimTeamCheck, function(v) GestioConfig.silentAimTeamCheck = v end)
-            addInspectorToggle(96, "Visible Check", GestioConfig.silentAimVisibleCheck, function(v) GestioConfig.silentAimVisibleCheck = v end)
-            addInspectorToggle(122, "Aim Head", GestioConfig.silentAimAimHead, function(v) GestioConfig.silentAimAimHead = v end)
-            addInspectorToggle(148, "Show Silent FOV", GestioConfig.showSilentFovCircle, function(v) GestioConfig.showSilentFovCircle = v end)
-            addInspectorToggle(174, "pSilent (Raycast)", GestioConfig.pSilentEnabled, function(v) GestioConfig.pSilentEnabled = v end)
-            addInspectorToggle(200, "Advanced Wallbang", GestioConfig.wallbangEnabled, function(v) GestioConfig.wallbangEnabled = v end)
+            addPanelSlider(6, "FOV", 10, 360, GestioConfig.silentAimFov, false, function(v) GestioConfig.silentAimFov = v end)
+            addPanelSlider(38, "Hit Chance", 1, 100, GestioConfig.silentAimHitChance, false, function(v) GestioConfig.silentAimHitChance = v end)
+            addPanelToggle(70, "Team Check", GestioConfig.silentAimTeamCheck, function(v) GestioConfig.silentAimTeamCheck = v end)
+            addPanelToggle(96, "Visible Check", GestioConfig.silentAimVisibleCheck, function(v) GestioConfig.silentAimVisibleCheck = v end)
+            addPanelToggle(122, "Aim Head", GestioConfig.silentAimAimHead, function(v) GestioConfig.silentAimAimHead = v end)
+            addPanelToggle(148, "Show Silent FOV", GestioConfig.showSilentFovCircle, function(v) GestioConfig.showSilentFovCircle = v end)
+            addPanelToggle(174, "pSilent (Raycast)", GestioConfig.pSilentEnabled, function(v) GestioConfig.pSilentEnabled = v end)
+            addPanelToggle(200, "Advanced Wallbang", GestioConfig.wallbangEnabled, function(v) GestioConfig.wallbangEnabled = v end)
         elseif moduleName == "RageBot" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 150)
-            addInspectorToggle(6, "Auto Fire", GestioConfig.rageAutoFire, function(v) GestioConfig.rageAutoFire = v end)
-            addInspectorChoice(38, "Target Mode", {"Distance", "Health"}, GestioConfig.rageTargetMode, function(v) GestioConfig.rageTargetMode = v end)
-            addInspectorSlider(76, "Rage FOV", 10, 360, GestioConfig.rageFov, false, function(v) GestioConfig.rageFov = v end)
+            addPanelToggle(6, "Auto Fire", GestioConfig.rageAutoFire, function(v) GestioConfig.rageAutoFire = v end)
+            addPanelChoice(38, "Target Mode", {"Distance", "Health"}, GestioConfig.rageTargetMode, function(v) GestioConfig.rageTargetMode = v end)
+            addPanelSlider(76, "Rage FOV", 10, 360, GestioConfig.rageFov, false, function(v) GestioConfig.rageFov = v end)
         elseif moduleName == "Chams" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 240)
-            addInspectorSlider(6, "Fill Alpha", 0.0, 1.0, GestioConfig.chamsFillTransparency, true, function(v) GestioConfig.chamsFillTransparency = v end)
-            addInspectorSlider(38, "Outline Alpha", 0.0, 1.0, GestioConfig.chamsOutlineTransparency, true, function(v) GestioConfig.chamsOutlineTransparency = v end)
-            addInspectorToggle(76, "Team Check", GestioConfig.chamsTeamCheck, function(v) GestioConfig.chamsTeamCheck = v end)
-            addInspectorToggle(102, "Show Teammates", GestioConfig.chamsShowTeammates, function(v) GestioConfig.chamsShowTeammates = v end)
-            addInspectorToggle(128, "Occlusion Color (Walls)", GestioConfig.chamsOcclusion, function(v) GestioConfig.chamsOcclusion = v end)
+            addPanelSlider(6, "Fill Alpha", 0.0, 1.0, GestioConfig.chamsFillTransparency, true, function(v) GestioConfig.chamsFillTransparency = v end)
+            addPanelSlider(38, "Outline Alpha", 0.0, 1.0, GestioConfig.chamsOutlineTransparency, true, function(v) GestioConfig.chamsOutlineTransparency = v end)
+            addPanelToggle(76, "Team Check", GestioConfig.chamsTeamCheck, function(v) GestioConfig.chamsTeamCheck = v end)
+            addPanelToggle(102, "Show Teammates", GestioConfig.chamsShowTeammates, function(v) GestioConfig.chamsShowTeammates = v end)
+            addPanelToggle(128, "Occlusion Color (Walls)", GestioConfig.chamsOcclusion, function(v) GestioConfig.chamsOcclusion = v end)
         elseif moduleName == "No Recoil" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 110)
-            addInspectorSlider(6, "Recoil Dampener", 0.1, 1.0, GestioConfig.recoilStrength, true, function(v)
+            addPanelSlider(6, "Recoil Dampener", 0.1, 1.0, GestioConfig.recoilStrength, true, function(v)
                 GestioConfig.recoilStrength = v
             end)
         elseif moduleName == "No Spread" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 80)
-            addInspectorToggle(6, "MemeSense Spread Hook", GestioConfig.noSpreadEnabled, function(v)
+            addPanelToggle(6, "MemeSense Spread Hook", GestioConfig.noSpreadEnabled, function(v)
                 GestioConfig.noSpreadEnabled = v
             end)
         elseif moduleName == "FireRate" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 105)
-            addInspectorToggle(6, "Enable FireRate", GestioConfig.fireRateEnabled, function(v)
+            addPanelToggle(6, "Enable FireRate", GestioConfig.fireRateEnabled, function(v)
                 GestioConfig.fireRateEnabled = v
             end)
-            addInspectorSlider(38, "FireRate", 0.01, 1.0, GestioConfig.fireRate, true, function(v)
+            addPanelSlider(38, "FireRate", 0.01, 1.0, GestioConfig.fireRate, true, function(v)
                 GestioConfig.fireRate = math.clamp(tonumber(v) or 0.01, 0.01, 1.0)
             end)
         elseif moduleName == "Skin Changer" or moduleName == "Knife Changer" then
@@ -4956,41 +4897,41 @@ function buildGestioUI()
             table.sort(gloveModels)
 
             insContent.CanvasSize = UDim2.new(0, 0, 0, 520)
-            addInspectorToggle(6, "Weapon Skins", GestioConfig.skinChangerEnabled, function(v)
+            addPanelToggle(6, "Weapon Skins", GestioConfig.skinChangerEnabled, function(v)
                 GestioConfig.skinChangerEnabled = v
                 if v then hookBloxStrikeModules() end
             end)
-            addInspectorToggle(32, "Glove Changer", GestioConfig.gloveChangerEnabled, function(v)
+            addPanelToggle(32, "Glove Changer", GestioConfig.gloveChangerEnabled, function(v)
                 GestioConfig.gloveChangerEnabled = v
             end)
 
-            addInspectorChoice(64, "Knife Model", knifeModels, GestioConfig.selectedKnifeType, function(selected)
+            addPanelChoice(64, "Knife Model", knifeModels, GestioConfig.selectedKnifeType, function(selected)
                 GestioConfig.selectedKnifeType = selected
                 GestioConfig.weaponSkinSelections[selected] = GestioConfig.weaponSkinSelections[selected] or GestioConfig.selectedSkin
                 GestioConfig.selectedSkin = GestioConfig.weaponSkinSelections[selected] or "Default"
                 hookBloxStrikeModules()
                 scanAndMorphKnives(camera)
-                openInspectorFor("Skin Changer")
+                openPanelFor("Skin Changer")
             end)
 
             local knifeSkins = skinData.SkinSelections[GestioConfig.selectedKnifeType] or {"Default"}
-            addInspectorChoice(100, "Knife Skin", knifeSkins, GestioConfig.selectedSkin, function(selected)
+            addPanelChoice(100, "Knife Skin", knifeSkins, GestioConfig.selectedSkin, function(selected)
                 GestioConfig.selectedSkin = selected
                 GestioConfig.weaponSkinSelections[GestioConfig.selectedKnifeType] = selected
                 scanAndMorphKnives(camera)
             end)
 
             if #gloveModels > 0 then
-                addInspectorChoice(136, "Glove Model", gloveModels, GestioConfig.selectedGloveModel, function(selected)
+                addPanelChoice(136, "Glove Model", gloveModels, GestioConfig.selectedGloveModel, function(selected)
                     GestioConfig.selectedGloveModel = selected
                     local choices = skinData.GloveSelections[selected] or {"Default"}
                     GestioConfig.selectedGloveSkin = choices[1] or "Default"
                     applyGestioGloves()
-                    openInspectorFor("Skin Changer")
+                    openPanelFor("Skin Changer")
                 end)
 
                 local gloveSkins = skinData.GloveSelections[GestioConfig.selectedGloveModel] or {"Default"}
-                addInspectorChoice(172, "Glove Skin", gloveSkins, GestioConfig.selectedGloveSkin, function(selected)
+                addPanelChoice(172, "Glove Skin", gloveSkins, GestioConfig.selectedGloveSkin, function(selected)
                     GestioConfig.selectedGloveSkin = selected
                     applyGestioGloves()
                 end)
@@ -5009,7 +4950,7 @@ function buildGestioUI()
                 if y > 500 then break end
                 local choices = skinData.SkinSelections[weaponName]
                 if choices and #choices > 0 then
-                    addInspectorChoice(y, weaponName, choices, GestioConfig.weaponSkinSelections[weaponName] or choices[1], function(selected)
+                    addPanelChoice(y, weaponName, choices, GestioConfig.weaponSkinSelections[weaponName] or choices[1], function(selected)
                         GestioConfig.weaponSkinSelections[weaponName] = selected
                         if weaponName == GestioConfig.selectedKnifeType then
                             GestioConfig.selectedSkin = selected
@@ -5021,32 +4962,32 @@ function buildGestioUI()
             end
         elseif moduleName == "Third Person" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 115)
-            addInspectorSlider(6, "Distance", 5, 25, GestioConfig.thirdPersonDistance, false, function(v)
+            addPanelSlider(6, "Distance", 5, 25, GestioConfig.thirdPersonDistance, false, function(v)
                 GestioConfig.thirdPersonDistance = v
                 refreshThirdPerson()
             end)
-            addInspectorSlider(38, "Height", -1, 5, GestioConfig.thirdPersonHeight, false, function(v)
+            addPanelSlider(38, "Height", -1, 5, GestioConfig.thirdPersonHeight, false, function(v)
                 GestioConfig.thirdPersonHeight = v
                 refreshThirdPerson()
             end)
         elseif moduleName == "Hitmarker" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 170)
-            addInspectorSlider(6, "Duration", 0.10, 0.60, GestioConfig.hitmarkerDuration, true, function(v)
+            addPanelSlider(6, "Duration", 0.10, 0.60, GestioConfig.hitmarkerDuration, true, function(v)
                 GestioConfig.hitmarkerDuration = v
             end)
-            addInspectorSlider(38, "Size", 8, 24, GestioConfig.hitmarkerSize, false, function(v)
+            addPanelSlider(38, "Size", 8, 24, GestioConfig.hitmarkerSize, false, function(v)
                 GestioConfig.hitmarkerSize = v
                 for _, line in ipairs(hitmarkerLines) do
                     line.Size = UDim2.new(0, GestioConfig.hitmarkerThickness, 0, GestioConfig.hitmarkerSize)
                 end
             end)
-            addInspectorSlider(70, "Thickness", 1, 4, GestioConfig.hitmarkerThickness, false, function(v)
+            addPanelSlider(70, "Thickness", 1, 4, GestioConfig.hitmarkerThickness, false, function(v)
                 GestioConfig.hitmarkerThickness = v
                 for _, line in ipairs(hitmarkerLines) do
                     line.Size = UDim2.new(0, GestioConfig.hitmarkerThickness, 0, GestioConfig.hitmarkerSize)
                 end
             end)
-            addInspectorToggle(108, "Neon Glow", GestioConfig.hitmarkerGlow, function(v)
+            addPanelToggle(108, "Neon Glow", GestioConfig.hitmarkerGlow, function(v)
                 GestioConfig.hitmarkerGlow = v
                 for _, line in ipairs(hitmarkerLines) do
                     local glow = line:FindFirstChild("NeonGlow")
@@ -5055,165 +4996,165 @@ function buildGestioUI()
             end)
         elseif moduleName == "Watermark" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 170)
-            addInspectorToggle(6, "Show FPS", GestioConfig.watermarkShowFPS, function(v) GestioConfig.watermarkShowFPS = v end)
-            addInspectorToggle(34, "Show Ping", GestioConfig.watermarkShowPing, function(v) GestioConfig.watermarkShowPing = v end)
-            addInspectorToggle(62, "Show Name", GestioConfig.watermarkShowName, function(v) GestioConfig.watermarkShowName = v end)
-            addInspectorChoice(90, "Style", {"GESTIO", "GESTIO • Player"}, GestioConfig.watermarkShowName and "GESTIO • Player" or "GESTIO", function(v) GestioConfig.watermarkShowName = (v == "GESTIO • Player") end)
-            addInspectorToggle(126, "Accent Mode", true, function(v) end)
+            addPanelToggle(6, "Show FPS", GestioConfig.watermarkShowFPS, function(v) GestioConfig.watermarkShowFPS = v end)
+            addPanelToggle(34, "Show Ping", GestioConfig.watermarkShowPing, function(v) GestioConfig.watermarkShowPing = v end)
+            addPanelToggle(62, "Show Name", GestioConfig.watermarkShowName, function(v) GestioConfig.watermarkShowName = v end)
+            addPanelChoice(90, "Style", {"GESTIO", "GESTIO • Player"}, GestioConfig.watermarkShowName and "GESTIO • Player" or "GESTIO", function(v) GestioConfig.watermarkShowName = (v == "GESTIO • Player") end)
+            addPanelToggle(126, "Accent Mode", true, function(v) end)
         elseif moduleName == "No Fall Damage" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 90)
-            addInspectorToggle(6, "Disable Ragdoll/Fall", GestioConfig.noFallDamageEnabled, function(v) GestioConfig.noFallDamageEnabled = v end)
+            addPanelToggle(6, "Disable Ragdoll/Fall", GestioConfig.noFallDamageEnabled, function(v) GestioConfig.noFallDamageEnabled = v end)
         elseif moduleName == "Spectator List" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 150)
-            addInspectorToggle(6, "Watcher Counter", GestioConfig.spectatorCounterEnabled, function(v) GestioConfig.spectatorCounterEnabled = v end)
-            addInspectorToggle(34, "Hide When Empty", GestioConfig.spectatorHideEmpty, function(v) GestioConfig.spectatorHideEmpty = v end)
-            addInspectorChoice(62, "Name Mode", {"Username", "Display name", "Both"}, GestioConfig.spectatorNameMode, function(v) GestioConfig.spectatorNameMode = v end)
-            addInspectorSlider(98, "Panel Width", 150, 350, 210, false, function(v) if spectatorFrame then spectatorFrame.Size = UDim2.new(0, v, spectatorFrame.Size.Y.Scale, spectatorFrame.Size.Y.Offset) end end)
+            addPanelToggle(6, "Watcher Counter", GestioConfig.spectatorCounterEnabled, function(v) GestioConfig.spectatorCounterEnabled = v end)
+            addPanelToggle(34, "Hide When Empty", GestioConfig.spectatorHideEmpty, function(v) GestioConfig.spectatorHideEmpty = v end)
+            addPanelChoice(62, "Name Mode", {"Username", "Display name", "Both"}, GestioConfig.spectatorNameMode, function(v) GestioConfig.spectatorNameMode = v end)
+            addPanelSlider(98, "Panel Width", 150, 350, 210, false, function(v) if spectatorFrame then spectatorFrame.Size = UDim2.new(0, v, spectatorFrame.Size.Y.Scale, spectatorFrame.Size.Y.Offset) end end)
         elseif moduleName == "Animations" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 190)
-            addInspectorToggle(6, "Loop", GestioConfig.animationLoop, function(v) GestioConfig.animationLoop = v end)
-            addInspectorSlider(34, "Speed", 0.1, 3.0, GestioConfig.animationSpeed, true, function(v) GestioConfig.animationSpeed = v end)
-            addInspectorChoice(68, "Preset", {"Take The L"}, "Take The L", function(v)
+            addPanelToggle(6, "Loop", GestioConfig.animationLoop, function(v) GestioConfig.animationLoop = v end)
+            addPanelSlider(34, "Speed", 0.1, 3.0, GestioConfig.animationSpeed, true, function(v) GestioConfig.animationSpeed = v end)
+            addPanelChoice(68, "Preset", {"Take The L"}, "Take The L", function(v)
                 if v == "Take The L" then GestioConfig.animationId = "73593666217037" end
             end)
-            addInspectorToggle(104, "Restart", false, function(v) if v then playGestioAnimation() end end)
+            addPanelToggle(104, "Restart", false, function(v) if v then playGestioAnimation() end end)
         elseif moduleName == "Custom Hands" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 250)
-            addInspectorSlider(6, "X Offset", -2, 2, GestioConfig.customHandsX, true, function(v) GestioConfig.customHandsX = v end)
-            addInspectorSlider(38, "Y Offset", -2, 2, GestioConfig.customHandsY, true, function(v) GestioConfig.customHandsY = v end)
-            addInspectorSlider(70, "Z Offset", -2, 2, GestioConfig.customHandsZ, true, function(v) GestioConfig.customHandsZ = v end)
-            addInspectorSlider(102, "Pitch", -45, 45, GestioConfig.customHandsPitch, false, function(v) GestioConfig.customHandsPitch = v end)
-            addInspectorSlider(134, "Yaw", -45, 45, GestioConfig.customHandsYaw, false, function(v) GestioConfig.customHandsYaw = v end)
-            addInspectorSlider(166, "Roll", -90, 90, GestioConfig.customHandsRoll, false, function(v) GestioConfig.customHandsRoll = v end)
+            addPanelSlider(6, "X Offset", -2, 2, GestioConfig.customHandsX, true, function(v) GestioConfig.customHandsX = v end)
+            addPanelSlider(38, "Y Offset", -2, 2, GestioConfig.customHandsY, true, function(v) GestioConfig.customHandsY = v end)
+            addPanelSlider(70, "Z Offset", -2, 2, GestioConfig.customHandsZ, true, function(v) GestioConfig.customHandsZ = v end)
+            addPanelSlider(102, "Pitch", -45, 45, GestioConfig.customHandsPitch, false, function(v) GestioConfig.customHandsPitch = v end)
+            addPanelSlider(134, "Yaw", -45, 45, GestioConfig.customHandsYaw, false, function(v) GestioConfig.customHandsYaw = v end)
+            addPanelSlider(166, "Roll", -90, 90, GestioConfig.customHandsRoll, false, function(v) GestioConfig.customHandsRoll = v end)
         elseif moduleName == "Anti-Aim" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 100)
-            addInspectorSlider(6, "Spin Speed", 10, 150, GestioConfig.spinSpeed, false, function(v) 
+            addPanelSlider(6, "Spin Speed", 10, 150, GestioConfig.spinSpeed, false, function(v) 
                 GestioConfig.spinSpeed = v 
             end)
         elseif moduleName == "Slide" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 180)
-            addInspectorSlider(6, "Speed Boost", 1.2, 3.0, GestioConfig.slideSpeedBoost, true, function(v) GestioConfig.slideSpeedBoost = v end)
-            addInspectorSlider(38, "Friction", 0.85, 0.99, GestioConfig.slideFriction, true, function(v) GestioConfig.slideFriction = v end)
-            addInspectorSlider(70, "Min Speed Threshold", 8, 24, GestioConfig.slideMinSpeed, false, function(v) GestioConfig.slideMinSpeed = v end)
+            addPanelSlider(6, "Speed Boost", 1.2, 3.0, GestioConfig.slideSpeedBoost, true, function(v) GestioConfig.slideSpeedBoost = v end)
+            addPanelSlider(38, "Friction", 0.85, 0.99, GestioConfig.slideFriction, true, function(v) GestioConfig.slideFriction = v end)
+            addPanelSlider(70, "Min Speed Threshold", 8, 24, GestioConfig.slideMinSpeed, false, function(v) GestioConfig.slideMinSpeed = v end)
         elseif moduleName == "Jump Circle" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 240)
-            addInspectorSlider(6, "Radius", 1.5, 8.0, GestioConfig.jumpCircleRadius, true, function(v)
+            addPanelSlider(6, "Radius", 1.5, 8.0, GestioConfig.jumpCircleRadius, true, function(v)
                 GestioConfig.jumpCircleRadius = v
                 if player.Character then initJumpCircleForCharacter(player.Character) end
             end)
-            addInspectorSlider(38, "Segments", 12, 64, GestioConfig.jumpCircleSegmentCount, false, function(v)
+            addPanelSlider(38, "Segments", 12, 64, GestioConfig.jumpCircleSegmentCount, false, function(v)
                 GestioConfig.jumpCircleSegmentCount = v
                 if player.Character then initJumpCircleForCharacter(player.Character) end
             end)
-            addInspectorChoice(80, "Style", {"GradientWave", "ChromaPulse", "StaticNeon"}, GestioConfig.jumpCircleStyle, function(v)
+            addPanelChoice(80, "Style", {"GradientWave", "ChromaPulse", "StaticNeon"}, GestioConfig.jumpCircleStyle, function(v)
                 GestioConfig.jumpCircleStyle = v
                 if player.Character then initJumpCircleForCharacter(player.Character) end
             end)
         elseif moduleName == "Grenade ESP" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 220)
-            addInspectorSlider(6, "Max Distance", 200, 3000, GestioConfig.grenadeMaxDist, false, function(v) GestioConfig.grenadeMaxDist = v end)
-            addInspectorToggle(42, "Trajectory Path", GestioConfig.showGrenadePath, function(v) GestioConfig.showGrenadePath = v end)
-            addInspectorToggle(70, "Molotov Radius", GestioConfig.showMolotovRadius, function(v) GestioConfig.showMolotovRadius = v end)
-            addInspectorToggle(98, "Smoke Radius", GestioConfig.showSmokeRadius, function(v) GestioConfig.showSmokeRadius = v end)
+            addPanelSlider(6, "Max Distance", 200, 3000, GestioConfig.grenadeMaxDist, false, function(v) GestioConfig.grenadeMaxDist = v end)
+            addPanelToggle(42, "Trajectory Path", GestioConfig.showGrenadePath, function(v) GestioConfig.showGrenadePath = v end)
+            addPanelToggle(70, "Molotov Radius", GestioConfig.showMolotovRadius, function(v) GestioConfig.showMolotovRadius = v end)
+            addPanelToggle(98, "Smoke Radius", GestioConfig.showSmokeRadius, function(v) GestioConfig.showSmokeRadius = v end)
         elseif moduleName == "Bhop Engine" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 200)
-            addInspectorSlider(6, "Jump Power", 30, 100, GestioConfig.bhopJumpPower, false, function(v) GestioConfig.bhopJumpPower = v end)
-            addInspectorSlider(38, "Speed Boost", 1.0, 3.0, GestioConfig.bhopSpeedBoost, true, function(v) GestioConfig.bhopSpeedBoost = v end)
-            addInspectorToggle(76, "Auto Jump (Always)", GestioConfig.bhopAutoJump, function(v) GestioConfig.bhopAutoJump = v end)
-            addInspectorToggle(102, "Air Strafe", GestioConfig.bhopAirStrafe, function(v) GestioConfig.bhopAirStrafe = v end)
+            addPanelSlider(6, "Jump Power", 30, 100, GestioConfig.bhopJumpPower, false, function(v) GestioConfig.bhopJumpPower = v end)
+            addPanelSlider(38, "Speed Boost", 1.0, 3.0, GestioConfig.bhopSpeedBoost, true, function(v) GestioConfig.bhopSpeedBoost = v end)
+            addPanelToggle(76, "Auto Jump (Always)", GestioConfig.bhopAutoJump, function(v) GestioConfig.bhopAutoJump = v end)
+            addPanelToggle(102, "Air Strafe", GestioConfig.bhopAirStrafe, function(v) GestioConfig.bhopAirStrafe = v end)
         elseif moduleName == "Nametags" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 340)
-            addInspectorSlider(6, "Max Distance", 100, 5000, GestioConfig.espMaxDist, false, function(v) GestioConfig.espMaxDist = v end)
-            addInspectorSlider(38, "Text Size", 8, 20, GestioConfig.espTextSize, false, function(v) GestioConfig.espTextSize = v end)
-            addInspectorSlider(70, "Transparency", 0.0, 0.9, GestioConfig.tagTransparency, true, function(v) GestioConfig.tagTransparency = v end)
-            addInspectorToggle(108, "Show Distance", GestioConfig.espShowDistance, function(v) GestioConfig.espShowDistance = v end)
-            addInspectorToggle(134, "Show Health", GestioConfig.espShowHealth, function(v) GestioConfig.espShowHealth = v end)
-            addInspectorToggle(160, "Show Weapon", GestioConfig.tagShowWeapon, function(v) GestioConfig.tagShowWeapon = v end)
+            addPanelSlider(6, "Max Distance", 100, 5000, GestioConfig.espMaxDist, false, function(v) GestioConfig.espMaxDist = v end)
+            addPanelSlider(38, "Text Size", 8, 20, GestioConfig.espTextSize, false, function(v) GestioConfig.espTextSize = v end)
+            addPanelSlider(70, "Transparency", 0.0, 0.9, GestioConfig.tagTransparency, true, function(v) GestioConfig.tagTransparency = v end)
+            addPanelToggle(108, "Show Distance", GestioConfig.espShowDistance, function(v) GestioConfig.espShowDistance = v end)
+            addPanelToggle(134, "Show Health", GestioConfig.espShowHealth, function(v) GestioConfig.espShowHealth = v end)
+            addPanelToggle(160, "Show Weapon", GestioConfig.tagShowWeapon, function(v) GestioConfig.tagShowWeapon = v end)
         elseif moduleName == "Box Overlay" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 200)
-            addInspectorSlider(6, "Max Distance", 100, 5000, GestioConfig.espMaxDist, false, function(v) GestioConfig.espMaxDist = v end)
-            addInspectorSlider(38, "Thickness", 1.0, 3.0, GestioConfig.boxThickness, true, function(v) GestioConfig.boxThickness = v end)
-            addInspectorToggle(76, "Corner Box", GestioConfig.cornerBoxEnabled, function(v) GestioConfig.cornerBoxEnabled = v end)
-            addInspectorToggle(108, "Health Bar", GestioConfig.healthBarEnabled, function(v) GestioConfig.healthBarEnabled = v end)
+            addPanelSlider(6, "Max Distance", 100, 5000, GestioConfig.espMaxDist, false, function(v) GestioConfig.espMaxDist = v end)
+            addPanelSlider(38, "Thickness", 1.0, 3.0, GestioConfig.boxThickness, true, function(v) GestioConfig.boxThickness = v end)
+            addPanelToggle(76, "Corner Box", GestioConfig.cornerBoxEnabled, function(v) GestioConfig.cornerBoxEnabled = v end)
+            addPanelToggle(108, "Health Bar", GestioConfig.healthBarEnabled, function(v) GestioConfig.healthBarEnabled = v end)
         elseif moduleName == "World Changer" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 520)
-            addInspectorChoice(6, "World Preset", {"Midnight", "Nebula", "DeepBlood", "CyberPurple", "EmeraldNight", "PitchBlack"}, GestioConfig.nightPreset, function(selected)
+            addPanelChoice(6, "World Preset", {"Midnight", "Nebula", "DeepBlood", "CyberPurple", "EmeraldNight", "PitchBlack"}, GestioConfig.nightPreset, function(selected)
                 applyNightPreset(selected)
             end)
-            addInspectorSlider(48, "Brightness", 0.0, 5.0, GestioConfig.nightBrightness, true, function(v) GestioConfig.nightBrightness=v; if GestioConfig.nightModeEnabled then Lighting.Brightness=v end end)
-            addInspectorSlider(80, "Clock Time", 0.0, 24.0, GestioConfig.nightClockTime, true, function(v) GestioConfig.nightClockTime=v; if GestioConfig.nightModeEnabled then Lighting.ClockTime=v end end)
-            addInspectorToggle(112, "Custom Skybox", GestioConfig.worldSkyboxEnabled, function(v) GestioConfig.worldSkyboxEnabled=v; updateWorldChanger() end)
-            addInspectorChoice(138, "Skybox", {"Night","Ocean Sunset","My Summer Car","Minecraft","Deep Space","Clouded Sky","City"}, GestioConfig.worldSkyboxPreset, function(v) GestioConfig.worldSkyboxPreset=v; updateWorldChanger() end)
-            addInspectorSlider(174, "Fog Start", 0, 5000, GestioConfig.worldFogStart, false, function(v) GestioConfig.worldFogStart=v; updateWorldChanger() end)
-            addInspectorSlider(206, "Fog End", 50, 100000, GestioConfig.worldFogEnd, false, function(v) GestioConfig.worldFogEnd=v; updateWorldChanger() end)
-            addInspectorToggle(238, "Post FX", GestioConfig.worldPostFXEnabled, function(v) GestioConfig.worldPostFXEnabled=v; updateWorldPostFX() end)
-            addInspectorSlider(264, "Exposure", -3, 3, GestioConfig.worldExposure, true, function(v) GestioConfig.worldExposure=v; updateWorldPostFX() end)
-            addInspectorSlider(296, "Saturation", -1, 1, GestioConfig.worldSaturation, true, function(v) GestioConfig.worldSaturation=v; updateWorldPostFX() end)
-            addInspectorSlider(328, "Contrast", -1, 1, GestioConfig.worldContrast, true, function(v) GestioConfig.worldContrast=v; updateWorldPostFX() end)
-            addInspectorSlider(360, "Tint Red", 0, 255, GestioConfig.worldColorR, false, function(v) GestioConfig.worldColorR=v; updateWorldPostFX() end)
-            addInspectorSlider(392, "Tint Green", 0, 255, GestioConfig.worldColorG, false, function(v) GestioConfig.worldColorG=v; updateWorldPostFX() end)
-            addInspectorSlider(424, "Tint Blue", 0, 255, GestioConfig.worldColorB, false, function(v) GestioConfig.worldColorB=v; updateWorldPostFX() end)
+            addPanelSlider(48, "Brightness", 0.0, 5.0, GestioConfig.nightBrightness, true, function(v) GestioConfig.nightBrightness=v; if GestioConfig.nightModeEnabled then Lighting.Brightness=v end end)
+            addPanelSlider(80, "Clock Time", 0.0, 24.0, GestioConfig.nightClockTime, true, function(v) GestioConfig.nightClockTime=v; if GestioConfig.nightModeEnabled then Lighting.ClockTime=v end end)
+            addPanelToggle(112, "Custom Skybox", GestioConfig.worldSkyboxEnabled, function(v) GestioConfig.worldSkyboxEnabled=v; updateWorldChanger() end)
+            addPanelChoice(138, "Skybox", {"Night","Ocean Sunset","My Summer Car","Minecraft","Deep Space","Clouded Sky","City"}, GestioConfig.worldSkyboxPreset, function(v) GestioConfig.worldSkyboxPreset=v; updateWorldChanger() end)
+            addPanelSlider(174, "Fog Start", 0, 5000, GestioConfig.worldFogStart, false, function(v) GestioConfig.worldFogStart=v; updateWorldChanger() end)
+            addPanelSlider(206, "Fog End", 50, 100000, GestioConfig.worldFogEnd, false, function(v) GestioConfig.worldFogEnd=v; updateWorldChanger() end)
+            addPanelToggle(238, "Post FX", GestioConfig.worldPostFXEnabled, function(v) GestioConfig.worldPostFXEnabled=v; updateWorldPostFX() end)
+            addPanelSlider(264, "Exposure", -3, 3, GestioConfig.worldExposure, true, function(v) GestioConfig.worldExposure=v; updateWorldPostFX() end)
+            addPanelSlider(296, "Saturation", -1, 1, GestioConfig.worldSaturation, true, function(v) GestioConfig.worldSaturation=v; updateWorldPostFX() end)
+            addPanelSlider(328, "Contrast", -1, 1, GestioConfig.worldContrast, true, function(v) GestioConfig.worldContrast=v; updateWorldPostFX() end)
+            addPanelSlider(360, "Tint Red", 0, 255, GestioConfig.worldColorR, false, function(v) GestioConfig.worldColorR=v; updateWorldPostFX() end)
+            addPanelSlider(392, "Tint Green", 0, 255, GestioConfig.worldColorG, false, function(v) GestioConfig.worldColorG=v; updateWorldPostFX() end)
+            addPanelSlider(424, "Tint Blue", 0, 255, GestioConfig.worldColorB, false, function(v) GestioConfig.worldColorB=v; updateWorldPostFX() end)
         elseif moduleName == "Bullet Trail" then
             insContent.CanvasSize = UDim2.new(0,0,0,260)
-            addInspectorChoice(6,"Tracer Style", {"Block","Cylinder"}, GestioConfig.bulletTracerStyle, function(v) GestioConfig.bulletTracerStyle=v end)
-            addInspectorSlider(38,"Duration",0.05,3,GestioConfig.bulletTracerDuration,true,function(v) GestioConfig.bulletTracerDuration=v end)
-            addInspectorSlider(70,"Width",0.02,0.5,GestioConfig.bulletTracerWidth,true,function(v) GestioConfig.bulletTracerWidth=v end)
-            addInspectorToggle(102,"Rainbow",GestioConfig.bulletTracerRainbow,function(v) GestioConfig.bulletTracerRainbow=v end)
-            addInspectorToggle(128,"Bullet Impacts",GestioConfig.bulletImpactEnabled,function(v) GestioConfig.bulletImpactEnabled=v end)
-            addInspectorSlider(154,"Impact Size",0.05,1.5,GestioConfig.bulletImpactSize,true,function(v) GestioConfig.bulletImpactSize=v end)
-            addInspectorSlider(186,"Tracer Red",0,255,GestioConfig.bulletTracerColorR,false,function(v) GestioConfig.bulletTracerColorR=v end)
-            addInspectorSlider(218,"Tracer Green",0,255,GestioConfig.bulletTracerColorG,false,function(v) GestioConfig.bulletTracerColorG=v end)
-            addInspectorSlider(250,"Tracer Blue",0,255,GestioConfig.bulletTracerColorB,false,function(v) GestioConfig.bulletTracerColorB=v end)
+            addPanelChoice(6,"Tracer Style", {"Block","Cylinder"}, GestioConfig.bulletTracerStyle, function(v) GestioConfig.bulletTracerStyle=v end)
+            addPanelSlider(38,"Duration",0.05,3,GestioConfig.bulletTracerDuration,true,function(v) GestioConfig.bulletTracerDuration=v end)
+            addPanelSlider(70,"Width",0.02,0.5,GestioConfig.bulletTracerWidth,true,function(v) GestioConfig.bulletTracerWidth=v end)
+            addPanelToggle(102,"Rainbow",GestioConfig.bulletTracerRainbow,function(v) GestioConfig.bulletTracerRainbow=v end)
+            addPanelToggle(128,"Bullet Impacts",GestioConfig.bulletImpactEnabled,function(v) GestioConfig.bulletImpactEnabled=v end)
+            addPanelSlider(154,"Impact Size",0.05,1.5,GestioConfig.bulletImpactSize,true,function(v) GestioConfig.bulletImpactSize=v end)
+            addPanelSlider(186,"Tracer Red",0,255,GestioConfig.bulletTracerColorR,false,function(v) GestioConfig.bulletTracerColorR=v end)
+            addPanelSlider(218,"Tracer Green",0,255,GestioConfig.bulletTracerColorG,false,function(v) GestioConfig.bulletTracerColorG=v end)
+            addPanelSlider(250,"Tracer Blue",0,255,GestioConfig.bulletTracerColorB,false,function(v) GestioConfig.bulletTracerColorB=v end)
         elseif moduleName == "Cube Checker" then
             insContent.CanvasSize = UDim2.new(0,0,0,270)
-            addInspectorToggle(6,"Rainbow",GestioConfig.cubeCheckerRainbow,function(v) GestioConfig.cubeCheckerRainbow=v end)
-            addInspectorSlider(38,"Cube Size",0.1,5,GestioConfig.cubeCheckerSize,true,function(v) GestioConfig.cubeCheckerSize=v end)
-            addInspectorSlider(70,"Max Distance",1,100,GestioConfig.cubeCheckerDistance,false,function(v) GestioConfig.cubeCheckerDistance=v end)
-            addInspectorSlider(102,"Outline Thickness",0.01,0.2,GestioConfig.cubeCheckerLineThickness,true,function(v) GestioConfig.cubeCheckerLineThickness=v end)
-            addInspectorSlider(134,"Outline Fade",0,1,GestioConfig.cubeCheckerTransparency,true,function(v) GestioConfig.cubeCheckerTransparency=v end)
-            addInspectorSlider(166,"Color Red",0,255,GestioConfig.bulletTracerColorR,false,function(v) GestioConfig.bulletTracerColorR=v end)
-            addInspectorSlider(198,"Color Green",0,255,GestioConfig.bulletTracerColorG,false,function(v) GestioConfig.bulletTracerColorG=v end)
-            addInspectorSlider(230,"Color Blue",0,255,GestioConfig.bulletTracerColorB,false,function(v) GestioConfig.bulletTracerColorB=v end)
+            addPanelToggle(6,"Rainbow",GestioConfig.cubeCheckerRainbow,function(v) GestioConfig.cubeCheckerRainbow=v end)
+            addPanelSlider(38,"Cube Size",0.1,5,GestioConfig.cubeCheckerSize,true,function(v) GestioConfig.cubeCheckerSize=v end)
+            addPanelSlider(70,"Max Distance",1,100,GestioConfig.cubeCheckerDistance,false,function(v) GestioConfig.cubeCheckerDistance=v end)
+            addPanelSlider(102,"Outline Thickness",0.01,0.2,GestioConfig.cubeCheckerLineThickness,true,function(v) GestioConfig.cubeCheckerLineThickness=v end)
+            addPanelSlider(134,"Outline Fade",0,1,GestioConfig.cubeCheckerTransparency,true,function(v) GestioConfig.cubeCheckerTransparency=v end)
+            addPanelSlider(166,"Color Red",0,255,GestioConfig.bulletTracerColorR,false,function(v) GestioConfig.bulletTracerColorR=v end)
+            addPanelSlider(198,"Color Green",0,255,GestioConfig.bulletTracerColorG,false,function(v) GestioConfig.bulletTracerColorG=v end)
+            addPanelSlider(230,"Color Blue",0,255,GestioConfig.bulletTracerColorB,false,function(v) GestioConfig.bulletTracerColorB=v end)
         elseif moduleName == "Weapon Chams" then
             insContent.CanvasSize = UDim2.new(0,0,0,300)
-            addInspectorChoice(6,"Style",{"Glass","ForceField","Metal","Highlight","Neon"},GestioConfig.weaponChamsMode,function(v) GestioConfig.weaponChamsMode=v end)
-            addInspectorSlider(38,"Fade",0,1,GestioConfig.weaponChamsTransparency,true,function(v) GestioConfig.weaponChamsTransparency=v end)
-            addInspectorSlider(70,"Surface",0,1,GestioConfig.weaponChamsReflectance,true,function(v) GestioConfig.weaponChamsReflectance=v end)
-            addInspectorSlider(102,"Tone R",0,255,GestioConfig.weaponChamsColorR,false,function(v) GestioConfig.weaponChamsColorR=v end)
-            addInspectorSlider(134,"Tone G",0,255,GestioConfig.weaponChamsColorG,false,function(v) GestioConfig.weaponChamsColorG=v end)
-            addInspectorSlider(166,"Tone B",0,255,GestioConfig.weaponChamsColorB,false,function(v) GestioConfig.weaponChamsColorB=v end)
+            addPanelChoice(6,"Style",{"Glass","ForceField","Metal","Highlight","Neon"},GestioConfig.weaponChamsMode,function(v) GestioConfig.weaponChamsMode=v end)
+            addPanelSlider(38,"Fade",0,1,GestioConfig.weaponChamsTransparency,true,function(v) GestioConfig.weaponChamsTransparency=v end)
+            addPanelSlider(70,"Surface",0,1,GestioConfig.weaponChamsReflectance,true,function(v) GestioConfig.weaponChamsReflectance=v end)
+            addPanelSlider(102,"Tone R",0,255,GestioConfig.weaponChamsColorR,false,function(v) GestioConfig.weaponChamsColorR=v end)
+            addPanelSlider(134,"Tone G",0,255,GestioConfig.weaponChamsColorG,false,function(v) GestioConfig.weaponChamsColorG=v end)
+            addPanelSlider(166,"Tone B",0,255,GestioConfig.weaponChamsColorB,false,function(v) GestioConfig.weaponChamsColorB=v end)
         elseif moduleName == "Custom FOV" then
             insContent.CanvasSize = UDim2.new(0,0,0,120)
-            addInspectorToggle(6,"Enable Custom FOV",GestioConfig.customFovEnabled,function(v) GestioConfig.customFovEnabled=v end)
-            addInspectorSlider(38,"FOV Amount",70,120,GestioConfig.customFov,false,function(v) GestioConfig.customFov=v end)
+            addPanelToggle(6,"Enable Custom FOV",GestioConfig.customFovEnabled,function(v) GestioConfig.customFovEnabled=v end)
+            addPanelSlider(38,"FOV Amount",70,120,GestioConfig.customFov,false,function(v) GestioConfig.customFov=v end)
         elseif moduleName == "Custom Scope" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 600)
-            addInspectorToggle(6,"Remove Original Scope",GestioConfig.scopeRemoveOriginal,function(v) GestioConfig.scopeRemoveOriginal=v end)
-            addInspectorToggle(32,"Custom FOV",GestioConfig.scopeFovEnabled,function(v) GestioConfig.scopeFovEnabled=v end)
-            addInspectorSlider(58,"Scope FOV",10,120,GestioConfig.scopeFov,false,function(v) GestioConfig.scopeFov=v end)
-            addInspectorToggle(90,"Scope Crosshair",GestioConfig.scopeCrosshairEnabled,function(v) GestioConfig.scopeCrosshairEnabled=v end)
-            addInspectorChoice(116,"Style",{"Cross","T","X","Dot"},GestioConfig.scopeCrosshairStyle or "Cross",function(v) GestioConfig.scopeCrosshairStyle=v end)
-            addInspectorToggle(148,"Left Arm",GestioConfig.scopeCrosshairLeft,function(v) GestioConfig.scopeCrosshairLeft=v end)
-            addInspectorToggle(174,"Right Arm",GestioConfig.scopeCrosshairRight,function(v) GestioConfig.scopeCrosshairRight=v end)
-            addInspectorToggle(200,"Top Arm",GestioConfig.scopeCrosshairTop,function(v) GestioConfig.scopeCrosshairTop=v end)
-            addInspectorToggle(226,"Bottom Arm",GestioConfig.scopeCrosshairBottom,function(v) GestioConfig.scopeCrosshairBottom=v end)
-            addInspectorToggle(252,"Center Dot",GestioConfig.scopeCrosshairDot,function(v) GestioConfig.scopeCrosshairDot=v end)
-            addInspectorToggle(278,"Dynamic Gap",GestioConfig.scopeDynamicGap,function(v) GestioConfig.scopeDynamicGap=v end)
-            addInspectorSlider(304,"Length",5,300,GestioConfig.scopeCrosshairLength,false,function(v) GestioConfig.scopeCrosshairLength=v end)
-            addInspectorSlider(336,"Thickness",1,12,GestioConfig.scopeCrosshairThickness,false,function(v) GestioConfig.scopeCrosshairThickness=v end)
-            addInspectorSlider(368,"Gap",0,80,GestioConfig.scopeCrosshairGap,false,function(v) GestioConfig.scopeCrosshairGap=v end)
-            addInspectorSlider(400,"Opacity",0,1,GestioConfig.scopeCrosshairOpacity or 0,true,function(v) GestioConfig.scopeCrosshairOpacity=v end)
-            addInspectorSlider(432,"Red",0,255,GestioConfig.scopeCrosshairColorR,false,function(v) GestioConfig.scopeCrosshairColorR=v end)
-            addInspectorSlider(464,"Green",0,255,GestioConfig.scopeCrosshairColorG,false,function(v) GestioConfig.scopeCrosshairColorG=v end)
-            addInspectorSlider(496,"Blue",0,255,GestioConfig.scopeCrosshairColorB,false,function(v) GestioConfig.scopeCrosshairColorB=v end)
-            addInspectorToggle(528,"Reticle Outline",GestioConfig.scopeCrosshairOutline,function(v) GestioConfig.scopeCrosshairOutline=v end)
-            addInspectorSlider(554,"Outline Size",1,6,GestioConfig.scopeCrosshairOutlineThickness or 1,false,function(v) GestioConfig.scopeCrosshairOutlineThickness=v end)
+            addPanelToggle(6,"Remove Original Scope",GestioConfig.scopeRemoveOriginal,function(v) GestioConfig.scopeRemoveOriginal=v end)
+            addPanelToggle(32,"Custom FOV",GestioConfig.scopeFovEnabled,function(v) GestioConfig.scopeFovEnabled=v end)
+            addPanelSlider(58,"Scope FOV",10,120,GestioConfig.scopeFov,false,function(v) GestioConfig.scopeFov=v end)
+            addPanelToggle(90,"Scope Crosshair",GestioConfig.scopeCrosshairEnabled,function(v) GestioConfig.scopeCrosshairEnabled=v end)
+            addPanelChoice(116,"Style",{"Cross","T","X","Dot"},GestioConfig.scopeCrosshairStyle or "Cross",function(v) GestioConfig.scopeCrosshairStyle=v end)
+            addPanelToggle(148,"Left Arm",GestioConfig.scopeCrosshairLeft,function(v) GestioConfig.scopeCrosshairLeft=v end)
+            addPanelToggle(174,"Right Arm",GestioConfig.scopeCrosshairRight,function(v) GestioConfig.scopeCrosshairRight=v end)
+            addPanelToggle(200,"Top Arm",GestioConfig.scopeCrosshairTop,function(v) GestioConfig.scopeCrosshairTop=v end)
+            addPanelToggle(226,"Bottom Arm",GestioConfig.scopeCrosshairBottom,function(v) GestioConfig.scopeCrosshairBottom=v end)
+            addPanelToggle(252,"Center Dot",GestioConfig.scopeCrosshairDot,function(v) GestioConfig.scopeCrosshairDot=v end)
+            addPanelToggle(278,"Dynamic Gap",GestioConfig.scopeDynamicGap,function(v) GestioConfig.scopeDynamicGap=v end)
+            addPanelSlider(304,"Length",5,300,GestioConfig.scopeCrosshairLength,false,function(v) GestioConfig.scopeCrosshairLength=v end)
+            addPanelSlider(336,"Thickness",1,12,GestioConfig.scopeCrosshairThickness,false,function(v) GestioConfig.scopeCrosshairThickness=v end)
+            addPanelSlider(368,"Gap",0,80,GestioConfig.scopeCrosshairGap,false,function(v) GestioConfig.scopeCrosshairGap=v end)
+            addPanelSlider(400,"Opacity",0,1,GestioConfig.scopeCrosshairOpacity or 0,true,function(v) GestioConfig.scopeCrosshairOpacity=v end)
+            addPanelSlider(432,"Red",0,255,GestioConfig.scopeCrosshairColorR,false,function(v) GestioConfig.scopeCrosshairColorR=v end)
+            addPanelSlider(464,"Green",0,255,GestioConfig.scopeCrosshairColorG,false,function(v) GestioConfig.scopeCrosshairColorG=v end)
+            addPanelSlider(496,"Blue",0,255,GestioConfig.scopeCrosshairColorB,false,function(v) GestioConfig.scopeCrosshairColorB=v end)
+            addPanelToggle(528,"Reticle Outline",GestioConfig.scopeCrosshairOutline,function(v) GestioConfig.scopeCrosshairOutline=v end)
+            addPanelSlider(554,"Outline Size",1,6,GestioConfig.scopeCrosshairOutlineThickness or 1,false,function(v) GestioConfig.scopeCrosshairOutlineThickness=v end)
 
         elseif moduleName == "RCS" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 240)
-            addInspectorSlider(6, "RCS Strength", 10, 100, GestioConfig.rcsStrength, false, function(v) GestioConfig.rcsStrength = v end)
-            addInspectorSlider(38, "Pitch Factor", 0.1, 2.0, GestioConfig.rcsPitchFactor, true, function(v) GestioConfig.rcsPitchFactor = v end)
-            addInspectorSlider(70, "Yaw Factor", 0.1, 2.0, GestioConfig.rcsYawFactor, true, function(v) GestioConfig.rcsYawFactor = v end)
+            addPanelSlider(6, "RCS Strength", 10, 100, GestioConfig.rcsStrength, false, function(v) GestioConfig.rcsStrength = v end)
+            addPanelSlider(38, "Pitch Factor", 0.1, 2.0, GestioConfig.rcsPitchFactor, true, function(v) GestioConfig.rcsPitchFactor = v end)
+            addPanelSlider(70, "Yaw Factor", 0.1, 2.0, GestioConfig.rcsYawFactor, true, function(v) GestioConfig.rcsYawFactor = v end)
         end
     end
 
@@ -5286,7 +5227,7 @@ function buildGestioUI()
             setBtn.Font = Enum.Font.GothamBold
             setBtn.ZIndex = 9
             bindTouch(setBtn, function()
-                openInspectorFor(title)
+                openPanelFor(title)
             end)
         end
         return card
@@ -5584,7 +5525,7 @@ function buildGestioUI()
                 b.Text = "  " .. nm
                 b.TextColor3 = currentTheme.TextPrimary
                 b.TextXAlignment = Enum.TextXAlignment.Left
-                b.TextSize = 8
+                b.TextSize = 10
                 b.Font = Enum.Font.GothamBold
                 Instance.new("UICorner", b).CornerRadius = UDim.new(0, 3)
                 bindTouch(b, function()
@@ -5999,15 +5940,14 @@ task.spawn(function()
 end)
 buildGestioUI()
 
-
--- Custom active navigation accent.
-local function GestioApplyTabAccent(button, active)
+-- Gestio-style active navigation accent.
+local function GestioApplyGestioTabAccent(button, active)
     pcall(function()
-        local accent = button:FindFirstChild("ActiveAccent")
+        local accent = button:FindFirstChild("GestioActiveAccent")
         if active then
             if not accent then
                 accent = Instance.new("Frame")
-                accent.Name = "ActiveAccent"
+                accent.Name = "GestioActiveAccent"
                 accent.BorderSizePixel = 0
                 accent.AnchorPoint = Vector2.new(0, 0.5)
                 accent.Position = UDim2.new(0, 0, 0.5, 0)
