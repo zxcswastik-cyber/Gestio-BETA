@@ -1,16 +1,17 @@
+-- Gestio Delta-safe bootstrap: never assume executor globals exist.
 pcall(function()
-    if type(getgenv) == "function" then
-        local env = getgenv()
-        if env and type(env.GestioRunning) == "function" then
-            env.GestioRunning()
+    local getEnv = rawget(_G, "getgenv")
+    if type(getEnv) == "function" then
+        local ok, env = pcall(getEnv)
+        if ok and type(env) == "table" and type(env.GestioRunning) == "function" then
+            pcall(env.GestioRunning)
         end
     end
 end)
 
 
 -- ==========================================
--- SKEET-INSPIRED ICON SYSTEM
--- Self-contained monochrome/red navigation glyphs.
+-- SKEET-ICON NO WORK !FIX!
 -- ==========================================
 local GestioSkeetIcons = {
     Combat = "⌁",
@@ -48,7 +49,7 @@ local HttpService = game:GetService("HttpService")
 
 local GestioConfig = {
     -- Toggles
-    antiAfkEnabled = true,
+    antiAfkEnabled = false,
     noFallDamageEnabled = false,
     spectatorListEnabled = false,
     spectatorCounterEnabled = true,
@@ -93,7 +94,7 @@ local GestioConfig = {
     tracersEnabled = false,
     grenadeEspEnabled = false,
     jumpCircleEnabled = false,
-    antiFlashEnabled = true,
+    antiFlashEnabled = false,
     fullBrightEnabled = false,
     removeFogEnabled = true,
     nightModeEnabled = false,
@@ -278,49 +279,79 @@ pcall(function()
 end)
 
 -- ==========================================
--- CLIENT ENVIRONMENT VALIDATION
+-- CLIENT ENVIRONMENT VALIDATION GESTIO
 -- ==========================================
 local player = Players.LocalPlayer
 if not player then
-    local startWait = tick()
-    while not player and (tick() - startWait) < 5 do
-        player = Players.LocalPlayer
+    local startWait = os.clock()
+    while not player and (os.clock() - startWait) < 15 do
+        pcall(function() player = Players.LocalPlayer end)
         task.wait(0.1)
     end
-    if not player then
-        player = Players:GetPlayers()[1]
+end
+
+-- Do not silently substitute another player: this is a client script.
+if not player then
+    local ok, list = pcall(Players.GetPlayers, Players)
+    if ok and type(list) == "table" then
+        for _, candidate in ipairs(list) do
+            if candidate and candidate.Parent == Players then
+                player = candidate
+                break
+            end
+        end
     end
 end
 
 local camera = Workspace.CurrentCamera or Workspace:FindFirstChildOfClass("Camera")
 
+local function tryGuiParent(candidate)
+    if not candidate then return nil end
+    local ok = pcall(function()
+        local probe = Instance.new("ScreenGui")
+        probe.Name = "__GestioGuiProbe"
+        probe.ResetOnSpawn = false
+        probe.Parent = candidate
+        local parented = probe.Parent == candidate
+        probe:Destroy()
+        if not parented then error("parent rejected") end
+    end)
+    return ok and candidate or nil
+end
+
 function getSafeGui()
-    local success, result = pcall(function()
-        if gethui then
-            return gethui()
-        end
-    end)
-    if success and result then return result end
-    
-    success, result = pcall(function()
-        return CoreGui
-    end)
-    if success and result then return result end
-    
+    -- PlayerGui is the most compatible target for injected LocalScripts.
     if player then
-        return player:WaitForChild("PlayerGui", 5) or player:FindFirstChildOfClass("PlayerGui")
+        local pg = nil
+        pcall(function() pg = player:FindFirstChildOfClass("PlayerGui") end)
+        if not pg then
+            pcall(function() pg = player:WaitForChild("PlayerGui", 15) end)
+        end
+        pg = tryGuiParent(pg)
+        if pg then return pg end
     end
+
+    -- Executor UI container, when available.
+    local gh = rawget(_G, "gethui")
+    if type(gh) == "function" then
+        local ok, result = pcall(gh)
+        result = ok and tryGuiParent(result) or nil
+        if result then return result end
+    end
+
+    -- CoreGui fallback.
+    local cg = tryGuiParent(CoreGui)
+    if cg then return cg end
     return nil
 end
 
 local targetGui = getSafeGui()
-if not targetGui and player then
-    pcall(function() targetGui = player:WaitForChild("PlayerGui", 5) end)
-end
 if not targetGui then
-    warn("[Gestio] GUI initialization failed: no valid GUI parent")
+    warn("[Gestio] GUI initialization failed: PlayerGui/gethui/CoreGui rejected the GUI parent")
+    warn("[Gestio] LocalPlayer:", player and player.Name or "nil")
     return
 end
+print("[Gestio] GUI parent OK:", targetGui:GetFullName())
 
 local connections = {}
 local activeEspHolders = {}
@@ -426,7 +457,6 @@ local currentTheme = themeLibrary["Charcoal Crimson"]
 
 -- ==========================================
 -- GESTIO NOTIFICATION CENTER
--- Sleek red/black toast system matching the menu.
 -- ==========================================
 local GestioNotificationGui = nil
 local GestioNotificationHolder = nil
@@ -756,7 +786,7 @@ local function setupBloxStrikeShootHook()
                                         bullet.Direction = delta.Unit
                                     end
 
-                                    -- MemeSense-style authoritative hit payload rewrite.
+                                    -- Gestio-style-style authoritative hit payload rewrite.
                                     if type(bullet.Hits) == "table" then
                                         for _, hitData in pairs(bullet.Hits) do
                                             if type(hitData) == "table" then
@@ -808,7 +838,7 @@ end)
 table.insert(connections, fireEndConn)
 
 -- ==========================================
--- FACTION CHECK & HEALTH CHECK LOGIC
+-- FACTION CHECK & HEALTH CHECK LOGIC -+WORK
 -- ==========================================
 function isAlly(plr)
     if not plr or plr == player then return true end
@@ -875,7 +905,7 @@ function isEntityAlive(char, hum)
 end
 
 -- ==========================================
--- VISIBILITY CHECK SYSTEM
+-- VISIBILITY CHECK SYSTEM WORK
 -- ==========================================
 local wallRayParams = RaycastParams.new()
 wallRayParams.FilterType = Enum.RaycastFilterType.Exclude
@@ -899,7 +929,7 @@ function isVisibleThroughWalls(targetPart, targetChar)
 end
 
 -- ==========================================
--- ZERO-LAG SILENT AIM
+-- ZERO-LAG SILENT AIM -+WORK
 -- ==========================================
 getSilentAimTarget = function()
     local cam = Workspace.CurrentCamera or camera
@@ -1034,7 +1064,7 @@ local function setupSilentAimHooks()
 end
 
 -- ==========================================
--- CHAMS COLORS & HITMARKER VARS
+-- CHAMS COLORS NO WORK & HITMARKER VARS NO WORK
 -- ==========================================
 local chamsColorVisible = Color3.fromRGB(255, 45, 85)
 local chamsColorHidden = Color3.fromRGB(110, 115, 125)
@@ -1044,7 +1074,7 @@ local chamsOutlineColor = Color3.fromRGB(240, 240, 245)
 local hitmarkerLastHealth = {}
 
 -- ==========================================
--- MEMESENSE -> GESTIO SKIN / KNIFE / GLOVE CHANGER
+-- GESTIO SKINCHANGER
 -- ==========================================
 local skinData = {
     SkinsRoot = nil,
@@ -1426,7 +1456,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function()
 end))
 
 -- ==========================================
--- TRIGGERBOT & MOVEMENT STATE
+-- TRIGGERBOT NO WORK & MOVEMENT STATE NO WORK
 -- ==========================================
 local triggerbotDelay = 0.02
 local triggerbotHeadOnly = false
@@ -1443,7 +1473,7 @@ local defaultHipHeight = 2.0
 local defaultHipHeightCaptured = false
 
 -- ==========================================
--- ENVIRONMENT PRESETS & FOG LIBRARY
+-- ENVIRONMENT PRESETS & FOG LIBRARY FULL WORK
 -- ==========================================
 local nightPresets = {
     ["Midnight"] = {
@@ -1533,7 +1563,7 @@ local grenadePool = {}
 local mobileSlideBtn = nil
 
 -- ==========================================
--- HITMARKER UI
+-- HITMARKER NO WORK
 -- ==========================================
 local hitmarkerGui = Instance.new("ScreenGui")
 hitmarkerGui.Name = "GestioHitmarkerGui"
@@ -1626,7 +1656,7 @@ if genv then
 end
 
 -- ==========================================
--- MEMESENSE-STYLE THIRD PERSON CONTROLLER
+-- THIRD PERSON WORK
 -- ==========================================
 local isThirdPersonActive = false
 local thirdPersonSaved = nil
@@ -1731,7 +1761,7 @@ function refreshThirdPerson()
 end
 
 -- ==========================================
--- LIGHTING & ATMOSPHERE FUNCTIONS
+-- LIGHTING & ATMOSPHERE FUNCTIONS WORK
 -- ==========================================
 function applyNightPreset(presetName)
     local cfg = nightPresets[presetName]
@@ -1771,7 +1801,7 @@ function restoreLightingState()
 end
 
 -- ==========================================
--- MEMESENSE-STYLE WORLD / WEAPON VISUALS
+--  WORLD VISUALS
 -- ==========================================
 local worldSkyboxData = {
     ["Night"] = {"rbxassetid://1514717643","rbxassetid://1514716936","rbxassetid://1514715910","rbxassetid://1514714945","rbxassetid://1514714011","rbxassetid://1514713374"},
@@ -2076,7 +2106,7 @@ end
 
 -- ==========================================================================
 -- [ CUBE CHECKER ]
--- MemeSense-style camera-ray surface marker.
+-- camera-ray surface marker.
 -- ==========================================================================
 do
     local cubePart = Instance.new("Part")
@@ -2285,7 +2315,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function()
 end))
 
 -- ==========================================
--- JUMP CIRCLE RENDER ENGINE (GROUND CONTOUR)
+-- JUMP CIRCLE NO WORK BLOXSTRIKE
 -- ==========================================
 local jumpRayParams = RaycastParams.new()
 jumpRayParams.FilterType = Enum.RaycastFilterType.Exclude
@@ -2585,7 +2615,7 @@ function bindTouch(btn, callback)
 end
 
 -- ==========================================
--- HUD OVERLAYS (FOV & WATERMARK)
+-- HUD & WATEMARK
 -- ==========================================
 local fovGui = Instance.new("ScreenGui")
 fovGui.Name = "GestioFovGui"
@@ -2895,7 +2925,7 @@ function renderGrenadeOverlays()
 end
 
 -- ==========================================
--- ADVANCED KINEMATIC AIM ENGINE
+--  AIM ENGINE SHLAK
 -- ==========================================
 local visRayParams = RaycastParams.new()
 visRayParams.FilterType = Enum.RaycastFilterType.Exclude
@@ -3016,7 +3046,7 @@ function getClosestTarget()
 end
 
 -- ==========================================
--- RAGEBOT TARGETING ENGINE
+-- RAGEBOT TT
 -- ==========================================
 function getRageTarget()
     local cam = Workspace.CurrentCamera or camera
@@ -3066,15 +3096,13 @@ end
 
 -- ==========================================
 -- TRIGGERBOT + MATERIAL/THICKNESS PENETRATION
--- Target remains FOV/camera-center based. If the first ray hits a wall,
--- determine whether that exact surface can be penetrated before firing.
 -- ==========================================
 local triggerRayParams = RaycastParams.new()
 triggerRayParams.FilterType = Enum.RaycastFilterType.Exclude
 triggerRayParams.IgnoreWater = true
 
 -- Conservative BloxStrike material limits adapted from the existing
--- MemeSense penetration model. Values are maximum accumulated thickness.
+-- penetration model. Values are maximum accumulated thickness.
 local triggerMaterialLimits = {
     [Enum.Material.Asphalt] = 0.25, [Enum.Material.Basalt] = 0.25,
     [Enum.Material.Brick] = 0.25, [Enum.Material.Cobblestone] = 0.25,
@@ -3279,7 +3307,7 @@ function runMobileTriggerbot()
 end
 
 -- ==========================================
--- 2D ESP COMPONENT CACHE FACTORY
+-- 2D ESP 
 -- ==========================================
 function getOrCreateScreenEsp(plr)
     if screenEspCache[plr] then return screenEspCache[plr] end
@@ -3396,7 +3424,7 @@ table.insert(connections, Players.PlayerRemoving:Connect(function(plr)
 end))
 
 -- ==========================================
--- TACTICAL ESP SCREEN RENDER LOOP
+-- TACTICAL ESP
 -- ==========================================
 function renderTacticalOverlay()
     local camPos = camera.CFrame.Position
@@ -3583,7 +3611,7 @@ function renderTacticalOverlay()
 end
 
 -- ==========================================
--- 3D ESP & CHAMS PIPELINE
+-- 3D ESP
 -- ==========================================
 function attachEspToPlayer(plr)
     if plr == player then return end
@@ -3692,7 +3720,6 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     end
     wmMetrics.Visible = GestioConfig.watermarkShowFPS or GestioConfig.watermarkShowPing
     wmDivider.Visible = wmMetrics.Visible
-    end
 
     if fovFrame then
         local isFovVisible = GestioConfig.aimbotEnabled and GestioConfig.showFovCircle
@@ -3889,7 +3916,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
 end))
 
 -- ==========================================
--- ANTI-AIM ROTATION LOOP
+-- ANTI-AIM ROTATION SHLAK
 -- ==========================================
 table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     local char = player.Character
@@ -4196,7 +4223,7 @@ end)
 table.insert(connections, inEndedConn)
 
 -- ==========================================
--- HITMARKER & PHYSICS LOOP
+-- HITMARKER & PHYSICS LOOP NO WORK
 -- ==========================================
 table.insert(connections, RunService.Heartbeat:Connect(function()
     if not GestioConfig.hitmarkerEnabled then
@@ -6002,7 +6029,14 @@ task.spawn(function()
     task.wait(1)
     setupMemesenseSilentSendHook()
 end)
-buildGestioUI()
+local __gestioBootOK, __gestioBootErr = xpcall(buildGestioUI, function(err)
+    return debug and debug.traceback and debug.traceback(tostring(err), 2) or tostring(err)
+end)
+if not __gestioBootOK then
+    warn("[Gestio BOOT ERROR] " .. tostring(__gestioBootErr))
+else
+    print("[Gestio] UI initialized successfully")
+end
 
 
 -- Skeet-style active navigation accent.
