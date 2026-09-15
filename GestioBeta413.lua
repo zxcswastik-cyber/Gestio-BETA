@@ -1,10 +1,8 @@
--- Gestio Delta-safe bootstrap: never assume executor globals exist.
 pcall(function()
-    local getEnv = rawget(_G, "getgenv")
-    if type(getEnv) == "function" then
-        local ok, env = pcall(getEnv)
-        if ok and type(env) == "table" and type(env.GestioRunning) == "function" then
-            pcall(env.GestioRunning)
+    if type(getgenv) == "function" then
+        local env = getgenv()
+        if env and type(env.GestioRunning) == "function" then
+            env.GestioRunning()
         end
     end
 end)
@@ -283,75 +281,45 @@ end)
 -- ==========================================
 local player = Players.LocalPlayer
 if not player then
-    local startWait = os.clock()
-    while not player and (os.clock() - startWait) < 15 do
-        pcall(function() player = Players.LocalPlayer end)
+    local startWait = tick()
+    while not player and (tick() - startWait) < 5 do
+        player = Players.LocalPlayer
         task.wait(0.1)
     end
-end
-
--- Do not silently substitute another player: this is a client script.
-if not player then
-    local ok, list = pcall(Players.GetPlayers, Players)
-    if ok and type(list) == "table" then
-        for _, candidate in ipairs(list) do
-            if candidate and candidate.Parent == Players then
-                player = candidate
-                break
-            end
-        end
+    if not player then
+        player = Players:GetPlayers()[1]
     end
 end
 
 local camera = Workspace.CurrentCamera or Workspace:FindFirstChildOfClass("Camera")
 
-local function tryGuiParent(candidate)
-    if not candidate then return nil end
-    local ok = pcall(function()
-        local probe = Instance.new("ScreenGui")
-        probe.Name = "__GestioGuiProbe"
-        probe.ResetOnSpawn = false
-        probe.Parent = candidate
-        local parented = probe.Parent == candidate
-        probe:Destroy()
-        if not parented then error("parent rejected") end
-    end)
-    return ok and candidate or nil
-end
-
 function getSafeGui()
-    -- PlayerGui is the most compatible target for injected LocalScripts.
-    if player then
-        local pg = nil
-        pcall(function() pg = player:FindFirstChildOfClass("PlayerGui") end)
-        if not pg then
-            pcall(function() pg = player:WaitForChild("PlayerGui", 15) end)
+    local success, result = pcall(function()
+        if gethui then
+            return gethui()
         end
-        pg = tryGuiParent(pg)
-        if pg then return pg end
+    end)
+    if success and result then return result end
+    
+    success, result = pcall(function()
+        return CoreGui
+    end)
+    if success and result then return result end
+    
+    if player then
+        return player:WaitForChild("PlayerGui", 5) or player:FindFirstChildOfClass("PlayerGui")
     end
-
-    -- Executor UI container, when available.
-    local gh = rawget(_G, "gethui")
-    if type(gh) == "function" then
-        local ok, result = pcall(gh)
-        result = ok and tryGuiParent(result) or nil
-        if result then return result end
-    end
-
-    -- CoreGui fallback.
-    local cg = tryGuiParent(CoreGui)
-    if cg then return cg end
     return nil
 end
 
 local targetGui = getSafeGui()
+if not targetGui and player then
+    pcall(function() targetGui = player:WaitForChild("PlayerGui", 5) end)
+end
 if not targetGui then
-    warn("[Gestio] GUI initialization failed: PlayerGui/gethui/CoreGui rejected the GUI parent")
-    warn("[Gestio] LocalPlayer:", player and player.Name or "nil")
+    warn("[Gestio] GUI initialization failed: no valid GUI parent")
     return
 end
-print("[Gestio] GUI parent OK:", targetGui:GetFullName())
 
 local connections = {}
 local activeEspHolders = {}
@@ -1162,8 +1130,132 @@ local function applySurfaceAppearanceSkin(model, weaponName, skinName)
     end
 end
 
+local gestioCosmeticHooksReady = false
+local gestioCosmeticHookState = {Skins = nil, Viewmodel = nil}
+
+local function gestioSafeRequire(moduleScript)
+    if not moduleScript then return nil end
+    local ok, result = pcall(require, moduleScript)
+    if ok and type(result) == "table" then return result end
+    return nil
+end
+
+local function gestioIsBaseKnife(name)
+    return name == "CT Knife" or name == "T Knife" or name == "Knife"
+end
+
+local function initGestioCosmeticModuleHooks()
+    if gestioCosmeticHooksReady then return true end
+
+    local ok = pcall(function()
+        local database = ReplicatedStorage:FindFirstChild("Database")
+        local components = database and database:FindFirstChild("Components")
+        local libraries = components and components:FindFirstChild("Libraries")
+        local skinsModule = libraries and libraries:FindFirstChild("Skins")
+
+        local classes = ReplicatedStorage:FindFirstChild("Classes")
+        local weaponComponent = classes and classes:FindFirstChild("WeaponComponent")
+        local classesFolder = weaponComponent and weaponComponent:FindFirstChild("Classes")
+        local viewmodelModule = classesFolder and classesFolder:FindFirstChild("Viewmodel")
+
+        local Skins = gestioSafeRequire(skinsModule)
+        local Viewmodel = gestioSafeRequire(viewmodelModule)
+        if not Skins then return end
+
+        gestioCosmeticHookState.Skins = Skins
+        gestioCosmeticHookState.Viewmodel = Viewmodel
+
+        if type(Skins.GetCameraModel) == "function" and not Skins.__GestioGetCameraModel then
+            local original = Skins.GetCameraModel
+            Skins.__GestioGetCameraModel = original
+            Skins.GetCameraModel = function(weapon, skin, ...)
+                if GestioConfig.skinChangerEnabled and GestioConfig.selectedKnifeType and gestioIsBaseKnife(weapon) then
+                    local model = GestioConfig.selectedKnifeType
+                    local selected = GestioConfig.weaponSkinSelections[model] or GestioConfig.selectedSkin or "Default"
+                    local success, result = pcall(original, model, selected, ...)
+                    if success and result then return result end
+                end
+                local success, result = pcall(original, weapon, skin, ...)
+                if success then return result end
+                return nil
+            end
+        end
+
+        if type(Skins.GetCharacterModel) == "function" and not Skins.__GestioGetCharacterModel then
+            local original = Skins.GetCharacterModel
+            Skins.__GestioGetCharacterModel = original
+            Skins.GetCharacterModel = function(weapon, skin, ...)
+                if GestioConfig.skinChangerEnabled and GestioConfig.selectedKnifeType and gestioIsBaseKnife(weapon) then
+                    local model = GestioConfig.selectedKnifeType
+                    local selected = GestioConfig.weaponSkinSelections[model] or GestioConfig.selectedSkin or "Default"
+                    local success, result = pcall(original, model, selected, ...)
+                    if success and result then return result end
+                end
+                local success, result = pcall(original, weapon, skin, ...)
+                if success then return result end
+                return nil
+            end
+        end
+
+        if Viewmodel and type(Viewmodel.new) == "function" and not Viewmodel.__GestioNew then
+            local originalNew = Viewmodel.new
+            Viewmodel.__GestioNew = originalNew
+            Viewmodel.new = function(self, weapon, skin, ...)
+                if GestioConfig.skinChangerEnabled and GestioConfig.selectedKnifeType and gestioIsBaseKnife(weapon) then
+                    local model = GestioConfig.selectedKnifeType
+                    local selected = GestioConfig.weaponSkinSelections[model] or GestioConfig.selectedSkin or "Default"
+                    local success, result = pcall(originalNew, self, model, selected, ...)
+                    if success and result then return result end
+                end
+                local success, result = pcall(originalNew, self, weapon, skin, ...)
+                if success then return result end
+                return nil
+            end
+        end
+
+        if type(Skins.GetGloves) == "function" and not Skins.__GestioGetGloves then
+            local originalGloves = Skins.GetGloves
+            Skins.__GestioGetGloves = originalGloves
+            Skins.GetGloves = function(gloveModel, gloveSkin, ...)
+                if GestioConfig.gloveChangerEnabled and GestioConfig.selectedGloveModel then
+                    local model = GestioConfig.selectedGloveModel
+                    local selected = GestioConfig.selectedGloveSkin or "Default"
+                    local success, result = pcall(originalGloves, model, selected, ...)
+                    if success and result then return result end
+                end
+                local success, result = pcall(originalGloves, gloveModel, gloveSkin, ...)
+                if success then return result end
+                return nil
+            end
+        end
+
+        gestioCosmeticHooksReady = true
+    end)
+    return ok
+end
+
+local function updateGestioKnifeInventoryName()
+    pcall(function()
+        if not player or not player:FindFirstChild("PlayerGui") then return end
+        local mainGui = player.PlayerGui:FindFirstChild("MainGui")
+        local gameplay = mainGui and mainGui:FindFirstChild("Gameplay")
+        local bottom = gameplay and gameplay:FindFirstChild("Bottom")
+        local inventory = bottom and bottom:FindFirstChild("Inventory")
+        local melee = inventory and inventory:FindFirstChild("Melee")
+        local weapon = melee and melee:FindFirstChild("Weapon")
+        local label = weapon and weapon:FindFirstChild("WeaponName")
+        if label and label:IsA("TextLabel") and GestioConfig.skinChangerEnabled then
+            local model = GestioConfig.selectedKnifeType or "Knife"
+            local skin = GestioConfig.weaponSkinSelections[model] or GestioConfig.selectedSkin
+            label.Text = skin and skin ~= "Default" and ("★ " .. model .. " | " .. skin) or ("★ " .. model)
+        end
+    end)
+end
+
 local function hookBloxStrikeModules()
     refreshGestioSkinData()
+    initGestioCosmeticModuleHooks()
+    updateGestioKnifeInventoryName()
     pcall(function()
         if type(getgc) ~= "function" then return end
         for _, obj in ipairs(getgc(true)) do
@@ -1183,22 +1275,35 @@ local function hookBloxStrikeModules()
     end)
 end
 
+task.spawn(function()
+    for _ = 1, 30 do
+        if pcall(initGestioCosmeticModuleHooks) and gestioCosmeticHooksReady then break end
+        task.wait(0.5)
+    end
+end)
+
 local function scanAndMorphKnives(root)
     if not GestioConfig.skinChangerEnabled or not root then return end
     refreshGestioSkinData()
     if not skinData.SkinsRoot then return end
 
     local weaponModel = getCurrentWeaponModel()
-    if weaponModel then
-        local selectedWeapon = weaponModel.Name
-        if isBaseKnife(selectedWeapon) then
-            selectedWeapon = GestioConfig.selectedKnifeType
-        end
-        local selectedSkin = GestioConfig.weaponSkinSelections[selectedWeapon]
-            or (selectedWeapon == GestioConfig.selectedKnifeType and GestioConfig.selectedSkin)
-            or "Default"
+    if not weaponModel then return end
+
+    local actualName = weaponModel.Name
+    local selectedWeapon = actualName
+    if isBaseKnife(actualName) then
+        selectedWeapon = GestioConfig.selectedKnifeType
+    end
+
+    local selectedSkin = GestioConfig.weaponSkinSelections[selectedWeapon]
+        or (selectedWeapon == GestioConfig.selectedKnifeType and GestioConfig.selectedSkin)
+        or "Default"
+
+    if selectedSkin and selectedSkin ~= "Default" then
         applySurfaceAppearanceSkin(weaponModel, selectedWeapon, selectedSkin)
     end
+    updateGestioKnifeInventoryName()
 end
 
 local function applyGestioGloves()
@@ -1210,31 +1315,37 @@ local function applyGestioGloves()
     if not cam then return end
     local arms
     for _, child in ipairs(cam:GetChildren()) do
-        if child:IsA("Model") and (child.Name:match("Arms") or child:FindFirstChild("Right Arm")) then
+        if child:IsA("Model") and (child.Name:lower():find("arms") or child:FindFirstChild("Right Arm", true)) then
             arms = child
             break
         end
     end
     if not arms then return end
 
-    local leftArm = arms:FindFirstChild("Left Arm")
-    local rightArm = arms:FindFirstChild("Right Arm")
-    local leftGlove = leftArm and leftArm:FindFirstChild("Glove")
-    local rightGlove = rightArm and rightArm:FindFirstChild("Glove")
-    if not leftGlove or not rightGlove then return end
-
     local gloveFolder = skinData.SkinsRoot:FindFirstChild(GestioConfig.selectedGloveModel)
-    local skinFolder = gloveFolder and gloveFolder:FindFirstChild(GestioConfig.selectedGloveSkin)
+    if not gloveFolder then return end
+    local selectedSkin = GestioConfig.selectedGloveSkin or "Default"
+    local skinFolder = gloveFolder:FindFirstChild(selectedSkin)
     local cameraFolder = skinFolder and skinFolder:FindFirstChild("Camera")
     local factoryNew = cameraFolder and cameraFolder:FindFirstChild("Factory New")
     if not factoryNew then return end
 
-    for _, glove in ipairs({leftGlove, rightGlove}) do
-        for _, old in ipairs(glove:GetChildren()) do
-            if old:IsA("SurfaceAppearance") then old:Destroy() end
+    local sourceAppearances = {}
+    for _, appearance in ipairs(factoryNew:GetChildren()) do
+        if appearance:IsA("SurfaceAppearance") then
+            sourceAppearances[appearance.Name] = appearance
         end
-        for _, appearance in ipairs(factoryNew:GetChildren()) do
-            if appearance:IsA("SurfaceAppearance") then
+    end
+    if next(sourceAppearances) == nil then return end
+
+    for _, armName in ipairs({"Left Arm", "Right Arm"}) do
+        local arm = arms:FindFirstChild(armName, true)
+        local glove = arm and (arm:FindFirstChild("Glove") or arm:FindFirstChild("glove", true))
+        if glove then
+            for _, old in ipairs(glove:GetChildren()) do
+                if old:IsA("SurfaceAppearance") then old:Destroy() end
+            end
+            for _, appearance in pairs(sourceAppearances) do
                 appearance:Clone().Parent = glove
             end
         end
@@ -6029,14 +6140,7 @@ task.spawn(function()
     task.wait(1)
     setupMemesenseSilentSendHook()
 end)
-local __gestioBootOK, __gestioBootErr = xpcall(buildGestioUI, function(err)
-    return debug and debug.traceback and debug.traceback(tostring(err), 2) or tostring(err)
-end)
-if not __gestioBootOK then
-    warn("[Gestio BOOT ERROR] " .. tostring(__gestioBootErr))
-else
-    print("[Gestio] UI initialized successfully")
-end
+buildGestioUI()
 
 
 -- Skeet-style active navigation accent.
