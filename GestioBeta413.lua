@@ -120,6 +120,19 @@ local XCConfig = {
     scopeCrosshairOutlineB = 0,
     worldSkyboxEnabled = false,
     worldPostFXEnabled = false,
+    weatherEnabled = false,
+    weatherMode = "Rain",
+    weatherIntensity = 45,
+    weatherWind = 8,
+    freecamEnabled = false,
+    freecamSpeed = 55,
+    freecamSensitivity = 0.18,
+    freecamKey = "F4",
+    freelookEnabled = false,
+    freelookSensitivity = 0.16,
+    freelookKey = "LeftAlt",
+    streamerModeEnabled = false,
+    streamerKey = "F8",
     settingsShowNotifications = true,
     settingsCompactMode = false,
     menuKey = "RightShift",
@@ -127,6 +140,7 @@ local XCConfig = {
     -- Sliders & Values
     rageFov = 360,
     rageTargetMode = "Distance",
+    priorityPlayerName = "None",
     aimFov = 160,
     triggerbotFov = 160,
     aimbotSpeed = 35.0,
@@ -2513,9 +2527,343 @@ if player.Character then
 end
 
 -- ==========================================
+-- XC WORLD WEATHER + CAMERA DIRECTOR
+-- Inspired by the useful visual/camera ideas shown in the GameSense review.
+-- Both systems are local-only and use a single lightweight render path.
+-- ==========================================
+local weatherRig
+local weatherEmitter
+local weatherAtmosphere
+local weatherUpdateAccumulator = 0
+local weatherSignature
+
+local function destroyXCWeather()
+    if weatherRig then pcall(function() weatherRig:Destroy() end) end
+    if weatherAtmosphere then pcall(function() weatherAtmosphere:Destroy() end) end
+    weatherRig = nil
+    weatherEmitter = nil
+    weatherAtmosphere = nil
+    weatherSignature = nil
+end
+
+local function ensureXCWeatherObjects()
+    if not weatherRig or not weatherRig.Parent then
+        weatherRig = Instance.new("Part")
+        weatherRig.Name = "XCWeatherEmitter"
+        weatherRig.Size = Vector3.new(1, 1, 1)
+        weatherRig.Transparency = 1
+        weatherRig.Anchored = true
+        weatherRig.CanCollide = false
+        pcall(function() weatherRig.CanQuery = false; weatherRig.CanTouch = false end)
+        weatherRig.Parent = Workspace
+
+        weatherEmitter = Instance.new("ParticleEmitter")
+        weatherEmitter.Name = "XCWeatherParticles"
+        weatherEmitter.LockedToPart = false
+        weatherEmitter.LightInfluence = 0
+        weatherEmitter.Orientation = Enum.ParticleOrientation.FacingCamera
+        weatherEmitter.Shape = Enum.ParticleEmitterShape.Box
+        weatherEmitter.ShapeStyle = Enum.ParticleEmitterShapeStyle.Volume
+        weatherEmitter.ShapeInOut = Enum.ParticleEmitterShapeInOut.Outward
+        weatherEmitter.Parent = weatherRig
+    end
+end
+
+local function applyXCWeather()
+    if not XCConfig.weatherEnabled then
+        destroyXCWeather()
+        return
+    end
+
+    ensureXCWeatherObjects()
+    local mode = tostring(XCConfig.weatherMode or "Rain")
+    local intensity = math.clamp(tonumber(XCConfig.weatherIntensity) or 45, 1, 100)
+    local wind = math.clamp(tonumber(XCConfig.weatherWind) or 0, -40, 40)
+    local signature = mode .. ":" .. tostring(intensity) .. ":" .. tostring(wind)
+    if weatherSignature == signature and weatherEmitter and weatherEmitter.Parent then return end
+    weatherSignature = signature
+    weatherEmitter.Enabled = mode ~= "Fog"
+
+    if weatherAtmosphere then
+        weatherAtmosphere.Density = mode == "Fog" and (0.18 + intensity * 0.0045) or 0
+        weatherAtmosphere.Haze = mode == "Fog" and (1 + intensity * 0.045) or 0
+    elseif mode == "Fog" then
+        weatherAtmosphere = Instance.new("Atmosphere")
+        weatherAtmosphere.Name = "XCWeatherAtmosphere"
+        weatherAtmosphere.Color = Color3.fromRGB(190, 198, 205)
+        weatherAtmosphere.Decay = Color3.fromRGB(90, 96, 105)
+        weatherAtmosphere.Density = 0.18 + intensity * 0.0045
+        weatherAtmosphere.Haze = 1 + intensity * 0.045
+        weatherAtmosphere.Glare = 0
+        weatherAtmosphere.Parent = Lighting
+    end
+
+    if mode == "Rain" then
+        weatherRig.Size = Vector3.new(90, 1, 90)
+        weatherEmitter.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+        weatherEmitter.Rate = intensity * 3.2
+        weatherEmitter.Lifetime = NumberRange.new(0.65, 1.05)
+        weatherEmitter.Speed = NumberRange.new(65, 90)
+        weatherEmitter.Acceleration = Vector3.new(wind, -65, 0)
+        weatherEmitter.SpreadAngle = Vector2.new(4, 4)
+        weatherEmitter.Size = NumberSequence.new(0.075)
+        weatherEmitter.Transparency = NumberSequence.new({
+            NumberSequenceKeypoint.new(0, 0.3),
+            NumberSequenceKeypoint.new(0.85, 0.45),
+            NumberSequenceKeypoint.new(1, 1),
+        })
+        weatherEmitter.Color = ColorSequence.new(Color3.fromRGB(190, 220, 255))
+    elseif mode == "Snow" then
+        weatherRig.Size = Vector3.new(100, 1, 100)
+        weatherEmitter.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+        weatherEmitter.Rate = intensity * 1.45
+        weatherEmitter.Lifetime = NumberRange.new(4.5, 7)
+        weatherEmitter.Speed = NumberRange.new(5, 11)
+        weatherEmitter.Acceleration = Vector3.new(wind * 0.35, -2.5, 0)
+        weatherEmitter.SpreadAngle = Vector2.new(18, 18)
+        weatherEmitter.Size = NumberSequence.new({
+            NumberSequenceKeypoint.new(0, 0.12),
+            NumberSequenceKeypoint.new(0.5, 0.28),
+            NumberSequenceKeypoint.new(1, 0.08),
+        })
+        weatherEmitter.Transparency = NumberSequence.new({
+            NumberSequenceKeypoint.new(0, 0.18),
+            NumberSequenceKeypoint.new(1, 0.55),
+        })
+        weatherEmitter.Color = ColorSequence.new(Color3.fromRGB(245, 248, 255))
+    elseif mode == "Ash" then
+        weatherRig.Size = Vector3.new(85, 1, 85)
+        weatherEmitter.Texture = "rbxasset://textures/particles/smoke_main.dds"
+        weatherEmitter.Rate = intensity * 1.15
+        weatherEmitter.Lifetime = NumberRange.new(3.5, 6)
+        weatherEmitter.Speed = NumberRange.new(4, 9)
+        weatherEmitter.Acceleration = Vector3.new(wind * 0.5, 5, 0)
+        weatherEmitter.SpreadAngle = Vector2.new(22, 22)
+        weatherEmitter.Size = NumberSequence.new({
+            NumberSequenceKeypoint.new(0, 0.16),
+            NumberSequenceKeypoint.new(1, 0.26),
+        })
+        weatherEmitter.Transparency = NumberSequence.new({
+            NumberSequenceKeypoint.new(0, 0.3),
+            NumberSequenceKeypoint.new(1, 0.8),
+        })
+        weatherEmitter.Color = ColorSequence.new(Color3.fromRGB(135, 135, 135))
+    end
+end
+
+local xcCameraMode
+local xcSavedCameraState
+local xcCameraFrame
+local xcCameraPosition
+local xcCameraYaw = 0
+local xcCameraPitch = 0
+local xcCameraTouch
+local xcCameraTouchLast
+local xcCameraTouchDelta = Vector2.zero
+local streamerSnapshot
+
+local STREAMER_HIDDEN_KEYS = {
+    "watermarkEnabled", "spectatorListEnabled", "nametagsEnabled", "boxEspEnabled",
+    "cornerBoxEnabled", "healthBarEnabled", "headDotEnabled", "tracersEnabled",
+    "grenadeEspEnabled", "jumpCircleEnabled", "hitmarkerEnabled", "chamsEnabled",
+    "showFovCircle", "showSilentFovCircle",
+}
+
+local function refreshXCToggle(key)
+    local refresh = UI_Bind_Registry[key]
+    if refresh then pcall(refresh, XCConfig[key] == true) end
+end
+
+local function setXCStreamerMode(enabled)
+    enabled = enabled == true
+    if enabled and not streamerSnapshot then
+        streamerSnapshot = {}
+        for _, key in ipairs(STREAMER_HIDDEN_KEYS) do
+            streamerSnapshot[key] = XCConfig[key]
+            XCConfig[key] = false
+            refreshXCToggle(key)
+        end
+        XCConfig.streamerModeEnabled = true
+        clearActiveJumpCircle()
+    elseif not enabled and streamerSnapshot then
+        for key, value in pairs(streamerSnapshot) do
+            XCConfig[key] = value
+            refreshXCToggle(key)
+        end
+        streamerSnapshot = nil
+        XCConfig.streamerModeEnabled = false
+        if XCConfig.jumpCircleEnabled and player.Character then
+            initJumpCircleForCharacter(player.Character)
+        end
+    else
+        XCConfig.streamerModeEnabled = enabled
+    end
+    refreshXCToggle("streamerModeEnabled")
+end
+
+local function stopXCCameraMode()
+    xcCameraMode = nil
+    XCConfig.freecamEnabled = false
+    XCConfig.freelookEnabled = false
+    local cam = Workspace.CurrentCamera or camera
+    if cam and xcSavedCameraState then
+        pcall(function()
+            cam.CameraType = xcSavedCameraState.CameraType or Enum.CameraType.Custom
+            if xcSavedCameraState.CameraSubject then cam.CameraSubject = xcSavedCameraState.CameraSubject end
+            cam.CFrame = xcSavedCameraState.CFrame or cam.CFrame
+        end)
+    end
+    if xcSavedCameraState then
+        pcall(function()
+            UserInputService.MouseBehavior = xcSavedCameraState.MouseBehavior
+            UserInputService.MouseIconEnabled = xcSavedCameraState.MouseIconEnabled
+        end)
+    end
+    xcSavedCameraState = nil
+    refreshXCToggle("freecamEnabled")
+    refreshXCToggle("freelookEnabled")
+end
+
+local function setXCCameraMode(mode, enabled)
+    if not enabled then
+        if xcCameraMode == mode then stopXCCameraMode() end
+        return
+    end
+
+    local cam = Workspace.CurrentCamera or camera
+    if not cam then return end
+    if not xcSavedCameraState then
+        xcSavedCameraState = {
+            CameraType = cam.CameraType,
+            CameraSubject = cam.CameraSubject,
+            CFrame = cam.CFrame,
+            MouseBehavior = UserInputService.MouseBehavior,
+            MouseIconEnabled = UserInputService.MouseIconEnabled,
+        }
+    end
+
+    xcCameraMode = mode
+    XCConfig.freecamEnabled = mode == "Freecam"
+    XCConfig.freelookEnabled = mode == "Freelook"
+    xcCameraFrame = cam.CFrame
+    xcCameraPosition = cam.CFrame.Position
+    local pitch, yaw = cam.CFrame:ToOrientation()
+    xcCameraPitch = pitch
+    xcCameraYaw = yaw
+    cam.CameraType = Enum.CameraType.Scriptable
+    if not UserInputService.TouchEnabled then
+        UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
+        UserInputService.MouseIconEnabled = false
+    end
+    refreshXCToggle("freecamEnabled")
+    refreshXCToggle("freelookEnabled")
+end
+
+table.insert(connections, UserInputService.InputBegan:Connect(function(input, processed)
+    if input.UserInputType == Enum.UserInputType.Touch and xcCameraMode and not processed then
+        local cam = Workspace.CurrentCamera or camera
+        if cam and input.Position.X >= cam.ViewportSize.X * 0.45 then
+            xcCameraTouch = input
+            xcCameraTouchLast = input.Position
+            xcCameraTouchDelta = Vector2.zero
+        end
+    end
+    if processed then return end
+    local freecamKey = Enum.KeyCode[XCConfig.freecamKey or "F4"]
+    local freelookKey = Enum.KeyCode[XCConfig.freelookKey or "LeftAlt"]
+    local streamerKey = Enum.KeyCode[XCConfig.streamerKey or "F8"]
+    if freecamKey and input.KeyCode == freecamKey then
+        setXCCameraMode("Freecam", not XCConfig.freecamEnabled)
+    elseif freelookKey and input.KeyCode == freelookKey then
+        setXCCameraMode("Freelook", not XCConfig.freelookEnabled)
+    elseif streamerKey and input.KeyCode == streamerKey then
+        setXCStreamerMode(not XCConfig.streamerModeEnabled)
+    end
+end))
+
+table.insert(connections, UserInputService.InputChanged:Connect(function(input)
+    if input == xcCameraTouch and xcCameraTouchLast then
+        local current = input.Position
+        xcCameraTouchDelta += Vector2.new(current.X - xcCameraTouchLast.X, current.Y - xcCameraTouchLast.Y)
+        xcCameraTouchLast = current
+    end
+end))
+
+table.insert(connections, UserInputService.InputEnded:Connect(function(input)
+    if input == xcCameraTouch then
+        xcCameraTouch = nil
+        xcCameraTouchLast = nil
+        xcCameraTouchDelta = Vector2.zero
+    end
+end))
+
+table.insert(connections, RunService.RenderStepped:Connect(function(dt)
+    if XCConfig.weatherEnabled then
+        weatherUpdateAccumulator += dt
+        if weatherUpdateAccumulator >= 0.1 then
+            weatherUpdateAccumulator = 0
+            applyXCWeather()
+            local cam = Workspace.CurrentCamera or camera
+            if weatherRig and cam then
+                weatherRig.CFrame = CFrame.new(cam.CFrame.Position + Vector3.new(0, 30, 0))
+            end
+        end
+    elseif weatherRig or weatherAtmosphere then
+        destroyXCWeather()
+    end
+
+    if not xcCameraMode then return end
+    local cam = Workspace.CurrentCamera or camera
+    if not cam then return end
+    if (xcCameraMode == "Freecam" and not XCConfig.freecamEnabled)
+        or (xcCameraMode == "Freelook" and not XCConfig.freelookEnabled) then
+        stopXCCameraMode()
+        return
+    end
+
+    cam.CameraType = Enum.CameraType.Scriptable
+    local delta = UserInputService:GetMouseDelta() + xcCameraTouchDelta * 0.55
+    xcCameraTouchDelta = Vector2.zero
+    local sensitivity = xcCameraMode == "Freecam"
+        and (tonumber(XCConfig.freecamSensitivity) or 0.18)
+        or (tonumber(XCConfig.freelookSensitivity) or 0.16)
+    xcCameraYaw -= math.rad(delta.X * sensitivity)
+    xcCameraPitch = math.clamp(xcCameraPitch - math.rad(delta.Y * sensitivity), math.rad(-85), math.rad(85))
+    local rotation = CFrame.Angles(0, xcCameraYaw, 0) * CFrame.Angles(xcCameraPitch, 0, 0)
+
+    if xcCameraMode == "Freecam" then
+        local movement = Vector3.zero
+        if UserInputService:IsKeyDown(Enum.KeyCode.W) then movement += Vector3.new(0, 0, -1) end
+        if UserInputService:IsKeyDown(Enum.KeyCode.S) then movement += Vector3.new(0, 0, 1) end
+        if UserInputService:IsKeyDown(Enum.KeyCode.A) then movement += Vector3.new(-1, 0, 0) end
+        if UserInputService:IsKeyDown(Enum.KeyCode.D) then movement += Vector3.new(1, 0, 0) end
+        if UserInputService:IsKeyDown(Enum.KeyCode.Space) or UserInputService:IsKeyDown(Enum.KeyCode.E) then movement += Vector3.new(0, 1, 0) end
+        if UserInputService:IsKeyDown(Enum.KeyCode.Q) or UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then movement += Vector3.new(0, -1, 0) end
+        local speed = math.max(5, tonumber(XCConfig.freecamSpeed) or 55)
+        if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then speed *= 2.5 end
+        if movement.Magnitude > 0 then
+            xcCameraPosition += rotation:VectorToWorldSpace(movement.Unit) * speed * dt
+        end
+        if UserInputService.TouchEnabled then
+            local character = player and player.Character
+            local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+            if humanoid and humanoid.MoveDirection.Magnitude > 0.05 then
+                xcCameraPosition += humanoid.MoveDirection.Unit * speed * dt
+            end
+        end
+    end
+
+    xcCameraFrame = CFrame.new(xcCameraPosition) * rotation
+    cam.CFrame = xcCameraFrame
+end))
+
+-- ==========================================
 -- CLEANUP ROUTINES
 -- ==========================================
 function cleanup()
+    setXCStreamerMode(false)
+    stopXCCameraMode()
+    destroyXCWeather()
     pcall(function() setThirdPersonEnabled(false) end)
     if player.Character then
         local hum = player.Character:FindFirstChildOfClass("Humanoid")
@@ -2970,12 +3318,16 @@ function getClosestTarget()
         local cChar = currentAimTarget.Char
         local cHum = currentAimTarget.Hum
         local cPart = currentAimTarget.Part
+        local priorityName = tostring(XCConfig.priorityPlayerName or "None")
+        local currentPlayer = currentAimTarget.Player
+        local priorityAllowsSticky = priorityName == "None"
+            or (currentPlayer and (currentPlayer.Name == priorityName or currentPlayer.DisplayName == priorityName))
         if isEntityAlive(cChar, cHum) and cPart and cPart.Parent then
             local predPos = getKinematicAimPosition(cPart)
             local toTarget = (predPos - camPos).Unit
             local angle = math.acos(math.clamp(camLook:Dot(toTarget), -1, 1))
             
-            if angle <= (maxAngleRad * 1.15) then
+            if priorityAllowsSticky and angle <= (maxAngleRad * 1.15) then
                 currentAimTarget.AimPosition = predPos
                 return currentAimTarget
             end
@@ -3001,6 +3353,11 @@ function getClosestTarget()
                     if angle <= maxAngleRad then
                         local dist = (aimPos - camPos).Magnitude
                         local score = (angle * 0.7) + ((dist / 1000) * 0.3)
+                        local priorityName = tostring(XCConfig.priorityPlayerName or "None")
+                        if priorityName ~= "None"
+                            and (plr.Name == priorityName or plr.DisplayName == priorityName) then
+                            score -= 1000
+                        end
                         if score < bestScore then
                             bestScore = score
                             bestTarget = {
@@ -3036,6 +3393,7 @@ function getRageTarget()
     local cam = Workspace.CurrentCamera or camera
     if not cam then return nil end
     local camPos = cam.CFrame.Position
+    local camLook = cam.CFrame.LookVector
 
     local bestTarget = nil
     local bestScore = math.huge
@@ -3057,6 +3415,14 @@ function getRageTarget()
                             score = (aimPos - camPos).Magnitude
                         elseif XCConfig.rageTargetMode == "Health" then
                             score = hum.Health
+                        elseif XCConfig.rageTargetMode == "FOV" then
+                            local direction = (aimPos - camPos).Unit
+                            score = math.acos(math.clamp(camLook:Dot(direction), -1, 1))
+                        elseif XCConfig.rageTargetMode == "Priority" then
+                            local priorityName = tostring(XCConfig.priorityPlayerName or "None")
+                            local isPriority = priorityName ~= "None"
+                                and (plr.Name == priorityName or plr.DisplayName == priorityName)
+                            score = (isPriority and -100000 or 0) + (aimPos - camPos).Magnitude
                         end
 
                         if score < bestScore then
@@ -4481,6 +4847,111 @@ function buildXCUI()
     local activeSliderInput
     local activeSliderMove
 
+    local CONTROL_HELP = {
+        aimbotEnabled = "Tracks a valid target inside the configured field of view.",
+        silentAimEnabled = "Redirects supported shot data without visibly snapping the camera.",
+        triggerbotEnabled = "Fires when a valid target is under the crosshair.",
+        rageBotEnabled = "Aggressive target selection using the Rage FOV and priority settings.",
+        noRecoilEnabled = "Suppresses supported weapon and camera recoil callbacks.",
+        noSpreadEnabled = "Requests zero spread from supported weapon calculations.",
+        wallbangEnabled = "Allows target selection through surfaces when supported by the game.",
+        thirdPersonEnabled = "Moves the native camera behind the character.",
+        flightEnabled = "Moves the character along the camera direction.",
+        chamsEnabled = "Adds a local highlight to valid player models.",
+        grenadeEspEnabled = "Shows nearby grenade labels, paths and effect radiuses.",
+        nightModeEnabled = "Applies the selected lighting preset locally.",
+        worldSkyboxEnabled = "Applies the selected custom skybox locally.",
+        worldPostFXEnabled = "Enables local color correction and post-processing.",
+        weatherEnabled = "Local weather layer. Uses one particle emitter to avoid frame spikes.",
+        weatherMode = "Rain, snow, fog or ash. The effect follows the active camera.",
+        weatherIntensity = "Controls particle rate or fog density.",
+        weatherWind = "Horizontal drift of rain, snow and ash particles.",
+        freecamEnabled = "Detaches the camera. WASD moves, Space/E rises, Q/Ctrl lowers, Shift boosts.",
+        freecamSpeed = "Movement speed of the detached camera.",
+        freecamKey = "Hotkey that toggles Freecam without opening the menu.",
+        freelookEnabled = "Rotates the view in place without moving the character or camera origin.",
+        freelookSensitivity = "Mouse sensitivity used by Freelook.",
+        freelookKey = "Hotkey that toggles Freelook without opening the menu.",
+        streamerModeEnabled = "Roblox-safe capture mode: temporarily hides XC overlays without deleting their settings.",
+        streamerKey = "Hotkey for quickly hiding or restoring XC overlays.",
+        priorityPlayerName = "Roblox player selected as the preferred target. The list uses live server usernames.",
+        customScopeEnabled = "Draws the XC scope overlay when scoped.",
+        customHandsEnabled = "Offsets the detected first-person weapon or hands model.",
+        spectatorListEnabled = "Shows players currently observing the local player when detectable.",
+        menuKey = "Keyboard shortcut used to show or hide XC.",
+    }
+
+    local helpPopup = Instance.new("Frame")
+    helpPopup.Name = "ContextHelp"
+    helpPopup.Size = UDim2.fromOffset(UserInputService.TouchEnabled and 260 or 235, 0)
+    helpPopup.AutomaticSize = Enum.AutomaticSize.Y
+    helpPopup.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
+    helpPopup.BorderColor3 = C.Lime
+    helpPopup.BorderSizePixel = 1
+    helpPopup.Visible = false
+    helpPopup.ZIndex = 300
+    helpPopup.Parent = screenGui
+    local helpPadding = Instance.new("UIPadding")
+    helpPadding.PaddingTop = UDim.new(0, 7)
+    helpPadding.PaddingBottom = UDim.new(0, 7)
+    helpPadding.PaddingLeft = UDim.new(0, 9)
+    helpPadding.PaddingRight = UDim.new(0, 9)
+    helpPadding.Parent = helpPopup
+    local helpText = Instance.new("TextLabel")
+    helpText.Size = UDim2.new(1, 0, 0, 0)
+    helpText.AutomaticSize = Enum.AutomaticSize.Y
+    helpText.BackgroundTransparency = 1
+    helpText.TextColor3 = C.Text
+    helpText.Font = Enum.Font.Code
+    helpText.TextSize = UserInputService.TouchEnabled and 11 or 10
+    helpText.TextWrapped = true
+    helpText.TextXAlignment = Enum.TextXAlignment.Left
+    helpText.TextYAlignment = Enum.TextYAlignment.Top
+    helpText.ZIndex = 301
+    helpText.Parent = helpPopup
+    local helpToken = 0
+
+    local function hideHelp()
+        helpToken += 1
+        helpPopup.Visible = false
+    end
+
+    local function showHelp(target, message)
+        if not message or message == "" or not target or not target.Parent then return end
+        helpToken += 1
+        helpText.Text = message
+        helpPopup.Visible = true
+        task.defer(function()
+            if not helpPopup.Visible or not target.Parent then return end
+            local viewport = screenGui.AbsoluteSize
+            local width = helpPopup.AbsoluteSize.X
+            local height = math.max(helpPopup.AbsoluteSize.Y, 34)
+            local x = math.clamp(target.AbsolutePosition.X, 6, math.max(6, viewport.X - width - 6))
+            local below = target.AbsolutePosition.Y + target.AbsoluteSize.Y + 5
+            local y = below + height <= viewport.Y - 6 and below
+                or math.max(6, target.AbsolutePosition.Y - height - 5)
+            helpPopup.Position = UDim2.fromOffset(x, y)
+        end)
+    end
+
+    local function attachHelp(target, key)
+        local message = CONTROL_HELP[key]
+        if not message then return end
+        target.MouseEnter:Connect(function() showHelp(target, message) end)
+        target.MouseLeave:Connect(hideHelp)
+        target.InputBegan:Connect(function(input)
+            if input.UserInputType ~= Enum.UserInputType.Touch then return end
+            helpToken += 1
+            local token = helpToken
+            task.delay(0.45, function()
+                if token == helpToken then showHelp(target, message) end
+            end)
+        end)
+        target.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.Touch then hideHelp() end
+        end)
+    end
+
     local function createPage(name)
         local page = Instance.new("Frame")
         page.Name = name
@@ -4609,6 +5080,7 @@ function buildXCUI()
                 XCNotify(label, XCConfig[key] and "Enabled" or "Disabled", XCConfig[key] and "success" or "warning", 1.5)
             end
         end)
+        attachHelp(row, key)
         return row
     end
 
@@ -4617,6 +5089,7 @@ function buildXCUI()
         holder.Name = key
         holder.Size = UDim2.new(1, 0, 0, 36)
         holder.BackgroundTransparency = 1
+        holder.Active = true
         holder.Parent = parent
         local name = Instance.new("TextLabel")
         name.Size = UDim2.new(0.68, 0, 0, 16)
@@ -4673,6 +5146,7 @@ function buildXCUI()
                 setFromX(input.Position.X)
             end
         end)
+        attachHelp(holder, key)
     end
 
     table.insert(connections, UserInputService.InputChanged:Connect(function(input)
@@ -4690,10 +5164,132 @@ function buildXCUI()
         end
     end))
 
+    local activeDropdown
+    local function closeDropdown()
+        if activeDropdown and activeDropdown.popup then
+            activeDropdown.popup:Destroy()
+        end
+        activeDropdown = nil
+    end
+
+    local function pointInside(gui, point)
+        if not gui or not gui.Parent then return false end
+        local pos, size = gui.AbsolutePosition, gui.AbsoluteSize
+        return point.X >= pos.X and point.X <= pos.X + size.X
+            and point.Y >= pos.Y and point.Y <= pos.Y + size.Y
+    end
+
+    table.insert(connections, UserInputService.InputBegan:Connect(function(input)
+        if not activeDropdown then return end
+        if input.UserInputType ~= Enum.UserInputType.MouseButton1
+            and input.UserInputType ~= Enum.UserInputType.Touch then return end
+        if not pointInside(activeDropdown.button, input.Position)
+            and not pointInside(activeDropdown.popup, input.Position) then
+            closeDropdown()
+        end
+    end))
+
+    local function openDropdown(button, key, values, onChanged, refresh)
+        hideHelp()
+        if activeDropdown and activeDropdown.button == button then
+            closeDropdown()
+            return
+        end
+        closeDropdown()
+
+        local rowHeight = UserInputService.TouchEnabled and 28 or 23
+        local visibleRows = math.min(#values, UserInputService.TouchEnabled and 5 or 7)
+        local popupHeight = visibleRows * rowHeight + 2
+        local buttonPos, buttonSize = button.AbsolutePosition, button.AbsoluteSize
+        local viewport = screenGui.AbsoluteSize
+        local belowY = buttonPos.Y + buttonSize.Y + 2
+        local aboveY = buttonPos.Y - popupHeight - 2
+        local openAbove = belowY + popupHeight > viewport.Y - 6 and aboveY >= 6
+
+        local popup = Instance.new("ScrollingFrame")
+        popup.Name = "SmartDropdown_" .. key
+        popup.Position = UDim2.fromOffset(
+            math.clamp(buttonPos.X, 6, math.max(6, viewport.X - buttonSize.X - 6)),
+            openAbove and aboveY or math.min(belowY, viewport.Y - popupHeight - 6)
+        )
+        popup.Size = UDim2.fromOffset(buttonSize.X, popupHeight)
+        popup.BackgroundColor3 = Color3.fromRGB(16, 16, 16)
+        popup.BorderColor3 = C.Border
+        popup.BorderSizePixel = 1
+        popup.ScrollBarThickness = #values > visibleRows and 2 or 0
+        popup.ScrollBarImageColor3 = C.Lime
+        popup.CanvasSize = UDim2.fromOffset(0, #values * rowHeight)
+        popup.ZIndex = 200
+        popup.Parent = screenGui
+
+        local popupStroke = Instance.new("UIStroke")
+        popupStroke.Color = C.Black
+        popupStroke.Thickness = 1
+        popupStroke.Parent = popup
+
+        local layout = Instance.new("UIListLayout")
+        layout.SortOrder = Enum.SortOrder.LayoutOrder
+        layout.Parent = popup
+
+        for index, option in ipairs(values) do
+            local selected = XCConfig[key] == option
+            local optionButton = Instance.new("TextButton")
+            optionButton.Name = tostring(option)
+            optionButton.LayoutOrder = index
+            optionButton.Size = UDim2.new(1, 0, 0, rowHeight)
+            optionButton.BackgroundColor3 = selected and Color3.fromRGB(32, 39, 17) or Color3.fromRGB(18, 18, 18)
+            optionButton.BorderSizePixel = 0
+            optionButton.Text = tostring(option)
+            optionButton.TextColor3 = selected and C.White or C.Text
+            optionButton.Font = Enum.Font.Code
+            optionButton.TextSize = UserInputService.TouchEnabled and 11 or 10
+            optionButton.TextXAlignment = Enum.TextXAlignment.Left
+            optionButton.AutoButtonColor = false
+            optionButton.ZIndex = 201
+            optionButton.Parent = popup
+            local optionPadding = Instance.new("UIPadding")
+            optionPadding.PaddingLeft = UDim.new(0, 18)
+            optionPadding.PaddingRight = UDim.new(0, 8)
+            optionPadding.Parent = optionButton
+
+            local marker = Instance.new("Frame")
+            marker.Name = "SelectionMarker"
+            marker.Size = UDim2.fromOffset(selected and 7 or 4, selected and 7 or 4)
+            marker.Position = UDim2.new(0, 7, 0.5, selected and -3 or -2)
+            marker.BackgroundColor3 = selected and C.Lime or C.Border
+            marker.BorderSizePixel = 0
+            marker.ZIndex = 202
+            marker.Parent = optionButton
+            local markerCorner = Instance.new("UICorner")
+            markerCorner.CornerRadius = UDim.new(1, 0)
+            markerCorner.Parent = marker
+
+            optionButton.MouseEnter:Connect(function()
+                optionButton.BackgroundColor3 = selected and Color3.fromRGB(38, 48, 18) or C.Control2
+                optionButton.TextColor3 = C.White
+            end)
+            optionButton.MouseLeave:Connect(function()
+                optionButton.BackgroundColor3 = selected and Color3.fromRGB(32, 39, 17) or Color3.fromRGB(18, 18, 18)
+                optionButton.TextColor3 = selected and C.White or C.Text
+            end)
+            optionButton.Activated:Connect(function()
+                XCConfig[key] = option
+                refresh(option)
+                if onChanged then onChanged(option) end
+                closeDropdown()
+            end)
+        end
+
+        local selectedIndex = table.find(values, XCConfig[key]) or 1
+        popup.CanvasPosition = Vector2.new(0, math.max(0, (selectedIndex - 2) * rowHeight))
+        activeDropdown = {popup = popup, button = button, key = key}
+    end
+
     local function addChoice(parent, label, key, values, onChanged)
         local holder = Instance.new("Frame")
         holder.Size = UDim2.new(1, 0, 0, 38)
         holder.BackgroundTransparency = 1
+        holder.Active = true
         holder.Parent = parent
         local name = Instance.new("TextLabel")
         name.Size = UDim2.new(1, 0, 0, 14)
@@ -4710,22 +5306,55 @@ function buildXCUI()
         button.BackgroundColor3 = C.Control
         button.BorderColor3 = C.Black
         button.BorderSizePixel = 1
-        button.TextColor3 = C.Text
-        button.Font = Enum.Font.Code
-        button.TextSize = 10
+        button.Text = ""
         button.AutoButtonColor = false
         button.Parent = holder
-        local function refresh(value) button.Text = tostring(value) .. "  v" end
+
+        local valueText = Instance.new("TextLabel")
+        valueText.Size = UDim2.new(1, -30, 1, 0)
+        valueText.Position = UDim2.fromOffset(8, 0)
+        valueText.BackgroundTransparency = 1
+        valueText.TextColor3 = C.Text
+        valueText.Font = Enum.Font.Code
+        valueText.TextSize = 10
+        valueText.TextXAlignment = Enum.TextXAlignment.Left
+        valueText.TextTruncate = Enum.TextTruncate.AtEnd
+        valueText.Parent = button
+
+        local arrow = Instance.new("Frame")
+        arrow.Name = "Chevron"
+        arrow.Size = UDim2.fromOffset(14, 12)
+        arrow.Position = UDim2.new(1, -20, 0.5, -6)
+        arrow.BackgroundTransparency = 1
+        arrow.Parent = button
+        local arrowLeft = Instance.new("Frame")
+        arrowLeft.AnchorPoint = Vector2.new(0.5, 0.5)
+        arrowLeft.Position = UDim2.fromOffset(5, 5)
+        arrowLeft.Size = UDim2.fromOffset(6, 1.4)
+        arrowLeft.BackgroundColor3 = C.Muted
+        arrowLeft.BorderSizePixel = 0
+        arrowLeft.Rotation = 42
+        arrowLeft.Parent = arrow
+        local arrowRight = Instance.new("Frame")
+        arrowRight.AnchorPoint = Vector2.new(0.5, 0.5)
+        arrowRight.Position = UDim2.fromOffset(9, 5)
+        arrowRight.Size = UDim2.fromOffset(6, 1.4)
+        arrowRight.BackgroundColor3 = C.Muted
+        arrowRight.BorderSizePixel = 0
+        arrowRight.Rotation = -42
+        arrowRight.Parent = arrow
+
+        local function refresh(value)
+            valueText.Text = tostring(value)
+            valueText.TextColor3 = C.Text
+        end
         refresh(XCConfig[key] or values[1])
         refreshers[key] = refreshers[key] or {}
         table.insert(refreshers[key], refresh)
         button.Activated:Connect(function()
-            local current = XCConfig[key]
-            local index = table.find(values, current) or 0
-            XCConfig[key] = values[(index % #values) + 1]
-            refresh(XCConfig[key])
-            if onChanged then onChanged(XCConfig[key]) end
+            openDropdown(button, key, values, onChanged, refresh)
         end)
+        attachHelp(holder, key)
     end
 
     local function addButton(parent, label, callback)
@@ -4766,6 +5395,10 @@ function buildXCUI()
         elseif key == "animationsEnabled" then if value then playXCAnimation() else stopXCAnimation() end
         elseif key == "weaponChamsEnabled" then setWeaponVisuals()
         elseif key == "customScopeEnabled" then updateCustomScope()
+        elseif key == "weatherEnabled" then applyXCWeather()
+        elseif key == "freecamEnabled" then setXCCameraMode("Freecam", value)
+        elseif key == "freelookEnabled" then setXCCameraMode("Freelook", value)
+        elseif key == "streamerModeEnabled" then setXCStreamerMode(value)
         elseif key == "settingsCompactMode" then updateScale()
         end
     end
@@ -4888,6 +5521,8 @@ function buildXCUI()
         {"Misc", "misc"}, {"Skins", "skins"}, {"Players", "players"}, {"Configs", "configs"},
     }
     local function switchPage(name)
+        closeDropdown()
+        hideHelp()
         currentPage = name
         for pageName, page in pairs(pages) do page.Visible = pageName == name end
         for tabName, data in pairs(tabData) do
@@ -4932,6 +5567,17 @@ function buildXCUI()
         return createPanel(page, leftTitle, 0, 0.49), createPanel(page, rightTitle, 0.51, 0.49)
     end
 
+    local function currentPlayerChoices()
+        local values = {"None"}
+        local names = {}
+        for _, serverPlayer in ipairs(Players:GetPlayers()) do
+            if serverPlayer ~= player then table.insert(names, serverPlayer.Name) end
+        end
+        table.sort(names, function(a, b) return a:lower() < b:lower() end)
+        for _, name in ipairs(names) do table.insert(values, name) end
+        return values
+    end
+
     local L, R = columns("Rage", "Aimbot", "Weapon mechanics")
     section(L, "aim assistants")
     toggle(L, "Tracking", "aimbotEnabled")
@@ -4961,7 +5607,7 @@ function buildXCUI()
     addSlider(R, "RCS yaw", "rcsYawFactor", 0.1, 2, 0.1, "x")
     addSlider(R, "Rage FOV", "rageFov", 30, 360, 1, "°")
     toggle(R, "Rage auto fire", "rageAutoFire")
-    addChoice(R, "Target priority", "rageTargetMode", {"Distance", "Health", "FOV"})
+    addChoice(R, "Target priority", "rageTargetMode", {"Distance", "Health", "FOV", "Priority"})
     addSlider(R, "Trigger FOV", "triggerbotFov", 10, 360, 1, "px")
 
     task.wait()
@@ -5018,6 +5664,11 @@ function buildXCUI()
     addSlider(L, "Clock time", "nightClockTime", 0, 24, 0.5, "h")
     toggle(L, "Custom skybox", "worldSkyboxEnabled")
     toggle(L, "Post FX", "worldPostFXEnabled")
+    section(L, "weather")
+    toggle(L, "Weather effects", "weatherEnabled")
+    addChoice(L, "Weather type", "weatherMode", {"Rain", "Snow", "Fog", "Ash"}, function() applyXCWeather() end)
+    addSlider(L, "Weather intensity", "weatherIntensity", 1, 100, 1, "%", function() applyXCWeather() end)
+    addSlider(L, "Wind", "weatherWind", -40, 40, 1, "", function() applyXCWeather() end)
     toggle(R, "Custom scope", "customScopeEnabled")
     toggle(R, "Custom FOV", "customFovEnabled")
     addSlider(R, "Camera FOV", "customFov", 70, 120, 1, "°")
@@ -5027,6 +5678,14 @@ function buildXCUI()
     addSlider(R, "Scope FOV", "scopeFov", 10, 120, 1, "°")
     addSlider(R, "Crosshair gap", "scopeCrosshairGap", 0, 80, 1, "")
     addSlider(R, "Crosshair length", "scopeCrosshairLength", 5, 300, 1, "")
+    section(R, "camera director")
+    toggle(R, "Freecam", "freecamEnabled")
+    addSlider(R, "Freecam speed", "freecamSpeed", 5, 180, 1, "")
+    addSlider(R, "Freecam sensitivity", "freecamSensitivity", 0.05, 0.5, 0.01, "")
+    addChoice(R, "Freecam bind", "freecamKey", {"F3", "F4", "F5", "F6", "LeftAlt", "RightAlt"})
+    toggle(R, "Freelook", "freelookEnabled")
+    addSlider(R, "Look sensitivity", "freelookSensitivity", 0.05, 0.5, 0.01, "")
+    addChoice(R, "Freelook bind", "freelookKey", {"LeftAlt", "RightAlt", "F3", "F4", "F5", "F6"})
 
     task.wait()
     L, R = columns("Skins", "Cosmetics", "Bullet effects")
@@ -5053,6 +5712,8 @@ function buildXCUI()
     toggle(L, "Spectator list", "spectatorListEnabled")
     toggle(L, "Animations", "animationsEnabled")
     toggle(L, "Custom hands", "customHandsEnabled")
+    toggle(L, "Streamer mode", "streamerModeEnabled")
+    addChoice(L, "Streamer bind", "streamerKey", {"F6", "F7", "F8", "F9", "F10"})
     addSlider(L, "Animation speed", "animationSpeed", 0.1, 3, 0.1, "x")
     toggle(L, "Animation loop", "animationLoop")
     addSlider(R, "Hands X", "customHandsX", -2, 2, 0.1, "")
@@ -5069,6 +5730,7 @@ function buildXCUI()
     toggle(L, "Show teammates", "chamsShowTeammates")
     toggle(L, "Chams team check", "chamsTeamCheck")
     toggle(L, "Chams occlusion", "chamsOcclusion")
+    addChoice(L, "Priority player", "priorityPlayerName", currentPlayerChoices())
     addSlider(L, "Chams fill", "chamsFillTransparency", 0, 1, 0.05, "")
     addSlider(L, "Chams outline", "chamsOutlineTransparency", 0, 1, 0.05, "")
     toggle(R, "Nametag distance", "espShowDistance")
@@ -5124,12 +5786,19 @@ function buildXCUI()
         local ok = pcall(function()
             if type(makefolder) == "function" and type(isfolder) == "function" and not isfolder("XCConfigs") then makefolder("XCConfigs") end
             assert(type(writefile) == "function", "File API unavailable")
-            writefile(configPath(), HttpService:JSONEncode(XCConfig))
+            local saveData = {}
+            for key, value in pairs(XCConfig) do saveData[key] = value end
+            if streamerSnapshot then
+                for key, value in pairs(streamerSnapshot) do saveData[key] = value end
+                saveData.streamerModeEnabled = false
+            end
+            writefile(configPath(), HttpService:JSONEncode(saveData))
         end)
         status.Text = ok and ("saved: " .. safeName(nameBox.Text)) or "save failed"
     end)
     addButton(R, "LOAD CONFIG", function()
         local ok = pcall(function()
+            setXCStreamerMode(false)
             assert(type(readfile) == "function", "File API unavailable")
             local data = HttpService:JSONDecode(readfile(configPath()))
             for key, value in pairs(data) do if XCConfig[key] ~= nil then XCConfig[key] = value end end
@@ -5138,6 +5807,11 @@ function buildXCUI()
             lazyFeatureRequests.silentFallback = XCConfig.silentAimEnabled == true
             refreshAll()
             updateMobileSlideVisibility(); refreshThirdPerson(); setWeaponVisuals(); updateCustomScope(); updateWorldPostFX()
+            applyXCWeather()
+            if XCConfig.freecamEnabled then setXCCameraMode("Freecam", true)
+            elseif XCConfig.freelookEnabled then setXCCameraMode("Freelook", true)
+            else stopXCCameraMode() end
+            setXCStreamerMode(XCConfig.streamerModeEnabled)
             setAntiAfkEnabled(XCConfig.antiAfkEnabled)
             if XCConfig.animationsEnabled then playXCAnimation() else stopXCAnimation() end
             if XCConfig.nightModeEnabled then applyNightPreset(XCConfig.nightPreset); updateWorldChanger() else restoreLightingState() end
@@ -5145,11 +5819,13 @@ function buildXCUI()
         status.Text = ok and ("loaded: " .. safeName(nameBox.Text)) or "load failed"
     end)
     addButton(R, "RESET DEFAULTS", function()
+        setXCStreamerMode(false)
         for key, value in pairs(XCConfigDefaults) do XCConfig[key] = deepCopyConfigValue(value) end
         lazyFeatureRequests.fireRate = false
         lazyFeatureRequests.recoilSpread = false
         lazyFeatureRequests.silentFallback = false
         refreshAll(); updateMobileSlideVisibility(); refreshThirdPerson(); setWeaponVisuals(); updateCustomScope(); updateWorldPostFX()
+        stopXCCameraMode(); destroyXCWeather()
         setAntiAfkEnabled(XCConfig.antiAfkEnabled)
         status.Text = "defaults restored"
     end)
@@ -5161,7 +5837,12 @@ function buildXCUI()
     switchPage("Rage")
 
     local menuVisible = true
-    local function toggleMenu() main.Visible = not main.Visible; menuVisible = main.Visible end
+    local function toggleMenu()
+        closeDropdown()
+        hideHelp()
+        main.Visible = not main.Visible
+        menuVisible = main.Visible
+    end
     table.insert(connections, UserInputService.InputBegan:Connect(function(input, processed)
         if processed then return end
         local key = Enum.KeyCode[XCConfig.menuKey or "RightShift"]
@@ -5651,11 +6332,17 @@ local function cfgSerialize()
             out[k]={__type="UDim2",xs=v.X.Scale,xo=v.X.Offset,ys=v.Y.Scale,yo=v.Y.Offset}
         end
     end
+    if streamerSnapshot then
+        for key,value in pairs(streamerSnapshot) do out[key]=value end
+        out.streamerModeEnabled=false
+    end
     return out
 end
 
 local function cfgApply(data)
     if type(data)~="table" then return false end
+    setXCStreamerMode(false)
+    local requestedStreamerMode=data.streamerModeEnabled==true
     for k,v in pairs(data) do
         if XCConfig[k]~=nil then
             pcall(function()
@@ -5667,6 +6354,7 @@ local function cfgApply(data)
             end)
         end
     end
+    setXCStreamerMode(requestedStreamerMode)
     return true
 end
 
@@ -5720,6 +6408,7 @@ function XCConfigSystem.List()
 end
 
 function XCConfigSystem.Reset()
+    setXCStreamerMode(false)
     for k,v in pairs(XCConfigDefaults or {}) do pcall(function() XCConfig[k]=v end) end
     return true,"Reset"
 end
