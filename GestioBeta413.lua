@@ -1108,7 +1108,11 @@ local function applySurfaceAppearanceSkin(model, weaponName, skinName)
     end
 end
 
-local function hookBloxStrikeModules()
+local lastBloxModuleScan = 0
+local function hookBloxStrikeModules(forceScan)
+    local now = os.clock()
+    if not forceScan and lastBloxModuleScan > 0 and (now - lastBloxModuleScan) < 5 then return end
+    lastBloxModuleScan = now
     refreshXCSkinData()
     pcall(function()
         if type(getgc) ~= "function" then return end
@@ -1190,13 +1194,11 @@ end
 -- Compatibility with the existing XC render scanner.
 task.spawn(function()
     while xcSessionActive() do
-        task.wait(0.5)
+        task.wait(1)
         pcall(function()
             if XCConfig.skinChangerEnabled then
                 hookBloxStrikeModules()
                 scanAndMorphKnives(camera)
-                if player and player.Character then scanAndMorphKnives(player.Character) end
-                scanAndMorphKnives(Workspace)
             end
             if XCConfig.gloveChangerEnabled then
                 applyXCGloves()
@@ -3373,7 +3375,27 @@ end))
 -- ==========================================
 -- TACTICAL ESP
 -- ==========================================
+local tacticalOverlayWasActive = false
+local function hideTacticalOverlay()
+    for _, esp in pairs(screenEspCache) do
+        esp.Box.Visible = false
+        esp.HealthBarBg.Visible = false
+        esp.TagCard.Visible = false
+        for _, corner in ipairs(esp.Corners) do
+            corner.H.Visible = false
+            corner.V.Visible = false
+        end
+    end
+end
+
 function renderTacticalOverlay()
+    local active = XCConfig.nametagsEnabled or XCConfig.boxEspEnabled or XCConfig.cornerBoxEnabled
+    if not active then
+        if tacticalOverlayWasActive then hideTacticalOverlay() end
+        tacticalOverlayWasActive = false
+        return
+    end
+    tacticalOverlayWasActive = true
     local camPos = camera.CFrame.Position
     local allPlayers = Players:GetPlayers()
 
@@ -3634,6 +3656,8 @@ table.insert(connections, Players.PlayerAdded:Connect(attachEspToPlayer))
 -- ==========================================
 -- MAIN ENGINE RENDER LOOP
 -- ==========================================
+local visualOverlayAccumulator = 0
+local threeDEspWasActive = false
 table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     camera = Workspace.CurrentCamera or camera
     if not camera then return end
@@ -3739,26 +3763,23 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         currentAimTarget = nil
     end
 
-    if XCConfig.skinChangerEnabled then
-        skinScanAccumulator += dt
-        if skinScanAccumulator >= 0.30 then
-            skinScanAccumulator = 0
-            hookBloxStrikeModules()
-            scanAndMorphKnives(camera)
-            if player and player.Character then
-                scanAndMorphKnives(player.Character)
-            end
-            scanAndMorphKnives(Workspace)
-        end
-    else
-        skinScanAccumulator = 0
-    end
-
     runMobileTriggerbot()
-    renderTacticalOverlay()
-    renderGrenadeOverlays()
 
-    for plr, data in pairs(activeEspHolders) do
+    visualOverlayAccumulator += dt
+    if visualOverlayAccumulator >= (1 / 30) then
+        visualOverlayAccumulator = 0
+        renderTacticalOverlay()
+        renderGrenadeOverlays()
+
+        local threeDEspActive = XCConfig.chamsEnabled or XCConfig.headDotEnabled or XCConfig.tracersEnabled
+        if threeDEspActive or threeDEspWasActive then
+        for plr, data in pairs(activeEspHolders) do
+        if not threeDEspActive then
+            data.HeadDot.Enabled = false
+            data.Highlight.Enabled = false
+            data.Tracer.Visible = false
+            continue
+        end
         local char = plr.Character
         local hum = char and char:FindFirstChildOfClass("Humanoid")
         local rootPart = char and (char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso"))
@@ -3833,6 +3854,9 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
             if data.Highlight.Adornee then data.Highlight.Adornee = nil end
             if data.HeadDot.Adornee then data.HeadDot.Adornee = nil end
         end
+        end
+        end
+        threeDEspWasActive = threeDEspActive
     end
 
     if XCConfig.fullBrightEnabled then
@@ -5744,6 +5768,8 @@ function buildXCUI()
     local tabData = {}
     local currentPage
     local refreshers = {}
+    local activeSliderInput
+    local activeSliderMove
 
     local function createPage(name)
         local page = Instance.new("Frame")
@@ -5893,8 +5919,6 @@ function buildXCUI()
         fill.BorderSizePixel = 0
         fill.BackgroundColor3 = C.Lime
         fill.Parent = bar
-        local dragging = false
-        local activeInput
         local function refresh(value)
             value = math.clamp(tonumber(value) or minValue, minValue, maxValue)
             fill.Size = UDim2.new((value - minValue) / (maxValue - minValue), 0, 1, 0)
@@ -5915,24 +5939,27 @@ function buildXCUI()
         table.insert(refreshers[key], refresh)
         bar.InputBegan:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                dragging = true
-                activeInput = input
+                activeSliderInput = input
+                activeSliderMove = setFromX
                 setFromX(input.Position.X)
             end
         end)
-        table.insert(connections, UserInputService.InputChanged:Connect(function(input)
-            if not dragging then return end
-            if input == activeInput or input.UserInputType == Enum.UserInputType.MouseMovement then
-                setFromX(input.Position.X)
-            end
-        end))
-        table.insert(connections, UserInputService.InputEnded:Connect(function(input)
-            if input == activeInput or (activeInput and activeInput.UserInputType == Enum.UserInputType.MouseButton1 and input.UserInputType == Enum.UserInputType.MouseButton1) then
-                dragging = false
-                activeInput = nil
-            end
-        end))
     end
+
+    table.insert(connections, UserInputService.InputChanged:Connect(function(input)
+        if activeSliderMove and activeSliderInput
+            and (input == activeSliderInput or input.UserInputType == Enum.UserInputType.MouseMovement) then
+            activeSliderMove(input.Position.X)
+        end
+    end))
+    table.insert(connections, UserInputService.InputEnded:Connect(function(input)
+        if input == activeSliderInput
+            or (activeSliderInput and activeSliderInput.UserInputType == Enum.UserInputType.MouseButton1
+                and input.UserInputType == Enum.UserInputType.MouseButton1) then
+            activeSliderInput = nil
+            activeSliderMove = nil
+        end
+    end))
 
     local function addChoice(parent, label, key, values, onChanged)
         local holder = Instance.new("Frame")
@@ -5993,8 +6020,7 @@ function buildXCUI()
         elseif key == "jumpCircleEnabled" then
             if value and player.Character then initJumpCircleForCharacter(player.Character) else clearActiveJumpCircle() end
         elseif key == "skinChangerEnabled" and value then
-            hookBloxStrikeModules(); scanAndMorphKnives(camera)
-            if player.Character then scanAndMorphKnives(player.Character) end
+            hookBloxStrikeModules(true); scanAndMorphKnives(camera)
         elseif key == "gloveChangerEnabled" and value then applyXCGloves()
         elseif key == "nightModeEnabled" then
             if value then applyNightPreset(XCConfig.nightPreset); updateWorldChanger() else restoreLightingState() end
@@ -6088,6 +6114,7 @@ function buildXCUI()
     addChoice(R, "Target priority", "rageTargetMode", {"Distance", "Health", "FOV"})
     addSlider(R, "Trigger FOV", "triggerbotFov", 10, 360, 1, "px")
 
+    task.wait()
     L, R = columns("AntiAim", "Anti-aim", "Movement")
     toggle(L, "Anti-aim", "antiAimEnabled")
     addSlider(L, "Spin speed", "spinSpeed", 10, 150, 1, "")
@@ -6108,6 +6135,7 @@ function buildXCUI()
     addSlider(R, "Flight speed", "flightSpeed", 10, 150, 1, "")
     addSlider(R, "Walk multiplier", "walkMultiplier", 1, 5, 0.1, "x")
 
+    task.wait()
     L, R = columns("Visuals", "Player ESP", "Indicators")
     toggle(L, "Chams", "chamsEnabled")
     toggle(L, "Nametags", "nametagsEnabled")
@@ -6129,6 +6157,7 @@ function buildXCUI()
     toggle(R, "Corner box", "cornerBoxEnabled")
     toggle(R, "Health bar", "healthBarEnabled")
 
+    task.wait()
     L, R = columns("World", "Environment", "Scope & camera")
     toggle(L, "World changer", "nightModeEnabled")
     toggle(L, "Fullbright", "fullBrightEnabled")
@@ -6149,6 +6178,7 @@ function buildXCUI()
     addSlider(R, "Crosshair gap", "scopeCrosshairGap", 0, 80, 1, "")
     addSlider(R, "Crosshair length", "scopeCrosshairLength", 5, 300, 1, "")
 
+    task.wait()
     L, R = columns("Skins", "Cosmetics", "Bullet effects")
     toggle(L, "Skin changer", "skinChangerEnabled")
     toggle(L, "Glove changer", "gloveChangerEnabled")
@@ -6167,6 +6197,7 @@ function buildXCUI()
     addSlider(R, "Trail width", "bulletTracerWidth", 0.02, 0.5, 0.01, "")
     addSlider(R, "Cube distance", "cubeCheckerDistance", 1, 100, 1, "")
 
+    task.wait()
     L, R = columns("Misc", "Utilities", "Viewmodel")
     toggle(L, "Anti AFK", "antiAfkEnabled")
     toggle(L, "Spectator list", "spectatorListEnabled")
@@ -6181,6 +6212,7 @@ function buildXCUI()
     addSlider(R, "Hands yaw", "customHandsYaw", -45, 45, 1, "°")
     addSlider(R, "Hands roll", "customHandsRoll", -90, 90, 1, "°")
 
+    task.wait()
     L, R = columns("Players", "Target filtering", "Overlay options")
     toggle(L, "Ignore teammates", "silentAimTeamCheck")
     toggle(L, "Visible targets only", "silentAimVisibleCheck")
@@ -6196,6 +6228,7 @@ function buildXCUI()
     addSlider(R, "Box thickness", "boxThickness", 1, 3, 0.1, "")
     addSlider(R, "Grenade distance", "grenadeMaxDist", 200, 3000, 50, "")
 
+    task.wait()
     L, R = columns("Configs", "Interface", "Config manager")
     toggle(L, "Notifications", "settingsShowNotifications")
     toggle(L, "Compact mode", "settingsCompactMode")
@@ -6481,22 +6514,21 @@ local function applyXCFireRate()
 end
 
 task.spawn(function()
-    while xcSessionActive() and task.wait(0.05) do
+    local wasEnabled = false
+    while xcSessionActive() and task.wait(0.1) do
         pcall(function()
-            if not xcFireRateScanDone then
-                scanXCFireRateObjects()
-            end
-
             if XCConfig.fireRateEnabled then
+                if not xcFireRateScanDone then scanXCFireRateObjects() end
                 if #xcFireRateObjects == 0 then
                     -- The game can create weapon data after injection/respawn.
                     xcFireRateScanDone = false
                     scanXCFireRateObjects()
                 end
                 applyXCFireRate()
-            else
+            elseif wasEnabled then
                 restoreXCFireRates()
             end
+            wasEnabled = XCConfig.fireRateEnabled
         end)
     end
 end)
@@ -6594,11 +6626,15 @@ task.spawn(function()
     if xcRecoilSpreadRetrying then return end
     xcRecoilSpreadRetrying = true
 
-    for _ = 1, 20 do
-        if installXCRecoilSpread() then
-            break
+    local attempts = 0
+    while xcSessionActive() and not xcRecoilSpreadInstalled and attempts < 20 do
+        if XCConfig.noRecoilEnabled or XCConfig.noSpreadEnabled then
+            attempts += 1
+            if installXCRecoilSpread() then break end
+            task.wait(0.75)
+        else
+            task.wait(0.25)
         end
-        task.wait(0.75)
     end
 
     xcRecoilSpreadRetrying = false
@@ -6675,8 +6711,14 @@ end
 setupSilentAimHooks()
 setupBloxStrikeShootHook()
 task.spawn(function()
-    task.wait(1)
-    setupXCSilentSendHook()
+    while xcSessionActive() and not xcSilentSendHooked do
+        if XCConfig.silentAimEnabled then
+            setupXCSilentSendHook()
+            if not xcSilentSendHooked then task.wait(1.5) end
+        else
+            task.wait(0.25)
+        end
+    end
 end)
 buildXCUI()
 
