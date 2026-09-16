@@ -1,18 +1,18 @@
--- GESTIO cleaned UI build
--- Unified red/dark interface
+-- XC cleaned UI build
+-- Unified XC lime/dark interface
 pcall(function()
     if type(getgenv) == "function" then
         local env = getgenv()
-        if env and type(env.GestioRunning) == "function" then
-            env.GestioRunning()
+        if env and type(env.XCRunning) == "function" then
+            env.XCRunning()
         end
     end
 end)
 
 -- ==========================================
--- Gestio UI layer
+-- XC UI layer
 -- ==========================================
-local GestioIcons = {
+local XCIcons = {
     Combat = "⌁",
     Visuals = "◉",
     Players = "♙",
@@ -26,15 +26,15 @@ local GestioIcons = {
     Info = "ⓘ",
 }
 
-local function GestioIcon(parent, glyph, size, color)
+local function XCIcon(parent, glyph, size, color)
     local label = Instance.new("TextLabel")
-    label.Name = "GestioIcon"
+    label.Name = "XCIcon"
     label.BackgroundTransparency = 1
     label.Size = UDim2.new(0, size or 18, 0, size or 18)
     label.Text = glyph or "•"
     label.Font = Enum.Font.GothamBold
     label.TextSize = math.max(12, math.floor((size or 18) * 0.78))
-    label.TextColor3 = color or Color3.fromRGB(180, 40, 50)
+    label.TextColor3 = color or Color3.fromRGB(152, 204, 0)
     label.TextXAlignment = Enum.TextXAlignment.Center
     label.TextYAlignment = Enum.TextYAlignment.Center
     label.Parent = parent
@@ -46,7 +46,7 @@ end
 -- ==========================================
 local HttpService = game:GetService("HttpService")
 
-local GestioConfig = {
+local XCConfig = {
     -- Toggles
     antiAfkEnabled = false,
     noFallDamageEnabled = false,
@@ -70,7 +70,7 @@ local GestioConfig = {
     watermarkShowFPS = true,
     watermarkShowPing = true,
     watermarkShowName = false,
-    watermarkText = "GESTIO",
+    watermarkText = "XC",
     aimbotEnabled = false,
     predictionEnabled = true,
     silentAimEnabled = false,
@@ -128,6 +128,7 @@ local GestioConfig = {
     rageFov = 360,
     rageTargetMode = "Distance",
     aimFov = 160,
+    triggerbotFov = 160,
     aimbotSpeed = 35.0,
     aimbotSmoothness = 0.15,
     predictionFactor = 0.165,
@@ -256,7 +257,7 @@ local function deepCopyConfigValue(v)
     for k,val in pairs(v) do out[k] = deepCopyConfigValue(val) end
     return out
 end
-local GestioConfigDefaults = deepCopyConfigValue(GestioConfig)
+local XCConfigDefaults = deepCopyConfigValue(XCConfig)
 
 local UI_Bind_Registry = {}
 
@@ -278,7 +279,7 @@ pcall(function()
 end)
 
 -- ==========================================
--- CLIENT ENVIRONMENT VALIDATION GESTIO
+-- CLIENT ENVIRONMENT VALIDATION XC
 -- ==========================================
 local player = Players.LocalPlayer
 if not player then
@@ -318,7 +319,7 @@ if not targetGui and player then
     pcall(function() targetGui = player:WaitForChild("PlayerGui", 5) end)
 end
 if not targetGui then
-    warn("[Gestio] GUI initialization failed: no valid GUI parent")
+    warn("[XC] GUI initialization failed: no valid GUI parent")
     return
 end
 
@@ -338,13 +339,13 @@ local antiAfkConnection = nil
 local activeJumpCircleData = nil
 
 local genv = (type(getgenv) == "function") and getgenv() or nil
-if genv and not genv.GestioSavedPos then
-    genv.GestioSavedPos = {
+if genv and not genv.XCSavedPos then
+    genv.XCSavedPos = {
         OpenBtn = UDim2.new(0.5, -45, 0, 15),
         MainFrame = UDim2.new(0.5, 0, 0.5, 0)
     }
 end
-local savedPos = (genv and genv.GestioSavedPos) or {
+local savedPos = (genv and genv.XCSavedPos) or {
     OpenBtn = UDim2.new(0.5, -45, 0, 15),
     MainFrame = UDim2.new(0.5, 0, 0.5, 0)
 }
@@ -353,13 +354,13 @@ local savedPos = (genv and genv.GestioSavedPos) or {
 -- EXTENDED THEME & PALETTE SYSTEM
 -- ==========================================
 local themeLibrary = {
-    ["Charcoal Crimson"] = {
-        Name = "Charcoal Crimson",
+    ["XC Lime"] = {
+        Name = "XC Lime",
         Background = Color3.fromRGB(18, 18, 22),
         Sidebar = Color3.fromRGB(22, 22, 27),
         CardBg = Color3.fromRGB(28, 28, 34),
-        Accent = Color3.fromRGB(220, 45, 55),
-        AccentHover = Color3.fromRGB(245, 65, 75),
+        Accent = Color3.fromRGB(152, 204, 0),
+        AccentHover = Color3.fromRGB(180, 225, 25),
         TextPrimary = Color3.fromRGB(240, 240, 245),
         TextSecondary = Color3.fromRGB(150, 150, 160),
         Border = Color3.fromRGB(45, 45, 55),
@@ -377,58 +378,58 @@ local themeLibrary = {
     }
 }
 
-local currentTheme = themeLibrary["Charcoal Crimson"]
+local currentTheme = themeLibrary["XC Lime"]
 
 -- ==========================================
--- GESTIO NOTIFICATION CENTER
+-- XC NOTIFICATION CENTER
 -- ==========================================
-local GestioNotificationGui = nil
-local GestioNotificationHolder = nil
-local GestioNotificationSerial = 0
+local XCNotificationGui = nil
+local XCNotificationHolder = nil
+local XCNotificationSerial = 0
 
-local function ensureGestioNotifications()
-    if GestioNotificationGui and GestioNotificationGui.Parent and GestioNotificationHolder and GestioNotificationHolder.Parent then
+local function ensureXCNotifications()
+    if XCNotificationGui and XCNotificationGui.Parent and XCNotificationHolder and XCNotificationHolder.Parent then
         return true
     end
 
     pcall(function()
-        local old = targetGui:FindFirstChild("GestioNotificationsGui")
+        local old = targetGui:FindFirstChild("XCNotificationsGui")
         if old then old:Destroy() end
     end)
 
-    GestioNotificationGui = Instance.new("ScreenGui")
-    GestioNotificationGui.Name = "GestioNotificationsGui"
-    GestioNotificationGui.ResetOnSpawn = false
-    GestioNotificationGui.IgnoreGuiInset = true
-    GestioNotificationGui.DisplayOrder = 250
-    GestioNotificationGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    GestioNotificationGui.Parent = targetGui
+    XCNotificationGui = Instance.new("ScreenGui")
+    XCNotificationGui.Name = "XCNotificationsGui"
+    XCNotificationGui.ResetOnSpawn = false
+    XCNotificationGui.IgnoreGuiInset = true
+    XCNotificationGui.DisplayOrder = 250
+    XCNotificationGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    XCNotificationGui.Parent = targetGui
 
-    GestioNotificationHolder = Instance.new("Frame")
-    GestioNotificationHolder.Name = "NotificationHolder"
-    GestioNotificationHolder.AnchorPoint = Vector2.new(1, 1)
-    GestioNotificationHolder.Position = UDim2.new(1, -18, 1, -18)
-    GestioNotificationHolder.Size = UDim2.new(0, 300, 1, -36)
-    GestioNotificationHolder.BackgroundTransparency = 1
-    GestioNotificationHolder.Parent = GestioNotificationGui
+    XCNotificationHolder = Instance.new("Frame")
+    XCNotificationHolder.Name = "NotificationHolder"
+    XCNotificationHolder.AnchorPoint = Vector2.new(1, 1)
+    XCNotificationHolder.Position = UDim2.new(1, -18, 1, -18)
+    XCNotificationHolder.Size = UDim2.new(0, 300, 1, -36)
+    XCNotificationHolder.BackgroundTransparency = 1
+    XCNotificationHolder.Parent = XCNotificationGui
 
     local layout = Instance.new("UIListLayout")
     layout.FillDirection = Enum.FillDirection.Vertical
     layout.HorizontalAlignment = Enum.HorizontalAlignment.Right
     layout.VerticalAlignment = Enum.VerticalAlignment.Bottom
     layout.Padding = UDim.new(0, 8)
-    layout.Parent = GestioNotificationHolder
+    layout.Parent = XCNotificationHolder
 
     return true
 end
 
-function GestioNotify(title, message, kind, duration)
-    if GestioConfig.settingsShowNotifications == false then return end
-    if not ensureGestioNotifications() then return end
+function XCNotify(title, message, kind, duration)
+    if XCConfig.settingsShowNotifications == false then return end
+    if not ensureXCNotifications() then return end
 
-    GestioNotificationSerial = GestioNotificationSerial + 1
-    local serial = GestioNotificationSerial
-    title = tostring(title or "Gestio")
+    XCNotificationSerial = XCNotificationSerial + 1
+    local serial = XCNotificationSerial
+    title = tostring(title or "XC")
     message = tostring(message or "")
     duration = tonumber(duration) or 2.5
 
@@ -449,7 +450,7 @@ function GestioNotify(title, message, kind, duration)
     card.BorderSizePixel = 0
     card.ClipsDescendants = true
     card.LayoutOrder = serial
-    card.Parent = GestioNotificationHolder
+    card.Parent = XCNotificationHolder
 
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, 8)
@@ -583,7 +584,7 @@ local function setupBloxStrikeShootHook()
                 local char = player.Character
                 local tool = char and char:FindFirstChildOfClass("Tool")
                 
-                if (GestioConfig.bulletTrailEnabled or GestioConfig.bulletFlashEnabled) and tool then
+                if (XCConfig.bulletTrailEnabled or XCConfig.bulletFlashEnabled) and tool then
                     local cam = Workspace.CurrentCamera or camera
                     if not cam then return end
                     
@@ -602,17 +603,17 @@ local function setupBloxStrikeShootHook()
                     local bulletEnd = hit and hit.Position or (origin + cam.CFrame.LookVector * 500)
                     local dist = (origin - bulletEnd).Magnitude
 
-                    if GestioConfig.bulletTrailEnabled then
+                    if XCConfig.bulletTrailEnabled then
                         local trail = Instance.new("Part")
                         trail.Anchored = true
                         trail.CanCollide = false
                         trail.CanTouch = false
                         trail.CanQuery = false
                         trail.CastShadow = false
-                        trail.Material = (GestioConfig.bulletTracerStyle == "Cylinder") and Enum.Material.Neon or Enum.Material.Neon
-                        trail.Color = GestioConfig.bulletTracerRainbow and Color3.fromHSV((os.clock()*0.35)%1,0.9,1) or rgb(GestioConfig.bulletTracerColorR,GestioConfig.bulletTracerColorG,GestioConfig.bulletTracerColorB)
-                        local width = math.clamp(tonumber(GestioConfig.bulletTracerWidth) or 0.08, 0.02, 0.5)
-                        if GestioConfig.bulletTracerStyle == "Cylinder" then
+                        trail.Material = (XCConfig.bulletTracerStyle == "Cylinder") and Enum.Material.Neon or Enum.Material.Neon
+                        trail.Color = XCConfig.bulletTracerRainbow and Color3.fromHSV((os.clock()*0.35)%1,0.9,1) or rgb(XCConfig.bulletTracerColorR,XCConfig.bulletTracerColorG,XCConfig.bulletTracerColorB)
+                        local width = math.clamp(tonumber(XCConfig.bulletTracerWidth) or 0.08, 0.02, 0.5)
+                        if XCConfig.bulletTracerStyle == "Cylinder" then
                             trail.Shape = Enum.PartType.Cylinder
                             trail.Size = Vector3.new(dist, width, width)
                             trail.CFrame = CFrame.lookAt(origin, bulletEnd) * CFrame.Angles(0, math.rad(90), 0) * CFrame.new(-dist/2,0,0)
@@ -621,18 +622,18 @@ local function setupBloxStrikeShootHook()
                             trail.CFrame = CFrame.lookAt(origin, bulletEnd) * CFrame.new(0, 0, -dist / 2)
                         end
                         trail.Parent = Workspace
-                        local duration = math.clamp(tonumber(GestioConfig.bulletTracerDuration) or 0.65, 0.05, 10)
+                        local duration = math.clamp(tonumber(XCConfig.bulletTracerDuration) or 0.65, 0.05, 10)
                         TweenService:Create(trail, TweenInfo.new(duration, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Transparency = 1}):Play()
                         task.delay(duration + 0.05, function() pcall(function() trail:Destroy() end) end)
                     end
 
-                    if GestioConfig.bulletImpactEnabled then
+                    if XCConfig.bulletImpactEnabled then
                         local impact = Instance.new("Part")
                         impact.Anchored = true; impact.CanCollide = false; impact.CanTouch = false; impact.CanQuery = false; impact.CastShadow = false
                         impact.Shape = Enum.PartType.Ball
                         impact.Material = Enum.Material.Neon
-                        impact.Color = GestioConfig.bulletTracerRainbow and Color3.fromHSV((os.clock()*0.35)%1,0.9,1) or rgb(GestioConfig.bulletTracerColorR,GestioConfig.bulletTracerColorG,GestioConfig.bulletTracerColorB)
-                        local sz = math.clamp(tonumber(GestioConfig.bulletImpactSize) or 0.35, 0.05, 2)
+                        impact.Color = XCConfig.bulletTracerRainbow and Color3.fromHSV((os.clock()*0.35)%1,0.9,1) or rgb(XCConfig.bulletTracerColorR,XCConfig.bulletTracerColorG,XCConfig.bulletTracerColorB)
+                        local sz = math.clamp(tonumber(XCConfig.bulletImpactSize) or 0.35, 0.05, 2)
                         impact.Size = Vector3.new(sz,sz,sz)
                         impact.CFrame = CFrame.new(bulletEnd)
                         impact.Parent = Workspace
@@ -640,7 +641,7 @@ local function setupBloxStrikeShootHook()
                         task.delay(0.4, function() pcall(function() impact:Destroy() end) end)
                     end
 
-                    if GestioConfig.bulletFlashEnabled then
+                    if XCConfig.bulletFlashEnabled then
                         local flash = Instance.new("Part")
                         flash.Anchored = true; flash.CanCollide = false; flash.CanTouch = false; flash.CanQuery = false; flash.CastShadow = false
                         flash.Material = Enum.Material.Neon
@@ -665,14 +666,14 @@ local function setupBloxStrikeShootHook()
         local inventoryController = require(moduleScript)
         if type(inventoryController) ~= "table" then return end
         if type(inventoryController.ShootWeapon) ~= "function" then return end
-        if rawget(inventoryController, "__GestioShootHooked") then
+        if rawget(inventoryController, "__XCShootHooked") then
             bloxStrikeShootHooked = true
             return
         end
 
         local originalShootWeapon = inventoryController.ShootWeapon
         inventoryController.ShootWeapon = function(self, data, ...)
-            if GestioConfig.silentAimEnabled
+            if XCConfig.silentAimEnabled
                 and type(data) == "table"
                 and type(data.Bullets) == "table" then
 
@@ -685,8 +686,8 @@ local function setupBloxStrikeShootHook()
                 -- Hit chance is evaluated once per actual ShootWeapon invocation.
                 -- A single invocation may contain multiple pellets; they share the
                 -- same decision so one shot is not partially modified.
-                if GestioConfig.silentAimHitChance < 100 then
-                    shotAllowed = math.random(1, 100) <= math.clamp(GestioConfig.silentAimHitChance, 0, 100)
+                if XCConfig.silentAimHitChance < 100 then
+                    shotAllowed = math.random(1, 100) <= math.clamp(XCConfig.silentAimHitChance, 0, 100)
                 end
 
                 if shotTarget and shotAllowed then
@@ -706,11 +707,11 @@ local function setupBloxStrikeShootHook()
                                 if typeof(origin) == "Vector3" then
                                     local delta = aimPos - origin
                                     if delta.Magnitude > 0.001 then
-                                        -- Keep Gestio's direction rewrite.
+                                        -- Keep XC's direction rewrite.
                                         bullet.Direction = delta.Unit
                                     end
 
-                                    -- Gestio-style-style authoritative hit payload rewrite.
+                                    -- XC-style authoritative hit payload rewrite.
                                     if type(bullet.Hits) == "table" then
                                         for _, hitData in pairs(bullet.Hits) do
                                             if type(hitData) == "table" then
@@ -720,7 +721,7 @@ local function setupBloxStrikeShootHook()
                                         end
                                     end
 
-                                    if GestioConfig.wallbangEnabled then
+                                    if XCConfig.wallbangEnabled then
                                         bullet.Penetration = 9999
                                         bullet.Wallbang = true
                                         bullet.IgnoreEnvironment = true
@@ -735,7 +736,7 @@ local function setupBloxStrikeShootHook()
             return originalShootWeapon(self, data, ...)
         end
 
-        rawset(inventoryController, "__GestioShootHooked", true)
+        rawset(inventoryController, "__XCShootHooked", true)
         bloxStrikeShootHooked = true
     end)
 end
@@ -766,7 +767,7 @@ table.insert(connections, fireEndConn)
 -- ==========================================
 function isAlly(plr)
     if not plr or plr == player then return true end
-    if not GestioConfig.chamsTeamCheck then return false end
+    if not XCConfig.chamsTeamCheck then return false end
     
     if plr.Team and player.Team then
         return plr.Team == player.Team
@@ -788,7 +789,7 @@ end
 
 function getTargetHitbox(char)
     if not char then return nil end
-    if GestioConfig.bodyAimOnly then
+    if XCConfig.bodyAimOnly then
         return char:FindFirstChild("UpperTorso") or char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso")
     end
     if aimboneIndex == 1 then
@@ -836,7 +837,7 @@ wallRayParams.FilterType = Enum.RaycastFilterType.Exclude
 wallRayParams.IgnoreWater = true
 
 function isVisibleThroughWalls(targetPart, targetChar)
-    if GestioConfig.wallbangEnabled then return true end
+    if XCConfig.wallbangEnabled then return true end
     if not camera or not targetPart or not targetChar then return false end
     local myChar = player.Character
     wallRayParams.FilterDescendantsInstances = {myChar, camera}
@@ -860,18 +861,18 @@ getSilentAimTarget = function()
     if not cam then return nil end
     local camPos = cam.CFrame.Position
     local camLook = cam.CFrame.LookVector
-    local maxAngle = math.rad(GestioConfig.silentAimFov)
+    local maxAngle = math.rad(XCConfig.silentAimFov)
     local best, bestAngle = nil, maxAngle
     for _, plr in ipairs(Players:GetPlayers()) do
         if plr == player then continue end
-        if GestioConfig.silentAimTeamCheck and isAlly(plr) then continue end
+        if XCConfig.silentAimTeamCheck and isAlly(plr) then continue end
         local char = plr.Character
         local hum = char and char:FindFirstChildOfClass("Humanoid")
         if not isEntityAlive(char, hum) then continue end
-        local part = char:FindFirstChild(GestioConfig.silentAimAimHead and "Head" or "HumanoidRootPart")
+        local part = char:FindFirstChild(XCConfig.silentAimAimHead and "Head" or "HumanoidRootPart")
             or char:FindFirstChild("Torso")
         if not part or not part:IsA("BasePart") then continue end
-        if GestioConfig.silentAimVisibleCheck and not isVisibleThroughWalls(part, char) then
+        if XCConfig.silentAimVisibleCheck and not isVisibleThroughWalls(part, char) then
             continue
         end
         local predictedPos = getKinematicAimPosition(part)
@@ -887,7 +888,7 @@ end
 
 silentAimCamPosAim = function(targetPart)
     targetPart = targetPart or silentAimResolved
-    if not (GestioConfig.silentAimEnabled and targetPart) then return nil end
+    if not (XCConfig.silentAimEnabled and targetPart) then return nil end
     local cam = Workspace.CurrentCamera or camera
     if not cam then return nil end
     local camPos = cam.CFrame.Position
@@ -906,7 +907,7 @@ local function setupSilentAimHooks()
             local mouse = player:GetMouse()
             local oldIndex
             oldIndex = hookmetamethod(mouse, "__index", function(self, key)
-                if GestioConfig.silentAimEnabled and silentAimResolved and (key == "Hit" or key == "UnitRay") then
+                if XCConfig.silentAimEnabled and silentAimResolved and (key == "Hit" or key == "UnitRay") then
                     local camPos, aimPos = silentAimCamPosAim()
                     if camPos then
                         if key == "Hit" then
@@ -929,7 +930,7 @@ local function setupSilentAimHooks()
                 local method = getnamecallmethod()
                 local args = {...}
 
-                if GestioConfig.silentAimEnabled and silentAimResolved and noRecoil.isShooting
+                if XCConfig.silentAimEnabled and silentAimResolved and noRecoil.isShooting
                     and self == camera
                     and (method == "ViewportPointToRay" or method == "ScreenPointToRay") then
                     local camPos, aimPos = silentAimCamPosAim()
@@ -938,7 +939,7 @@ local function setupSilentAimHooks()
                     end
                 end
 
-                if GestioConfig.pSilentEnabled and silentAimResolved and self == Workspace then
+                if XCConfig.pSilentEnabled and silentAimResolved and self == Workspace then
                     local camPos, aimPos = silentAimCamPosAim()
                     if aimPos then
                         if method == "Raycast" then
@@ -949,7 +950,7 @@ local function setupSilentAimHooks()
                                 local delta = aimPos - origin
                                 if magnitude > 0 and delta.Magnitude > 0.001 then
                                     args[2] = delta.Unit * magnitude
-                                    if GestioConfig.wallbangEnabled then
+                                    if XCConfig.wallbangEnabled then
                                         local wbParams = RaycastParams.new()
                                         wbParams.FilterType = Enum.RaycastFilterType.Include
                                         local charList = {}
@@ -998,7 +999,7 @@ local chamsOutlineColor = Color3.fromRGB(240, 240, 245)
 local hitmarkerLastHealth = {}
 
 -- ==========================================
--- GESTIO SKINCHANGER
+-- XC SKINCHANGER
 -- ==========================================
 local skinData = {
     SkinsRoot = nil,
@@ -1008,7 +1009,7 @@ local skinData = {
     Ready = false
 }
 
-local function refreshGestioSkinData()
+local function refreshXCSkinData()
     if skinData.Ready and skinData.SkinsRoot and skinData.SkinsRoot.Parent then return end
 
     local assets = ReplicatedStorage:FindFirstChild("Assets")
@@ -1038,15 +1039,15 @@ local function refreshGestioSkinData()
     end
 
     for weaponName, skins in pairs(skinData.SkinSelections) do
-        if GestioConfig.weaponSkinSelections[weaponName] == nil then
-            GestioConfig.weaponSkinSelections[weaponName] = skins[1] or "Default"
+        if XCConfig.weaponSkinSelections[weaponName] == nil then
+            XCConfig.weaponSkinSelections[weaponName] = skins[1] or "Default"
         end
     end
 
     skinData.Ready = true
 end
 
-refreshGestioSkinData()
+refreshXCSkinData()
 
 local function isBaseKnife(name)
     return name == "CT Knife" or name == "T Knife" or name == "Knife"
@@ -1087,20 +1088,20 @@ local function applySurfaceAppearanceSkin(model, weaponName, skinName)
 end
 
 local function hookBloxStrikeModules()
-    refreshGestioSkinData()
+    refreshXCSkinData()
     pcall(function()
         if type(getgc) ~= "function" then return end
         for _, obj in ipairs(getgc(true)) do
             if type(obj) == "table" then
-                if rawget(obj, "EquippedMelee") ~= nil and GestioConfig.skinChangerEnabled then
-                    obj.EquippedMelee = GestioConfig.selectedKnifeType
+                if rawget(obj, "EquippedMelee") ~= nil and XCConfig.skinChangerEnabled then
+                    obj.EquippedMelee = XCConfig.selectedKnifeType
                 end
-                if rawget(obj, "MeleeSkin") ~= nil and GestioConfig.skinChangerEnabled then
-                    obj.MeleeSkin = GestioConfig.selectedSkin
+                if rawget(obj, "MeleeSkin") ~= nil and XCConfig.skinChangerEnabled then
+                    obj.MeleeSkin = XCConfig.selectedSkin
                 end
-                if rawget(obj, "Knife") ~= nil and type(obj.Knife) == "table" and GestioConfig.skinChangerEnabled then
-                    obj.Knife.Name = GestioConfig.selectedKnifeType
-                    obj.Knife.Skin = GestioConfig.selectedSkin
+                if rawget(obj, "Knife") ~= nil and type(obj.Knife) == "table" and XCConfig.skinChangerEnabled then
+                    obj.Knife.Name = XCConfig.selectedKnifeType
+                    obj.Knife.Skin = XCConfig.selectedSkin
                 end
             end
         end
@@ -1108,26 +1109,26 @@ local function hookBloxStrikeModules()
 end
 
 local function scanAndMorphKnives(root)
-    if not GestioConfig.skinChangerEnabled or not root then return end
-    refreshGestioSkinData()
+    if not XCConfig.skinChangerEnabled or not root then return end
+    refreshXCSkinData()
     if not skinData.SkinsRoot then return end
 
     local weaponModel = getCurrentWeaponModel()
     if weaponModel then
         local selectedWeapon = weaponModel.Name
         if isBaseKnife(selectedWeapon) then
-            selectedWeapon = GestioConfig.selectedKnifeType
+            selectedWeapon = XCConfig.selectedKnifeType
         end
-        local selectedSkin = GestioConfig.weaponSkinSelections[selectedWeapon]
-            or (selectedWeapon == GestioConfig.selectedKnifeType and GestioConfig.selectedSkin)
+        local selectedSkin = XCConfig.weaponSkinSelections[selectedWeapon]
+            or (selectedWeapon == XCConfig.selectedKnifeType and XCConfig.selectedSkin)
             or "Default"
         applySurfaceAppearanceSkin(weaponModel, selectedWeapon, selectedSkin)
     end
 end
 
-local function applyGestioGloves()
-    if not GestioConfig.gloveChangerEnabled then return end
-    refreshGestioSkinData()
+local function applyXCGloves()
+    if not XCConfig.gloveChangerEnabled then return end
+    refreshXCSkinData()
     if not skinData.SkinsRoot then return end
 
     local cam = Workspace.CurrentCamera or camera
@@ -1147,8 +1148,8 @@ local function applyGestioGloves()
     local rightGlove = rightArm and rightArm:FindFirstChild("Glove")
     if not leftGlove or not rightGlove then return end
 
-    local gloveFolder = skinData.SkinsRoot:FindFirstChild(GestioConfig.selectedGloveModel)
-    local skinFolder = gloveFolder and gloveFolder:FindFirstChild(GestioConfig.selectedGloveSkin)
+    local gloveFolder = skinData.SkinsRoot:FindFirstChild(XCConfig.selectedGloveModel)
+    local skinFolder = gloveFolder and gloveFolder:FindFirstChild(XCConfig.selectedGloveSkin)
     local cameraFolder = skinFolder and skinFolder:FindFirstChild("Camera")
     local factoryNew = cameraFolder and cameraFolder:FindFirstChild("Factory New")
     if not factoryNew then return end
@@ -1165,26 +1166,26 @@ local function applyGestioGloves()
     end
 end
 
--- Compatibility with the existing Gestio render scanner.
+-- Compatibility with the existing XC render scanner.
 task.spawn(function()
     while true do
         task.wait(0.5)
         pcall(function()
-            if GestioConfig.skinChangerEnabled then
+            if XCConfig.skinChangerEnabled then
                 hookBloxStrikeModules()
                 scanAndMorphKnives(camera)
                 if player and player.Character then scanAndMorphKnives(player.Character) end
                 scanAndMorphKnives(Workspace)
             end
-            if GestioConfig.gloveChangerEnabled then
-                applyGestioGloves()
+            if XCConfig.gloveChangerEnabled then
+                applyXCGloves()
             end
         end)
     end
 end)
 
 -- ==========================================
--- EXTRA GESTIO MODULES
+-- EXTRA XC MODULES
 -- Skin/knife/gloves are already handled above.
 -- These modules are intentionally self-contained so they do not
 -- interfere with the existing aim/ESP/render engines.
@@ -1211,7 +1212,7 @@ local function setNoFallDamage(enabled)
     end)
 end
 
-local function stopGestioAnimation()
+local function stopXCAnimation()
     if animationTrack then
         pcall(function() animationTrack:Stop(0.12) end)
         animationTrack = nil
@@ -1222,9 +1223,9 @@ local function stopGestioAnimation()
     end
 end
 
-local function playGestioAnimation()
-    stopGestioAnimation()
-    if not GestioConfig.animationsEnabled then return end
+local function playXCAnimation()
+    stopXCAnimation()
+    if not XCConfig.animationsEnabled then return end
     local char = player and player.Character
     local hum = char and char:FindFirstChildOfClass("Humanoid")
     if not hum then return end
@@ -1233,20 +1234,20 @@ local function playGestioAnimation()
         animator = Instance.new("Animator")
         animator.Parent = hum
     end
-    local id = tostring(GestioConfig.animationId or ""):match("%d+")
+    local id = tostring(XCConfig.animationId or ""):match("%d+")
     if not id then return end
     animationObject = Instance.new("Animation")
-    animationObject.Name = "GestioAnimation"
+    animationObject.Name = "XCAnimation"
     animationObject.AnimationId = "rbxassetid://" .. id
     local ok, track = pcall(function() return animator:LoadAnimation(animationObject) end)
     if not ok or not track then
-        stopGestioAnimation()
+        stopXCAnimation()
         return
     end
     animationTrack = track
     animationTrack.Priority = Enum.AnimationPriority.Action
-    animationTrack.Looped = GestioConfig.animationLoop
-    animationTrack:Play(0.15, 1, math.clamp(GestioConfig.animationSpeed, 0.1, 3))
+    animationTrack.Looped = XCConfig.animationLoop
+    animationTrack:Play(0.15, 1, math.clamp(XCConfig.animationSpeed, 0.1, 3))
 end
 
 local function getSpectatorNames()
@@ -1263,7 +1264,7 @@ end
 local function buildSpectatorGui()
     if spectatorGui and spectatorGui.Parent then return end
     spectatorGui = Instance.new("ScreenGui")
-    spectatorGui.Name = "GestioSpectatorGui"
+    spectatorGui.Name = "XCSpectatorGui"
     spectatorGui.ResetOnSpawn = false
     spectatorGui.IgnoreGuiInset = true
     spectatorGui.DisplayOrder = 21
@@ -1316,14 +1317,14 @@ local function updateSpectatorGui()
     local names = getSpectatorNames()
     local watching = player and player:GetAttribute("Spectators")
     if type(watching) ~= "number" then watching = nil end
-    spectatorFrame.Visible = GestioConfig.spectatorListEnabled and not (GestioConfig.spectatorHideEmpty and #names == 0 and not watching)
-    spectatorCounterLabel.Visible = GestioConfig.spectatorCounterEnabled
+    spectatorFrame.Visible = XCConfig.spectatorListEnabled and not (XCConfig.spectatorHideEmpty and #names == 0 and not watching)
+    spectatorCounterLabel.Visible = XCConfig.spectatorCounterEnabled
     spectatorCounterLabel.Text = "Watching you: " .. (watching and tostring(math.floor(watching)) or "?")
     local lines = {}
     for _, plr in ipairs(names) do
-        if GestioConfig.spectatorNameMode == "Username" then
+        if XCConfig.spectatorNameMode == "Username" then
             lines[#lines+1] = plr.Name
-        elseif GestioConfig.spectatorNameMode == "Both" and plr.DisplayName ~= plr.Name then
+        elseif XCConfig.spectatorNameMode == "Both" and plr.DisplayName ~= plr.Name then
             lines[#lines+1] = plr.DisplayName .. "  @" .. plr.Name
         else
             lines[#lines+1] = plr.DisplayName
@@ -1333,8 +1334,8 @@ local function updateSpectatorGui()
     spectatorFrame.Size = UDim2.new(0, 210, 0, math.max(88, 64 + math.min(#lines, 8) * 14))
 end
 
-local function applyGestioHandsOffset()
-    if not GestioConfig.customHandsEnabled then
+local function applyXCHandsOffset()
+    if not XCConfig.customHandsEnabled then
         handsLastModel = nil
         handsLastPivot = nil
         return
@@ -1348,8 +1349,8 @@ local function applyGestioHandsOffset()
         handsLastPivot = model:GetPivot()
     end
     local original = model:GetPivot()
-    local offset = CFrame.new(GestioConfig.customHandsX, GestioConfig.customHandsY, GestioConfig.customHandsZ)
-        * CFrame.Angles(math.rad(GestioConfig.customHandsPitch), math.rad(GestioConfig.customHandsYaw), math.rad(GestioConfig.customHandsRoll))
+    local offset = CFrame.new(XCConfig.customHandsX, XCConfig.customHandsY, XCConfig.customHandsZ)
+        * CFrame.Angles(math.rad(XCConfig.customHandsPitch), math.rad(XCConfig.customHandsYaw), math.rad(XCConfig.customHandsRoll))
     pcall(function()
         model:PivotTo(cam.CFrame * offset * cam.CFrame:ToObjectSpace(original))
     end)
@@ -1357,7 +1358,7 @@ end
 
 -- Lightweight background update for the extra modules.
 table.insert(connections, RunService.RenderStepped:Connect(function()
-    if GestioConfig.noFallDamageEnabled then
+    if XCConfig.noFallDamageEnabled then
         local char = player and player.Character
         if char ~= noFallLastCharacter then
             noFallLastCharacter = char
@@ -1365,17 +1366,17 @@ table.insert(connections, RunService.RenderStepped:Connect(function()
         end
         setNoFallDamage(true)
     end
-    if GestioConfig.spectatorListEnabled then
+    if XCConfig.spectatorListEnabled then
         updateSpectatorGui()
     elseif spectatorFrame then
         spectatorFrame.Visible = false
     end
-    if GestioConfig.customHandsEnabled then
-        applyGestioHandsOffset()
+    if XCConfig.customHandsEnabled then
+        applyXCHandsOffset()
     end
     if animationTrack and animationTrack.IsPlaying then
-        animationTrack.Looped = GestioConfig.animationLoop
-        pcall(function() animationTrack:AdjustSpeed(math.clamp(GestioConfig.animationSpeed, 0.1, 3)) end)
+        animationTrack.Looped = XCConfig.animationLoop
+        pcall(function() animationTrack:AdjustSpeed(math.clamp(XCConfig.animationSpeed, 0.1, 3)) end)
     end
 end))
 
@@ -1468,20 +1469,20 @@ local defaultLighting = {
 -- DISPLAY CONTAINERS SETUP
 -- ==========================================
 local mainContainer = Instance.new("ScreenGui")
-mainContainer.Name = "GestioMainContainer"
+mainContainer.Name = "XCMainContainer"
 mainContainer.ResetOnSpawn = false
 mainContainer.DisplayOrder = 10
 mainContainer.IgnoreGuiInset = true
 mainContainer.Parent = targetGui
 
 local overlayContainer = Instance.new("Folder", mainContainer)
-overlayContainer.Name = "Gestio_2DOverlay"
+overlayContainer.Name = "XC_2DOverlay"
 
 local grenadeContainer = Instance.new("Folder", mainContainer)
-grenadeContainer.Name = "Gestio_GrenadeOverlay"
+grenadeContainer.Name = "XC_GrenadeOverlay"
 
 local jumpCircleFolder = Instance.new("Folder", Workspace)
-jumpCircleFolder.Name = "Gestio_JumpCircleWorld"
+jumpCircleFolder.Name = "XC_JumpCircleWorld"
 
 local grenadePool = {}
 local mobileSlideBtn = nil
@@ -1490,7 +1491,7 @@ local mobileSlideBtn = nil
 -- HITMARKER NO WORK
 -- ==========================================
 local hitmarkerGui = Instance.new("ScreenGui")
-hitmarkerGui.Name = "GestioHitmarkerGui"
+hitmarkerGui.Name = "XCHitmarkerGui"
 hitmarkerGui.ResetOnSpawn = false
 hitmarkerGui.IgnoreGuiInset = true
 hitmarkerGui.DisplayOrder = 60
@@ -1510,7 +1511,7 @@ for i, rotation in ipairs({45, -45, 135, -135}) do
     local line = Instance.new("Frame")
     line.Name = "Line" .. i
     line.AnchorPoint = Vector2.new(0.5, 0.5)
-    line.Size = UDim2.new(0, GestioConfig.hitmarkerThickness, 0, GestioConfig.hitmarkerSize)
+    line.Size = UDim2.new(0, XCConfig.hitmarkerThickness, 0, XCConfig.hitmarkerSize)
     line.BackgroundColor3 = currentTheme.Accent
     line.BorderSizePixel = 0
     line.BackgroundTransparency = 1
@@ -1520,7 +1521,7 @@ for i, rotation in ipairs({45, -45, 135, -135}) do
     local glow = Instance.new("UIStroke")
     glow.Name = "NeonGlow"
     glow.Color = currentTheme.Accent
-    glow.Thickness = GestioConfig.hitmarkerGlow and 2.5 or 0
+    glow.Thickness = XCConfig.hitmarkerGlow and 2.5 or 0
     glow.Transparency = 1
     glow.Parent = line
 
@@ -1533,13 +1534,13 @@ function refreshHitmarkerTheme()
         local glow = line:FindFirstChild("NeonGlow")
         if glow then
             glow.Color = currentTheme.Accent
-            glow.Thickness = GestioConfig.hitmarkerGlow and 2.5 or 0
+            glow.Thickness = XCConfig.hitmarkerGlow and 2.5 or 0
         end
     end
 end
 
 function showHitmarker()
-    if not GestioConfig.hitmarkerEnabled then return end
+    if not XCConfig.hitmarkerEnabled then return end
 
     hitmarkerSerial += 1
     local serial = hitmarkerSerial
@@ -1552,7 +1553,7 @@ function showHitmarker()
     end
 
     local fadeInfo = TweenInfo.new(
-        math.max(0.05, GestioConfig.hitmarkerDuration),
+        math.max(0.05, XCConfig.hitmarkerDuration),
         Enum.EasingStyle.Quad,
         Enum.EasingDirection.Out
     )
@@ -1568,7 +1569,7 @@ function showHitmarker()
         end
     end
 
-    task.delay(math.max(0.05, GestioConfig.hitmarkerDuration), function()
+    task.delay(math.max(0.05, XCConfig.hitmarkerDuration), function()
         if serial == hitmarkerSerial then
             hitmarkerCenter.Visible = false
         end
@@ -1576,7 +1577,7 @@ function showHitmarker()
 end
 
 if genv then
-    genv.GestioShowHitmarker = showHitmarker
+    genv.XCShowHitmarker = showHitmarker
 end
 
 -- ==========================================
@@ -1620,7 +1621,7 @@ local function restoreThirdPerson()
 end
 
 function applyThirdPerson()
-    if not GestioConfig.thirdPersonEnabled then
+    if not XCConfig.thirdPersonEnabled then
         if isThirdPersonActive then
             restoreThirdPerson()
         end
@@ -1647,7 +1648,7 @@ function applyThirdPerson()
         isThirdPersonActive = true
     end
 
-    -- MemeSense behavior:
+    -- XC behavior:
     -- use Roblox's native third-person camera instead of forcing
     -- a Scriptable camera. This preserves touch-look, joystick and
     -- the game's normal camera pipeline on both mobile and PC.
@@ -1656,7 +1657,7 @@ function applyThirdPerson()
     end)
 
     local distance = math.clamp(
-        tonumber(GestioConfig.thirdPersonDistance) or 12,
+        tonumber(XCConfig.thirdPersonDistance) or 12,
         5,
         50
     )
@@ -1668,7 +1669,7 @@ function applyThirdPerson()
 end
 
 function setThirdPersonEnabled(enabled)
-    GestioConfig.thirdPersonEnabled = enabled and true or false
+    XCConfig.thirdPersonEnabled = enabled and true or false
 
     if not enabled then
         restoreThirdPerson()
@@ -1679,7 +1680,7 @@ function setThirdPersonEnabled(enabled)
 end
 
 function refreshThirdPerson()
-    if GestioConfig.thirdPersonEnabled then
+    if XCConfig.thirdPersonEnabled then
         applyThirdPerson()
     end
 end
@@ -1690,17 +1691,17 @@ end
 function applyNightPreset(presetName)
     local cfg = nightPresets[presetName]
     if not cfg then return end
-    GestioConfig.nightPreset = presetName
-    GestioConfig.nightClockTime = cfg.ClockTime
-    GestioConfig.nightBrightness = cfg.Brightness
+    XCConfig.nightPreset = presetName
+    XCConfig.nightClockTime = cfg.ClockTime
+    XCConfig.nightBrightness = cfg.Brightness
     
-    if GestioConfig.nightModeEnabled then
+    if XCConfig.nightModeEnabled then
         Lighting.ClockTime = cfg.ClockTime
         Lighting.Brightness = cfg.Brightness
         Lighting.OutdoorAmbient = cfg.OutdoorAmbient
         Lighting.Ambient = cfg.Ambient
         Lighting.GlobalShadows = true
-        if not GestioConfig.removeFogEnabled then
+        if not XCConfig.removeFogEnabled then
             Lighting.FogColor = fogLibrary[presetName] or cfg.FogColor
         end
         updateWorldChanger()
@@ -1719,7 +1720,7 @@ function restoreLightingState()
         Lighting.FogColor = defaultLighting.FogColor
         Lighting.ExposureCompensation = 0
         restoreWorldSkybox()
-        local fx = Lighting:FindFirstChild("GestioWorldColorFX")
+        local fx = Lighting:FindFirstChild("XCWorldColorFX")
         if fx then fx:Destroy() end
     end)
 end
@@ -1744,12 +1745,12 @@ local weaponGlowObjects = setmetatable({}, {__mode = "k"})
 
 -- Weapon visual engine.
 -- Supports the five visual variants used by the reference implementation,
--- while keeping Gestio's own configuration/state system and restoring every
+-- while keeping XC's own configuration/state system and restoring every
 -- property that was changed when the module is disabled or the weapon changes.
-if GestioConfig.weaponChamsMode == "Crystal" then GestioConfig.weaponChamsMode = "Glass" end
-if GestioConfig.weaponChamsMode == "Field" then GestioConfig.weaponChamsMode = "ForceField" end
-if GestioConfig.weaponChamsMode == "Chrome" then GestioConfig.weaponChamsMode = "Metal" end
-if GestioConfig.weaponChamsMode == "Glow" then GestioConfig.weaponChamsMode = "Highlight" end
+if XCConfig.weaponChamsMode == "Crystal" then XCConfig.weaponChamsMode = "Glass" end
+if XCConfig.weaponChamsMode == "Field" then XCConfig.weaponChamsMode = "ForceField" end
+if XCConfig.weaponChamsMode == "Chrome" then XCConfig.weaponChamsMode = "Metal" end
+if XCConfig.weaponChamsMode == "Glow" then XCConfig.weaponChamsMode = "Highlight" end
 
 local function resolveWeaponModel()
     local cam = Workspace.CurrentCamera or camera
@@ -1804,7 +1805,7 @@ local function saveWeaponPartState(part)
     }
 
     -- The reference removes SurfaceAppearance/Texture/Decal for most modes.
-    -- Gestio keeps backups so switching the module off never permanently
+    -- XC keeps backups so switching the module off never permanently
     -- destroys the weapon's original appearance.
     for _, child in ipairs(part:GetChildren()) do
         if child:IsA("SurfaceAppearance") or child:IsA("Texture") or child:IsA("Decal") then
@@ -1860,7 +1861,7 @@ local function clearWeaponGlow(part)
 end
 
 local function setWeaponVisuals()
-    if not GestioConfig.weaponChamsEnabled then
+    if not XCConfig.weaponChamsEnabled then
         clearWeaponVisuals()
         return
     end
@@ -1871,7 +1872,7 @@ local function setWeaponVisuals()
         return
     end
 
-    local style = GestioConfig.weaponChamsMode or "Glass"
+    local style = XCConfig.weaponChamsMode or "Glass"
     local validStyles = {
         Glass = true,
         ForceField = true,
@@ -1882,9 +1883,9 @@ local function setWeaponVisuals()
     if not validStyles[style] then style = "Glass" end
 
     local tint = rgb(
-        GestioConfig.weaponChamsColorR,
-        GestioConfig.weaponChamsColorG,
-        GestioConfig.weaponChamsColorB
+        XCConfig.weaponChamsColorR,
+        XCConfig.weaponChamsColorG,
+        XCConfig.weaponChamsColorB
     )
     local activeParts = {}
 
@@ -1903,7 +1904,7 @@ local function setWeaponVisuals()
                     local h = weaponGlowObjects[part]
                     if not h or not h.Parent then
                         h = Instance.new("Highlight")
-                        h.Name = "GestioWeaponChams"
+                        h.Name = "XCWeaponChams"
                         h.Adornee = part
                         h.FillTransparency = 0
                         h.OutlineTransparency = 1
@@ -1927,7 +1928,7 @@ local function setWeaponVisuals()
                         part.Material = Enum.Material.Glass
                         part.Color = tint
                         part.Transparency = math.clamp(
-                            tonumber(GestioConfig.weaponChamsTransparency) or 0.4, 0, 1
+                            tonumber(XCConfig.weaponChamsTransparency) or 0.4, 0, 1
                         )
                         part.Reflectance = 0
                     elseif style == "ForceField" then
@@ -1939,7 +1940,7 @@ local function setWeaponVisuals()
                         part.Material = Enum.Material.Metal
                         part.Color = tint
                         part.Reflectance = math.clamp(
-                            tonumber(GestioConfig.weaponChamsReflectance) or 1.0, 0, 1
+                            tonumber(XCConfig.weaponChamsReflectance) or 1.0, 0, 1
                         )
                         part.Transparency = 0
                     elseif style == "Neon" then
@@ -1965,17 +1966,17 @@ local function setWeaponVisuals()
 end
 
 local function applyWorldSkybox()
-    local data = worldSkyboxData[GestioConfig.worldSkyboxPreset]
-    if not data or not GestioConfig.worldSkyboxEnabled then return end
+    local data = worldSkyboxData[XCConfig.worldSkyboxPreset]
+    if not data or not XCConfig.worldSkyboxEnabled then return end
     pcall(function()
         if not originalSkybox then
             originalSkybox = Lighting:FindFirstChildOfClass("Sky")
             if originalSkybox then originalSkybox = originalSkybox:Clone() end
         end
-        local sky = Lighting:FindFirstChild("GestioWorldSky")
+        local sky = Lighting:FindFirstChild("XCWorldSky")
         if not sky then
             sky = Instance.new("Sky")
-            sky.Name = "GestioWorldSky"
+            sky.Name = "XCWorldSky"
             sky.Parent = Lighting
         end
         sky.SkyboxBk, sky.SkyboxDn, sky.SkyboxFt = data[1], data[2], data[3]
@@ -1985,7 +1986,7 @@ end
 
 local function restoreWorldSkybox()
     pcall(function()
-        local sky = Lighting:FindFirstChild("GestioWorldSky")
+        local sky = Lighting:FindFirstChild("XCWorldSky")
         if sky then sky:Destroy() end
         if originalSkybox then
             originalSkybox.Parent = Lighting
@@ -1995,36 +1996,36 @@ local function restoreWorldSkybox()
 end
 
 local function updateWorldPostFX()
-    if not GestioConfig.worldPostFXEnabled then
-        local fx = Lighting:FindFirstChild("GestioWorldColorFX")
+    if not XCConfig.worldPostFXEnabled then
+        local fx = Lighting:FindFirstChild("XCWorldColorFX")
         if fx then fx:Destroy() end
         Lighting.ExposureCompensation = 0
         return
     end
-    local fx = Lighting:FindFirstChild("GestioWorldColorFX")
+    local fx = Lighting:FindFirstChild("XCWorldColorFX")
     if not fx then
         fx = Instance.new("ColorCorrectionEffect")
-        fx.Name = "GestioWorldColorFX"
+        fx.Name = "XCWorldColorFX"
         fx.Parent = Lighting
     end
-    fx.Saturation = math.clamp(GestioConfig.worldSaturation or 0, -1, 1)
-    fx.Contrast = math.clamp(GestioConfig.worldContrast or 0, -1, 1)
-    fx.TintColor = rgb(GestioConfig.worldColorR, GestioConfig.worldColorG, GestioConfig.worldColorB)
-    Lighting.ExposureCompensation = math.clamp(GestioConfig.worldExposure or 0, -5, 5)
+    fx.Saturation = math.clamp(XCConfig.worldSaturation or 0, -1, 1)
+    fx.Contrast = math.clamp(XCConfig.worldContrast or 0, -1, 1)
+    fx.TintColor = rgb(XCConfig.worldColorR, XCConfig.worldColorG, XCConfig.worldColorB)
+    Lighting.ExposureCompensation = math.clamp(XCConfig.worldExposure or 0, -5, 5)
 end
 
 local function updateWorldChanger()
-    if not GestioConfig.nightModeEnabled then
+    if not XCConfig.nightModeEnabled then
         restoreWorldSkybox()
-        local fx = Lighting:FindFirstChild("GestioWorldColorFX")
+        local fx = Lighting:FindFirstChild("XCWorldColorFX")
         if fx then fx:Destroy() end
         return
     end
-    if GestioConfig.worldSkyboxEnabled then applyWorldSkybox() else restoreWorldSkybox() end
+    if XCConfig.worldSkyboxEnabled then applyWorldSkybox() else restoreWorldSkybox() end
     updateWorldPostFX()
-    if GestioConfig.worldFogEnd and GestioConfig.worldFogEnd > 0 then
-        Lighting.FogStart = math.max(0, GestioConfig.worldFogStart or 0)
-        Lighting.FogEnd = math.max(Lighting.FogStart + 1, GestioConfig.worldFogEnd)
+    if XCConfig.worldFogEnd and XCConfig.worldFogEnd > 0 then
+        Lighting.FogStart = math.max(0, XCConfig.worldFogStart or 0)
+        Lighting.FogEnd = math.max(Lighting.FogStart + 1, XCConfig.worldFogEnd)
     end
 end
 
@@ -2034,7 +2035,7 @@ end
 -- ==========================================================================
 do
     local cubePart = Instance.new("Part")
-    cubePart.Name = "Gestio_CubeChecker"
+    cubePart.Name = "XC_CubeChecker"
     cubePart.Anchored = true
     cubePart.CanCollide = false
     cubePart.CanTouch = false
@@ -2058,7 +2059,7 @@ do
 
     RunService.RenderStepped:Connect(function()
         pcall(function()
-            if not GestioConfig.cubeCheckerEnabled then
+            if not XCConfig.cubeCheckerEnabled then
                 cubePart.Parent = nil
                 return
             end
@@ -2069,13 +2070,13 @@ do
                 return
             end
 
-            local distance = math.clamp(tonumber(GestioConfig.cubeCheckerDistance) or 20, 1, 200)
-            local size = math.clamp(tonumber(GestioConfig.cubeCheckerSize) or 1.5, 0.1, 10)
-            local lineThickness = math.clamp(tonumber(GestioConfig.cubeCheckerLineThickness) or 0.04, 0.01, 0.2)
-            local outlineTransparency = math.clamp(tonumber(GestioConfig.cubeCheckerTransparency) or 0.2, 0, 1)
-            local col = GestioConfig.cubeCheckerRainbow
+            local distance = math.clamp(tonumber(XCConfig.cubeCheckerDistance) or 20, 1, 200)
+            local size = math.clamp(tonumber(XCConfig.cubeCheckerSize) or 1.5, 0.1, 10)
+            local lineThickness = math.clamp(tonumber(XCConfig.cubeCheckerLineThickness) or 0.04, 0.01, 0.2)
+            local outlineTransparency = math.clamp(tonumber(XCConfig.cubeCheckerTransparency) or 0.2, 0, 1)
+            local col = XCConfig.cubeCheckerRainbow
                 and Color3.fromHSV((os.clock() * 0.2) % 1, 1, 1)
-                or rgb(GestioConfig.bulletTracerColorR, GestioConfig.bulletTracerColorG, GestioConfig.bulletTracerColorB)
+                or rgb(XCConfig.bulletTracerColorR, XCConfig.bulletTracerColorG, XCConfig.bulletTracerColorB)
 
             cubeRayParams.FilterDescendantsInstances = {player.Character, cubePart}
             local origin = cam.CFrame.Position
@@ -2097,7 +2098,7 @@ do
     end)
 end
 
--- Scope overlay adapted from MemeSense: FOV override, removable scope and configurable crosshair.
+-- Scope overlay adapted from XC: FOV override, removable scope and configurable crosshair.
 local function findSniperScope()
     local pg = player and player:FindFirstChildOfClass("PlayerGui")
     if not pg then return nil end
@@ -2110,7 +2111,7 @@ end
 local function ensureScopeGui()
     if scopeGui and scopeGui.Parent then return end
     scopeGui = Instance.new("ScreenGui")
-    scopeGui.Name = "GestioCustomScope"
+    scopeGui.Name = "XCCustomScope"
     scopeGui.ResetOnSpawn = false
     scopeGui.IgnoreGuiInset = true
     pcall(function() scopeGui.Parent = targetGui end)
@@ -2137,7 +2138,7 @@ local function updateCustomScope()
 
     -- Never permanently alter the game's original scope size.
     if scope then
-        if GestioConfig.scopeRemoveOriginal and scoped then
+        if XCConfig.scopeRemoveOriginal and scoped then
             scope.Size = UDim2.fromOffset(0,0)
         elseif scopeSavedSize then
             scope.Size = scopeSavedSize
@@ -2145,24 +2146,24 @@ local function updateCustomScope()
     end
 
     local cam = Workspace.CurrentCamera or camera
-    if GestioConfig.customScopeEnabled and scoped then
-        if GestioConfig.scopeFovEnabled and cam then
+    if XCConfig.customScopeEnabled and scoped then
+        if XCConfig.scopeFovEnabled and cam then
             if scopeSavedFov == nil then scopeSavedFov = cam.FieldOfView end
-            cam.FieldOfView = math.clamp(tonumber(GestioConfig.scopeFov) or 70, 10, 120)
+            cam.FieldOfView = math.clamp(tonumber(XCConfig.scopeFov) or 70, 10, 120)
         end
 
-        local enabled = GestioConfig.scopeCrosshairEnabled ~= false
+        local enabled = XCConfig.scopeCrosshairEnabled ~= false
         scopeContainer.Visible = enabled
         if not enabled then return end
 
-        local col = rgb(GestioConfig.scopeCrosshairColorR, GestioConfig.scopeCrosshairColorG, GestioConfig.scopeCrosshairColorB)
-        local len = math.clamp(tonumber(GestioConfig.scopeCrosshairLength) or 85, 2, 500)
-        local thick = math.clamp(tonumber(GestioConfig.scopeCrosshairThickness) or 2, 1, 12)
-        local gap = math.clamp(tonumber(GestioConfig.scopeCrosshairGap) or 8, 0, 150)
-        local dynamic = GestioConfig.scopeDynamicGap and math.clamp((1/(cam and cam.FieldOfView or 70))*700, 2, 30) or 0
+        local col = rgb(XCConfig.scopeCrosshairColorR, XCConfig.scopeCrosshairColorG, XCConfig.scopeCrosshairColorB)
+        local len = math.clamp(tonumber(XCConfig.scopeCrosshairLength) or 85, 2, 500)
+        local thick = math.clamp(tonumber(XCConfig.scopeCrosshairThickness) or 2, 1, 12)
+        local gap = math.clamp(tonumber(XCConfig.scopeCrosshairGap) or 8, 0, 150)
+        local dynamic = XCConfig.scopeDynamicGap and math.clamp((1/(cam and cam.FieldOfView or 70))*700, 2, 30) or 0
         gap = gap + dynamic
-        local opacity = math.clamp(tonumber(GestioConfig.scopeCrosshairOpacity) or 0, 0, 1)
-        local style = GestioConfig.scopeCrosshairStyle or "Cross"
+        local opacity = math.clamp(tonumber(XCConfig.scopeCrosshairOpacity) or 0, 0, 1)
+        local style = XCConfig.scopeCrosshairStyle or "Cross"
 
         local l=scopeContainer.Left; local r=scopeContainer.Right
         local t=scopeContainer.Top; local b=scopeContainer.Bottom; local d=scopeContainer.Dot
@@ -2180,9 +2181,9 @@ local function updateCustomScope()
                 st.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
                 st.Parent = f
             end
-            st.Enabled = GestioConfig.scopeCrosshairOutline == true
-            st.Thickness = math.clamp(tonumber(GestioConfig.scopeCrosshairOutlineThickness) or 1, 1, 6)
-            st.Color = rgb(GestioConfig.scopeCrosshairOutlineR,GestioConfig.scopeCrosshairOutlineG,GestioConfig.scopeCrosshairOutlineB)
+            st.Enabled = XCConfig.scopeCrosshairOutline == true
+            st.Thickness = math.clamp(tonumber(XCConfig.scopeCrosshairOutlineThickness) or 1, 1, 6)
+            st.Color = rgb(XCConfig.scopeCrosshairOutlineR,XCConfig.scopeCrosshairOutlineG,XCConfig.scopeCrosshairOutlineB)
             st.Transparency = opacity
         end
 
@@ -2193,29 +2194,29 @@ local function updateCustomScope()
         -- Style presets: Cross, T, X and Dot. Individual arms still remain toggleable.
         if style == "X" then
             local xLen = math.max(2, len * 0.72)
-            if GestioConfig.scopeCrosshairLeft ~= false then show(l,UDim2.fromOffset(xLen,thick),UDim2.fromOffset(-gap,-gap),45) end
-            if GestioConfig.scopeCrosshairRight ~= false then show(r,UDim2.fromOffset(xLen,thick),UDim2.fromOffset(gap,-gap),-45) end
-            if GestioConfig.scopeCrosshairTop ~= false then show(t,UDim2.fromOffset(xLen,thick),UDim2.fromOffset(-gap,gap),-45) end
-            if GestioConfig.scopeCrosshairBottom ~= false then show(b,UDim2.fromOffset(xLen,thick),UDim2.fromOffset(gap,gap),45) end
+            if XCConfig.scopeCrosshairLeft ~= false then show(l,UDim2.fromOffset(xLen,thick),UDim2.fromOffset(-gap,-gap),45) end
+            if XCConfig.scopeCrosshairRight ~= false then show(r,UDim2.fromOffset(xLen,thick),UDim2.fromOffset(gap,-gap),-45) end
+            if XCConfig.scopeCrosshairTop ~= false then show(t,UDim2.fromOffset(xLen,thick),UDim2.fromOffset(-gap,gap),-45) end
+            if XCConfig.scopeCrosshairBottom ~= false then show(b,UDim2.fromOffset(xLen,thick),UDim2.fromOffset(gap,gap),45) end
         elseif style == "T" then
-            if GestioConfig.scopeCrosshairTop ~= false then show(t,UDim2.fromOffset(thick,len),UDim2.fromOffset(0,gap),0) end
-            if GestioConfig.scopeCrosshairLeft ~= false then show(l,UDim2.fromOffset(len,thick),UDim2.fromOffset(-gap,0),0) end
-            if GestioConfig.scopeCrosshairRight ~= false then show(r,UDim2.fromOffset(len,thick),UDim2.fromOffset(gap,0),0) end
+            if XCConfig.scopeCrosshairTop ~= false then show(t,UDim2.fromOffset(thick,len),UDim2.fromOffset(0,gap),0) end
+            if XCConfig.scopeCrosshairLeft ~= false then show(l,UDim2.fromOffset(len,thick),UDim2.fromOffset(-gap,0),0) end
+            if XCConfig.scopeCrosshairRight ~= false then show(r,UDim2.fromOffset(len,thick),UDim2.fromOffset(gap,0),0) end
             -- Bottom can be independently disabled/enabled; enabled means a short lower arm.
-            if GestioConfig.scopeCrosshairBottom ~= false then show(b,UDim2.fromOffset(thick,math.max(2,len*0.55)),UDim2.fromOffset(0,gap),0) end
+            if XCConfig.scopeCrosshairBottom ~= false then show(b,UDim2.fromOffset(thick,math.max(2,len*0.55)),UDim2.fromOffset(0,gap),0) end
         elseif style == "Dot" then
             -- Only the center dot is drawn for Dot style.
         else -- Cross
-            if GestioConfig.scopeCrosshairLeft ~= false then show(l,UDim2.fromOffset(len,thick),UDim2.fromOffset(-gap,0),0) end
-            if GestioConfig.scopeCrosshairRight ~= false then show(r,UDim2.fromOffset(len,thick),UDim2.fromOffset(gap,0),0) end
-            if GestioConfig.scopeCrosshairTop ~= false then show(t,UDim2.fromOffset(thick,len),UDim2.fromOffset(0,-gap),0) end
-            if GestioConfig.scopeCrosshairBottom ~= false then show(b,UDim2.fromOffset(thick,len),UDim2.fromOffset(0,gap),0) end
+            if XCConfig.scopeCrosshairLeft ~= false then show(l,UDim2.fromOffset(len,thick),UDim2.fromOffset(-gap,0),0) end
+            if XCConfig.scopeCrosshairRight ~= false then show(r,UDim2.fromOffset(len,thick),UDim2.fromOffset(gap,0),0) end
+            if XCConfig.scopeCrosshairTop ~= false then show(t,UDim2.fromOffset(thick,len),UDim2.fromOffset(0,-gap),0) end
+            if XCConfig.scopeCrosshairBottom ~= false then show(b,UDim2.fromOffset(thick,len),UDim2.fromOffset(0,gap),0) end
         end
 
         d.Size=UDim2.fromOffset(math.max(1,thick*2),math.max(1,thick*2))
         d.Position=UDim2.fromOffset(0,0)
         d.Rotation=0
-        d.Visible = GestioConfig.scopeCrosshairDot ~= false
+        d.Visible = XCConfig.scopeCrosshairDot ~= false
     else
         scopeContainer.Visible=false
         if scopeSavedFov and cam then cam.FieldOfView=scopeSavedFov end
@@ -2227,14 +2228,14 @@ table.insert(connections, RunService.RenderStepped:Connect(function()
     pcall(function()
         setWeaponVisuals()
         updateCustomScope()
-        -- MemeSense Custom FOV: apply the camera FOV every render frame while enabled.
-        if GestioConfig.customFovEnabled then
+        -- XC Custom FOV: apply the camera FOV every render frame while enabled.
+        if XCConfig.customFovEnabled then
             local cam = Workspace.CurrentCamera or camera
             if cam then
-                cam.FieldOfView = math.clamp(tonumber(GestioConfig.customFov) or 90, 70, 120)
+                cam.FieldOfView = math.clamp(tonumber(XCConfig.customFov) or 90, 70, 120)
             end
         end
-        if GestioConfig.nightModeEnabled then updateWorldChanger() end
+        if XCConfig.nightModeEnabled then updateWorldChanger() end
     end)
 end))
 
@@ -2310,14 +2311,14 @@ function updateJumpRingLayout(segments, centerPosition, radius, thicknessMult)
 end
 
 function spawnJumpRipple(position)
-    if not GestioConfig.jumpCircleEnabled then return end
+    if not XCConfig.jumpCircleEnabled then return end
     task.spawn(function()
-        local rippleFolder, segments = buildJumpRing(GestioConfig.jumpCircleSegmentCount, GestioConfig.jumpCircleRadius, 0.08, 0.04)
+        local rippleFolder, segments = buildJumpRing(XCConfig.jumpCircleSegmentCount, XCConfig.jumpCircleRadius, 0.08, 0.04)
         rippleFolder.Parent = jumpCircleFolder
 
         local startT = os.clock()
         local duration = 0.55
-        local maxR = GestioConfig.jumpCircleRadius * 2.2
+        local maxR = XCConfig.jumpCircleRadius * 2.2
         local col1 = currentTheme.Accent
         local col2 = Color3.fromRGB(255, 255, 255)
 
@@ -2325,14 +2326,14 @@ function spawnJumpRipple(position)
         rippleConn = RunService.RenderStepped:Connect(function()
             local elapsed = os.clock() - startT
             local alpha = elapsed / duration
-            if alpha >= 1 or not GestioConfig.jumpCircleEnabled then
+            if alpha >= 1 or not XCConfig.jumpCircleEnabled then
                 if rippleConn then rippleConn:Disconnect() end
                 if rippleFolder then rippleFolder:Destroy() end
                 return
             end
 
             local eased = 1 - math.pow(1 - alpha, 3)
-            local curR = GestioConfig.jumpCircleRadius + (maxR - GestioConfig.jumpCircleRadius) * eased
+            local curR = XCConfig.jumpCircleRadius + (maxR - XCConfig.jumpCircleRadius) * eased
             updateJumpRingLayout(segments, position, curR, 1.0 - (alpha * 0.5))
 
             for _, seg in ipairs(segments) do
@@ -2360,13 +2361,13 @@ end
 
 function initJumpCircleForCharacter(char)
     clearActiveJumpCircle()
-    if not GestioConfig.jumpCircleEnabled or not char then return end
+    if not XCConfig.jumpCircleEnabled or not char then return end
 
     local hrp = char:WaitForChild("HumanoidRootPart", 4)
     local hum = char:WaitForChild("Humanoid", 4)
     if not hrp or not hum then return end
 
-    local container, segments = buildJumpRing(GestioConfig.jumpCircleSegmentCount, GestioConfig.jumpCircleRadius, 0.06, 0.03)
+    local container, segments = buildJumpRing(XCConfig.jumpCircleSegmentCount, XCConfig.jumpCircleRadius, 0.06, 0.03)
     container.Parent = jumpCircleFolder
 
     local circleData = {
@@ -2383,7 +2384,7 @@ function initJumpCircleForCharacter(char)
     local pulseDir = 1
 
     local loopConn = RunService.RenderStepped:Connect(function(dt)
-        if not GestioConfig.jumpCircleEnabled or not hrp or not hrp.Parent or not hum or not hum.Parent or hum.Health <= 0 then
+        if not XCConfig.jumpCircleEnabled or not hrp or not hrp.Parent or not hum or not hum.Parent or hum.Health <= 0 then
             clearActiveJumpCircle()
             return
         end
@@ -2398,9 +2399,9 @@ function initJumpCircleForCharacter(char)
         local groundCenter = Vector3.new(hrp.Position.X, groundY, hrp.Position.Z)
 
         local pulseThickMult = 1.0 + (pulse * 0.45)
-        updateJumpRingLayout(segments, groundCenter, GestioConfig.jumpCircleRadius, pulseThickMult)
+        updateJumpRingLayout(segments, groundCenter, XCConfig.jumpCircleRadius, pulseThickMult)
 
-        if GestioConfig.jumpCircleStyle == "GradientWave" then
+        if XCConfig.jumpCircleStyle == "GradientWave" then
             local n = #segments
             local spin = (elapsed * 3) % (math.pi * 2)
             local c1 = currentTheme.Accent
@@ -2413,7 +2414,7 @@ function initJumpCircleForCharacter(char)
                     seg.Part.Transparency = 0.05 + (pulse * 0.25)
                 end
             end
-        elseif GestioConfig.jumpCircleStyle == "ChromaPulse" then
+        elseif XCConfig.jumpCircleStyle == "ChromaPulse" then
             local hue = (elapsed * 0.35) % 1
             local col = Color3.fromHSV(hue, 0.85, 1)
             for _, seg in ipairs(segments) do
@@ -2422,7 +2423,7 @@ function initJumpCircleForCharacter(char)
                     seg.Part.Transparency = 0.1 + (pulse * 0.3)
                 end
             end
-        elseif GestioConfig.jumpCircleStyle == "StaticNeon" then
+        elseif XCConfig.jumpCircleStyle == "StaticNeon" then
             for _, seg in ipairs(segments) do
                 if seg.Part and seg.Part.Parent then
                     seg.Part.Color = currentTheme.Accent
@@ -2504,7 +2505,7 @@ function cleanup()
         if bulletFlash then bulletFlash:Destroy() end
     end)
     
-    if genv then genv.GestioShowHitmarker = nil end
+    if genv then genv.XCShowHitmarker = nil end
     if mobileSlideBtn then
         pcall(function() mobileSlideBtn:Destroy() end)
         mobileSlideBtn = nil
@@ -2522,17 +2523,17 @@ function cleanup()
     
     restoreLightingState()
 
-    pcall(function() if targetGui:FindFirstChild("GestioScreenGui") then targetGui.GestioScreenGui:Destroy() end end)
-    pcall(function() if targetGui:FindFirstChild("GestioToggleGui") then targetGui.GestioToggleGui:Destroy() end end)
-    pcall(function() if targetGui:FindFirstChild("GestioFovGui") then targetGui.GestioFovGui:Destroy() end end)
-    pcall(function() if targetGui:FindFirstChild("GestioWatermarkGui") then targetGui.GestioWatermarkGui:Destroy() end end)
-    pcall(function() if targetGui:FindFirstChild("GestioNotificationsGui") then targetGui.GestioNotificationsGui:Destroy() end end)
+    pcall(function() if targetGui:FindFirstChild("XCScreenGui") then targetGui.XCScreenGui:Destroy() end end)
+    pcall(function() if targetGui:FindFirstChild("XCToggleGui") then targetGui.XCToggleGui:Destroy() end end)
+    pcall(function() if targetGui:FindFirstChild("XCFovGui") then targetGui.XCFovGui:Destroy() end end)
+    pcall(function() if targetGui:FindFirstChild("XCWatermarkGui") then targetGui.XCWatermarkGui:Destroy() end end)
+    pcall(function() if targetGui:FindFirstChild("XCNotificationsGui") then targetGui.XCNotificationsGui:Destroy() end end)
     pcall(function() if spectatorGui then spectatorGui:Destroy() end end)
-    stopGestioAnimation()
-    pcall(function() if targetGui:FindFirstChild("GestioMainContainer") then targetGui.GestioMainContainer:Destroy() end end)
+    stopXCAnimation()
+    pcall(function() if targetGui:FindFirstChild("XCMainContainer") then targetGui.XCMainContainer:Destroy() end end)
 end
 
-if genv then genv.GestioRunning = cleanup end
+if genv then genv.XCRunning = cleanup end
 
 function bindTouch(btn, callback)
     btn.Activated:Connect(callback)
@@ -2542,7 +2543,7 @@ end
 -- HUD & WATEMARK
 -- ==========================================
 local fovGui = Instance.new("ScreenGui")
-fovGui.Name = "GestioFovGui"
+fovGui.Name = "XCFovGui"
 fovGui.ResetOnSpawn = false
 fovGui.DisplayOrder = 9
 fovGui.IgnoreGuiInset = true
@@ -2573,7 +2574,7 @@ local silentFovCorner = Instance.new("UICorner", silentFovFrame)
 silentFovCorner.CornerRadius = UDim.new(1, 0)
 
 local watermarkGui = Instance.new("ScreenGui")
-watermarkGui.Name = "GestioWatermarkGui"
+watermarkGui.Name = "XCWatermarkGui"
 watermarkGui.ResetOnSpawn = false
 watermarkGui.DisplayOrder = 20
 watermarkGui.IgnoreGuiInset = true
@@ -2610,7 +2611,7 @@ local wmTitle = Instance.new("TextLabel", wmCard)
 wmTitle.AutomaticSize = Enum.AutomaticSize.X
 wmTitle.Size = UDim2.new(0, 0, 1, 0)
 wmTitle.BackgroundTransparency = 1
-wmTitle.Text = "GESTIO"
+wmTitle.Text = "XC"
 wmTitle.TextColor3 = currentTheme.Accent
 wmTitle.TextSize = 9
 wmTitle.Font = Enum.Font.GothamBold
@@ -2703,7 +2704,7 @@ function getOrCreateGrenadeUI(nadeInstance)
 end
 
 function renderGrenadeOverlays()
-    if not GestioConfig.grenadeEspEnabled then
+    if not XCConfig.grenadeEspEnabled then
         for _, v in pairs(grenadePool) do
             v.Tag.Visible = false
             v.RadiusCircle.Visible = false
@@ -2749,7 +2750,7 @@ function renderGrenadeOverlays()
                 local part = item:IsA("BasePart") and item or item:FindFirstChildWhichIsA("BasePart")
                 if part and part.Parent and part:IsDescendantOf(Workspace) then
                     local dist = (part.Position - camPos).Magnitude
-                    if dist <= GestioConfig.grenadeMaxDist then
+                    if dist <= XCConfig.grenadeMaxDist then
                         activeGrenades[item] = true
                         local ui = getOrCreateGrenadeUI(item)
                         local scrPos, onScreen = camera:WorldToViewportPoint(part.Position)
@@ -2760,7 +2761,7 @@ function renderGrenadeOverlays()
                             ui.Label.TextColor3 = nadeColor
                             ui.Tag.Visible = true
 
-                            if GestioConfig.showGrenadePath and part.AssemblyLinearVelocity and part.AssemblyLinearVelocity.Magnitude > 2 then
+                            if XCConfig.showGrenadePath and part.AssemblyLinearVelocity and part.AssemblyLinearVelocity.Magnitude > 2 then
                                 local vel = part.AssemblyLinearVelocity
                                 local simPos = part.Position
                                 local stepTime = 0.08
@@ -2805,7 +2806,7 @@ function renderGrenadeOverlays()
                                 for _, l in ipairs(ui.Lines) do l.Visible = false end
                             end
 
-                            local shouldShowRadius = (nadeType == "MOLOTOV" and GestioConfig.showMolotovRadius) or (nadeType == "SMOKE" and GestioConfig.showSmokeRadius)
+                            local shouldShowRadius = (nadeType == "MOLOTOV" and XCConfig.showMolotovRadius) or (nadeType == "SMOKE" and XCConfig.showSmokeRadius)
                             if shouldShowRadius then
                                 grenadeRayParams.FilterDescendantsInstances = {player.Character, item, camera}
                                 local groundCast = Workspace:Raycast(part.Position, Vector3.new(0, -60, 0), grenadeRayParams)
@@ -2856,7 +2857,7 @@ visRayParams.FilterType = Enum.RaycastFilterType.Exclude
 visRayParams.IgnoreWater = true
 
 function isTargetVisible(originPos, targetPart, targetChar)
-    if not GestioConfig.visibleCheck or GestioConfig.wallbangEnabled then return true end
+    if not XCConfig.visibleCheck or XCConfig.wallbangEnabled then return true end
     local myChar = player.Character
     visRayParams.FilterDescendantsInstances = {myChar, camera}
     local dir = targetPart.Position - originPos
@@ -2881,12 +2882,12 @@ end
 
 function getKinematicAimPosition(targetPart)
     local rawPos = targetPart.Position
-    if not GestioConfig.predictionEnabled then
+    if not XCConfig.predictionEnabled then
         return rawPos
     end
 
     local ping = getPingLatency()
-    local predDelta = (GestioConfig.predictionFactor * 0.5) + ping
+    local predDelta = (XCConfig.predictionFactor * 0.5) + ping
     local targetVel = targetPart.AssemblyLinearVelocity or Vector3.zero
 
     local myChar = player.Character
@@ -2904,7 +2905,7 @@ function getClosestTarget()
     local camCFrame = cam.CFrame
     local camPos = camCFrame.Position
     local camLook = camCFrame.LookVector
-    local maxAngleRad = math.rad(GestioConfig.aimFov * 0.5)
+    local maxAngleRad = math.rad(XCConfig.aimFov * 0.5)
 
     if currentAimTarget then
         local cChar = currentAimTarget.Char
@@ -2989,13 +2990,13 @@ function getRageTarget()
             if isEntityAlive(char, hum) then
                 local hitPart = getTargetHitbox(char)
                 if hitPart then
-                    if GestioConfig.wallbangEnabled or isVisibleThroughWalls(hitPart, char) then
+                    if XCConfig.wallbangEnabled or isVisibleThroughWalls(hitPart, char) then
                         local aimPos = getKinematicAimPosition(hitPart)
                         local score = math.huge
                         
-                        if GestioConfig.rageTargetMode == "Distance" then
+                        if XCConfig.rageTargetMode == "Distance" then
                             score = (aimPos - camPos).Magnitude
-                        elseif GestioConfig.rageTargetMode == "Health" then
+                        elseif XCConfig.rageTargetMode == "Health" then
                             score = hum.Health
                         end
 
@@ -3159,7 +3160,7 @@ local function triggerbotFire(vp)
 end
 
 function runMobileTriggerbot()
-    if not GestioConfig.triggerbotEnabled then return end
+    if not XCConfig.triggerbotEnabled then return end
 
     local cam = Workspace.CurrentCamera or camera
     if not cam then return end
@@ -3208,7 +3209,7 @@ function runMobileTriggerbot()
                         if onScreen and screenPos.Z > 0 then
                             local center = Vector2.new(vp.X * 0.5, vp.Y * 0.5)
                             local dist = (Vector2.new(screenPos.X, screenPos.Y) - center).Magnitude
-                            local fovRadius = tonumber(GestioConfig.triggerbotFov) or tonumber(GestioConfig.aimFov) or 160
+                            local fovRadius = tonumber(XCConfig.triggerbotFov) or tonumber(XCConfig.aimFov) or 160
                             if dist <= fovRadius and dist < bestScreenDistance then
                                 bestScreenDistance = dist
                                 bestTarget = {Player = hitPlayer, Model = char, Part = targetPart}
@@ -3244,7 +3245,7 @@ function getOrCreateScreenEsp(plr)
 
     local stroke = Instance.new("UIStroke", box)
     stroke.Color = currentTheme.Enemy_Accent
-    stroke.Thickness = GestioConfig.boxThickness
+    stroke.Thickness = XCConfig.boxThickness
     stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
     local healthBarBg = Instance.new("Frame", overlayContainer)
@@ -3289,7 +3290,7 @@ function getOrCreateScreenEsp(plr)
     tagCard.Size = UDim2.new(0, 0, 0, 16)
     tagCard.AutomaticSize = Enum.AutomaticSize.X
     tagCard.BackgroundColor3 = currentTheme.Sidebar
-    tagCard.BackgroundTransparency = GestioConfig.tagTransparency
+    tagCard.BackgroundTransparency = XCConfig.tagTransparency
     tagCard.BorderSizePixel = 0
     tagCard.Visible = false
 
@@ -3307,7 +3308,7 @@ function getOrCreateScreenEsp(plr)
     tagLabel.Size = UDim2.new(0, 0, 1, 0)
     tagLabel.BackgroundTransparency = 1
     tagLabel.TextColor3 = currentTheme.NametagTextColor
-    tagLabel.TextSize = GestioConfig.espTextSize
+    tagLabel.TextSize = XCConfig.espTextSize
     tagLabel.Font = Enum.Font.GothamBold
 
     local data = {
@@ -3365,10 +3366,10 @@ function renderTacticalOverlay()
         local isEnemy = isTargetEnemy(plr, char)
         local isAlive = isEntityAlive(char, hum)
 
-        if isEnemy and isAlive and rootPart and (GestioConfig.nametagsEnabled or GestioConfig.boxEspEnabled or GestioConfig.cornerBoxEnabled) then
+        if isEnemy and isAlive and rootPart and (XCConfig.nametagsEnabled or XCConfig.boxEspEnabled or XCConfig.cornerBoxEnabled) then
             local dist = (rootPart.Position - camPos).Magnitude
 
-            if dist <= GestioConfig.espMaxDist then
+            if dist <= XCConfig.espMaxDist then
                 local isVisible = isVisibleThroughWalls(head or rootPart, char)
                 local sideColor = isVisible and currentTheme.Enemy_Accent or currentTheme.Enemy_Hidden
 
@@ -3385,9 +3386,9 @@ function renderTacticalOverlay()
                     local boxPosX = topScreen.X - (boxWidth * 0.5)
                     local boxPosY = topScreen.Y
 
-                    if GestioConfig.boxEspEnabled and not GestioConfig.cornerBoxEnabled then
+                    if XCConfig.boxEspEnabled and not XCConfig.cornerBoxEnabled then
                         esp.BoxStroke.Color = sideColor
-                        esp.BoxStroke.Thickness = GestioConfig.boxThickness
+                        esp.BoxStroke.Thickness = XCConfig.boxThickness
                         esp.Box.Size = UDim2.new(0, boxWidth, 0, boxHeight)
                         esp.Box.Position = UDim2.new(0, boxPosX, 0, boxPosY)
                         esp.Box.Visible = true
@@ -3395,11 +3396,11 @@ function renderTacticalOverlay()
                             corner.H.Visible = false
                             corner.V.Visible = false
                         end
-                    elseif GestioConfig.cornerBoxEnabled then
+                    elseif XCConfig.cornerBoxEnabled then
                         esp.Box.Visible = false
                         local lengthX = math.max(boxWidth * 0.25, 4)
                         local lengthY = math.max(boxHeight * 0.25, 4)
-                        local thick = GestioConfig.boxThickness + 0.5
+                        local thick = XCConfig.boxThickness + 0.5
 
                         for _, corner in ipairs(esp.Corners) do
                             corner.H.BackgroundColor3 = sideColor
@@ -3445,7 +3446,7 @@ function renderTacticalOverlay()
                         end
                     end
 
-                    if (GestioConfig.boxEspEnabled or GestioConfig.cornerBoxEnabled) and GestioConfig.healthBarEnabled and hum then
+                    if (XCConfig.boxEspEnabled or XCConfig.cornerBoxEnabled) and XCConfig.healthBarEnabled and hum then
                         local maxHp = hum.MaxHealth > 0 and hum.MaxHealth or 100
                         local curHp = math.clamp(hum.Health, 0, maxHp)
                         local hpPercent = math.clamp(curHp / maxHp, 0, 1)
@@ -3472,22 +3473,22 @@ function renderTacticalOverlay()
                         esp.HealthBarBg.Visible = false
                     end
 
-                    if GestioConfig.nametagsEnabled then
-                        esp.TagCard.BackgroundTransparency = GestioConfig.tagTransparency
+                    if XCConfig.nametagsEnabled then
+                        esp.TagCard.BackgroundTransparency = XCConfig.tagTransparency
                         esp.TagCardStroke.Color = currentTheme.Border
-                        esp.TagLabel.TextSize = GestioConfig.espTextSize
+                        esp.TagLabel.TextSize = XCConfig.espTextSize
 
                         local baseName = plr.DisplayName or plr.Name
                         local infoText = baseName
                         
-                        if GestioConfig.espShowDistance then
+                        if XCConfig.espShowDistance then
                             infoText = string.format("%s [%dm]", infoText, math.floor(dist))
                         end
-                        if GestioConfig.espShowHealth and hum then
+                        if XCConfig.espShowHealth and hum then
                             local curHealth = math.floor(hum.Health)
                             infoText = string.format("%s [%dHP]", infoText, curHealth > 0 and curHealth or 100)
                         end
-                        if GestioConfig.tagShowWeapon then
+                        if XCConfig.tagShowWeapon then
                             local tool = char:FindFirstChildOfClass("Tool")
                             if tool then
                                 infoText = string.format("%s {%s}", infoText, tool.Name)
@@ -3541,7 +3542,7 @@ function attachEspToPlayer(plr)
     if plr == player then return end
 
     local holder = Instance.new("Folder")
-    holder.Name = "GestioESP_" .. plr.Name
+    holder.Name = "XCESP_" .. plr.Name
     holder.Parent = mainContainer
 
     local dotBillboard = Instance.new("BillboardGui", holder)
@@ -3563,9 +3564,9 @@ function attachEspToPlayer(plr)
     tracerLine.Visible = false
 
     local hl = Instance.new("Highlight")
-    hl.Name = "GestioChams_" .. plr.Name
-    hl.FillTransparency = GestioConfig.chamsFillTransparency
-    hl.OutlineTransparency = GestioConfig.chamsOutlineTransparency
+    hl.Name = "XCChams_" .. plr.Name
+    hl.FillTransparency = XCConfig.chamsFillTransparency
+    hl.OutlineTransparency = XCConfig.chamsOutlineTransparency
     hl.Enabled = false
     hl.FillColor = chamsColorVisible
     hl.OutlineColor = chamsOutlineColor
@@ -3631,39 +3632,39 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
             end
         end)
         local parts = {}
-        if GestioConfig.watermarkShowFPS then table.insert(parts, string.format("FPS: %d", currentFps)) end
-        if GestioConfig.watermarkShowPing then table.insert(parts, string.format("PING: %dms", pingVal)) end
+        if XCConfig.watermarkShowFPS then table.insert(parts, string.format("FPS: %d", currentFps)) end
+        if XCConfig.watermarkShowPing then table.insert(parts, string.format("PING: %dms", pingVal)) end
         wmMetrics.Text = table.concat(parts, " | ")
         fpsCounter = 0
         lastFpsUpdate = nowTick
     end
-    wmCard.Visible = GestioConfig.watermarkEnabled
-    wmTitle.Text = GestioConfig.watermarkText or "GESTIO"
-    if GestioConfig.watermarkShowName then
-        wmTitle.Text = (GestioConfig.watermarkText or "GESTIO") .. " • " .. player.Name
+    wmCard.Visible = XCConfig.watermarkEnabled
+    wmTitle.Text = XCConfig.watermarkText or "XC"
+    if XCConfig.watermarkShowName then
+        wmTitle.Text = (XCConfig.watermarkText or "XC") .. " • " .. player.Name
     end
-    wmMetrics.Visible = GestioConfig.watermarkShowFPS or GestioConfig.watermarkShowPing
+    wmMetrics.Visible = XCConfig.watermarkShowFPS or XCConfig.watermarkShowPing
     wmDivider.Visible = wmMetrics.Visible
 
     if fovFrame then
-        local isFovVisible = GestioConfig.aimbotEnabled and GestioConfig.showFovCircle
+        local isFovVisible = XCConfig.aimbotEnabled and XCConfig.showFovCircle
         fovFrame.Visible = isFovVisible
         if isFovVisible then
-            local diameter = GestioConfig.aimFov * 2
+            local diameter = XCConfig.aimFov * 2
             fovFrame.Size = UDim2.new(0, diameter, 0, diameter)
         end
     end
 
     if silentFovFrame then
-        local isSilentFovVisible = GestioConfig.silentAimEnabled and GestioConfig.showSilentFovCircle
+        local isSilentFovVisible = XCConfig.silentAimEnabled and XCConfig.showSilentFovCircle
         silentFovFrame.Visible = isSilentFovVisible
         if isSilentFovVisible then
-            local diameter = GestioConfig.silentAimFov * 2
+            local diameter = XCConfig.silentAimFov * 2
             silentFovFrame.Size = UDim2.new(0, diameter, 0, diameter)
         end
     end
 
-    if GestioConfig.silentAimEnabled then
+    if XCConfig.silentAimEnabled then
         -- Cache only the current target for legacy camera/mouse hooks.
         -- Actual ShootWeapon interception resolves its own target at fire time
         -- and performs Hit Chance once per shot.
@@ -3672,19 +3673,19 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         silentAimResolved = nil
     end
 
-    if (GestioConfig.rcsEnabled or GestioConfig.noRecoilEnabled) and noRecoil.isShooting then
-        local comp = (GestioConfig.noRecoilEnabled and (GestioConfig.recoilStrength * 0.0035) or 0) + (GestioConfig.rcsEnabled and ((GestioConfig.rcsStrength / 100) * 0.004 * GestioConfig.rcsPitchFactor) or 0)
+    if (XCConfig.rcsEnabled or XCConfig.noRecoilEnabled) and noRecoil.isShooting then
+        local comp = (XCConfig.noRecoilEnabled and (XCConfig.recoilStrength * 0.0035) or 0) + (XCConfig.rcsEnabled and ((XCConfig.rcsStrength / 100) * 0.004 * XCConfig.rcsPitchFactor) or 0)
         camera.CFrame = camera.CFrame * CFrame.Angles(-comp, 0, 0)
     end
 
     -- RAGEBOT & AIMBOT EXECUTION
-    if GestioConfig.rageBotEnabled then
+    if XCConfig.rageBotEnabled then
         local target = getRageTarget()
         if target and target.Part and target.Part.Parent then
             local aimPos = getKinematicAimPosition(target.Part)
             camera.CFrame = CFrame.lookAt(camera.CFrame.Position, aimPos)
             
-            if GestioConfig.rageAutoFire and tick() - lastTriggerTick > triggerbotDelay then
+            if XCConfig.rageAutoFire and tick() - lastTriggerTick > triggerbotDelay then
                 lastTriggerTick = tick()
                 pcall(function()
                     local vp = camera.ViewportSize
@@ -3696,18 +3697,18 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
                 end)
             end
         end
-    elseif GestioConfig.aimbotEnabled then
+    elseif XCConfig.aimbotEnabled then
         local target = getClosestTarget()
         if target and target.Part and target.Part.Parent then
             local aimPos = getKinematicAimPosition(target.Part)
             local currentCF = camera.CFrame
             local desiredCF = CFrame.lookAt(currentCF.Position, aimPos)
 
-            if GestioConfig.snapAimMode then
+            if XCConfig.snapAimMode then
                 camera.CFrame = desiredCF
             else
-                local responsiveness = math.clamp(GestioConfig.aimbotSpeed, 1, 100)
-                local damping = 1 - math.clamp(GestioConfig.aimbotSmoothness, 0, 0.95)
+                local responsiveness = math.clamp(XCConfig.aimbotSpeed, 1, 100)
+                local damping = 1 - math.clamp(XCConfig.aimbotSmoothness, 0, 0.95)
                 local effectiveFactor = 1 - math.exp(-responsiveness * damping * dt)
                 camera.CFrame = currentCF:Lerp(desiredCF, effectiveFactor)
             end
@@ -3716,7 +3717,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         currentAimTarget = nil
     end
 
-    if GestioConfig.skinChangerEnabled then
+    if XCConfig.skinChangerEnabled then
         skinScanAccumulator += dt
         if skinScanAccumulator >= 0.30 then
             skinScanAccumulator = 0
@@ -3745,25 +3746,25 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         local isAlive = isEntityAlive(char, hum)
         local dist = rootPart and (rootPart.Position - localPos).Magnitude or 9999
 
-        if char and isAlive and (dist <= GestioConfig.espMaxDist) then
+        if char and isAlive and (dist <= XCConfig.espMaxDist) then
             local isVisible = isVisibleThroughWalls(head or rootPart, char)
             
-            if GestioConfig.chamsEnabled then
-                if ally and not GestioConfig.chamsShowTeammates then
+            if XCConfig.chamsEnabled then
+                if ally and not XCConfig.chamsShowTeammates then
                     data.Highlight.Enabled = false
                 else
                     data.Highlight.Enabled = true
                     if data.Highlight.Adornee ~= char then
                         data.Highlight.Adornee = char
                     end
-                    data.Highlight.FillTransparency = GestioConfig.chamsFillTransparency
-                    data.Highlight.OutlineTransparency = GestioConfig.chamsOutlineTransparency
+                    data.Highlight.FillTransparency = XCConfig.chamsFillTransparency
+                    data.Highlight.OutlineTransparency = XCConfig.chamsOutlineTransparency
                     data.Highlight.OutlineColor = chamsOutlineColor
 
                     if ally then
                         data.Highlight.FillColor = chamsColorAlly
                     else
-                        data.Highlight.FillColor = GestioConfig.chamsOcclusion and (isVisible and chamsColorVisible or chamsColorHidden) or chamsColorVisible
+                        data.Highlight.FillColor = XCConfig.chamsOcclusion and (isVisible and chamsColorVisible or chamsColorHidden) or chamsColorVisible
                     end
                 end
             else
@@ -3777,9 +3778,9 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
                     data.HeadDot.Adornee = head
                 end
                 data.DotFrame.BackgroundColor3 = activeAccent
-                data.HeadDot.Enabled = GestioConfig.headDotEnabled
+                data.HeadDot.Enabled = XCConfig.headDotEnabled
 
-                if GestioConfig.tracersEnabled and rootPart then
+                if XCConfig.tracersEnabled and rootPart then
                     local scrPos, onScreen = camera:WorldToViewportPoint(rootPart.Position)
                     if onScreen and scrPos.Z > 0 then
                         local origin = Vector2.new(camera.ViewportSize.X * 0.5, camera.ViewportSize.Y)
@@ -3812,25 +3813,25 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         end
     end
 
-    if GestioConfig.fullBrightEnabled then
+    if XCConfig.fullBrightEnabled then
         Lighting.Brightness = 3
         Lighting.ClockTime = 14
         Lighting.GlobalShadows = false
-    elseif GestioConfig.nightModeEnabled then
-        local cfg = nightPresets[GestioConfig.nightPreset] or nightPresets["Midnight"]
-        Lighting.Brightness = GestioConfig.nightBrightness or cfg.Brightness
-        Lighting.ClockTime = GestioConfig.nightClockTime or cfg.ClockTime
+    elseif XCConfig.nightModeEnabled then
+        local cfg = nightPresets[XCConfig.nightPreset] or nightPresets["Midnight"]
+        Lighting.Brightness = XCConfig.nightBrightness or cfg.Brightness
+        Lighting.ClockTime = XCConfig.nightClockTime or cfg.ClockTime
         Lighting.GlobalShadows = true
         Lighting.OutdoorAmbient = cfg.OutdoorAmbient
         Lighting.Ambient = cfg.Ambient
     end
 
-    if GestioConfig.removeFogEnabled then
+    if XCConfig.removeFogEnabled then
         Lighting.FogEnd = 100000
     else
         Lighting.FogEnd = defaultLighting.FogEnd
     end
-    if GestioConfig.antiFlashEnabled then
+    if XCConfig.antiFlashEnabled then
         pcall(function()
             for _, v in pairs(Lighting:GetChildren()) do
                 if v:IsA("ColorCorrectionEffect") and v.Saturation < -0.5 then v.Enabled = false end
@@ -3847,7 +3848,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
     local hum = char and char:FindFirstChildOfClass("Humanoid")
 
-    if not GestioConfig.antiAimEnabled then
+    if not XCConfig.antiAimEnabled then
         if hum and savedAutoRotate ~= nil then
             hum.AutoRotate = savedAutoRotate
             savedAutoRotate = nil
@@ -3862,7 +3863,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         hum.AutoRotate = false
     end
 
-    currentSpinAngle = (currentSpinAngle + (GestioConfig.spinSpeed * dt * 60)) % 360
+    currentSpinAngle = (currentSpinAngle + (XCConfig.spinSpeed * dt * 60)) % 360
     hrp.CFrame = CFrame.new(hrp.Position) * CFrame.Angles(0, math.rad(currentSpinAngle), 0)
 end))
 
@@ -3911,7 +3912,7 @@ end
 
 function updateMobileSlideIndicator()
     if not mobileSlideBtn then return end
-    local stroke = mobileSlideBtn:FindFirstChild("GestioSlideStroke")
+    local stroke = mobileSlideBtn:FindFirstChild("XCSlideStroke")
     if mobileSlideToggleActive then
         mobileSlideBtn.BackgroundColor3 = currentTheme.Accent
         mobileSlideBtn.BackgroundTransparency = 0.08
@@ -3933,8 +3934,8 @@ end
 
 function updateMobileSlideVisibility()
     if mobileSlideBtn then
-        mobileSlideBtn.Visible = GestioConfig.slideEnabled and UserInputService.TouchEnabled
-        if not GestioConfig.slideEnabled then
+        mobileSlideBtn.Visible = XCConfig.slideEnabled and UserInputService.TouchEnabled
+        if not XCConfig.slideEnabled then
             mobileSlideToggleActive = false
             isSliding = false
             currentSlideVel = Vector3.zero
@@ -3944,14 +3945,14 @@ function updateMobileSlideVisibility()
 end
 
 function triggerMobileSlideStart()
-    if not GestioConfig.slideEnabled then return end
+    if not XCConfig.slideEnabled then return end
     local char = player.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
     local hum = char and char:FindFirstChildOfClass("Humanoid")
     if not (hrp and hum and isEntityAlive(char, hum) and isPlayerGrounded(char, hrp)) then return false end
 
     local moveDir = hum.MoveDirection.Magnitude > 0.1 and hum.MoveDirection or hrp.CFrame.LookVector
-    currentSlideVel = moveDir * (16 * GestioConfig.slideSpeedBoost)
+    currentSlideVel = moveDir * (16 * XCConfig.slideSpeedBoost)
     isSliding = true
     hum.HipHeight = defaultHipHeight * 0.4
     return true
@@ -3964,7 +3965,7 @@ function triggerMobileSlideEnd()
 end
 
 function toggleMobileSlide()
-    if not GestioConfig.slideEnabled then return end
+    if not XCConfig.slideEnabled then return end
     if mobileSlideToggleActive then
         mobileSlideToggleActive = false
         triggerMobileSlideEnd()
@@ -3983,7 +3984,7 @@ function createMobileSlideButton()
     end
 
     mobileSlideBtn = Instance.new("TextButton")
-    mobileSlideBtn.Name = "GestioMobileSlideBtn"
+    mobileSlideBtn.Name = "XCMobileSlideBtn"
     mobileSlideBtn.Size = UDim2.new(0, 50, 0, 50)
     mobileSlideBtn.Position = UDim2.new(1, -145, 1, -115)
     mobileSlideBtn.BackgroundColor3 = currentTheme.CardBg
@@ -3992,7 +3993,7 @@ function createMobileSlideButton()
     mobileSlideBtn.TextColor3 = currentTheme.Accent
     mobileSlideBtn.TextSize = 9.5
     mobileSlideBtn.Font = Enum.Font.GothamBold
-    mobileSlideBtn.Visible = GestioConfig.slideEnabled and UserInputService.TouchEnabled
+    mobileSlideBtn.Visible = XCConfig.slideEnabled and UserInputService.TouchEnabled
     mobileSlideBtn.ZIndex = 80
     mobileSlideBtn.Active = true
     mobileSlideBtn.AutoButtonColor = false
@@ -4000,7 +4001,7 @@ function createMobileSlideButton()
 
     Instance.new("UICorner", mobileSlideBtn).CornerRadius = UDim.new(1, 0)
     local stroke = Instance.new("UIStroke", mobileSlideBtn)
-    stroke.Name = "GestioSlideStroke"
+    stroke.Name = "XCSlideStroke"
     stroke.Color = currentTheme.Border
     stroke.Thickness = 1.2
 
@@ -4121,14 +4122,14 @@ table.insert(connections, jumpReqConn)
 
 local inBeganConn = UserInputService.InputBegan:Connect(function(input)
     if input.KeyCode == Enum.KeyCode.Space then isMobileJumpHeld = true end
-    if GestioConfig.slideEnabled and (input.KeyCode == Enum.KeyCode.C or input.KeyCode == Enum.KeyCode.LeftControl) then
+    if XCConfig.slideEnabled and (input.KeyCode == Enum.KeyCode.C or input.KeyCode == Enum.KeyCode.LeftControl) then
         local char = player.Character
         local hrp = char and char:FindFirstChild("HumanoidRootPart")
         local hum = char and char:FindFirstChildOfClass("Humanoid")
         if hrp and hum and isEntityAlive(char, hum) and isPlayerGrounded(char, hrp) then
             if not defaultHipHeightCaptured then captureDefaultHipHeight(char) end
             local moveDir = hum.MoveDirection.Magnitude > 0.1 and hum.MoveDirection or hrp.CFrame.LookVector
-            currentSlideVel = moveDir * (16 * GestioConfig.slideSpeedBoost)
+            currentSlideVel = moveDir * (16 * XCConfig.slideSpeedBoost)
             isSliding = true
             hum.HipHeight = defaultHipHeight * 0.4
         end
@@ -4150,7 +4151,7 @@ table.insert(connections, inEndedConn)
 -- HITMARKER & PHYSICS LOOP NO WORK
 -- ==========================================
 table.insert(connections, RunService.Heartbeat:Connect(function()
-    if not GestioConfig.hitmarkerEnabled then
+    if not XCConfig.hitmarkerEnabled then
         hitmarkerLastHealth = {}
         return
     end
@@ -4199,13 +4200,13 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     local finalVelocity = nil
     local activeMode = "Normal"
 
-    if GestioConfig.flightEnabled then
+    if XCConfig.flightEnabled then
         activeMode = "Flight"
-        finalVelocity = camera.CFrame.LookVector * GestioConfig.flightSpeed
-    elseif GestioConfig.slideEnabled and isSliding then
-        if isPlayerGrounded(char, hrp) and currentSlideVel.Magnitude > GestioConfig.slideMinSpeed then
+        finalVelocity = camera.CFrame.LookVector * XCConfig.flightSpeed
+    elseif XCConfig.slideEnabled and isSliding then
+        if isPlayerGrounded(char, hrp) and currentSlideVel.Magnitude > XCConfig.slideMinSpeed then
             activeMode = "Slide"
-            local frictionFactor = math.pow(math.clamp(GestioConfig.slideFriction, 0, 1), math.max(dt, 0) * 60)
+            local frictionFactor = math.pow(math.clamp(XCConfig.slideFriction, 0, 1), math.max(dt, 0) * 60)
             currentSlideVel = currentSlideVel * frictionFactor
             finalVelocity = Vector3.new(currentSlideVel.X, currentVel.Y, currentSlideVel.Z)
         else
@@ -4215,10 +4216,10 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         end
     end
 
-    if activeMode == "Normal" and GestioConfig.bunnyHopEnabled then
+    if activeMode == "Normal" and XCConfig.bunnyHopEnabled then
         local grounded = isPlayerGrounded(char, hrp) or hum.FloorMaterial ~= Enum.Material.Air
         local isSpacePressed = UserInputService:IsKeyDown(Enum.KeyCode.Space)
-        local shouldJump = GestioConfig.bhopAutoJump or isMobileJumpHeld or hum.Jump or isSpacePressed
+        local shouldJump = XCConfig.bhopAutoJump or isMobileJumpHeld or hum.Jump or isSpacePressed
 
         if grounded and shouldJump then
             activeMode = "Bhop"
@@ -4226,13 +4227,13 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
             
             local currentX = finalVelocity and finalVelocity.X or currentVel.X
             local currentZ = finalVelocity and finalVelocity.Z or currentVel.Z
-            finalVelocity = Vector3.new(currentX, GestioConfig.bhopJumpPower, currentZ)
+            finalVelocity = Vector3.new(currentX, XCConfig.bhopJumpPower, currentZ)
             
             pcall(function() hum:ChangeState(Enum.HumanoidStateType.Jumping) end)
             
-        elseif not grounded and GestioConfig.bhopAirStrafe and currentMove.Magnitude > 0.05 then
+        elseif not grounded and XCConfig.bhopAirStrafe and currentMove.Magnitude > 0.05 then
             activeMode = "AutoStrafe"
-            local targetSpeed = 16 * GestioConfig.bhopSpeedBoost
+            local targetSpeed = 16 * XCConfig.bhopSpeedBoost
             local targetVel = currentMove * targetSpeed
             
             local currentY = finalVelocity and finalVelocity.Y or currentVel.Y
@@ -4240,9 +4241,9 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         end
     end
 
-    if activeMode == "Normal" and GestioConfig.speedEnabled and currentMove.Magnitude > 0 then
+    if activeMode == "Normal" and XCConfig.speedEnabled and currentMove.Magnitude > 0 then
         activeMode = "Speed"
-        local targetVel = currentMove * (16 * GestioConfig.walkMultiplier)
+        local targetVel = currentMove * (16 * XCConfig.walkMultiplier)
         finalVelocity = Vector3.new(targetVel.X, currentVel.Y, targetVel.Z)
     end
 
@@ -4255,12 +4256,12 @@ end))
 -- UI BUILDER
 -- ==========================================
 function setAntiAfkEnabled(enabled)
-    GestioConfig.antiAfkEnabled = enabled
+    XCConfig.antiAfkEnabled = enabled
     if antiAfkConnection then
         pcall(function() antiAfkConnection:Disconnect() end)
         antiAfkConnection = nil
     end
-    if not GestioConfig.antiAfkEnabled then return end
+    if not XCConfig.antiAfkEnabled then return end
 
     antiAfkConnection = player.Idled:Connect(function()
         pcall(function()
@@ -4272,33 +4273,35 @@ function setAntiAfkEnabled(enabled)
     end)
 end
 
-function buildGestioUI()
-    setAntiAfkEnabled(GestioConfig.antiAfkEnabled)
+function buildXCUI()
+    setAntiAfkEnabled(XCConfig.antiAfkEnabled)
 
     local toggleGui = Instance.new("ScreenGui")
-    toggleGui.Name = "GestioToggleGui"
+    toggleGui.Name = "XCToggleGui"
     toggleGui.ResetOnSpawn = false
     toggleGui.DisplayOrder = 100
     toggleGui.IgnoreGuiInset = true
     toggleGui.Parent = targetGui
 
     local openBtn = Instance.new("TextButton", toggleGui)
-    openBtn.Size = UDim2.new(0, 85, 0, 30)
+    openBtn.Size = UDim2.fromOffset(56, 48)
     openBtn.Position = savedPos.OpenBtn
     openBtn.BackgroundColor3 = currentTheme.Background
-    openBtn.Text = "Gestio"
-    openBtn.TextColor3 = currentTheme.Accent
-    openBtn.TextSize = 11
+    openBtn.RichText = true
+    openBtn.Text = '<font color="rgb(152,204,0)">X</font><font color="rgb(255,255,255)">C</font>'
+    openBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    openBtn.TextSize = 23
     openBtn.Font = Enum.Font.GothamBold
     openBtn.Active = true
     openBtn.AutoButtonColor = false
     openBtn.ZIndex = 100
     Instance.new("UICorner", openBtn).CornerRadius = UDim.new(0, 6)
     local openStroke = Instance.new("UIStroke", openBtn)
-    openStroke.Color = currentTheme.Border
+    openStroke.Color = currentTheme.Accent
+    openStroke.Thickness = 1
 
     local screenGui = Instance.new("ScreenGui")
-    screenGui.Name = "GestioScreenGui"
+    screenGui.Name = "XCScreenGui"
     screenGui.ResetOnSpawn = false
     screenGui.DisplayOrder = 50
     screenGui.IgnoreGuiInset = true
@@ -4335,7 +4338,7 @@ function buildGestioUI()
 
     table.insert(connections, UserInputService.InputBegan:Connect(function(input, gameProcessed)
         if gameProcessed then return end
-        local keyName = GestioConfig.menuKey or "RightShift"
+        local keyName = XCConfig.menuKey or "RightShift"
         local keyCode = Enum.KeyCode[keyName]
         if keyCode and input.KeyCode == keyCode then toggleMenu() end
     end))
@@ -4353,10 +4356,17 @@ function buildGestioUI()
     local bInChanged = UserInputService.InputChanged:Connect(function(input)
         if btnDrag and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
             local delta = input.Position - btnInputStart
-            local newPos = UDim2.new(btnStartPos.X.Scale, btnStartPos.X.Offset + delta.X, btnStartPos.Y.Scale, btnStartPos.Y.Offset + delta.Y)
+            local targetX = btnStartPos.X.Scale * toggleGui.AbsoluteSize.X + btnStartPos.X.Offset + delta.X
+            local targetY = btnStartPos.Y.Scale * toggleGui.AbsoluteSize.Y + btnStartPos.Y.Offset + delta.Y
+            local maxX = math.max(8, toggleGui.AbsoluteSize.X - openBtn.AbsoluteSize.X - 8)
+            local maxY = math.max(8, toggleGui.AbsoluteSize.Y - openBtn.AbsoluteSize.Y - 8)
+            local newPos = UDim2.fromOffset(
+                math.clamp(targetX, 8, maxX),
+                math.clamp(targetY, 8, maxY)
+            )
             openBtn.Position = newPos
             savedPos.OpenBtn = newPos
-            if genv then genv.GestioSavedPos.OpenBtn = newPos end
+            if genv then genv.XCSavedPos.OpenBtn = newPos end
         end
     end)
     table.insert(connections, bInChanged)
@@ -4391,7 +4401,7 @@ function buildGestioUI()
     Instance.new("UICorner", mainAccent).CornerRadius = UDim.new(1, 0)
 
     local bgGridFolder = Instance.new("Folder", mainFrame)
-    bgGridFolder.Name = "GestioBackgroundGrid"
+    bgGridFolder.Name = "XCBackgroundGrid"
 
     local sidebar = Instance.new("ScrollingFrame", mainFrame)
     sidebar.Size = UDim2.new(0, 110, 1, -8)
@@ -4416,7 +4426,7 @@ function buildGestioUI()
     local logoBtn = Instance.new("TextButton", sidebar)
     logoBtn.Size = UDim2.new(0.9, 0, 0, 36)
     logoBtn.BackgroundTransparency = 1
-    logoBtn.Text = "GESTIO"
+    logoBtn.Text = "XC"
     logoBtn.TextColor3 = currentTheme.Accent
     logoBtn.TextSize = 13
     logoBtn.Font = Enum.Font.GothamBold
@@ -4474,10 +4484,8 @@ function buildGestioUI()
 
     local function makeCategorySection(page, title, layoutOrder, cardCount)
         local count = cardCount or 4
-        -- The current mobile content width fits 3 cards per row.
-        -- Calculate section height from the real column count so cards
-        -- never spill into the next category.
-        local columns = 3
+        -- Phones use two columns so every module remains reachable/readable.
+        local columns = UserInputService.TouchEnabled and 2 or 3
         local rows = math.max(1, math.ceil(count / columns))
         local gridHeight = rows * 80
         local totalHeight = 22 + gridHeight
@@ -4513,7 +4521,7 @@ function buildGestioUI()
         gridFrame.ZIndex = 6
 
         local grid = Instance.new("UIGridLayout", gridFrame)
-        grid.CellSize = UDim2.new(0, 108, 0, 72)
+        grid.CellSize = UDim2.new(0, UserInputService.TouchEnabled and 98 or 108, 0, 72)
         grid.CellPadding = UDim2.new(0, 8, 0, 8)
 
         return gridFrame
@@ -4571,7 +4579,7 @@ function buildGestioUI()
     Instance.new("UICorner", insAccent).CornerRadius = UDim.new(1, 0)
 
     local insGridFolder = Instance.new("Folder", inspectorPanel)
-    insGridFolder.Name = "GestioPanelGrid"
+    insGridFolder.Name = "XCPanelGrid"
     for r = 0, gridRows - 1 do
         for c = 0, 12 do
             local square = Instance.new("Frame", insGridFolder)
@@ -4840,100 +4848,100 @@ function buildGestioUI()
 
         if moduleName == "Tracking" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 580)
-            addPanelSlider(6, "FOV Radius", 50, 400, GestioConfig.aimFov, false, function(v) GestioConfig.aimFov = v end)
-            addPanelSlider(38, "Speed", 1.0, 50.0, GestioConfig.aimbotSpeed, true, function(v) GestioConfig.aimbotSpeed = v end)
-            addPanelSlider(70, "Smoothness", 0.0, 0.95, GestioConfig.aimbotSmoothness, true, function(v) GestioConfig.aimbotSmoothness = v end)
-            addPanelSlider(102, "Prediction Factor", 0.05, 0.3, GestioConfig.predictionFactor, true, function(v) GestioConfig.predictionFactor = v end)
-            addPanelToggle(140, "Body Priority", GestioConfig.bodyAimOnly, function(v) GestioConfig.bodyAimOnly = v end)
-            addPanelToggle(166, "Snap Lock Mode", GestioConfig.snapAimMode, function(v) GestioConfig.snapAimMode = v end)
-            addPanelToggle(192, "Prediction", GestioConfig.predictionEnabled, function(v) GestioConfig.predictionEnabled = v end)
-            addPanelToggle(218, "Show FOV Circle", GestioConfig.showFovCircle, function(v) GestioConfig.showFovCircle = v end)
-            addPanelToggle(244, "Visibility Check", GestioConfig.visibleCheck, function(v) GestioConfig.visibleCheck = v end)
+            addPanelSlider(6, "FOV Radius", 50, 400, XCConfig.aimFov, false, function(v) XCConfig.aimFov = v end)
+            addPanelSlider(38, "Speed", 1.0, 50.0, XCConfig.aimbotSpeed, true, function(v) XCConfig.aimbotSpeed = v end)
+            addPanelSlider(70, "Smoothness", 0.0, 0.95, XCConfig.aimbotSmoothness, true, function(v) XCConfig.aimbotSmoothness = v end)
+            addPanelSlider(102, "Prediction Factor", 0.05, 0.3, XCConfig.predictionFactor, true, function(v) XCConfig.predictionFactor = v end)
+            addPanelToggle(140, "Body Priority", XCConfig.bodyAimOnly, function(v) XCConfig.bodyAimOnly = v end)
+            addPanelToggle(166, "Snap Lock Mode", XCConfig.snapAimMode, function(v) XCConfig.snapAimMode = v end)
+            addPanelToggle(192, "Prediction", XCConfig.predictionEnabled, function(v) XCConfig.predictionEnabled = v end)
+            addPanelToggle(218, "Show FOV Circle", XCConfig.showFovCircle, function(v) XCConfig.showFovCircle = v end)
+            addPanelToggle(244, "Visibility Check", XCConfig.visibleCheck, function(v) XCConfig.visibleCheck = v end)
         elseif moduleName == "Silent Aim" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 290)
-            addPanelSlider(6, "FOV", 10, 360, GestioConfig.silentAimFov, false, function(v) GestioConfig.silentAimFov = v end)
-            addPanelSlider(38, "Hit Chance", 1, 100, GestioConfig.silentAimHitChance, false, function(v) GestioConfig.silentAimHitChance = v end)
-            addPanelToggle(70, "Team Check", GestioConfig.silentAimTeamCheck, function(v) GestioConfig.silentAimTeamCheck = v end)
-            addPanelToggle(96, "Visible Check", GestioConfig.silentAimVisibleCheck, function(v) GestioConfig.silentAimVisibleCheck = v end)
-            addPanelToggle(122, "Aim Head", GestioConfig.silentAimAimHead, function(v) GestioConfig.silentAimAimHead = v end)
-            addPanelToggle(148, "Show Silent FOV", GestioConfig.showSilentFovCircle, function(v) GestioConfig.showSilentFovCircle = v end)
-            addPanelToggle(174, "pSilent (Raycast)", GestioConfig.pSilentEnabled, function(v) GestioConfig.pSilentEnabled = v end)
-            addPanelToggle(200, "Advanced Wallbang", GestioConfig.wallbangEnabled, function(v) GestioConfig.wallbangEnabled = v end)
+            addPanelSlider(6, "FOV", 10, 360, XCConfig.silentAimFov, false, function(v) XCConfig.silentAimFov = v end)
+            addPanelSlider(38, "Hit Chance", 1, 100, XCConfig.silentAimHitChance, false, function(v) XCConfig.silentAimHitChance = v end)
+            addPanelToggle(70, "Team Check", XCConfig.silentAimTeamCheck, function(v) XCConfig.silentAimTeamCheck = v end)
+            addPanelToggle(96, "Visible Check", XCConfig.silentAimVisibleCheck, function(v) XCConfig.silentAimVisibleCheck = v end)
+            addPanelToggle(122, "Aim Head", XCConfig.silentAimAimHead, function(v) XCConfig.silentAimAimHead = v end)
+            addPanelToggle(148, "Show Silent FOV", XCConfig.showSilentFovCircle, function(v) XCConfig.showSilentFovCircle = v end)
+            addPanelToggle(174, "pSilent (Raycast)", XCConfig.pSilentEnabled, function(v) XCConfig.pSilentEnabled = v end)
+            addPanelToggle(200, "Advanced Wallbang", XCConfig.wallbangEnabled, function(v) XCConfig.wallbangEnabled = v end)
         elseif moduleName == "RageBot" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 150)
-            addPanelToggle(6, "Auto Fire", GestioConfig.rageAutoFire, function(v) GestioConfig.rageAutoFire = v end)
-            addPanelChoice(38, "Target Mode", {"Distance", "Health"}, GestioConfig.rageTargetMode, function(v) GestioConfig.rageTargetMode = v end)
-            addPanelSlider(76, "Rage FOV", 10, 360, GestioConfig.rageFov, false, function(v) GestioConfig.rageFov = v end)
+            addPanelToggle(6, "Auto Fire", XCConfig.rageAutoFire, function(v) XCConfig.rageAutoFire = v end)
+            addPanelChoice(38, "Target Mode", {"Distance", "Health"}, XCConfig.rageTargetMode, function(v) XCConfig.rageTargetMode = v end)
+            addPanelSlider(76, "Rage FOV", 10, 360, XCConfig.rageFov, false, function(v) XCConfig.rageFov = v end)
         elseif moduleName == "Chams" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 240)
-            addPanelSlider(6, "Fill Alpha", 0.0, 1.0, GestioConfig.chamsFillTransparency, true, function(v) GestioConfig.chamsFillTransparency = v end)
-            addPanelSlider(38, "Outline Alpha", 0.0, 1.0, GestioConfig.chamsOutlineTransparency, true, function(v) GestioConfig.chamsOutlineTransparency = v end)
-            addPanelToggle(76, "Team Check", GestioConfig.chamsTeamCheck, function(v) GestioConfig.chamsTeamCheck = v end)
-            addPanelToggle(102, "Show Teammates", GestioConfig.chamsShowTeammates, function(v) GestioConfig.chamsShowTeammates = v end)
-            addPanelToggle(128, "Occlusion Color (Walls)", GestioConfig.chamsOcclusion, function(v) GestioConfig.chamsOcclusion = v end)
+            addPanelSlider(6, "Fill Alpha", 0.0, 1.0, XCConfig.chamsFillTransparency, true, function(v) XCConfig.chamsFillTransparency = v end)
+            addPanelSlider(38, "Outline Alpha", 0.0, 1.0, XCConfig.chamsOutlineTransparency, true, function(v) XCConfig.chamsOutlineTransparency = v end)
+            addPanelToggle(76, "Team Check", XCConfig.chamsTeamCheck, function(v) XCConfig.chamsTeamCheck = v end)
+            addPanelToggle(102, "Show Teammates", XCConfig.chamsShowTeammates, function(v) XCConfig.chamsShowTeammates = v end)
+            addPanelToggle(128, "Occlusion Color (Walls)", XCConfig.chamsOcclusion, function(v) XCConfig.chamsOcclusion = v end)
         elseif moduleName == "No Recoil" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 110)
-            addPanelSlider(6, "Recoil Dampener", 0.1, 1.0, GestioConfig.recoilStrength, true, function(v)
-                GestioConfig.recoilStrength = v
+            addPanelSlider(6, "Recoil Dampener", 0.1, 1.0, XCConfig.recoilStrength, true, function(v)
+                XCConfig.recoilStrength = v
             end)
         elseif moduleName == "No Spread" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 80)
-            addPanelToggle(6, "MemeSense Spread Hook", GestioConfig.noSpreadEnabled, function(v)
-                GestioConfig.noSpreadEnabled = v
+            addPanelToggle(6, "XC Spread Hook", XCConfig.noSpreadEnabled, function(v)
+                XCConfig.noSpreadEnabled = v
             end)
         elseif moduleName == "FireRate" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 105)
-            addPanelToggle(6, "Enable FireRate", GestioConfig.fireRateEnabled, function(v)
-                GestioConfig.fireRateEnabled = v
+            addPanelToggle(6, "Enable FireRate", XCConfig.fireRateEnabled, function(v)
+                XCConfig.fireRateEnabled = v
             end)
-            addPanelSlider(38, "FireRate", 0.01, 1.0, GestioConfig.fireRate, true, function(v)
-                GestioConfig.fireRate = math.clamp(tonumber(v) or 0.01, 0.01, 1.0)
+            addPanelSlider(38, "FireRate", 0.01, 1.0, XCConfig.fireRate, true, function(v)
+                XCConfig.fireRate = math.clamp(tonumber(v) or 0.01, 0.01, 1.0)
             end)
         elseif moduleName == "Skin Changer" or moduleName == "Knife Changer" then
-            refreshGestioSkinData()
+            refreshXCSkinData()
             local knifeModels = {"Karambit", "Butterfly Knife", "Flip Knife", "Gut Knife", "M9 Bayonet", "Skeleton Knife", "Stiletto Knife"}
             local gloveModels = {}
             for name in pairs(skinData.GloveSelections) do gloveModels[#gloveModels + 1] = name end
             table.sort(gloveModels)
 
             insContent.CanvasSize = UDim2.new(0, 0, 0, 520)
-            addPanelToggle(6, "Weapon Skins", GestioConfig.skinChangerEnabled, function(v)
-                GestioConfig.skinChangerEnabled = v
+            addPanelToggle(6, "Weapon Skins", XCConfig.skinChangerEnabled, function(v)
+                XCConfig.skinChangerEnabled = v
                 if v then hookBloxStrikeModules() end
             end)
-            addPanelToggle(32, "Glove Changer", GestioConfig.gloveChangerEnabled, function(v)
-                GestioConfig.gloveChangerEnabled = v
+            addPanelToggle(32, "Glove Changer", XCConfig.gloveChangerEnabled, function(v)
+                XCConfig.gloveChangerEnabled = v
             end)
 
-            addPanelChoice(64, "Knife Model", knifeModels, GestioConfig.selectedKnifeType, function(selected)
-                GestioConfig.selectedKnifeType = selected
-                GestioConfig.weaponSkinSelections[selected] = GestioConfig.weaponSkinSelections[selected] or GestioConfig.selectedSkin
-                GestioConfig.selectedSkin = GestioConfig.weaponSkinSelections[selected] or "Default"
+            addPanelChoice(64, "Knife Model", knifeModels, XCConfig.selectedKnifeType, function(selected)
+                XCConfig.selectedKnifeType = selected
+                XCConfig.weaponSkinSelections[selected] = XCConfig.weaponSkinSelections[selected] or XCConfig.selectedSkin
+                XCConfig.selectedSkin = XCConfig.weaponSkinSelections[selected] or "Default"
                 hookBloxStrikeModules()
                 scanAndMorphKnives(camera)
                 openPanelFor("Skin Changer")
             end)
 
-            local knifeSkins = skinData.SkinSelections[GestioConfig.selectedKnifeType] or {"Default"}
-            addPanelChoice(100, "Knife Skin", knifeSkins, GestioConfig.selectedSkin, function(selected)
-                GestioConfig.selectedSkin = selected
-                GestioConfig.weaponSkinSelections[GestioConfig.selectedKnifeType] = selected
+            local knifeSkins = skinData.SkinSelections[XCConfig.selectedKnifeType] or {"Default"}
+            addPanelChoice(100, "Knife Skin", knifeSkins, XCConfig.selectedSkin, function(selected)
+                XCConfig.selectedSkin = selected
+                XCConfig.weaponSkinSelections[XCConfig.selectedKnifeType] = selected
                 scanAndMorphKnives(camera)
             end)
 
             if #gloveModels > 0 then
-                addPanelChoice(136, "Glove Model", gloveModels, GestioConfig.selectedGloveModel, function(selected)
-                    GestioConfig.selectedGloveModel = selected
+                addPanelChoice(136, "Glove Model", gloveModels, XCConfig.selectedGloveModel, function(selected)
+                    XCConfig.selectedGloveModel = selected
                     local choices = skinData.GloveSelections[selected] or {"Default"}
-                    GestioConfig.selectedGloveSkin = choices[1] or "Default"
-                    applyGestioGloves()
+                    XCConfig.selectedGloveSkin = choices[1] or "Default"
+                    applyXCGloves()
                     openPanelFor("Skin Changer")
                 end)
 
-                local gloveSkins = skinData.GloveSelections[GestioConfig.selectedGloveModel] or {"Default"}
-                addPanelChoice(172, "Glove Skin", gloveSkins, GestioConfig.selectedGloveSkin, function(selected)
-                    GestioConfig.selectedGloveSkin = selected
-                    applyGestioGloves()
+                local gloveSkins = skinData.GloveSelections[XCConfig.selectedGloveModel] or {"Default"}
+                addPanelChoice(172, "Glove Skin", gloveSkins, XCConfig.selectedGloveSkin, function(selected)
+                    XCConfig.selectedGloveSkin = selected
+                    applyXCGloves()
                 end)
             end
 
@@ -4950,10 +4958,10 @@ function buildGestioUI()
                 if y > 500 then break end
                 local choices = skinData.SkinSelections[weaponName]
                 if choices and #choices > 0 then
-                    addPanelChoice(y, weaponName, choices, GestioConfig.weaponSkinSelections[weaponName] or choices[1], function(selected)
-                        GestioConfig.weaponSkinSelections[weaponName] = selected
-                        if weaponName == GestioConfig.selectedKnifeType then
-                            GestioConfig.selectedSkin = selected
+                    addPanelChoice(y, weaponName, choices, XCConfig.weaponSkinSelections[weaponName] or choices[1], function(selected)
+                        XCConfig.weaponSkinSelections[weaponName] = selected
+                        if weaponName == XCConfig.selectedKnifeType then
+                            XCConfig.selectedSkin = selected
                         end
                         scanAndMorphKnives(camera)
                     end)
@@ -4962,199 +4970,199 @@ function buildGestioUI()
             end
         elseif moduleName == "Third Person" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 115)
-            addPanelSlider(6, "Distance", 5, 25, GestioConfig.thirdPersonDistance, false, function(v)
-                GestioConfig.thirdPersonDistance = v
+            addPanelSlider(6, "Distance", 5, 25, XCConfig.thirdPersonDistance, false, function(v)
+                XCConfig.thirdPersonDistance = v
                 refreshThirdPerson()
             end)
-            addPanelSlider(38, "Height", -1, 5, GestioConfig.thirdPersonHeight, false, function(v)
-                GestioConfig.thirdPersonHeight = v
+            addPanelSlider(38, "Height", -1, 5, XCConfig.thirdPersonHeight, false, function(v)
+                XCConfig.thirdPersonHeight = v
                 refreshThirdPerson()
             end)
         elseif moduleName == "Hitmarker" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 170)
-            addPanelSlider(6, "Duration", 0.10, 0.60, GestioConfig.hitmarkerDuration, true, function(v)
-                GestioConfig.hitmarkerDuration = v
+            addPanelSlider(6, "Duration", 0.10, 0.60, XCConfig.hitmarkerDuration, true, function(v)
+                XCConfig.hitmarkerDuration = v
             end)
-            addPanelSlider(38, "Size", 8, 24, GestioConfig.hitmarkerSize, false, function(v)
-                GestioConfig.hitmarkerSize = v
+            addPanelSlider(38, "Size", 8, 24, XCConfig.hitmarkerSize, false, function(v)
+                XCConfig.hitmarkerSize = v
                 for _, line in ipairs(hitmarkerLines) do
-                    line.Size = UDim2.new(0, GestioConfig.hitmarkerThickness, 0, GestioConfig.hitmarkerSize)
+                    line.Size = UDim2.new(0, XCConfig.hitmarkerThickness, 0, XCConfig.hitmarkerSize)
                 end
             end)
-            addPanelSlider(70, "Thickness", 1, 4, GestioConfig.hitmarkerThickness, false, function(v)
-                GestioConfig.hitmarkerThickness = v
+            addPanelSlider(70, "Thickness", 1, 4, XCConfig.hitmarkerThickness, false, function(v)
+                XCConfig.hitmarkerThickness = v
                 for _, line in ipairs(hitmarkerLines) do
-                    line.Size = UDim2.new(0, GestioConfig.hitmarkerThickness, 0, GestioConfig.hitmarkerSize)
+                    line.Size = UDim2.new(0, XCConfig.hitmarkerThickness, 0, XCConfig.hitmarkerSize)
                 end
             end)
-            addPanelToggle(108, "Neon Glow", GestioConfig.hitmarkerGlow, function(v)
-                GestioConfig.hitmarkerGlow = v
+            addPanelToggle(108, "Neon Glow", XCConfig.hitmarkerGlow, function(v)
+                XCConfig.hitmarkerGlow = v
                 for _, line in ipairs(hitmarkerLines) do
                     local glow = line:FindFirstChild("NeonGlow")
-                    if glow then glow.Thickness = GestioConfig.hitmarkerGlow and 2.5 or 0 end
+                    if glow then glow.Thickness = XCConfig.hitmarkerGlow and 2.5 or 0 end
                 end
             end)
         elseif moduleName == "Watermark" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 170)
-            addPanelToggle(6, "Show FPS", GestioConfig.watermarkShowFPS, function(v) GestioConfig.watermarkShowFPS = v end)
-            addPanelToggle(34, "Show Ping", GestioConfig.watermarkShowPing, function(v) GestioConfig.watermarkShowPing = v end)
-            addPanelToggle(62, "Show Name", GestioConfig.watermarkShowName, function(v) GestioConfig.watermarkShowName = v end)
-            addPanelChoice(90, "Style", {"GESTIO", "GESTIO • Player"}, GestioConfig.watermarkShowName and "GESTIO • Player" or "GESTIO", function(v) GestioConfig.watermarkShowName = (v == "GESTIO • Player") end)
+            addPanelToggle(6, "Show FPS", XCConfig.watermarkShowFPS, function(v) XCConfig.watermarkShowFPS = v end)
+            addPanelToggle(34, "Show Ping", XCConfig.watermarkShowPing, function(v) XCConfig.watermarkShowPing = v end)
+            addPanelToggle(62, "Show Name", XCConfig.watermarkShowName, function(v) XCConfig.watermarkShowName = v end)
+            addPanelChoice(90, "Style", {"XC", "XC • Player"}, XCConfig.watermarkShowName and "XC • Player" or "XC", function(v) XCConfig.watermarkShowName = (v == "XC • Player") end)
             addPanelToggle(126, "Accent Mode", true, function(v) end)
         elseif moduleName == "No Fall Damage" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 90)
-            addPanelToggle(6, "Disable Ragdoll/Fall", GestioConfig.noFallDamageEnabled, function(v) GestioConfig.noFallDamageEnabled = v end)
+            addPanelToggle(6, "Disable Ragdoll/Fall", XCConfig.noFallDamageEnabled, function(v) XCConfig.noFallDamageEnabled = v end)
         elseif moduleName == "Spectator List" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 150)
-            addPanelToggle(6, "Watcher Counter", GestioConfig.spectatorCounterEnabled, function(v) GestioConfig.spectatorCounterEnabled = v end)
-            addPanelToggle(34, "Hide When Empty", GestioConfig.spectatorHideEmpty, function(v) GestioConfig.spectatorHideEmpty = v end)
-            addPanelChoice(62, "Name Mode", {"Username", "Display name", "Both"}, GestioConfig.spectatorNameMode, function(v) GestioConfig.spectatorNameMode = v end)
+            addPanelToggle(6, "Watcher Counter", XCConfig.spectatorCounterEnabled, function(v) XCConfig.spectatorCounterEnabled = v end)
+            addPanelToggle(34, "Hide When Empty", XCConfig.spectatorHideEmpty, function(v) XCConfig.spectatorHideEmpty = v end)
+            addPanelChoice(62, "Name Mode", {"Username", "Display name", "Both"}, XCConfig.spectatorNameMode, function(v) XCConfig.spectatorNameMode = v end)
             addPanelSlider(98, "Panel Width", 150, 350, 210, false, function(v) if spectatorFrame then spectatorFrame.Size = UDim2.new(0, v, spectatorFrame.Size.Y.Scale, spectatorFrame.Size.Y.Offset) end end)
         elseif moduleName == "Animations" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 190)
-            addPanelToggle(6, "Loop", GestioConfig.animationLoop, function(v) GestioConfig.animationLoop = v end)
-            addPanelSlider(34, "Speed", 0.1, 3.0, GestioConfig.animationSpeed, true, function(v) GestioConfig.animationSpeed = v end)
+            addPanelToggle(6, "Loop", XCConfig.animationLoop, function(v) XCConfig.animationLoop = v end)
+            addPanelSlider(34, "Speed", 0.1, 3.0, XCConfig.animationSpeed, true, function(v) XCConfig.animationSpeed = v end)
             addPanelChoice(68, "Preset", {"Take The L"}, "Take The L", function(v)
-                if v == "Take The L" then GestioConfig.animationId = "73593666217037" end
+                if v == "Take The L" then XCConfig.animationId = "73593666217037" end
             end)
-            addPanelToggle(104, "Restart", false, function(v) if v then playGestioAnimation() end end)
+            addPanelToggle(104, "Restart", false, function(v) if v then playXCAnimation() end end)
         elseif moduleName == "Custom Hands" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 250)
-            addPanelSlider(6, "X Offset", -2, 2, GestioConfig.customHandsX, true, function(v) GestioConfig.customHandsX = v end)
-            addPanelSlider(38, "Y Offset", -2, 2, GestioConfig.customHandsY, true, function(v) GestioConfig.customHandsY = v end)
-            addPanelSlider(70, "Z Offset", -2, 2, GestioConfig.customHandsZ, true, function(v) GestioConfig.customHandsZ = v end)
-            addPanelSlider(102, "Pitch", -45, 45, GestioConfig.customHandsPitch, false, function(v) GestioConfig.customHandsPitch = v end)
-            addPanelSlider(134, "Yaw", -45, 45, GestioConfig.customHandsYaw, false, function(v) GestioConfig.customHandsYaw = v end)
-            addPanelSlider(166, "Roll", -90, 90, GestioConfig.customHandsRoll, false, function(v) GestioConfig.customHandsRoll = v end)
+            addPanelSlider(6, "X Offset", -2, 2, XCConfig.customHandsX, true, function(v) XCConfig.customHandsX = v end)
+            addPanelSlider(38, "Y Offset", -2, 2, XCConfig.customHandsY, true, function(v) XCConfig.customHandsY = v end)
+            addPanelSlider(70, "Z Offset", -2, 2, XCConfig.customHandsZ, true, function(v) XCConfig.customHandsZ = v end)
+            addPanelSlider(102, "Pitch", -45, 45, XCConfig.customHandsPitch, false, function(v) XCConfig.customHandsPitch = v end)
+            addPanelSlider(134, "Yaw", -45, 45, XCConfig.customHandsYaw, false, function(v) XCConfig.customHandsYaw = v end)
+            addPanelSlider(166, "Roll", -90, 90, XCConfig.customHandsRoll, false, function(v) XCConfig.customHandsRoll = v end)
         elseif moduleName == "Anti-Aim" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 100)
-            addPanelSlider(6, "Spin Speed", 10, 150, GestioConfig.spinSpeed, false, function(v) 
-                GestioConfig.spinSpeed = v 
+            addPanelSlider(6, "Spin Speed", 10, 150, XCConfig.spinSpeed, false, function(v) 
+                XCConfig.spinSpeed = v 
             end)
         elseif moduleName == "Slide" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 180)
-            addPanelSlider(6, "Speed Boost", 1.2, 3.0, GestioConfig.slideSpeedBoost, true, function(v) GestioConfig.slideSpeedBoost = v end)
-            addPanelSlider(38, "Friction", 0.85, 0.99, GestioConfig.slideFriction, true, function(v) GestioConfig.slideFriction = v end)
-            addPanelSlider(70, "Min Speed Threshold", 8, 24, GestioConfig.slideMinSpeed, false, function(v) GestioConfig.slideMinSpeed = v end)
+            addPanelSlider(6, "Speed Boost", 1.2, 3.0, XCConfig.slideSpeedBoost, true, function(v) XCConfig.slideSpeedBoost = v end)
+            addPanelSlider(38, "Friction", 0.85, 0.99, XCConfig.slideFriction, true, function(v) XCConfig.slideFriction = v end)
+            addPanelSlider(70, "Min Speed Threshold", 8, 24, XCConfig.slideMinSpeed, false, function(v) XCConfig.slideMinSpeed = v end)
         elseif moduleName == "Jump Circle" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 240)
-            addPanelSlider(6, "Radius", 1.5, 8.0, GestioConfig.jumpCircleRadius, true, function(v)
-                GestioConfig.jumpCircleRadius = v
+            addPanelSlider(6, "Radius", 1.5, 8.0, XCConfig.jumpCircleRadius, true, function(v)
+                XCConfig.jumpCircleRadius = v
                 if player.Character then initJumpCircleForCharacter(player.Character) end
             end)
-            addPanelSlider(38, "Segments", 12, 64, GestioConfig.jumpCircleSegmentCount, false, function(v)
-                GestioConfig.jumpCircleSegmentCount = v
+            addPanelSlider(38, "Segments", 12, 64, XCConfig.jumpCircleSegmentCount, false, function(v)
+                XCConfig.jumpCircleSegmentCount = v
                 if player.Character then initJumpCircleForCharacter(player.Character) end
             end)
-            addPanelChoice(80, "Style", {"GradientWave", "ChromaPulse", "StaticNeon"}, GestioConfig.jumpCircleStyle, function(v)
-                GestioConfig.jumpCircleStyle = v
+            addPanelChoice(80, "Style", {"GradientWave", "ChromaPulse", "StaticNeon"}, XCConfig.jumpCircleStyle, function(v)
+                XCConfig.jumpCircleStyle = v
                 if player.Character then initJumpCircleForCharacter(player.Character) end
             end)
         elseif moduleName == "Grenade ESP" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 220)
-            addPanelSlider(6, "Max Distance", 200, 3000, GestioConfig.grenadeMaxDist, false, function(v) GestioConfig.grenadeMaxDist = v end)
-            addPanelToggle(42, "Trajectory Path", GestioConfig.showGrenadePath, function(v) GestioConfig.showGrenadePath = v end)
-            addPanelToggle(70, "Molotov Radius", GestioConfig.showMolotovRadius, function(v) GestioConfig.showMolotovRadius = v end)
-            addPanelToggle(98, "Smoke Radius", GestioConfig.showSmokeRadius, function(v) GestioConfig.showSmokeRadius = v end)
+            addPanelSlider(6, "Max Distance", 200, 3000, XCConfig.grenadeMaxDist, false, function(v) XCConfig.grenadeMaxDist = v end)
+            addPanelToggle(42, "Trajectory Path", XCConfig.showGrenadePath, function(v) XCConfig.showGrenadePath = v end)
+            addPanelToggle(70, "Molotov Radius", XCConfig.showMolotovRadius, function(v) XCConfig.showMolotovRadius = v end)
+            addPanelToggle(98, "Smoke Radius", XCConfig.showSmokeRadius, function(v) XCConfig.showSmokeRadius = v end)
         elseif moduleName == "Bhop Engine" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 200)
-            addPanelSlider(6, "Jump Power", 30, 100, GestioConfig.bhopJumpPower, false, function(v) GestioConfig.bhopJumpPower = v end)
-            addPanelSlider(38, "Speed Boost", 1.0, 3.0, GestioConfig.bhopSpeedBoost, true, function(v) GestioConfig.bhopSpeedBoost = v end)
-            addPanelToggle(76, "Auto Jump (Always)", GestioConfig.bhopAutoJump, function(v) GestioConfig.bhopAutoJump = v end)
-            addPanelToggle(102, "Air Strafe", GestioConfig.bhopAirStrafe, function(v) GestioConfig.bhopAirStrafe = v end)
+            addPanelSlider(6, "Jump Power", 30, 100, XCConfig.bhopJumpPower, false, function(v) XCConfig.bhopJumpPower = v end)
+            addPanelSlider(38, "Speed Boost", 1.0, 3.0, XCConfig.bhopSpeedBoost, true, function(v) XCConfig.bhopSpeedBoost = v end)
+            addPanelToggle(76, "Auto Jump (Always)", XCConfig.bhopAutoJump, function(v) XCConfig.bhopAutoJump = v end)
+            addPanelToggle(102, "Air Strafe", XCConfig.bhopAirStrafe, function(v) XCConfig.bhopAirStrafe = v end)
         elseif moduleName == "Nametags" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 340)
-            addPanelSlider(6, "Max Distance", 100, 5000, GestioConfig.espMaxDist, false, function(v) GestioConfig.espMaxDist = v end)
-            addPanelSlider(38, "Text Size", 8, 20, GestioConfig.espTextSize, false, function(v) GestioConfig.espTextSize = v end)
-            addPanelSlider(70, "Transparency", 0.0, 0.9, GestioConfig.tagTransparency, true, function(v) GestioConfig.tagTransparency = v end)
-            addPanelToggle(108, "Show Distance", GestioConfig.espShowDistance, function(v) GestioConfig.espShowDistance = v end)
-            addPanelToggle(134, "Show Health", GestioConfig.espShowHealth, function(v) GestioConfig.espShowHealth = v end)
-            addPanelToggle(160, "Show Weapon", GestioConfig.tagShowWeapon, function(v) GestioConfig.tagShowWeapon = v end)
+            addPanelSlider(6, "Max Distance", 100, 5000, XCConfig.espMaxDist, false, function(v) XCConfig.espMaxDist = v end)
+            addPanelSlider(38, "Text Size", 8, 20, XCConfig.espTextSize, false, function(v) XCConfig.espTextSize = v end)
+            addPanelSlider(70, "Transparency", 0.0, 0.9, XCConfig.tagTransparency, true, function(v) XCConfig.tagTransparency = v end)
+            addPanelToggle(108, "Show Distance", XCConfig.espShowDistance, function(v) XCConfig.espShowDistance = v end)
+            addPanelToggle(134, "Show Health", XCConfig.espShowHealth, function(v) XCConfig.espShowHealth = v end)
+            addPanelToggle(160, "Show Weapon", XCConfig.tagShowWeapon, function(v) XCConfig.tagShowWeapon = v end)
         elseif moduleName == "Box Overlay" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 200)
-            addPanelSlider(6, "Max Distance", 100, 5000, GestioConfig.espMaxDist, false, function(v) GestioConfig.espMaxDist = v end)
-            addPanelSlider(38, "Thickness", 1.0, 3.0, GestioConfig.boxThickness, true, function(v) GestioConfig.boxThickness = v end)
-            addPanelToggle(76, "Corner Box", GestioConfig.cornerBoxEnabled, function(v) GestioConfig.cornerBoxEnabled = v end)
-            addPanelToggle(108, "Health Bar", GestioConfig.healthBarEnabled, function(v) GestioConfig.healthBarEnabled = v end)
+            addPanelSlider(6, "Max Distance", 100, 5000, XCConfig.espMaxDist, false, function(v) XCConfig.espMaxDist = v end)
+            addPanelSlider(38, "Thickness", 1.0, 3.0, XCConfig.boxThickness, true, function(v) XCConfig.boxThickness = v end)
+            addPanelToggle(76, "Corner Box", XCConfig.cornerBoxEnabled, function(v) XCConfig.cornerBoxEnabled = v end)
+            addPanelToggle(108, "Health Bar", XCConfig.healthBarEnabled, function(v) XCConfig.healthBarEnabled = v end)
         elseif moduleName == "World Changer" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 520)
-            addPanelChoice(6, "World Preset", {"Midnight", "Nebula", "DeepBlood", "CyberPurple", "EmeraldNight", "PitchBlack"}, GestioConfig.nightPreset, function(selected)
+            addPanelChoice(6, "World Preset", {"Midnight", "Nebula", "DeepBlood", "CyberPurple", "EmeraldNight", "PitchBlack"}, XCConfig.nightPreset, function(selected)
                 applyNightPreset(selected)
             end)
-            addPanelSlider(48, "Brightness", 0.0, 5.0, GestioConfig.nightBrightness, true, function(v) GestioConfig.nightBrightness=v; if GestioConfig.nightModeEnabled then Lighting.Brightness=v end end)
-            addPanelSlider(80, "Clock Time", 0.0, 24.0, GestioConfig.nightClockTime, true, function(v) GestioConfig.nightClockTime=v; if GestioConfig.nightModeEnabled then Lighting.ClockTime=v end end)
-            addPanelToggle(112, "Custom Skybox", GestioConfig.worldSkyboxEnabled, function(v) GestioConfig.worldSkyboxEnabled=v; updateWorldChanger() end)
-            addPanelChoice(138, "Skybox", {"Night","Ocean Sunset","My Summer Car","Minecraft","Deep Space","Clouded Sky","City"}, GestioConfig.worldSkyboxPreset, function(v) GestioConfig.worldSkyboxPreset=v; updateWorldChanger() end)
-            addPanelSlider(174, "Fog Start", 0, 5000, GestioConfig.worldFogStart, false, function(v) GestioConfig.worldFogStart=v; updateWorldChanger() end)
-            addPanelSlider(206, "Fog End", 50, 100000, GestioConfig.worldFogEnd, false, function(v) GestioConfig.worldFogEnd=v; updateWorldChanger() end)
-            addPanelToggle(238, "Post FX", GestioConfig.worldPostFXEnabled, function(v) GestioConfig.worldPostFXEnabled=v; updateWorldPostFX() end)
-            addPanelSlider(264, "Exposure", -3, 3, GestioConfig.worldExposure, true, function(v) GestioConfig.worldExposure=v; updateWorldPostFX() end)
-            addPanelSlider(296, "Saturation", -1, 1, GestioConfig.worldSaturation, true, function(v) GestioConfig.worldSaturation=v; updateWorldPostFX() end)
-            addPanelSlider(328, "Contrast", -1, 1, GestioConfig.worldContrast, true, function(v) GestioConfig.worldContrast=v; updateWorldPostFX() end)
-            addPanelSlider(360, "Tint Red", 0, 255, GestioConfig.worldColorR, false, function(v) GestioConfig.worldColorR=v; updateWorldPostFX() end)
-            addPanelSlider(392, "Tint Green", 0, 255, GestioConfig.worldColorG, false, function(v) GestioConfig.worldColorG=v; updateWorldPostFX() end)
-            addPanelSlider(424, "Tint Blue", 0, 255, GestioConfig.worldColorB, false, function(v) GestioConfig.worldColorB=v; updateWorldPostFX() end)
+            addPanelSlider(48, "Brightness", 0.0, 5.0, XCConfig.nightBrightness, true, function(v) XCConfig.nightBrightness=v; if XCConfig.nightModeEnabled then Lighting.Brightness=v end end)
+            addPanelSlider(80, "Clock Time", 0.0, 24.0, XCConfig.nightClockTime, true, function(v) XCConfig.nightClockTime=v; if XCConfig.nightModeEnabled then Lighting.ClockTime=v end end)
+            addPanelToggle(112, "Custom Skybox", XCConfig.worldSkyboxEnabled, function(v) XCConfig.worldSkyboxEnabled=v; updateWorldChanger() end)
+            addPanelChoice(138, "Skybox", {"Night","Ocean Sunset","My Summer Car","Minecraft","Deep Space","Clouded Sky","City"}, XCConfig.worldSkyboxPreset, function(v) XCConfig.worldSkyboxPreset=v; updateWorldChanger() end)
+            addPanelSlider(174, "Fog Start", 0, 5000, XCConfig.worldFogStart, false, function(v) XCConfig.worldFogStart=v; updateWorldChanger() end)
+            addPanelSlider(206, "Fog End", 50, 100000, XCConfig.worldFogEnd, false, function(v) XCConfig.worldFogEnd=v; updateWorldChanger() end)
+            addPanelToggle(238, "Post FX", XCConfig.worldPostFXEnabled, function(v) XCConfig.worldPostFXEnabled=v; updateWorldPostFX() end)
+            addPanelSlider(264, "Exposure", -3, 3, XCConfig.worldExposure, true, function(v) XCConfig.worldExposure=v; updateWorldPostFX() end)
+            addPanelSlider(296, "Saturation", -1, 1, XCConfig.worldSaturation, true, function(v) XCConfig.worldSaturation=v; updateWorldPostFX() end)
+            addPanelSlider(328, "Contrast", -1, 1, XCConfig.worldContrast, true, function(v) XCConfig.worldContrast=v; updateWorldPostFX() end)
+            addPanelSlider(360, "Tint Red", 0, 255, XCConfig.worldColorR, false, function(v) XCConfig.worldColorR=v; updateWorldPostFX() end)
+            addPanelSlider(392, "Tint Green", 0, 255, XCConfig.worldColorG, false, function(v) XCConfig.worldColorG=v; updateWorldPostFX() end)
+            addPanelSlider(424, "Tint Blue", 0, 255, XCConfig.worldColorB, false, function(v) XCConfig.worldColorB=v; updateWorldPostFX() end)
         elseif moduleName == "Bullet Trail" then
             insContent.CanvasSize = UDim2.new(0,0,0,260)
-            addPanelChoice(6,"Tracer Style", {"Block","Cylinder"}, GestioConfig.bulletTracerStyle, function(v) GestioConfig.bulletTracerStyle=v end)
-            addPanelSlider(38,"Duration",0.05,3,GestioConfig.bulletTracerDuration,true,function(v) GestioConfig.bulletTracerDuration=v end)
-            addPanelSlider(70,"Width",0.02,0.5,GestioConfig.bulletTracerWidth,true,function(v) GestioConfig.bulletTracerWidth=v end)
-            addPanelToggle(102,"Rainbow",GestioConfig.bulletTracerRainbow,function(v) GestioConfig.bulletTracerRainbow=v end)
-            addPanelToggle(128,"Bullet Impacts",GestioConfig.bulletImpactEnabled,function(v) GestioConfig.bulletImpactEnabled=v end)
-            addPanelSlider(154,"Impact Size",0.05,1.5,GestioConfig.bulletImpactSize,true,function(v) GestioConfig.bulletImpactSize=v end)
-            addPanelSlider(186,"Tracer Red",0,255,GestioConfig.bulletTracerColorR,false,function(v) GestioConfig.bulletTracerColorR=v end)
-            addPanelSlider(218,"Tracer Green",0,255,GestioConfig.bulletTracerColorG,false,function(v) GestioConfig.bulletTracerColorG=v end)
-            addPanelSlider(250,"Tracer Blue",0,255,GestioConfig.bulletTracerColorB,false,function(v) GestioConfig.bulletTracerColorB=v end)
+            addPanelChoice(6,"Tracer Style", {"Block","Cylinder"}, XCConfig.bulletTracerStyle, function(v) XCConfig.bulletTracerStyle=v end)
+            addPanelSlider(38,"Duration",0.05,3,XCConfig.bulletTracerDuration,true,function(v) XCConfig.bulletTracerDuration=v end)
+            addPanelSlider(70,"Width",0.02,0.5,XCConfig.bulletTracerWidth,true,function(v) XCConfig.bulletTracerWidth=v end)
+            addPanelToggle(102,"Rainbow",XCConfig.bulletTracerRainbow,function(v) XCConfig.bulletTracerRainbow=v end)
+            addPanelToggle(128,"Bullet Impacts",XCConfig.bulletImpactEnabled,function(v) XCConfig.bulletImpactEnabled=v end)
+            addPanelSlider(154,"Impact Size",0.05,1.5,XCConfig.bulletImpactSize,true,function(v) XCConfig.bulletImpactSize=v end)
+            addPanelSlider(186,"Tracer Red",0,255,XCConfig.bulletTracerColorR,false,function(v) XCConfig.bulletTracerColorR=v end)
+            addPanelSlider(218,"Tracer Green",0,255,XCConfig.bulletTracerColorG,false,function(v) XCConfig.bulletTracerColorG=v end)
+            addPanelSlider(250,"Tracer Blue",0,255,XCConfig.bulletTracerColorB,false,function(v) XCConfig.bulletTracerColorB=v end)
         elseif moduleName == "Cube Checker" then
             insContent.CanvasSize = UDim2.new(0,0,0,270)
-            addPanelToggle(6,"Rainbow",GestioConfig.cubeCheckerRainbow,function(v) GestioConfig.cubeCheckerRainbow=v end)
-            addPanelSlider(38,"Cube Size",0.1,5,GestioConfig.cubeCheckerSize,true,function(v) GestioConfig.cubeCheckerSize=v end)
-            addPanelSlider(70,"Max Distance",1,100,GestioConfig.cubeCheckerDistance,false,function(v) GestioConfig.cubeCheckerDistance=v end)
-            addPanelSlider(102,"Outline Thickness",0.01,0.2,GestioConfig.cubeCheckerLineThickness,true,function(v) GestioConfig.cubeCheckerLineThickness=v end)
-            addPanelSlider(134,"Outline Fade",0,1,GestioConfig.cubeCheckerTransparency,true,function(v) GestioConfig.cubeCheckerTransparency=v end)
-            addPanelSlider(166,"Color Red",0,255,GestioConfig.bulletTracerColorR,false,function(v) GestioConfig.bulletTracerColorR=v end)
-            addPanelSlider(198,"Color Green",0,255,GestioConfig.bulletTracerColorG,false,function(v) GestioConfig.bulletTracerColorG=v end)
-            addPanelSlider(230,"Color Blue",0,255,GestioConfig.bulletTracerColorB,false,function(v) GestioConfig.bulletTracerColorB=v end)
+            addPanelToggle(6,"Rainbow",XCConfig.cubeCheckerRainbow,function(v) XCConfig.cubeCheckerRainbow=v end)
+            addPanelSlider(38,"Cube Size",0.1,5,XCConfig.cubeCheckerSize,true,function(v) XCConfig.cubeCheckerSize=v end)
+            addPanelSlider(70,"Max Distance",1,100,XCConfig.cubeCheckerDistance,false,function(v) XCConfig.cubeCheckerDistance=v end)
+            addPanelSlider(102,"Outline Thickness",0.01,0.2,XCConfig.cubeCheckerLineThickness,true,function(v) XCConfig.cubeCheckerLineThickness=v end)
+            addPanelSlider(134,"Outline Fade",0,1,XCConfig.cubeCheckerTransparency,true,function(v) XCConfig.cubeCheckerTransparency=v end)
+            addPanelSlider(166,"Color Red",0,255,XCConfig.bulletTracerColorR,false,function(v) XCConfig.bulletTracerColorR=v end)
+            addPanelSlider(198,"Color Green",0,255,XCConfig.bulletTracerColorG,false,function(v) XCConfig.bulletTracerColorG=v end)
+            addPanelSlider(230,"Color Blue",0,255,XCConfig.bulletTracerColorB,false,function(v) XCConfig.bulletTracerColorB=v end)
         elseif moduleName == "Weapon Chams" then
             insContent.CanvasSize = UDim2.new(0,0,0,300)
-            addPanelChoice(6,"Style",{"Glass","ForceField","Metal","Highlight","Neon"},GestioConfig.weaponChamsMode,function(v) GestioConfig.weaponChamsMode=v end)
-            addPanelSlider(38,"Fade",0,1,GestioConfig.weaponChamsTransparency,true,function(v) GestioConfig.weaponChamsTransparency=v end)
-            addPanelSlider(70,"Surface",0,1,GestioConfig.weaponChamsReflectance,true,function(v) GestioConfig.weaponChamsReflectance=v end)
-            addPanelSlider(102,"Tone R",0,255,GestioConfig.weaponChamsColorR,false,function(v) GestioConfig.weaponChamsColorR=v end)
-            addPanelSlider(134,"Tone G",0,255,GestioConfig.weaponChamsColorG,false,function(v) GestioConfig.weaponChamsColorG=v end)
-            addPanelSlider(166,"Tone B",0,255,GestioConfig.weaponChamsColorB,false,function(v) GestioConfig.weaponChamsColorB=v end)
+            addPanelChoice(6,"Style",{"Glass","ForceField","Metal","Highlight","Neon"},XCConfig.weaponChamsMode,function(v) XCConfig.weaponChamsMode=v end)
+            addPanelSlider(38,"Fade",0,1,XCConfig.weaponChamsTransparency,true,function(v) XCConfig.weaponChamsTransparency=v end)
+            addPanelSlider(70,"Surface",0,1,XCConfig.weaponChamsReflectance,true,function(v) XCConfig.weaponChamsReflectance=v end)
+            addPanelSlider(102,"Tone R",0,255,XCConfig.weaponChamsColorR,false,function(v) XCConfig.weaponChamsColorR=v end)
+            addPanelSlider(134,"Tone G",0,255,XCConfig.weaponChamsColorG,false,function(v) XCConfig.weaponChamsColorG=v end)
+            addPanelSlider(166,"Tone B",0,255,XCConfig.weaponChamsColorB,false,function(v) XCConfig.weaponChamsColorB=v end)
         elseif moduleName == "Custom FOV" then
             insContent.CanvasSize = UDim2.new(0,0,0,120)
-            addPanelToggle(6,"Enable Custom FOV",GestioConfig.customFovEnabled,function(v) GestioConfig.customFovEnabled=v end)
-            addPanelSlider(38,"FOV Amount",70,120,GestioConfig.customFov,false,function(v) GestioConfig.customFov=v end)
+            addPanelToggle(6,"Enable Custom FOV",XCConfig.customFovEnabled,function(v) XCConfig.customFovEnabled=v end)
+            addPanelSlider(38,"FOV Amount",70,120,XCConfig.customFov,false,function(v) XCConfig.customFov=v end)
         elseif moduleName == "Custom Scope" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 600)
-            addPanelToggle(6,"Remove Original Scope",GestioConfig.scopeRemoveOriginal,function(v) GestioConfig.scopeRemoveOriginal=v end)
-            addPanelToggle(32,"Custom FOV",GestioConfig.scopeFovEnabled,function(v) GestioConfig.scopeFovEnabled=v end)
-            addPanelSlider(58,"Scope FOV",10,120,GestioConfig.scopeFov,false,function(v) GestioConfig.scopeFov=v end)
-            addPanelToggle(90,"Scope Crosshair",GestioConfig.scopeCrosshairEnabled,function(v) GestioConfig.scopeCrosshairEnabled=v end)
-            addPanelChoice(116,"Style",{"Cross","T","X","Dot"},GestioConfig.scopeCrosshairStyle or "Cross",function(v) GestioConfig.scopeCrosshairStyle=v end)
-            addPanelToggle(148,"Left Arm",GestioConfig.scopeCrosshairLeft,function(v) GestioConfig.scopeCrosshairLeft=v end)
-            addPanelToggle(174,"Right Arm",GestioConfig.scopeCrosshairRight,function(v) GestioConfig.scopeCrosshairRight=v end)
-            addPanelToggle(200,"Top Arm",GestioConfig.scopeCrosshairTop,function(v) GestioConfig.scopeCrosshairTop=v end)
-            addPanelToggle(226,"Bottom Arm",GestioConfig.scopeCrosshairBottom,function(v) GestioConfig.scopeCrosshairBottom=v end)
-            addPanelToggle(252,"Center Dot",GestioConfig.scopeCrosshairDot,function(v) GestioConfig.scopeCrosshairDot=v end)
-            addPanelToggle(278,"Dynamic Gap",GestioConfig.scopeDynamicGap,function(v) GestioConfig.scopeDynamicGap=v end)
-            addPanelSlider(304,"Length",5,300,GestioConfig.scopeCrosshairLength,false,function(v) GestioConfig.scopeCrosshairLength=v end)
-            addPanelSlider(336,"Thickness",1,12,GestioConfig.scopeCrosshairThickness,false,function(v) GestioConfig.scopeCrosshairThickness=v end)
-            addPanelSlider(368,"Gap",0,80,GestioConfig.scopeCrosshairGap,false,function(v) GestioConfig.scopeCrosshairGap=v end)
-            addPanelSlider(400,"Opacity",0,1,GestioConfig.scopeCrosshairOpacity or 0,true,function(v) GestioConfig.scopeCrosshairOpacity=v end)
-            addPanelSlider(432,"Red",0,255,GestioConfig.scopeCrosshairColorR,false,function(v) GestioConfig.scopeCrosshairColorR=v end)
-            addPanelSlider(464,"Green",0,255,GestioConfig.scopeCrosshairColorG,false,function(v) GestioConfig.scopeCrosshairColorG=v end)
-            addPanelSlider(496,"Blue",0,255,GestioConfig.scopeCrosshairColorB,false,function(v) GestioConfig.scopeCrosshairColorB=v end)
-            addPanelToggle(528,"Reticle Outline",GestioConfig.scopeCrosshairOutline,function(v) GestioConfig.scopeCrosshairOutline=v end)
-            addPanelSlider(554,"Outline Size",1,6,GestioConfig.scopeCrosshairOutlineThickness or 1,false,function(v) GestioConfig.scopeCrosshairOutlineThickness=v end)
+            addPanelToggle(6,"Remove Original Scope",XCConfig.scopeRemoveOriginal,function(v) XCConfig.scopeRemoveOriginal=v end)
+            addPanelToggle(32,"Custom FOV",XCConfig.scopeFovEnabled,function(v) XCConfig.scopeFovEnabled=v end)
+            addPanelSlider(58,"Scope FOV",10,120,XCConfig.scopeFov,false,function(v) XCConfig.scopeFov=v end)
+            addPanelToggle(90,"Scope Crosshair",XCConfig.scopeCrosshairEnabled,function(v) XCConfig.scopeCrosshairEnabled=v end)
+            addPanelChoice(116,"Style",{"Cross","T","X","Dot"},XCConfig.scopeCrosshairStyle or "Cross",function(v) XCConfig.scopeCrosshairStyle=v end)
+            addPanelToggle(148,"Left Arm",XCConfig.scopeCrosshairLeft,function(v) XCConfig.scopeCrosshairLeft=v end)
+            addPanelToggle(174,"Right Arm",XCConfig.scopeCrosshairRight,function(v) XCConfig.scopeCrosshairRight=v end)
+            addPanelToggle(200,"Top Arm",XCConfig.scopeCrosshairTop,function(v) XCConfig.scopeCrosshairTop=v end)
+            addPanelToggle(226,"Bottom Arm",XCConfig.scopeCrosshairBottom,function(v) XCConfig.scopeCrosshairBottom=v end)
+            addPanelToggle(252,"Center Dot",XCConfig.scopeCrosshairDot,function(v) XCConfig.scopeCrosshairDot=v end)
+            addPanelToggle(278,"Dynamic Gap",XCConfig.scopeDynamicGap,function(v) XCConfig.scopeDynamicGap=v end)
+            addPanelSlider(304,"Length",5,300,XCConfig.scopeCrosshairLength,false,function(v) XCConfig.scopeCrosshairLength=v end)
+            addPanelSlider(336,"Thickness",1,12,XCConfig.scopeCrosshairThickness,false,function(v) XCConfig.scopeCrosshairThickness=v end)
+            addPanelSlider(368,"Gap",0,80,XCConfig.scopeCrosshairGap,false,function(v) XCConfig.scopeCrosshairGap=v end)
+            addPanelSlider(400,"Opacity",0,1,XCConfig.scopeCrosshairOpacity or 0,true,function(v) XCConfig.scopeCrosshairOpacity=v end)
+            addPanelSlider(432,"Red",0,255,XCConfig.scopeCrosshairColorR,false,function(v) XCConfig.scopeCrosshairColorR=v end)
+            addPanelSlider(464,"Green",0,255,XCConfig.scopeCrosshairColorG,false,function(v) XCConfig.scopeCrosshairColorG=v end)
+            addPanelSlider(496,"Blue",0,255,XCConfig.scopeCrosshairColorB,false,function(v) XCConfig.scopeCrosshairColorB=v end)
+            addPanelToggle(528,"Reticle Outline",XCConfig.scopeCrosshairOutline,function(v) XCConfig.scopeCrosshairOutline=v end)
+            addPanelSlider(554,"Outline Size",1,6,XCConfig.scopeCrosshairOutlineThickness or 1,false,function(v) XCConfig.scopeCrosshairOutlineThickness=v end)
 
         elseif moduleName == "RCS" then
             insContent.CanvasSize = UDim2.new(0, 0, 0, 240)
-            addPanelSlider(6, "RCS Strength", 10, 100, GestioConfig.rcsStrength, false, function(v) GestioConfig.rcsStrength = v end)
-            addPanelSlider(38, "Pitch Factor", 0.1, 2.0, GestioConfig.rcsPitchFactor, true, function(v) GestioConfig.rcsPitchFactor = v end)
-            addPanelSlider(70, "Yaw Factor", 0.1, 2.0, GestioConfig.rcsYawFactor, true, function(v) GestioConfig.rcsYawFactor = v end)
+            addPanelSlider(6, "RCS Strength", 10, 100, XCConfig.rcsStrength, false, function(v) XCConfig.rcsStrength = v end)
+            addPanelSlider(38, "Pitch Factor", 0.1, 2.0, XCConfig.rcsPitchFactor, true, function(v) XCConfig.rcsPitchFactor = v end)
+            addPanelSlider(70, "Yaw Factor", 0.1, 2.0, XCConfig.rcsYawFactor, true, function(v) XCConfig.rcsYawFactor = v end)
         end
     end
 
@@ -5166,7 +5174,7 @@ function buildGestioUI()
         card.ZIndex = 7
         Instance.new("UICorner", card).CornerRadius = UDim.new(0, 6)
 
-        local initialVal = GestioConfig[configKey]
+        local initialVal = XCConfig[configKey]
         local stroke = Instance.new("UIStroke", card)
         stroke.Color = initialVal and currentTheme.Accent or currentTheme.Border
         stroke.Thickness = initialVal and 1.2 or 0.8
@@ -5207,12 +5215,12 @@ function buildGestioUI()
         UI_Bind_Registry[configKey] = updateCardVisual
 
         bindTouch(btn, function()
-            local newState = not GestioConfig[configKey]
-            GestioConfig[configKey] = newState
+            local newState = not XCConfig[configKey]
+            XCConfig[configKey] = newState
             updateCardVisual(newState)
             if onToggle then onToggle(newState) end
             if configKey ~= "settingsShowNotifications" then
-                GestioNotify(title, newState and "Enabled" or "Disabled", newState and "success" or "warning", 1.8)
+                XCNotify(title, newState and "Enabled" or "Disabled", newState and "success" or "warning", 1.8)
             end
         end)
 
@@ -5287,17 +5295,17 @@ function buildGestioUI()
         end
     end, true)
     createModuleCard(sGrid, "Glove Changer", "gloveChangerEnabled", function(v)
-        if v then applyGestioGloves() end
+        if v then applyXCGloves() end
     end, true)
 
     local envGrid = makeCategorySection(envPage, "Atmosphere", 1, 5)
     createModuleCard(envGrid, "World Changer", "nightModeEnabled", function(v)
-        if v then applyNightPreset(GestioConfig.nightPreset); updateWorldChanger() else restoreLightingState() end
+        if v then applyNightPreset(XCConfig.nightPreset); updateWorldChanger() else restoreLightingState() end
     end, true)
     createModuleCard(envGrid, "Custom Scope", "customScopeEnabled", nil, true)
     createModuleCard(envGrid, "Custom FOV", "customFovEnabled", nil, true)
     createModuleCard(envGrid, "FullBright", "fullBrightEnabled", function(v)
-        if not v and not GestioConfig.nightModeEnabled then restoreLightingState() end
+        if not v and not XCConfig.nightModeEnabled then restoreLightingState() end
     end, false)
     createModuleCard(envGrid, "Remove Fog", "removeFogEnabled", function(v)
         if not v then restoreLightingState() end
@@ -5309,11 +5317,11 @@ function buildGestioUI()
     createModuleCard(micsGrid, "Third Person", "thirdPersonEnabled", function(v) setThirdPersonEnabled(v) end, true)
     createModuleCard(micsGrid, "Anti AFK", "antiAfkEnabled", function(v) setAntiAfkEnabled(v) end, false)
     createModuleCard(micsGrid, "Spectator List", "spectatorListEnabled", function(v) if v then buildSpectatorGui() end end, true)
-    createModuleCard(micsGrid, "Animations", "animationsEnabled", function(v) if v then playGestioAnimation() else stopGestioAnimation() end end, true)
+    createModuleCard(micsGrid, "Animations", "animationsEnabled", function(v) if v then playXCAnimation() else stopXCAnimation() end end, true)
     createModuleCard(micsGrid, "Custom Hands", "customHandsEnabled", nil, true)
 
     -- CONFIG & THEMES
-    local cfgFolder = "GestioConfigs"
+    local cfgFolder = "XCConfigs"
     pcall(function()
         if makefolder and not isfolder(cfgFolder) then
             makefolder(cfgFolder)
@@ -5368,16 +5376,22 @@ function buildGestioUI()
     uiScaleBtn.TextSize = 8
     uiScaleBtn.Font = Enum.Font.GothamBold
     Instance.new("UICorner", uiScaleBtn).CornerRadius = UDim.new(0,4)
-    local scaleValues = {0.8, 0.9, 1.0, 1.1, 1.2}
+    local scaleValues = {0.7, 0.8, 0.85, 0.9, 1.0, 1.1}
     local scaleIndex = 3
     local scaleObject = Instance.new("UIScale", masterFrame)
-    scaleObject.Scale = GestioConfig.uiScale or 1
+    -- Keep the menu slightly smaller on touch devices. Desktop keeps the
+    -- configured scale, while phones are capped at 85%.
+    scaleObject.Scale = UserInputService.TouchEnabled
+        and math.min(XCConfig.uiScale or 1, 0.85)
+        or (XCConfig.uiScale or 1)
     for i,v in ipairs(scaleValues) do if math.abs(v-scaleObject.Scale)<0.01 then scaleIndex=i end end
     uiScaleBtn.Text = "UI SCALE: " .. math.floor(scaleObject.Scale*100) .. "%"
     bindTouch(uiScaleBtn, function()
         scaleIndex = (scaleIndex % #scaleValues) + 1
-        scaleObject.Scale = scaleValues[scaleIndex]
-        GestioConfig.uiScale = scaleObject.Scale
+        XCConfig.uiScale = scaleValues[scaleIndex]
+        scaleObject.Scale = UserInputService.TouchEnabled
+            and math.min(XCConfig.uiScale, 0.85)
+            or XCConfig.uiScale
         uiScaleBtn.Text = "UI SCALE: " .. math.floor(scaleObject.Scale*100) .. "%"
     end)
 
@@ -5396,18 +5410,18 @@ function buildGestioUI()
     keyBtn.Size = UDim2.new(1,-10,0,24)
     keyBtn.Position = UDim2.new(0,5,0,9)
     keyBtn.BackgroundColor3 = currentTheme.Sidebar
-    keyBtn.Text = "MENU KEY: " .. (GestioConfig.menuKey or "RightShift")
+    keyBtn.Text = "MENU KEY: " .. (XCConfig.menuKey or "RightShift")
     keyBtn.TextColor3 = currentTheme.Accent
     keyBtn.TextSize = 8
     keyBtn.Font = Enum.Font.GothamBold
     Instance.new("UICorner", keyBtn).CornerRadius = UDim.new(0,4)
     local menuKeys={"RightShift","LeftControl","RightControl","F6","F7","F8","F9","F10"}
     local menuKeyIndex=1
-    for i,k in ipairs(menuKeys) do if k==GestioConfig.menuKey then menuKeyIndex=i break end end
+    for i,k in ipairs(menuKeys) do if k==XCConfig.menuKey then menuKeyIndex=i break end end
     bindTouch(keyBtn,function()
         menuKeyIndex=(menuKeyIndex%#menuKeys)+1
-        GestioConfig.menuKey=menuKeys[menuKeyIndex]
-        keyBtn.Text="MENU KEY: "..GestioConfig.menuKey
+        XCConfig.menuKey=menuKeys[menuKeyIndex]
+        keyBtn.Text="MENU KEY: "..XCConfig.menuKey
     end)
 
     local cfgSection = Instance.new("Frame", setsPage)
@@ -5539,7 +5553,7 @@ function buildGestioUI()
 
     local function saveConfig(name)
         if name == "" or not writefile then return end
-        local ok, data = pcall(function() return HttpService:JSONEncode(GestioConfig) end)
+        local ok, data = pcall(function() return HttpService:JSONEncode(XCConfig) end)
         if ok then
             writefile(cfgFolder .. "/" .. name .. ".json", data)
             activeCfgLabel.Text = "ACTIVE: " .. name
@@ -5554,17 +5568,17 @@ function buildGestioUI()
         local ok2, data = pcall(function() return HttpService:JSONDecode(content) end)
         if ok2 and type(data) == "table" then
             for k, v in pairs(data) do
-                GestioConfig[k] = v
+                XCConfig[k] = v
                 if UI_Bind_Registry[k] then UI_Bind_Registry[k](v) end
             end
             updateMobileSlideVisibility()
             refreshThirdPerson()
-            if UI_Bind_Registry.settingsCompactMode then UI_Bind_Registry.settingsCompactMode(GestioConfig.settingsCompactMode) end
+            if UI_Bind_Registry.settingsCompactMode then UI_Bind_Registry.settingsCompactMode(XCConfig.settingsCompactMode) end
             setWeaponVisuals()
             updateCustomScope()
             updateWorldPostFX()
-            if GestioConfig.nightModeEnabled then
-                applyNightPreset(GestioConfig.nightPreset)
+            if XCConfig.nightModeEnabled then
+                applyNightPreset(XCConfig.nightPreset)
             else
                 restoreLightingState()
             end
@@ -5582,7 +5596,7 @@ function buildGestioUI()
     bindTouch(btnLoad, function() loadConfig(nameBox.Text) end)
     bindTouch(btnDel, function() deleteConfig(nameBox.Text) end)
     bindTouch(btnReset, function()
-        for k,v in pairs(GestioConfigDefaults) do GestioConfig[k] = deepCopyConfigValue(v) end
+        for k,v in pairs(XCConfigDefaults) do XCConfig[k] = deepCopyConfigValue(v) end
         updateMobileSlideVisibility(); refreshThirdPerson(); setWeaponVisuals(); updateCustomScope(); updateWorldPostFX()
         activeCfgLabel.Text = "ACTIVE: DEFAULTS"
     end)
@@ -5591,7 +5605,7 @@ function buildGestioUI()
 end
 
 -- ==========================================
--- MEMESENSE-STYLE THIRD PERSON PROTECTION
+-- XC-STYLE THIRD PERSON PROTECTION
 -- ==========================================
 local thirdPersonCameraConnection
 local thirdPersonMetaInstalled = false
@@ -5610,9 +5624,9 @@ local function installThirdPersonProtection()
 
         setreadonly(mt, false)
         mt.__newindex = newcclosure(function(self, key, value)
-            if self == player and GestioConfig.thirdPersonEnabled then
+            if self == player and XCConfig.thirdPersonEnabled then
                 local distance = math.clamp(
-                    tonumber(GestioConfig.thirdPersonDistance) or 12,
+                    tonumber(XCConfig.thirdPersonDistance) or 12,
                     5,
                     50
                 )
@@ -5642,9 +5656,9 @@ local function reconnectThirdPersonCamera()
     if not camera then return end
 
     thirdPersonCameraConnection = camera:GetPropertyChangedSignal("CameraType"):Connect(function()
-        if not GestioConfig.thirdPersonEnabled or not camera then return end
+        if not XCConfig.thirdPersonEnabled or not camera then return end
 
-        -- MemeSense keeps the native Custom camera pipeline.
+        -- XC keeps the native Custom camera pipeline.
         if camera.CameraType ~= Enum.CameraType.Custom then
             camera.CameraType = Enum.CameraType.Custom
         end
@@ -5666,27 +5680,27 @@ Workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
     camera = Workspace.CurrentCamera or camera
     reconnectThirdPersonCamera()
 
-    if GestioConfig.thirdPersonEnabled and camera then
+    if XCConfig.thirdPersonEnabled and camera then
         applyThirdPerson()
     end
 end)
 
 -- ==========================================
--- MEMESENSE WEAPON MODS (ADAPTED)
--- MemeSense No Recoil + No Spread + FireRate logic only.
+-- XC WEAPON MODS (ADAPTED)
+-- XC No Recoil + No Spread + FireRate logic only.
 -- FireRate follows the source approach: discover weapon tables containing
 -- FireRate, remember their original values, and periodically write the
--- configured interval while the Gestio toggle is enabled.
+-- configured interval while the XC toggle is enabled.
 -- ==========================================
-local memesenseRecoilSpreadInstalled = false
-local memesenseFireRateInstalled = false
-local memesenseFireRateObjects = {}
-local memesenseFireRateOriginal = {}
-local memesenseFireRateScanDone = false
-local memesenseRecoilSpreadRetrying = false
+local xcRecoilSpreadInstalled = false
+local xcFireRateInstalled = false
+local xcFireRateObjects = {}
+local xcFireRateOriginal = {}
+local xcFireRateScanDone = false
+local xcRecoilSpreadRetrying = false
 
-local function scanMemesenseFireRateObjects()
-    if memesenseFireRateScanDone then return #memesenseFireRateObjects > 0 end
+local function scanXCFireRateObjects()
+    if xcFireRateScanDone then return #xcFireRateObjects > 0 end
     if type(getgc) ~= "function" then return false end
 
     local found = false
@@ -5696,15 +5710,15 @@ local function scanMemesenseFireRateObjects()
                 local fireRate = rawget(obj, "FireRate")
                 if type(fireRate) == "number" then
                     local already = false
-                    for _, existing in ipairs(memesenseFireRateObjects) do
+                    for _, existing in ipairs(xcFireRateObjects) do
                         if existing == obj then
                             already = true
                             break
                         end
                     end
                     if not already then
-                        table.insert(memesenseFireRateObjects, obj)
-                        memesenseFireRateOriginal[obj] = fireRate
+                        table.insert(xcFireRateObjects, obj)
+                        xcFireRateOriginal[obj] = fireRate
                         found = true
                     end
                 end
@@ -5712,15 +5726,15 @@ local function scanMemesenseFireRateObjects()
         end
     end)
 
-    memesenseFireRateScanDone = true
-    return found or #memesenseFireRateObjects > 0
+    xcFireRateScanDone = true
+    return found or #xcFireRateObjects > 0
 end
 
-local function restoreMemesenseFireRates()
-    for _, obj in ipairs(memesenseFireRateObjects) do
+local function restoreXCFireRates()
+    for _, obj in ipairs(xcFireRateObjects) do
         pcall(function()
             if type(setreadonly) == "function" then setreadonly(obj, false) end
-            local original = memesenseFireRateOriginal[obj]
+            local original = xcFireRateOriginal[obj]
             if type(original) == "number" then
                 rawset(obj, "FireRate", original)
             end
@@ -5729,9 +5743,9 @@ local function restoreMemesenseFireRates()
     end
 end
 
-local function applyMemesenseFireRate()
-    local value = math.max(tonumber(GestioConfig.fireRate) or 0.01, 0.01)
-    for _, obj in ipairs(memesenseFireRateObjects) do
+local function applyXCFireRate()
+    local value = math.max(tonumber(XCConfig.fireRate) or 0.01, 0.01)
+    for _, obj in ipairs(xcFireRateObjects) do
         pcall(function()
             if type(setreadonly) == "function" then setreadonly(obj, false) end
             rawset(obj, "FireRate", value)
@@ -5743,26 +5757,26 @@ end
 task.spawn(function()
     while task.wait(0.05) do
         pcall(function()
-            if not memesenseFireRateScanDone then
-                scanMemesenseFireRateObjects()
+            if not xcFireRateScanDone then
+                scanXCFireRateObjects()
             end
 
-            if GestioConfig.fireRateEnabled then
-                if #memesenseFireRateObjects == 0 then
+            if XCConfig.fireRateEnabled then
+                if #xcFireRateObjects == 0 then
                     -- The game can create weapon data after injection/respawn.
-                    memesenseFireRateScanDone = false
-                    scanMemesenseFireRateObjects()
+                    xcFireRateScanDone = false
+                    scanXCFireRateObjects()
                 end
-                applyMemesenseFireRate()
+                applyXCFireRate()
             else
-                restoreMemesenseFireRates()
+                restoreXCFireRates()
             end
         end)
     end
 end)
 
-local function installMemesenseRecoilSpread()
-    if memesenseRecoilSpreadInstalled then return true end
+local function installXCRecoilSpread()
+    if xcRecoilSpreadInstalled then return true end
     if type(getgc) ~= "function" or type(hookfunction) ~= "function" then
         return false
     end
@@ -5774,14 +5788,14 @@ local function installMemesenseRecoilSpread()
 
     pcall(function()
         for _, obj in next, getgc(true) do
-            -- MemeSense: setWeaponRecoil -> suppress the recoil setter.
+            -- XC: setWeaponRecoil -> suppress the recoil setter.
             if type(obj) == "table" then
                 local setRecoil = rawget(obj, "setWeaponRecoil")
                 if typeof(setRecoil) == "function" then
                     pcall(function()
                         local oldSetRecoil
                         oldSetRecoil = hookfunction(setRecoil, function(...)
-                            if GestioConfig.noRecoilEnabled then
+                            if XCConfig.noRecoilEnabled then
                                 return
                             end
                             return oldSetRecoil(...)
@@ -5790,13 +5804,13 @@ local function installMemesenseRecoilSpread()
                     end)
                 end
 
-                -- MemeSense: weaponKick -> suppress the camera/weapon kick.
+                -- XC: weaponKick -> suppress the camera/weapon kick.
                 local weaponKick = rawget(obj, "weaponKick")
                 if typeof(weaponKick) == "function" then
                     pcall(function()
                         local oldKick
                         oldKick = hookfunction(weaponKick, function(...)
-                            if GestioConfig.noRecoilEnabled then
+                            if XCConfig.noRecoilEnabled then
                                 return
                             end
                             return oldKick(...)
@@ -5805,13 +5819,13 @@ local function installMemesenseRecoilSpread()
                     end)
                 end
 
-                -- MemeSense: getTrueSpread -> zero the calculated spread.
+                -- XC: getTrueSpread -> zero the calculated spread.
                 local getSpread = rawget(obj, "getTrueSpread")
                 if typeof(getSpread) == "function" then
                     pcall(function()
                         local oldSpread
                         oldSpread = hookfunction(getSpread, function(...)
-                            if GestioConfig.noSpreadEnabled then
+                            if XCConfig.noSpreadEnabled then
                                 return 0
                             end
                             return oldSpread(...)
@@ -5821,7 +5835,7 @@ local function installMemesenseRecoilSpread()
                 end
             end
 
-            -- MemeSense: calculateRecoilOffset -> return a neutral UDim2.
+            -- XC: calculateRecoilOffset -> return a neutral UDim2.
             if type(obj) == "function" then
                 local info
                 pcall(function() info = debug.getinfo(obj) end)
@@ -5829,7 +5843,7 @@ local function installMemesenseRecoilSpread()
                     pcall(function()
                         local oldCalc
                         oldCalc = hookfunction(obj, function(...)
-                            if GestioConfig.noRecoilEnabled then
+                            if XCConfig.noRecoilEnabled then
                                 return UDim2.new()
                             end
                             return oldCalc(...)
@@ -5842,34 +5856,34 @@ local function installMemesenseRecoilSpread()
     end)
 
     if hookedSomething then
-        memesenseRecoilSpreadInstalled = true
+        xcRecoilSpreadInstalled = true
         return true
     end
     return false
 end
 
--- Delay GC scanning until Gestio UI has finished building. This is intentionally
+-- Delay GC scanning until XC UI has finished building. This is intentionally
 -- separate from the launch path so unsupported executors don't block injection.
 task.spawn(function()
-    if memesenseRecoilSpreadRetrying then return end
-    memesenseRecoilSpreadRetrying = true
+    if xcRecoilSpreadRetrying then return end
+    xcRecoilSpreadRetrying = true
 
     for _ = 1, 20 do
-        if installMemesenseRecoilSpread() then
+        if installXCRecoilSpread() then
             break
         end
         task.wait(0.75)
     end
 
-    memesenseRecoilSpreadRetrying = false
+    xcRecoilSpreadRetrying = false
 end)
 
 -- ==========================================
--- MEMESENSE-STYLE SEND HOOK FALLBACK FOR SILENT AIM
+-- XC-STYLE SEND HOOK FALLBACK FOR SILENT AIM
 -- ==========================================
-local memesenseSilentSendHooked = false
-local function setupMemesenseSilentSendHook()
-    if memesenseSilentSendHooked then return end
+local xcSilentSendHooked = false
+local function setupXCSilentSendHook()
+    if xcSilentSendHooked then return end
     if type(getgc) ~= "function" or type(hookfunction) ~= "function" then return end
 
     local sendFunc = nil
@@ -5894,18 +5908,18 @@ local function setupMemesenseSilentSendHook()
     end)
 
     if type(sendFunc) ~= "function" then return end
-    if shootContainer and rawget(shootContainer, "__GestioMemeSilentHooked") then
-        memesenseSilentSendHooked = true
+    if shootContainer and rawget(shootContainer, "__XCSilentSendHooked") then
+        xcSilentSendHooked = true
         return
     end
 
     local oldSend
     oldSend = hookfunction(sendFunc, function(...)
         local args = {...}
-        if GestioConfig.silentAimEnabled and type(args[1]) == "table" and type(args[1].Bullets) == "table" then
+        if XCConfig.silentAimEnabled and type(args[1]) == "table" and type(args[1].Bullets) == "table" then
             local targetPart = getSilentAimTarget and getSilentAimTarget() or silentAimResolved
             if targetPart then
-                local chance = math.clamp(tonumber(GestioConfig.silentAimHitChance) or 100, 0, 100)
+                local chance = math.clamp(tonumber(XCConfig.silentAimHitChance) or 100, 0, 100)
                 local allowed = chance >= 100 or math.random(1, 100) <= chance
                 if allowed then
                     silentAimResolved = targetPart
@@ -5925,34 +5939,34 @@ local function setupMemesenseSilentSendHook()
         return oldSend(unpack(args))
     end)
 
-    if shootContainer then rawset(shootContainer, "__GestioMemeSilentHooked", true) end
-    memesenseSilentSendHooked = true
+    if shootContainer then rawset(shootContainer, "__XCSilentSendHooked", true) end
+    xcSilentSendHooked = true
 end
 
 -- ==========================================
--- ENGINE LAUNCH / MEMESENSE VISUAL EXTENSION
+-- ENGINE LAUNCH / XC VISUAL EXTENSION
 -- ==========================================
 setupSilentAimHooks()
 setupBloxStrikeShootHook()
 task.spawn(function()
     task.wait(1)
-    setupMemesenseSilentSendHook()
+    setupXCSilentSendHook()
 end)
-buildGestioUI()
+buildXCUI()
 
--- Gestio-style active navigation accent.
-local function GestioApplyGestioTabAccent(button, active)
+-- XC-style active navigation accent.
+local function XCApplyXCTabAccent(button, active)
     pcall(function()
-        local accent = button:FindFirstChild("GestioActiveAccent")
+        local accent = button:FindFirstChild("XCActiveAccent")
         if active then
             if not accent then
                 accent = Instance.new("Frame")
-                accent.Name = "GestioActiveAccent"
+                accent.Name = "XCActiveAccent"
                 accent.BorderSizePixel = 0
                 accent.AnchorPoint = Vector2.new(0, 0.5)
                 accent.Position = UDim2.new(0, 0, 0.5, 0)
                 accent.Size = UDim2.new(0, 2, 0, 22)
-                accent.BackgroundColor3 = Color3.fromRGB(220, 45, 55)
+                accent.BackgroundColor3 = Color3.fromRGB(152, 204, 0)
                 accent.Parent = button
             end
             accent.Visible = true
@@ -5963,13 +5977,13 @@ local function GestioApplyGestioTabAccent(button, active)
 end
 
 -- ==========================================
--- GESTIO CONFIG SYSTEM v2
+-- XC CONFIG SYSTEM v2
 -- Named profiles, save/load/delete/reset, export/import.
 -- Uses executor file APIs when available.
 -- ==========================================
-local GestioConfigSystem = {}
-GestioConfigSystem.Folder = "GestioConfigs"
-GestioConfigSystem.ActiveName = "Default"
+local XCConfigSystem = {}
+XCConfigSystem.Folder = "XCConfigs"
+XCConfigSystem.ActiveName = "Default"
 
 local function cfgFileAPI()
     return type(isfile)=="function" and type(readfile)=="function" and type(writefile)=="function"
@@ -5981,7 +5995,7 @@ local function cfgSafeName(name)
 end
 
 local function cfgPath(name)
-    return GestioConfigSystem.Folder.."/"..cfgSafeName(name)..".json"
+    return XCConfigSystem.Folder.."/"..cfgSafeName(name)..".json"
 end
 
 local function cfgJSONEncode(v)
@@ -5996,13 +6010,13 @@ end
 
 local function cfgEnsureFolder()
     if type(makefolder)=="function" and type(isfolder)=="function" then
-        pcall(function() if not isfolder(GestioConfigSystem.Folder) then makefolder(GestioConfigSystem.Folder) end end)
+        pcall(function() if not isfolder(XCConfigSystem.Folder) then makefolder(XCConfigSystem.Folder) end end)
     end
 end
 
 local function cfgSerialize()
     local out={}
-    for k,v in pairs(GestioConfig) do
+    for k,v in pairs(XCConfig) do
         local t=typeof(v)
         if t=="boolean" or t=="number" or t=="string" then
             out[k]=v
@@ -6018,33 +6032,33 @@ end
 local function cfgApply(data)
     if type(data)~="table" then return false end
     for k,v in pairs(data) do
-        if GestioConfig[k]~=nil then
+        if XCConfig[k]~=nil then
             pcall(function()
                 if type(v)=="table" and v.__type=="Color3" then
-                    GestioConfig[k]=Color3.new(tonumber(v.r) or 1,tonumber(v.g) or 1,tonumber(v.b) or 1)
+                    XCConfig[k]=Color3.new(tonumber(v.r) or 1,tonumber(v.g) or 1,tonumber(v.b) or 1)
                 elseif type(v)=="table" and v.__type=="UDim2" then
-                    GestioConfig[k]=UDim2.new(tonumber(v.xs) or 0,tonumber(v.xo) or 0,tonumber(v.ys) or 0,tonumber(v.yo) or 0)
-                else GestioConfig[k]=v end
+                    XCConfig[k]=UDim2.new(tonumber(v.xs) or 0,tonumber(v.xo) or 0,tonumber(v.ys) or 0,tonumber(v.yo) or 0)
+                else XCConfig[k]=v end
             end)
         end
     end
     return true
 end
 
-function GestioConfigSystem.Save(name)
+function XCConfigSystem.Save(name)
     if not cfgFileAPI() then return false,"File API unavailable" end
-    name=cfgSafeName(name or GestioConfigSystem.ActiveName)
+    name=cfgSafeName(name or XCConfigSystem.ActiveName)
     cfgEnsureFolder()
-    local raw=cfgJSONEncode({schema=2,product="Gestio",name=name,savedAt=os.time(),settings=cfgSerialize()})
+    local raw=cfgJSONEncode({schema=2,product="XC",name=name,savedAt=os.time(),settings=cfgSerialize()})
     if not raw then return false,"JSON encode failed" end
     local ok,err=pcall(function() writefile(cfgPath(name),raw) end)
-    if ok then GestioConfigSystem.ActiveName=name end
+    if ok then XCConfigSystem.ActiveName=name end
     return ok,ok and "Saved" or tostring(err)
 end
 
-function GestioConfigSystem.Load(name)
+function XCConfigSystem.Load(name)
     if not cfgFileAPI() then return false,"File API unavailable" end
-    name=cfgSafeName(name or GestioConfigSystem.ActiveName)
+    name=cfgSafeName(name or XCConfigSystem.ActiveName)
     local path=cfgPath(name)
     if not isfile(path) then return false,"Config not found" end
     local ok,raw=pcall(readfile,path)
@@ -6052,24 +6066,24 @@ function GestioConfigSystem.Load(name)
     local data=cfgJSONDecode(raw)
     if type(data)~="table" or type(data.settings)~="table" then return false,"Invalid config" end
     cfgApply(data.settings)
-    GestioConfigSystem.ActiveName=name
+    XCConfigSystem.ActiveName=name
     return true,"Loaded"
 end
 
-function GestioConfigSystem.Delete(name)
+function XCConfigSystem.Delete(name)
     if type(delfile)~="function" then return false,"Delete API unavailable" end
-    name=cfgSafeName(name or GestioConfigSystem.ActiveName)
+    name=cfgSafeName(name or XCConfigSystem.ActiveName)
     local path=cfgPath(name)
     if not isfile(path) then return false,"Config not found" end
     local ok,err=pcall(delfile,path)
     return ok,ok and "Deleted" or tostring(err)
 end
 
-function GestioConfigSystem.List()
+function XCConfigSystem.List()
     local out={}
     if type(listfiles)~="function" then return out end
     cfgEnsureFolder()
-    local ok,files=pcall(listfiles,GestioConfigSystem.Folder)
+    local ok,files=pcall(listfiles,XCConfigSystem.Folder)
     if ok and type(files)=="table" then
         for _,path in ipairs(files) do
             local n=tostring(path):match("([^/\\]+)%.json$")
@@ -6080,23 +6094,23 @@ function GestioConfigSystem.List()
     return out
 end
 
-function GestioConfigSystem.Reset()
-    for k,v in pairs(GestioConfigDefaults or {}) do pcall(function() GestioConfig[k]=v end) end
+function XCConfigSystem.Reset()
+    for k,v in pairs(XCConfigDefaults or {}) do pcall(function() XCConfig[k]=v end) end
     return true,"Reset"
 end
 
-function GestioConfigSystem.Export()
-    return cfgJSONEncode({schema=2,product="Gestio",name=GestioConfigSystem.ActiveName,settings=cfgSerialize()})
+function XCConfigSystem.Export()
+    return cfgJSONEncode({schema=2,product="XC",name=XCConfigSystem.ActiveName,settings=cfgSerialize()})
 end
 
-function GestioConfigSystem.Import(raw,name)
+function XCConfigSystem.Import(raw,name)
     local data=cfgJSONDecode(raw)
     if type(data)~="table" or type(data.settings)~="table" then return false,"Invalid import" end
     cfgApply(data.settings)
-    GestioConfigSystem.ActiveName=cfgSafeName(name or data.name or "Imported")
+    XCConfigSystem.ActiveName=cfgSafeName(name or data.name or "Imported")
     return true,"Imported"
 end
 
 if type(getgenv) == "function" then
-    pcall(function() getgenv().GestioConfigSystem = GestioConfigSystem end)
+    pcall(function() getgenv().XCConfigSystem = XCConfigSystem end)
 end
