@@ -4557,15 +4557,9 @@ function buildXCUI()
         row.Text = ""
         row.AutoButtonColor = false
         row.Parent = parent
-        local box = Instance.new("Frame")
-        box.Size = UDim2.fromOffset(9, 9)
-        box.Position = UDim2.new(0, 0, 0.5, -4)
-        box.BorderColor3 = C.Black
-        box.BorderSizePixel = 1
-        box.Parent = row
         local text = Instance.new("TextLabel")
-        text.Size = UDim2.new(1, -17, 1, 0)
-        text.Position = UDim2.fromOffset(16, 0)
+        text.Size = UDim2.new(1, -36, 1, 0)
+        text.Position = UDim2.fromOffset(0, 0)
         text.BackgroundTransparency = 1
         text.Text = label
         text.TextColor3 = C.Text
@@ -4574,8 +4568,33 @@ function buildXCUI()
         text.TextXAlignment = Enum.TextXAlignment.Left
         text.Parent = row
 
+        local track = Instance.new("Frame")
+        track.Name = "SwitchTrack"
+        track.Size = UDim2.fromOffset(27, 13)
+        track.Position = UDim2.new(1, -28, 0.5, -6)
+        track.BackgroundColor3 = C.Control2
+        track.BorderColor3 = C.Black
+        track.BorderSizePixel = 1
+        track.Parent = row
+        local trackCorner = Instance.new("UICorner")
+        trackCorner.CornerRadius = UDim.new(1, 0)
+        trackCorner.Parent = track
+
+        local knob = Instance.new("Frame")
+        knob.Name = "Knob"
+        knob.Size = UDim2.fromOffset(9, 9)
+        knob.Position = UDim2.new(0, 2, 0.5, -4)
+        knob.BackgroundColor3 = C.Muted
+        knob.BorderSizePixel = 0
+        knob.Parent = track
+        local knobCorner = Instance.new("UICorner")
+        knobCorner.CornerRadius = UDim.new(1, 0)
+        knobCorner.Parent = knob
+
         local function refresh(value)
-            box.BackgroundColor3 = value and C.Lime or C.Control2
+            track.BackgroundColor3 = value and Color3.fromRGB(76, 102, 0) or C.Control2
+            knob.BackgroundColor3 = value and C.Lime or C.Muted
+            knob.Position = value and UDim2.new(1, -11, 0.5, -4) or UDim2.new(0, 2, 0.5, -4)
             text.TextColor3 = value and C.White or C.Text
         end
         refresh(XCConfig[key] == true)
@@ -4754,16 +4773,126 @@ function buildXCUI()
         return addToggle(parent, label, key, function(v) specialToggle(key, v) end)
     end
 
+    local ICON_OFF = Color3.fromRGB(88, 88, 88)
+    local ICON_HOVER = Color3.fromRGB(155, 155, 155)
+    local ICON_ON = C.White
+
+    local function iconLine(parent, x, y, w, h, color, rotation)
+        local line = Instance.new("Frame")
+        line.AnchorPoint = Vector2.new(0.5, 0.5)
+        line.Position = UDim2.fromOffset(x, y)
+        line.Size = UDim2.fromOffset(w, h)
+        line.BackgroundColor3 = color
+        line.BorderSizePixel = 0
+        line.Rotation = rotation or 0
+        line.Parent = parent
+        return line
+    end
+
+    local function iconCircle(parent, x, y, size, color, filled)
+        local circle = Instance.new("Frame")
+        circle.AnchorPoint = Vector2.new(0.5, 0.5)
+        circle.Position = UDim2.fromOffset(x, y)
+        circle.Size = UDim2.fromOffset(size, size)
+        circle.BackgroundColor3 = color
+        circle.BackgroundTransparency = filled and 0 or 1
+        circle.BorderSizePixel = 0
+        circle.Parent = parent
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(1, 0)
+        corner.Parent = circle
+        if not filled then
+            local stroke = Instance.new("UIStroke")
+            stroke.Color = color
+            stroke.Thickness = 1.4
+            stroke.Parent = circle
+        end
+        return circle
+    end
+
+    local function drawTabIcon(parent, kind, color)
+        local root = Instance.new("Frame")
+        root.Name = "VectorIcon"
+        root.Size = UDim2.fromOffset(22, 22)
+        root.Position = UDim2.fromScale(0.5, 0.5)
+        root.AnchorPoint = Vector2.new(0.5, 0.5)
+        root.BackgroundTransparency = 1
+        root.Parent = parent
+        local cx, cy = 11, 11
+
+        if kind == "target" then
+            iconCircle(root, cx, cy, 14, color, false)
+            iconCircle(root, cx, cy, 5, color, false)
+            iconLine(root, cx, 2.5, 1.5, 5, color)
+            iconLine(root, cx, 19.5, 1.5, 5, color)
+            iconLine(root, 2.5, cy, 5, 1.5, color)
+            iconLine(root, 19.5, cy, 5, 1.5, color)
+        elseif kind == "antiaim" then
+            iconCircle(root, cx, cy, 15, color, false)
+            iconLine(root, 7, 9, 7, 1.5, color, -32)
+            iconLine(root, 15, 9, 7, 1.5, color, 32)
+            iconLine(root, cx, 15, 1.5, 7, color)
+        elseif kind == "visuals" then
+            iconCircle(root, cx, cy, 7, color, false)
+            for _, angle in ipairs({0, 45, 90, 135}) do
+                iconLine(root, cx, 2, 1.5, 4, color, angle)
+                iconLine(root, cx, 20, 1.5, 4, color, angle)
+            end
+        elseif kind == "world" then
+            iconCircle(root, cx, cy, 15, color, false)
+            iconLine(root, cx, cy, 1.5, 13, color)
+            iconLine(root, cx, cy, 13, 1.5, color)
+            iconCircle(root, cx, cy, 8, color, false)
+        elseif kind == "misc" then
+            iconCircle(root, cx, cy, 9, color, false)
+            iconCircle(root, cx, cy, 3, color, false)
+            for _, angle in ipairs({0, 45, 90, 135}) do iconLine(root, cx, 2, 3, 5, color, angle) end
+        elseif kind == "skins" then
+            iconLine(root, 12, 10, 14, 2, color, -42)
+            iconLine(root, 6, 16, 7, 2, color, 42)
+            iconLine(root, 8, 17.5, 6, 2, color, -42)
+        elseif kind == "players" then
+            iconCircle(root, cx, 6, 7, color, false)
+            iconLine(root, cx, 14, 10, 1.6, color)
+            iconLine(root, 7, 17, 1.7, 7, color, 18)
+            iconLine(root, 15, 17, 1.7, 7, color, -18)
+        elseif kind == "configs" then
+            local box = Instance.new("Frame")
+            box.Size = UDim2.fromOffset(14, 16)
+            box.Position = UDim2.fromOffset(4, 3)
+            box.BackgroundTransparency = 1
+            box.Parent = root
+            local stroke = Instance.new("UIStroke")
+            stroke.Color = color
+            stroke.Thickness = 1.4
+            stroke.Parent = box
+            iconLine(root, 8, 8, 7, 1.4, color)
+            iconLine(root, 8, 12, 7, 1.4, color)
+            iconLine(root, 8, 16, 7, 1.4, color)
+        end
+        return root
+    end
+
+    local function recolorTabIcon(root, color)
+        for _, object in ipairs(root:GetDescendants()) do
+            if object:IsA("UIStroke") then
+                object.Color = color
+            elseif object:IsA("Frame") and object.BackgroundTransparency < 1 then
+                object.BackgroundColor3 = color
+            end
+        end
+    end
+
     local tabs = {
-        {"Rage", "◎"}, {"AntiAim", "◒"}, {"Visuals", "☼"}, {"World", "◇"},
-        {"Misc", "⚙"}, {"Skins", "⌁"}, {"Players", "♙"}, {"Configs", "▣"},
+        {"Rage", "target"}, {"AntiAim", "antiaim"}, {"Visuals", "visuals"}, {"World", "world"},
+        {"Misc", "misc"}, {"Skins", "skins"}, {"Players", "players"}, {"Configs", "configs"},
     }
     local function switchPage(name)
         currentPage = name
         for pageName, page in pairs(pages) do page.Visible = pageName == name end
         for tabName, data in pairs(tabData) do
             data.active.Visible = tabName == name
-            data.button.TextColor3 = tabName == name and C.White or C.Muted
+            recolorTabIcon(data.icon, tabName == name and ICON_ON or ICON_OFF)
         end
     end
     for index, info in ipairs(tabs) do
@@ -4783,14 +4912,18 @@ function buildXCUI()
         button.Size = UDim2.new(1, -8, 1, 0)
         button.Position = UDim2.fromOffset(4, 0)
         button.BackgroundTransparency = 1
-        button.Text = info[2]
-        button.TextColor3 = C.Muted
-        button.Font = Enum.Font.Code
-        button.TextSize = 20
+        button.Text = ""
         button.AutoButtonColor = false
         button.Parent = holder
+        local icon = drawTabIcon(button, info[2], ICON_OFF)
+        button.MouseEnter:Connect(function()
+            if currentPage ~= info[1] then recolorTabIcon(icon, ICON_HOVER) end
+        end)
+        button.MouseLeave:Connect(function()
+            if currentPage ~= info[1] then recolorTabIcon(icon, ICON_OFF) end
+        end)
         button.Activated:Connect(function() switchPage(info[1]) end)
-        tabData[info[1]] = {button = button, active = active}
+        tabData[info[1]] = {button = button, active = active, icon = icon}
         createPage(info[1])
     end
 
