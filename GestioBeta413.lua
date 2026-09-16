@@ -259,6 +259,21 @@ local function deepCopyConfigValue(v)
 end
 local XCConfigDefaults = deepCopyConfigValue(XCConfig)
 
+-- Reuse one configuration table between reinjections. Persistent hooks from a
+-- previous run then continue to read the values controlled by the new menu.
+local sharedXCEnv = (type(getgenv) == "function") and getgenv() or nil
+if sharedXCEnv then
+    if type(sharedXCEnv.XCSharedConfig) == "table" then
+        local existing = sharedXCEnv.XCSharedConfig
+        for key, value in pairs(XCConfig) do
+            if existing[key] == nil then existing[key] = deepCopyConfigValue(value) end
+        end
+        XCConfig = existing
+    else
+        sharedXCEnv.XCSharedConfig = XCConfig
+    end
+end
+
 local UI_Bind_Registry = {}
 
 -- ==========================================
@@ -339,6 +354,11 @@ local antiAfkConnection = nil
 local activeJumpCircleData = nil
 
 local genv = (type(getgenv) == "function") and getgenv() or nil
+local xcSessionToken = {}
+if genv then genv.XCSessionToken = xcSessionToken end
+local function xcSessionActive()
+    return not genv or genv.XCSessionToken == xcSessionToken
+end
 if genv and not genv.XCSavedPos then
     genv.XCSavedPos = {
         OpenBtn = UDim2.new(0.5, -45, 0, 15),
@@ -579,7 +599,7 @@ local function setupBloxStrikeShootHook()
     if bloxStrikeShootHooked then return end
     
     pcall(function()
-        UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        local visualInputConnection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
             if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
                 local char = player.Character
                 local tool = char and char:FindFirstChildOfClass("Tool")
@@ -656,6 +676,7 @@ local function setupBloxStrikeShootHook()
                 end
             end
         end)
+        table.insert(connections, visualInputConnection)
     end)
 
     pcall(function()
@@ -1168,7 +1189,7 @@ end
 
 -- Compatibility with the existing XC render scanner.
 task.spawn(function()
-    while true do
+    while xcSessionActive() do
         task.wait(0.5)
         pcall(function()
             if XCConfig.skinChangerEnabled then
@@ -2057,7 +2078,7 @@ do
     cubeRayParams.FilterType = Enum.RaycastFilterType.Exclude
     cubeRayParams.IgnoreWater = true
 
-    RunService.RenderStepped:Connect(function()
+    local cubeRenderConnection = RunService.RenderStepped:Connect(function()
         pcall(function()
             if not XCConfig.cubeCheckerEnabled then
                 cubePart.Parent = nil
@@ -2096,6 +2117,7 @@ do
             cubePart.Parent = Workspace
         end)
     end)
+    table.insert(connections, cubeRenderConnection)
 end
 
 -- Scope overlay adapted from XC: FOV override, removable scope and configurable crosshair.
@@ -4087,9 +4109,10 @@ hookMobileJumpButton()
 
 function hookCharacterWeapons(char)
     if not char then return end
-    char.ChildAdded:Connect(function(child)
+    local childAddedConnection = char.ChildAdded:Connect(function(child)
         if child:IsA("Tool") then scanAndMorphKnives(child) end
     end)
+    table.insert(connections, childAddedConnection)
     for _, tool in ipairs(char:GetChildren()) do
         if tool:IsA("Tool") then scanAndMorphKnives(tool) end
     end
@@ -4273,7 +4296,7 @@ function setAntiAfkEnabled(enabled)
     end)
 end
 
-function buildXCUI()
+local function buildLegacyXCUI()
     setAntiAfkEnabled(XCConfig.antiAfkEnabled)
 
     local toggleGui = Instance.new("ScreenGui")
@@ -5605,6 +5628,707 @@ function buildXCUI()
 end
 
 -- ==========================================
+-- XC SKEET / GAMESENSE INTERFACE
+-- ==========================================
+function buildXCUI()
+    setAntiAfkEnabled(XCConfig.antiAfkEnabled)
+
+    local C = {
+        Main = Color3.fromRGB(17, 17, 17),
+        Sidebar = Color3.fromRGB(13, 13, 13),
+        Panel = Color3.fromRGB(12, 12, 12),
+        Control = Color3.fromRGB(25, 25, 25),
+        Control2 = Color3.fromRGB(35, 35, 35),
+        Border = Color3.fromRGB(44, 44, 44),
+        Black = Color3.fromRGB(0, 0, 0),
+        Lime = Color3.fromRGB(152, 204, 0),
+        White = Color3.fromRGB(235, 235, 235),
+        Text = Color3.fromRGB(200, 200, 200),
+        Muted = Color3.fromRGB(110, 110, 110),
+    }
+
+    local toggleGui = Instance.new("ScreenGui")
+    toggleGui.Name = "XCToggleGui"
+    toggleGui.ResetOnSpawn = false
+    toggleGui.IgnoreGuiInset = true
+    toggleGui.DisplayOrder = 100
+    toggleGui.Parent = targetGui
+
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "XCScreenGui"
+    screenGui.ResetOnSpawn = false
+    screenGui.IgnoreGuiInset = true
+    screenGui.DisplayOrder = 50
+    screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    screenGui.Parent = targetGui
+
+    local main = Instance.new("Frame")
+    main.Name = "SkeetMain"
+    main.Size = UDim2.fromOffset(680, 450)
+    main.Position = UDim2.new(0.5, -340, 0.5, -225)
+    main.BackgroundColor3 = C.Main
+    main.BorderColor3 = C.Border
+    main.BorderSizePixel = 1
+    main.Active = true
+    main.Parent = screenGui
+
+    local mainStroke = Instance.new("UIStroke")
+    mainStroke.Color = C.Black
+    mainStroke.Thickness = 2
+    mainStroke.Parent = main
+
+    local scale = Instance.new("UIScale")
+    scale.Name = "ResponsiveScale"
+    scale.Parent = main
+
+    local function updateScale()
+        local viewport = screenGui.AbsoluteSize
+        if viewport.X <= 0 or viewport.Y <= 0 then return end
+        local preferred = UserInputService.TouchEnabled and 0.82 or 1
+        if XCConfig.settingsCompactMode then preferred *= 0.88 end
+        scale.Scale = math.min(preferred, (viewport.X - 20) / 680, (viewport.Y - 20) / 450)
+        main.Position = UDim2.new(0.5, -340 * scale.Scale, 0.5, -225 * scale.Scale)
+    end
+    updateScale()
+    task.defer(updateScale)
+    table.insert(connections, screenGui:GetPropertyChangedSignal("AbsoluteSize"):Connect(updateScale))
+
+    local topLine = Instance.new("Frame")
+    topLine.Size = UDim2.new(1, -4, 0, 2)
+    topLine.Position = UDim2.fromOffset(2, 2)
+    topLine.BorderSizePixel = 0
+    topLine.BackgroundColor3 = C.Lime
+    topLine.Parent = main
+    local gradient = Instance.new("UIGradient")
+    gradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 210, 255)),
+        ColorSequenceKeypoint.new(0.25, Color3.fromRGB(160, 75, 255)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 65, 140)),
+        ColorSequenceKeypoint.new(0.75, Color3.fromRGB(255, 135, 20)),
+        ColorSequenceKeypoint.new(1, C.Lime),
+    })
+    gradient.Parent = topLine
+
+    local dragBar = Instance.new("Frame")
+    dragBar.Name = "DragBar"
+    dragBar.Size = UDim2.new(1, -52, 0, 10)
+    dragBar.Position = UDim2.fromOffset(52, 0)
+    dragBar.BackgroundTransparency = 1
+    dragBar.Active = true
+    dragBar.ZIndex = 20
+    dragBar.Parent = main
+
+    local sidebar = Instance.new("Frame")
+    sidebar.Name = "IconBar"
+    sidebar.Size = UDim2.new(0, 48, 1, -4)
+    sidebar.Position = UDim2.fromOffset(2, 2)
+    sidebar.BackgroundColor3 = C.Sidebar
+    sidebar.BorderColor3 = C.Border
+    sidebar.BorderSizePixel = 1
+    sidebar.Parent = main
+
+    local sideLayout = Instance.new("UIListLayout")
+    sideLayout.Padding = UDim.new(0, 1)
+    sideLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    sideLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    sideLayout.Parent = sidebar
+
+    local content = Instance.new("Frame")
+    content.Name = "Content"
+    content.Size = UDim2.new(1, -64, 1, -18)
+    content.Position = UDim2.fromOffset(56, 10)
+    content.BackgroundTransparency = 1
+    content.Parent = main
+
+    local pages = {}
+    local tabData = {}
+    local currentPage
+    local refreshers = {}
+
+    local function createPage(name)
+        local page = Instance.new("Frame")
+        page.Name = name
+        page.Size = UDim2.fromScale(1, 1)
+        page.BackgroundTransparency = 1
+        page.Visible = false
+        page.Parent = content
+        pages[name] = page
+        return page
+    end
+
+    local function createPanel(page, title, x, width)
+        local panel = Instance.new("Frame")
+        panel.Name = title
+        panel.Size = UDim2.new(width, 0, 1, 0)
+        panel.Position = UDim2.new(x, 0, 0, 0)
+        panel.BackgroundColor3 = C.Panel
+        panel.BorderColor3 = C.Border
+        panel.BorderSizePixel = 1
+        panel.Parent = page
+
+        local titleLabel = Instance.new("TextLabel")
+        titleLabel.Size = UDim2.new(1, -16, 0, 24)
+        titleLabel.Position = UDim2.fromOffset(8, 3)
+        titleLabel.BackgroundTransparency = 1
+        titleLabel.Text = title
+        titleLabel.TextColor3 = C.Text
+        titleLabel.Font = Enum.Font.Code
+        titleLabel.TextSize = 12
+        titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+        titleLabel.Parent = panel
+
+        local scroll = Instance.new("ScrollingFrame")
+        scroll.Name = "Controls"
+        scroll.Size = UDim2.new(1, -14, 1, -32)
+        scroll.Position = UDim2.fromOffset(7, 28)
+        scroll.BackgroundTransparency = 1
+        scroll.BorderSizePixel = 0
+        scroll.ScrollBarThickness = 2
+        scroll.ScrollBarImageColor3 = C.Border
+        scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+        scroll.CanvasSize = UDim2.new()
+        scroll.Parent = panel
+
+        local layout = Instance.new("UIListLayout")
+        layout.Padding = UDim.new(0, 4)
+        layout.SortOrder = Enum.SortOrder.LayoutOrder
+        layout.Parent = scroll
+        local padding = Instance.new("UIPadding")
+        padding.PaddingLeft = UDim.new(0, 7)
+        padding.PaddingRight = UDim.new(0, 7)
+        padding.PaddingBottom = UDim.new(0, 9)
+        padding.Parent = scroll
+        return scroll
+    end
+
+    local function section(parent, text)
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.new(1, 0, 0, 17)
+        label.BackgroundTransparency = 1
+        label.Text = text:upper()
+        label.TextColor3 = C.Lime
+        label.Font = Enum.Font.Code
+        label.TextSize = 10
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.Parent = parent
+    end
+
+    local function addToggle(parent, label, key, onChanged)
+        local row = Instance.new("TextButton")
+        row.Name = key
+        row.Size = UDim2.new(1, 0, 0, 20)
+        row.BackgroundTransparency = 1
+        row.Text = ""
+        row.AutoButtonColor = false
+        row.Parent = parent
+        local box = Instance.new("Frame")
+        box.Size = UDim2.fromOffset(9, 9)
+        box.Position = UDim2.new(0, 0, 0.5, -4)
+        box.BorderColor3 = C.Black
+        box.BorderSizePixel = 1
+        box.Parent = row
+        local text = Instance.new("TextLabel")
+        text.Size = UDim2.new(1, -17, 1, 0)
+        text.Position = UDim2.fromOffset(16, 0)
+        text.BackgroundTransparency = 1
+        text.Text = label
+        text.TextColor3 = C.Text
+        text.Font = Enum.Font.Code
+        text.TextSize = 11
+        text.TextXAlignment = Enum.TextXAlignment.Left
+        text.Parent = row
+
+        local function refresh(value)
+            box.BackgroundColor3 = value and C.Lime or C.Control2
+            text.TextColor3 = value and C.White or C.Text
+        end
+        refresh(XCConfig[key] == true)
+        UI_Bind_Registry[key] = refresh
+        refreshers[key] = refreshers[key] or {}
+        table.insert(refreshers[key], refresh)
+        row.Activated:Connect(function()
+            XCConfig[key] = not XCConfig[key]
+            refresh(XCConfig[key])
+            if onChanged then onChanged(XCConfig[key]) end
+            if key ~= "settingsShowNotifications" then
+                XCNotify(label, XCConfig[key] and "Enabled" or "Disabled", XCConfig[key] and "success" or "warning", 1.5)
+            end
+        end)
+        return row
+    end
+
+    local function addSlider(parent, label, key, minValue, maxValue, step, suffix, onChanged)
+        local holder = Instance.new("Frame")
+        holder.Name = key
+        holder.Size = UDim2.new(1, 0, 0, 36)
+        holder.BackgroundTransparency = 1
+        holder.Parent = parent
+        local name = Instance.new("TextLabel")
+        name.Size = UDim2.new(0.68, 0, 0, 16)
+        name.BackgroundTransparency = 1
+        name.Text = label
+        name.TextColor3 = C.Text
+        name.Font = Enum.Font.Code
+        name.TextSize = 10
+        name.TextXAlignment = Enum.TextXAlignment.Left
+        name.Parent = holder
+        local valueLabel = Instance.new("TextLabel")
+        valueLabel.Size = UDim2.new(0.32, 0, 0, 16)
+        valueLabel.Position = UDim2.new(0.68, 0, 0, 0)
+        valueLabel.BackgroundTransparency = 1
+        valueLabel.TextColor3 = C.Text
+        valueLabel.Font = Enum.Font.Code
+        valueLabel.TextSize = 10
+        valueLabel.TextXAlignment = Enum.TextXAlignment.Right
+        valueLabel.Parent = holder
+        local bar = Instance.new("Frame")
+        bar.Size = UDim2.new(1, 0, 0, 7)
+        bar.Position = UDim2.fromOffset(0, 21)
+        bar.BackgroundColor3 = C.Control2
+        bar.BorderColor3 = C.Black
+        bar.BorderSizePixel = 1
+        bar.Active = true
+        bar.Parent = holder
+        local fill = Instance.new("Frame")
+        fill.BorderSizePixel = 0
+        fill.BackgroundColor3 = C.Lime
+        fill.Parent = bar
+        local dragging = false
+        local activeInput
+        local function refresh(value)
+            value = math.clamp(tonumber(value) or minValue, minValue, maxValue)
+            fill.Size = UDim2.new((value - minValue) / (maxValue - minValue), 0, 1, 0)
+            local shown = step < 1 and string.format("%.2f", value) or tostring(math.floor(value + 0.5))
+            valueLabel.Text = shown .. (suffix or "")
+        end
+        local function setFromX(x)
+            if bar.AbsoluteSize.X <= 0 then return end
+            local pct = math.clamp((x - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)
+            local raw = minValue + (maxValue - minValue) * pct
+            local value = math.floor(raw / step + 0.5) * step
+            XCConfig[key] = value
+            refresh(value)
+            if onChanged then onChanged(value) end
+        end
+        refresh(XCConfig[key])
+        refreshers[key] = refreshers[key] or {}
+        table.insert(refreshers[key], refresh)
+        bar.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                dragging = true
+                activeInput = input
+                setFromX(input.Position.X)
+            end
+        end)
+        table.insert(connections, UserInputService.InputChanged:Connect(function(input)
+            if not dragging then return end
+            if input == activeInput or input.UserInputType == Enum.UserInputType.MouseMovement then
+                setFromX(input.Position.X)
+            end
+        end))
+        table.insert(connections, UserInputService.InputEnded:Connect(function(input)
+            if input == activeInput or (activeInput and activeInput.UserInputType == Enum.UserInputType.MouseButton1 and input.UserInputType == Enum.UserInputType.MouseButton1) then
+                dragging = false
+                activeInput = nil
+            end
+        end))
+    end
+
+    local function addChoice(parent, label, key, values, onChanged)
+        local holder = Instance.new("Frame")
+        holder.Size = UDim2.new(1, 0, 0, 38)
+        holder.BackgroundTransparency = 1
+        holder.Parent = parent
+        local name = Instance.new("TextLabel")
+        name.Size = UDim2.new(1, 0, 0, 14)
+        name.BackgroundTransparency = 1
+        name.Text = label
+        name.TextColor3 = C.Text
+        name.Font = Enum.Font.Code
+        name.TextSize = 10
+        name.TextXAlignment = Enum.TextXAlignment.Left
+        name.Parent = holder
+        local button = Instance.new("TextButton")
+        button.Size = UDim2.new(1, 0, 0, 22)
+        button.Position = UDim2.fromOffset(0, 15)
+        button.BackgroundColor3 = C.Control
+        button.BorderColor3 = C.Black
+        button.BorderSizePixel = 1
+        button.TextColor3 = C.Text
+        button.Font = Enum.Font.Code
+        button.TextSize = 10
+        button.AutoButtonColor = false
+        button.Parent = holder
+        local function refresh(value) button.Text = tostring(value) .. "  v" end
+        refresh(XCConfig[key] or values[1])
+        refreshers[key] = refreshers[key] or {}
+        table.insert(refreshers[key], refresh)
+        button.Activated:Connect(function()
+            local current = XCConfig[key]
+            local index = table.find(values, current) or 0
+            XCConfig[key] = values[(index % #values) + 1]
+            refresh(XCConfig[key])
+            if onChanged then onChanged(XCConfig[key]) end
+        end)
+    end
+
+    local function addButton(parent, label, callback)
+        local button = Instance.new("TextButton")
+        button.Size = UDim2.new(1, 0, 0, 24)
+        button.BackgroundColor3 = C.Control
+        button.BorderColor3 = C.Black
+        button.BorderSizePixel = 1
+        button.Text = label
+        button.TextColor3 = C.Text
+        button.Font = Enum.Font.Code
+        button.TextSize = 10
+        button.AutoButtonColor = false
+        button.Parent = parent
+        button.Activated:Connect(callback)
+        return button
+    end
+
+    local function specialToggle(key, value)
+        if key == "slideEnabled" then updateMobileSlideVisibility()
+        elseif key == "jumpCircleEnabled" then
+            if value and player.Character then initJumpCircleForCharacter(player.Character) else clearActiveJumpCircle() end
+        elseif key == "skinChangerEnabled" and value then
+            hookBloxStrikeModules(); scanAndMorphKnives(camera)
+            if player.Character then scanAndMorphKnives(player.Character) end
+        elseif key == "gloveChangerEnabled" and value then applyXCGloves()
+        elseif key == "nightModeEnabled" then
+            if value then applyNightPreset(XCConfig.nightPreset); updateWorldChanger() else restoreLightingState() end
+        elseif key == "fullBrightEnabled" and not value and not XCConfig.nightModeEnabled then restoreLightingState()
+        elseif key == "removeFogEnabled" and not value then restoreLightingState()
+        elseif key == "thirdPersonEnabled" then setThirdPersonEnabled(value)
+        elseif key == "antiAfkEnabled" then setAntiAfkEnabled(value)
+        elseif key == "spectatorListEnabled" and value then buildSpectatorGui()
+        elseif key == "animationsEnabled" then if value then playXCAnimation() else stopXCAnimation() end
+        elseif key == "settingsCompactMode" then updateScale()
+        end
+    end
+    local function toggle(parent, label, key)
+        return addToggle(parent, label, key, function(v) specialToggle(key, v) end)
+    end
+
+    local tabs = {
+        {"Rage", "◎"}, {"AntiAim", "◒"}, {"Visuals", "☼"}, {"World", "◇"},
+        {"Misc", "⚙"}, {"Skins", "⌁"}, {"Players", "♙"}, {"Configs", "▣"},
+    }
+    local function switchPage(name)
+        currentPage = name
+        for pageName, page in pairs(pages) do page.Visible = pageName == name end
+        for tabName, data in pairs(tabData) do
+            data.active.Visible = tabName == name
+            data.button.TextColor3 = tabName == name and C.White or C.Muted
+        end
+    end
+    for index, info in ipairs(tabs) do
+        local holder = Instance.new("Frame")
+        holder.Size = UDim2.new(1, 0, 0, 41)
+        holder.LayoutOrder = index
+        holder.BackgroundTransparency = 1
+        holder.Parent = sidebar
+        local active = Instance.new("Frame")
+        active.Size = UDim2.fromOffset(2, 30)
+        active.Position = UDim2.new(0, -1, 0.5, -15)
+        active.BackgroundColor3 = C.Lime
+        active.BorderSizePixel = 0
+        active.Visible = false
+        active.Parent = holder
+        local button = Instance.new("TextButton")
+        button.Size = UDim2.new(1, -8, 1, 0)
+        button.Position = UDim2.fromOffset(4, 0)
+        button.BackgroundTransparency = 1
+        button.Text = info[2]
+        button.TextColor3 = C.Muted
+        button.Font = Enum.Font.Code
+        button.TextSize = 20
+        button.AutoButtonColor = false
+        button.Parent = holder
+        button.Activated:Connect(function() switchPage(info[1]) end)
+        tabData[info[1]] = {button = button, active = active}
+        createPage(info[1])
+    end
+
+    local function columns(name, leftTitle, rightTitle)
+        local page = pages[name]
+        return createPanel(page, leftTitle, 0, 0.49), createPanel(page, rightTitle, 0.51, 0.49)
+    end
+
+    local L, R = columns("Rage", "Aimbot", "Weapon mechanics")
+    section(L, "aim assistants")
+    toggle(L, "Tracking", "aimbotEnabled")
+    toggle(L, "Silent aim", "silentAimEnabled")
+    toggle(L, "Triggerbot", "triggerbotEnabled")
+    toggle(L, "Ragebot", "rageBotEnabled")
+    toggle(L, "Recoil control", "rcsEnabled")
+    addSlider(L, "Aim FOV", "aimFov", 10, 360, 1, "°")
+    addSlider(L, "Aim speed", "aimbotSpeed", 1, 100, 1, "%")
+    addSlider(L, "Smoothness", "aimbotSmoothness", 0.01, 1, 0.01, "")
+    toggle(L, "Visible check", "visibleCheck")
+    addSlider(L, "Silent FOV", "silentAimFov", 10, 360, 1, "°")
+    addSlider(L, "Hit chance", "silentAimHitChance", 1, 100, 1, "%")
+    toggle(L, "Silent team check", "silentAimTeamCheck")
+    toggle(L, "Silent visible check", "silentAimVisibleCheck")
+    toggle(L, "Silent head", "silentAimAimHead")
+    toggle(L, "Perfect silent", "pSilentEnabled")
+    toggle(L, "Wall penetration", "wallbangEnabled")
+
+    section(R, "weapon")
+    toggle(R, "No recoil", "noRecoilEnabled")
+    toggle(R, "No spread", "noSpreadEnabled")
+    toggle(R, "Fire rate", "fireRateEnabled")
+    addSlider(R, "Fire interval", "fireRate", 0.01, 0.2, 0.01, "s")
+    addSlider(R, "RCS strength", "rcsStrength", 10, 100, 1, "%")
+    addSlider(R, "RCS pitch", "rcsPitchFactor", 0.1, 2, 0.1, "x")
+    addSlider(R, "RCS yaw", "rcsYawFactor", 0.1, 2, 0.1, "x")
+    addSlider(R, "Rage FOV", "rageFov", 30, 360, 1, "°")
+    toggle(R, "Rage auto fire", "rageAutoFire")
+    addChoice(R, "Target priority", "rageTargetMode", {"Distance", "Health", "FOV"})
+    addSlider(R, "Trigger FOV", "triggerbotFov", 10, 360, 1, "px")
+
+    L, R = columns("AntiAim", "Anti-aim", "Movement")
+    toggle(L, "Anti-aim", "antiAimEnabled")
+    addSlider(L, "Spin speed", "spinSpeed", 10, 150, 1, "")
+    toggle(L, "Third person", "thirdPersonEnabled")
+    addSlider(L, "Third person distance", "thirdPersonDistance", 5, 25, 1, "")
+    addSlider(L, "Third person height", "thirdPersonHeight", -3, 6, 0.5, "")
+    section(R, "movement")
+    toggle(R, "Bhop engine", "bunnyHopEnabled")
+    toggle(R, "Slide", "slideEnabled")
+    toggle(R, "Flight", "flightEnabled")
+    toggle(R, "Speed boost", "speedEnabled")
+    toggle(R, "No fall damage", "noFallDamageEnabled")
+    addSlider(R, "Bhop power", "bhopJumpPower", 30, 100, 1, "")
+    addSlider(R, "Bhop speed", "bhopSpeedBoost", 1, 3, 0.1, "x")
+    toggle(R, "Auto jump", "bhopAutoJump")
+    toggle(R, "Air strafe", "bhopAirStrafe")
+    addSlider(R, "Slide boost", "slideSpeedBoost", 1.2, 3, 0.1, "x")
+    addSlider(R, "Flight speed", "flightSpeed", 10, 150, 1, "")
+    addSlider(R, "Walk multiplier", "walkMultiplier", 1, 5, 0.1, "x")
+
+    L, R = columns("Visuals", "Player ESP", "Indicators")
+    toggle(L, "Chams", "chamsEnabled")
+    toggle(L, "Nametags", "nametagsEnabled")
+    toggle(L, "Box overlay", "boxEspEnabled")
+    toggle(L, "Grenade ESP", "grenadeEspEnabled")
+    toggle(L, "Tracers", "tracersEnabled")
+    toggle(L, "Head dot", "headDotEnabled")
+    addSlider(L, "ESP distance", "espMaxDist", 100, 5000, 50, "")
+    addSlider(L, "Text size", "espTextSize", 8, 20, 1, "")
+    toggle(L, "Show distance", "espShowDistance")
+    toggle(L, "Show health", "espShowHealth")
+    toggle(L, "Show weapon", "tagShowWeapon")
+    toggle(R, "Jump circle", "jumpCircleEnabled")
+    toggle(R, "Hitmarker", "hitmarkerEnabled")
+    addSlider(R, "Hitmarker size", "hitmarkerSize", 5, 30, 1, "")
+    addSlider(R, "Hitmarker duration", "hitmarkerDuration", 0.05, 1, 0.05, "s")
+    addSlider(R, "Jump radius", "jumpCircleRadius", 1.5, 8, 0.5, "")
+    addChoice(R, "Jump style", "jumpCircleStyle", {"GradientWave", "ChromaPulse", "StaticNeon"})
+    toggle(R, "Corner box", "cornerBoxEnabled")
+    toggle(R, "Health bar", "healthBarEnabled")
+
+    L, R = columns("World", "Environment", "Scope & camera")
+    toggle(L, "World changer", "nightModeEnabled")
+    toggle(L, "Fullbright", "fullBrightEnabled")
+    toggle(L, "Remove fog", "removeFogEnabled")
+    toggle(L, "Anti flash", "antiFlashEnabled")
+    addChoice(L, "Night preset", "nightPreset", {"Midnight", "Nebula", "DeepBlood", "CyberPurple", "EmeraldNight", "PitchBlack"}, function(v) if XCConfig.nightModeEnabled then applyNightPreset(v) end end)
+    addSlider(L, "Brightness", "nightBrightness", 0, 5, 0.1, "")
+    addSlider(L, "Clock time", "nightClockTime", 0, 24, 0.5, "h")
+    toggle(L, "Custom skybox", "worldSkyboxEnabled")
+    toggle(L, "Post FX", "worldPostFXEnabled")
+    toggle(R, "Custom scope", "customScopeEnabled")
+    toggle(R, "Custom FOV", "customFovEnabled")
+    addSlider(R, "Camera FOV", "customFov", 70, 120, 1, "°")
+    toggle(R, "Remove original scope", "scopeRemoveOriginal")
+    toggle(R, "Scope crosshair", "scopeCrosshairEnabled")
+    addChoice(R, "Crosshair style", "scopeCrosshairStyle", {"Cross", "T", "X", "Dot"})
+    addSlider(R, "Scope FOV", "scopeFov", 10, 120, 1, "°")
+    addSlider(R, "Crosshair gap", "scopeCrosshairGap", 0, 80, 1, "")
+    addSlider(R, "Crosshair length", "scopeCrosshairLength", 5, 300, 1, "")
+
+    L, R = columns("Skins", "Cosmetics", "Bullet effects")
+    toggle(L, "Skin changer", "skinChangerEnabled")
+    toggle(L, "Glove changer", "gloveChangerEnabled")
+    addChoice(L, "Knife", "selectedKnifeType", {"Butterfly Knife", "Karambit", "Bayonet", "Default"})
+    addChoice(L, "Skin", "selectedSkin", {"Fade", "Doppler", "Crimson Web", "Default"})
+    addChoice(L, "Glove model", "selectedGloveModel", {"Sports Gloves", "Driver Gloves", "Default"})
+    toggle(L, "Weapon chams", "weaponChamsEnabled")
+    addChoice(L, "Weapon material", "weaponChamsMode", {"Glass", "ForceField", "Metal", "Highlight", "Neon"})
+    toggle(R, "Bullet trail", "bulletTrailEnabled")
+    toggle(R, "Bullet flash", "bulletFlashEnabled")
+    toggle(R, "Cube checker", "cubeCheckerEnabled")
+    toggle(R, "Bullet impacts", "bulletImpactEnabled")
+    toggle(R, "Rainbow trail", "bulletTracerRainbow")
+    addChoice(R, "Trail style", "bulletTracerStyle", {"Block", "Cylinder"})
+    addSlider(R, "Trail duration", "bulletTracerDuration", 0.05, 3, 0.05, "s")
+    addSlider(R, "Trail width", "bulletTracerWidth", 0.02, 0.5, 0.01, "")
+    addSlider(R, "Cube distance", "cubeCheckerDistance", 1, 100, 1, "")
+
+    L, R = columns("Misc", "Utilities", "Viewmodel")
+    toggle(L, "Anti AFK", "antiAfkEnabled")
+    toggle(L, "Spectator list", "spectatorListEnabled")
+    toggle(L, "Animations", "animationsEnabled")
+    toggle(L, "Custom hands", "customHandsEnabled")
+    addSlider(L, "Animation speed", "animationSpeed", 0.1, 3, 0.1, "x")
+    toggle(L, "Animation loop", "animationLoop")
+    addSlider(R, "Hands X", "customHandsX", -2, 2, 0.1, "")
+    addSlider(R, "Hands Y", "customHandsY", -2, 2, 0.1, "")
+    addSlider(R, "Hands Z", "customHandsZ", -2, 2, 0.1, "")
+    addSlider(R, "Hands pitch", "customHandsPitch", -45, 45, 1, "°")
+    addSlider(R, "Hands yaw", "customHandsYaw", -45, 45, 1, "°")
+    addSlider(R, "Hands roll", "customHandsRoll", -90, 90, 1, "°")
+
+    L, R = columns("Players", "Target filtering", "Overlay options")
+    toggle(L, "Ignore teammates", "silentAimTeamCheck")
+    toggle(L, "Visible targets only", "silentAimVisibleCheck")
+    toggle(L, "Show teammates", "chamsShowTeammates")
+    toggle(L, "Chams team check", "chamsTeamCheck")
+    toggle(L, "Chams occlusion", "chamsOcclusion")
+    addSlider(L, "Chams fill", "chamsFillTransparency", 0, 1, 0.05, "")
+    addSlider(L, "Chams outline", "chamsOutlineTransparency", 0, 1, 0.05, "")
+    toggle(R, "Nametag distance", "espShowDistance")
+    toggle(R, "Nametag health", "espShowHealth")
+    toggle(R, "Nametag weapon", "tagShowWeapon")
+    addSlider(R, "Tag transparency", "tagTransparency", 0, 0.9, 0.05, "")
+    addSlider(R, "Box thickness", "boxThickness", 1, 3, 0.1, "")
+    addSlider(R, "Grenade distance", "grenadeMaxDist", 200, 3000, 50, "")
+
+    L, R = columns("Configs", "Interface", "Config manager")
+    toggle(L, "Notifications", "settingsShowNotifications")
+    toggle(L, "Compact mode", "settingsCompactMode")
+    toggle(L, "Watermark", "watermarkEnabled")
+    toggle(L, "Show FPS", "watermarkShowFPS")
+    toggle(L, "Show ping", "watermarkShowPing")
+    toggle(L, "Show name", "watermarkShowName")
+    addChoice(L, "Menu key", "menuKey", {"RightShift", "LeftControl", "RightControl", "F6", "F7", "F8", "F9", "F10"})
+
+    local configName = "Default"
+    local function safeName(value)
+        value = tostring(value or "Default"):gsub("[^%w%-%_ ]", ""):sub(1, 48)
+        return value ~= "" and value or "Default"
+    end
+    local nameBox = Instance.new("TextBox")
+    nameBox.Size = UDim2.new(1, 0, 0, 24)
+    nameBox.BackgroundColor3 = C.Control
+    nameBox.BorderColor3 = C.Black
+    nameBox.BorderSizePixel = 1
+    nameBox.PlaceholderText = "Config name"
+    nameBox.Text = configName
+    nameBox.TextColor3 = C.Text
+    nameBox.Font = Enum.Font.Code
+    nameBox.TextSize = 10
+    nameBox.Parent = R
+    local status = Instance.new("TextLabel")
+    status.Size = UDim2.new(1, 0, 0, 20)
+    status.BackgroundTransparency = 1
+    status.Text = "XCConfigs/Default.json"
+    status.TextColor3 = C.Muted
+    status.Font = Enum.Font.Code
+    status.TextSize = 9
+    status.TextXAlignment = Enum.TextXAlignment.Left
+    status.Parent = R
+    local function configPath() return "XCConfigs/" .. safeName(nameBox.Text) .. ".json" end
+    local function refreshAll()
+        for key, keyRefreshers in pairs(refreshers) do
+            for _, refresh in ipairs(keyRefreshers) do refresh(XCConfig[key]) end
+        end
+        updateScale()
+    end
+    addButton(R, "SAVE CONFIG", function()
+        local ok = pcall(function()
+            if type(makefolder) == "function" and type(isfolder) == "function" and not isfolder("XCConfigs") then makefolder("XCConfigs") end
+            assert(type(writefile) == "function", "File API unavailable")
+            writefile(configPath(), HttpService:JSONEncode(XCConfig))
+        end)
+        status.Text = ok and ("saved: " .. safeName(nameBox.Text)) or "save failed"
+    end)
+    addButton(R, "LOAD CONFIG", function()
+        local ok = pcall(function()
+            assert(type(readfile) == "function", "File API unavailable")
+            local data = HttpService:JSONDecode(readfile(configPath()))
+            for key, value in pairs(data) do if XCConfig[key] ~= nil then XCConfig[key] = value end end
+            refreshAll()
+            updateMobileSlideVisibility(); refreshThirdPerson(); setWeaponVisuals(); updateCustomScope(); updateWorldPostFX()
+            setAntiAfkEnabled(XCConfig.antiAfkEnabled)
+            if XCConfig.animationsEnabled then playXCAnimation() else stopXCAnimation() end
+            if XCConfig.nightModeEnabled then applyNightPreset(XCConfig.nightPreset); updateWorldChanger() else restoreLightingState() end
+        end)
+        status.Text = ok and ("loaded: " .. safeName(nameBox.Text)) or "load failed"
+    end)
+    addButton(R, "RESET DEFAULTS", function()
+        for key, value in pairs(XCConfigDefaults) do XCConfig[key] = deepCopyConfigValue(value) end
+        refreshAll(); updateMobileSlideVisibility(); refreshThirdPerson(); setWeaponVisuals(); updateCustomScope(); updateWorldPostFX()
+        setAntiAfkEnabled(XCConfig.antiAfkEnabled)
+        status.Text = "defaults restored"
+    end)
+    addButton(R, "DELETE CONFIG", function()
+        local ok = pcall(function() assert(type(delfile) == "function"); delfile(configPath()) end)
+        status.Text = ok and "config deleted" or "delete failed"
+    end)
+
+    switchPage("Rage")
+
+    local menuVisible = true
+    local function toggleMenu() main.Visible = not main.Visible; menuVisible = main.Visible end
+    table.insert(connections, UserInputService.InputBegan:Connect(function(input, processed)
+        if processed then return end
+        local key = Enum.KeyCode[XCConfig.menuKey or "RightShift"]
+        if key and input.KeyCode == key then toggleMenu() end
+    end))
+
+    local function dragObject(handle, object, saveButtonPosition)
+        local activeInput, startInput, startPos, moved
+        handle.InputBegan:Connect(function(input)
+            if activeInput then return end
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                activeInput, startInput, startPos, moved = input, input.Position, object.Position, false
+            end
+        end)
+        table.insert(connections, UserInputService.InputChanged:Connect(function(input)
+            if not activeInput then return end
+            if input == activeInput or input.UserInputType == Enum.UserInputType.MouseMovement then
+                local delta = input.Position - startInput
+                if delta.Magnitude >= 7 then moved = true end
+                if moved then
+                    object.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+                    if saveButtonPosition then savedPos.OpenBtn = object.Position; if genv then genv.XCSavedPos.OpenBtn = object.Position end end
+                end
+            end
+        end))
+        table.insert(connections, UserInputService.InputEnded:Connect(function(input)
+            if input ~= activeInput then return end
+            local tap = not moved
+            activeInput = nil
+            if tap and saveButtonPosition then toggleMenu() end
+        end))
+    end
+    dragObject(dragBar, main, false)
+
+    local openBtn = Instance.new("TextButton")
+    openBtn.Name = "XCButton"
+    openBtn.Size = UDim2.fromOffset(56, 48)
+    openBtn.Position = savedPos.OpenBtn
+    openBtn.BackgroundColor3 = C.Panel
+    openBtn.BorderColor3 = C.Lime
+    openBtn.BorderSizePixel = 1
+    openBtn.RichText = true
+    openBtn.Text = '<font color="rgb(152,204,0)">X</font><font color="rgb(255,255,255)">C</font>'
+    openBtn.TextColor3 = C.White
+    openBtn.Font = Enum.Font.GothamBold
+    openBtn.TextSize = 23
+    openBtn.AutoButtonColor = false
+    openBtn.Active = true
+    openBtn.Parent = toggleGui
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 7)
+    corner.Parent = openBtn
+    dragObject(openBtn, openBtn, true)
+end
+
+-- ==========================================
 -- XC-STYLE THIRD PERSON PROTECTION
 -- ==========================================
 local thirdPersonCameraConnection
@@ -5668,6 +6392,7 @@ local function reconnectThirdPersonCamera()
             camera.CameraSubject = hum
         end
     end)
+    table.insert(connections, thirdPersonCameraConnection)
 end
 
 task.spawn(function()
@@ -5676,7 +6401,7 @@ end)
 
 reconnectThirdPersonCamera()
 
-Workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
+local currentCameraConnection = Workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
     camera = Workspace.CurrentCamera or camera
     reconnectThirdPersonCamera()
 
@@ -5684,6 +6409,7 @@ Workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
         applyThirdPerson()
     end
 end)
+table.insert(connections, currentCameraConnection)
 
 -- ==========================================
 -- XC WEAPON MODS (ADAPTED)
@@ -5755,7 +6481,7 @@ local function applyXCFireRate()
 end
 
 task.spawn(function()
-    while task.wait(0.05) do
+    while xcSessionActive() and task.wait(0.05) do
         pcall(function()
             if not xcFireRateScanDone then
                 scanXCFireRateObjects()
