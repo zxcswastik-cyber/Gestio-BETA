@@ -274,7 +274,21 @@ if sharedXCEnv then
     end
 end
 
+-- A reinjection must start from safe toggle defaults. Numeric/user settings
+-- remain shared, but an old session cannot silently reactivate expensive
+-- scanners or render modules before the user opens the new menu.
+for key, defaultValue in pairs(XCConfigDefaults) do
+    if type(defaultValue) == "boolean" then XCConfig[key] = defaultValue end
+end
+
 local UI_Bind_Registry = {}
+-- Expensive executor scans are opt-in for the current session. Persisted
+-- config values never trigger getgc work merely by injecting the script.
+local lazyFeatureRequests = {
+    fireRate = false,
+    recoilSpread = false,
+    silentFallback = false,
+}
 
 -- ==========================================
 -- SYSTEM SERVICES IMPORT
@@ -1197,7 +1211,6 @@ task.spawn(function()
         task.wait(1)
         pcall(function()
             if XCConfig.skinChangerEnabled then
-                hookBloxStrikeModules()
                 scanAndMorphKnives(camera)
             end
             if XCConfig.gloveChangerEnabled then
@@ -1380,17 +1393,29 @@ local function applyXCHandsOffset()
 end
 
 -- Lightweight background update for the extra modules.
-table.insert(connections, RunService.RenderStepped:Connect(function()
+local spectatorUpdateAccumulator = 0
+local animationUpdateAccumulator = 0
+table.insert(connections, RunService.RenderStepped:Connect(function(dt)
+    if not XCConfig.noFallDamageEnabled
+        and not XCConfig.spectatorListEnabled
+        and not XCConfig.customHandsEnabled
+        and not animationTrack then
+        if spectatorFrame then spectatorFrame.Visible = false end
+        return
+    end
     if XCConfig.noFallDamageEnabled then
         local char = player and player.Character
         if char ~= noFallLastCharacter then
             noFallLastCharacter = char
             setNoFallDamage(true)
         end
-        setNoFallDamage(true)
     end
     if XCConfig.spectatorListEnabled then
-        updateSpectatorGui()
+        spectatorUpdateAccumulator += dt
+        if spectatorUpdateAccumulator >= 0.5 then
+            spectatorUpdateAccumulator = 0
+            updateSpectatorGui()
+        end
     elseif spectatorFrame then
         spectatorFrame.Visible = false
     end
@@ -1398,8 +1423,12 @@ table.insert(connections, RunService.RenderStepped:Connect(function()
         applyXCHandsOffset()
     end
     if animationTrack and animationTrack.IsPlaying then
-        animationTrack.Looped = XCConfig.animationLoop
-        pcall(function() animationTrack:AdjustSpeed(math.clamp(XCConfig.animationSpeed, 0.1, 3)) end)
+        animationUpdateAccumulator += dt
+        if animationUpdateAccumulator >= 0.25 then
+            animationUpdateAccumulator = 0
+            animationTrack.Looped = XCConfig.animationLoop
+            pcall(function() animationTrack:AdjustSpeed(math.clamp(XCConfig.animationSpeed, 0.1, 3)) end)
+        end
     end
 end))
 
@@ -2249,6 +2278,12 @@ local function updateCustomScope()
 end
 
 table.insert(connections, RunService.RenderStepped:Connect(function()
+    if not XCConfig.weaponChamsEnabled
+        and not XCConfig.customScopeEnabled
+        and not XCConfig.customFovEnabled
+        and not XCConfig.nightModeEnabled then
+        return
+    end
     pcall(function()
         setWeaponVisuals()
         updateCustomScope()
@@ -3890,6 +3925,12 @@ end))
 -- ANTI-AIM ROTATION SHLAK
 -- ==========================================
 table.insert(connections, RunService.RenderStepped:Connect(function(dt)
+    if not XCConfig.flightEnabled
+        and not XCConfig.slideEnabled
+        and not XCConfig.bunnyHopEnabled
+        and not XCConfig.speedEnabled then
+        return
+    end
     local char = player.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
     local hum = char and char:FindFirstChildOfClass("Humanoid")
@@ -4320,1337 +4361,6 @@ function setAntiAfkEnabled(enabled)
     end)
 end
 
-local function buildLegacyXCUI()
-    setAntiAfkEnabled(XCConfig.antiAfkEnabled)
-
-    local toggleGui = Instance.new("ScreenGui")
-    toggleGui.Name = "XCToggleGui"
-    toggleGui.ResetOnSpawn = false
-    toggleGui.DisplayOrder = 100
-    toggleGui.IgnoreGuiInset = true
-    toggleGui.Parent = targetGui
-
-    local openBtn = Instance.new("TextButton", toggleGui)
-    openBtn.Size = UDim2.fromOffset(56, 48)
-    openBtn.Position = savedPos.OpenBtn
-    openBtn.BackgroundColor3 = currentTheme.Background
-    openBtn.RichText = true
-    openBtn.Text = '<font color="rgb(152,204,0)">X</font><font color="rgb(255,255,255)">C</font>'
-    openBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    openBtn.TextSize = 23
-    openBtn.Font = Enum.Font.GothamBold
-    openBtn.Active = true
-    openBtn.AutoButtonColor = false
-    openBtn.ZIndex = 100
-    Instance.new("UICorner", openBtn).CornerRadius = UDim.new(0, 6)
-    local openStroke = Instance.new("UIStroke", openBtn)
-    openStroke.Color = currentTheme.Accent
-    openStroke.Thickness = 1
-
-    local screenGui = Instance.new("ScreenGui")
-    screenGui.Name = "XCScreenGui"
-    screenGui.ResetOnSpawn = false
-    screenGui.DisplayOrder = 50
-    screenGui.IgnoreGuiInset = true
-    screenGui.Parent = targetGui
-
-    local masterFrame = Instance.new("Frame", screenGui)
-    masterFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-    masterFrame.Size = UDim2.new(0.96, 0, 0.88, 0)
-    masterFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
-    masterFrame.BackgroundTransparency = 1
-    masterFrame.Visible = true
-
-    local sizeConstraint = Instance.new("UISizeConstraint", masterFrame)
-    sizeConstraint.MaxSize = Vector2.new(980, 520)
-    sizeConstraint.MinSize = Vector2.new(340, 220)
-
-    local masterLayout = Instance.new("UIListLayout", masterFrame)
-    masterLayout.FillDirection = Enum.FillDirection.Horizontal
-    masterLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-    masterLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-    masterLayout.Padding = UDim.new(0, 8)
-
-    local function toggleMenu() 
-        masterFrame.Visible = not masterFrame.Visible 
-    end
-
-    UI_Bind_Registry.settingsCompactMode = function(v)
-        if v then
-            masterFrame.Size = UDim2.new(0.84, 0, 0.74, 0)
-        else
-            masterFrame.Size = UDim2.new(0.96, 0, 0.88, 0)
-        end
-    end
-
-    table.insert(connections, UserInputService.InputBegan:Connect(function(input, gameProcessed)
-        if gameProcessed then return end
-        local keyName = XCConfig.menuKey or "RightShift"
-        local keyCode = Enum.KeyCode[keyName]
-        if keyCode and input.KeyCode == keyCode then toggleMenu() end
-    end))
-
-    local btnDrag, btnStartPos, btnInputStart = false, nil, nil
-    local bInBegan = openBtn.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            btnDrag = true
-            btnStartPos = openBtn.Position
-            btnInputStart = input.Position
-        end
-    end)
-    table.insert(connections, bInBegan)
-
-    local bInChanged = UserInputService.InputChanged:Connect(function(input)
-        if btnDrag and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-            local delta = input.Position - btnInputStart
-            local targetX = btnStartPos.X.Scale * toggleGui.AbsoluteSize.X + btnStartPos.X.Offset + delta.X
-            local targetY = btnStartPos.Y.Scale * toggleGui.AbsoluteSize.Y + btnStartPos.Y.Offset + delta.Y
-            local maxX = math.max(8, toggleGui.AbsoluteSize.X - openBtn.AbsoluteSize.X - 8)
-            local maxY = math.max(8, toggleGui.AbsoluteSize.Y - openBtn.AbsoluteSize.Y - 8)
-            local newPos = UDim2.fromOffset(
-                math.clamp(targetX, 8, maxX),
-                math.clamp(targetY, 8, maxY)
-            )
-            openBtn.Position = newPos
-            savedPos.OpenBtn = newPos
-            if genv then genv.XCSavedPos.OpenBtn = newPos end
-        end
-    end)
-    table.insert(connections, bInChanged)
-
-    local bInEnded = UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            if btnDrag then
-                btnDrag = false
-                if (input.Position - btnInputStart).Magnitude < 15 then 
-                    toggleMenu() 
-                end
-            end
-        end
-    end)
-    table.insert(connections, bInEnded)
-
-    local mainFrame = Instance.new("Frame", masterFrame)
-    mainFrame.Size = UDim2.new(0.72, 0, 1, 0)
-    mainFrame.BackgroundColor3 = currentTheme.Background
-    mainFrame.BorderSizePixel = 0
-    mainFrame.ZIndex = 5
-    Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 8)
-    local mainStroke = Instance.new("UIStroke", mainFrame)
-    mainStroke.Color = currentTheme.Border
-
-    local mainAccent = Instance.new("Frame", mainFrame)
-    mainAccent.Size = UDim2.new(1, -18, 0, 2)
-    mainAccent.Position = UDim2.new(0, 9, 0, 2)
-    mainAccent.BackgroundColor3 = currentTheme.Accent
-    mainAccent.BorderSizePixel = 0
-    mainAccent.ZIndex = 20
-    Instance.new("UICorner", mainAccent).CornerRadius = UDim.new(1, 0)
-
-    local bgGridFolder = Instance.new("Folder", mainFrame)
-    bgGridFolder.Name = "XCBackgroundGrid"
-
-    local sidebar = Instance.new("ScrollingFrame", mainFrame)
-    sidebar.Size = UDim2.new(0, 110, 1, -8)
-    sidebar.Position = UDim2.new(0, 4, 0, 4)
-    sidebar.BackgroundColor3 = currentTheme.Sidebar
-    sidebar.BorderSizePixel = 0
-    sidebar.ZIndex = 6
-    sidebar.ScrollBarThickness = 0
-    sidebar.CanvasSize = UDim2.new(0, 0, 0, 250)
-    Instance.new("UICorner", sidebar).CornerRadius = UDim.new(0, 8)
-
-    local sbLayout = Instance.new("UIListLayout", sidebar)
-    sbLayout.FillDirection = Enum.FillDirection.Vertical
-    sbLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    sbLayout.Padding = UDim.new(0, 3)
-    sbLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-
-    local sbPad = Instance.new("UIPadding", sidebar)
-    sbPad.PaddingTop = UDim.new(0, 4)
-    sbPad.PaddingBottom = UDim.new(0, 4)
-
-    local logoBtn = Instance.new("TextButton", sidebar)
-    logoBtn.Size = UDim2.new(0.9, 0, 0, 36)
-    logoBtn.BackgroundTransparency = 1
-    logoBtn.Text = "XC"
-    logoBtn.TextColor3 = currentTheme.Accent
-    logoBtn.TextSize = 13
-    logoBtn.Font = Enum.Font.GothamBold
-    logoBtn.ZIndex = 7
-    logoBtn.LayoutOrder = 1
-    bindTouch(logoBtn, toggleMenu)
-
-    local function createNavBtn(order, txt)
-        local b = Instance.new("TextButton", sidebar)
-        b.Size = UDim2.new(0.88, 0, 0, 28)
-        b.BackgroundColor3 = currentTheme.Sidebar
-        b.TextColor3 = currentTheme.TextSecondary
-        b.Text = txt
-        b.TextSize = 10
-        b.Font = Enum.Font.GothamBold
-        b.ZIndex = 7
-        b.LayoutOrder = order
-        Instance.new("UICorner", b).CornerRadius = UDim.new(0, 4)
-        return b
-    end
-
-    local cBtn = createNavBtn(2, "COMBAT")
-    local mBtn = createNavBtn(3, "MOVEMENT")
-    local eBtn = createNavBtn(4, "ESP")
-    local sBtn = createNavBtn(5, "ITEMS")
-    local envBtn = createNavBtn(6, "WORLD")
-    local micsBtn = createNavBtn(7, "MISC")
-    local setsBtn = createNavBtn(8, "SETTINGS")
-    cBtn.BackgroundColor3 = currentTheme.CardBg
-    cBtn.TextColor3 = currentTheme.Accent
-
-    local function makePageContainer()
-        local c = Instance.new("ScrollingFrame", mainFrame)
-        c.Size = UDim2.new(1, -101, 1, -12)
-        c.Position = UDim2.new(0, 96, 0, 6)
-        c.BackgroundTransparency = 1
-        c.ScrollBarThickness = 2
-        c.CanvasSize = UDim2.new(0, 0, 0, 900)
-        c.Visible = false
-        c.ZIndex = 6
-
-        local list = Instance.new("UIListLayout", c)
-        list.FillDirection = Enum.FillDirection.Vertical
-        list.SortOrder = Enum.SortOrder.LayoutOrder
-        list.Padding = UDim.new(0, 10)
-
-        local pad = Instance.new("UIPadding", c)
-        pad.PaddingLeft = UDim.new(0, 4)
-        pad.PaddingRight = UDim.new(0, 6)
-        pad.PaddingTop = UDim.new(0, 4)
-        pad.PaddingBottom = UDim.new(0, 10)
-
-        return c
-    end
-
-    local function makeCategorySection(page, title, layoutOrder, cardCount)
-        local count = cardCount or 4
-        -- Phones use two columns so every module remains reachable/readable.
-        local columns = UserInputService.TouchEnabled and 2 or 3
-        local rows = math.max(1, math.ceil(count / columns))
-        local gridHeight = rows * 80
-        local totalHeight = 22 + gridHeight
-
-        local sectionContainer = Instance.new("Frame", page)
-        sectionContainer.Size = UDim2.new(1, 0, 0, totalHeight)
-        sectionContainer.BackgroundTransparency = 1
-        sectionContainer.LayoutOrder = layoutOrder or 1
-        sectionContainer.ZIndex = 6
-
-        local headerLabel = Instance.new("TextLabel", sectionContainer)
-        headerLabel.Size = UDim2.new(1, 0, 0, 18)
-        headerLabel.BackgroundTransparency = 1
-        headerLabel.Text = title:upper()
-        headerLabel.TextColor3 = currentTheme.TextPrimary
-        local headerAccent = Instance.new("Frame", sectionContainer)
-        headerAccent.Size = UDim2.new(0, 3, 0, 12)
-        headerAccent.Position = UDim2.new(0, 0, 0, 3)
-        headerAccent.BackgroundColor3 = currentTheme.Accent
-        headerAccent.BorderSizePixel = 0
-        headerAccent.ZIndex = 8
-        Instance.new("UICorner", headerAccent).CornerRadius = UDim.new(1, 0)
-        headerLabel.Position = UDim2.new(0, 9, 0, 0)
-        headerLabel.TextSize = 9
-        headerLabel.Font = Enum.Font.GothamBold
-        headerLabel.TextXAlignment = Enum.TextXAlignment.Left
-        headerLabel.ZIndex = 7
-
-        local gridFrame = Instance.new("Frame", sectionContainer)
-        gridFrame.Size = UDim2.new(1, 0, 0, gridHeight)
-        gridFrame.Position = UDim2.new(0, 0, 0, 20)
-        gridFrame.BackgroundTransparency = 1
-        gridFrame.ZIndex = 6
-
-        local grid = Instance.new("UIGridLayout", gridFrame)
-        grid.CellSize = UDim2.new(0, UserInputService.TouchEnabled and 98 or 108, 0, 72)
-        grid.CellPadding = UDim2.new(0, 8, 0, 8)
-
-        return gridFrame
-    end
-
-    local cPage = makePageContainer()
-    local mPage = makePageContainer()
-    local ePage = makePageContainer()
-    local sPage = makePageContainer()
-    local envPage = makePageContainer()
-    local micsPage = makePageContainer()
-    local setsPage = makePageContainer()
-    cPage.Visible = true
-
-    local function switch(tab)
-        cPage.Visible = (tab == "C")
-        mPage.Visible = (tab == "M")
-        ePage.Visible = (tab == "E")
-        sPage.Visible = (tab == "ITEMS")
-        envPage.Visible = (tab == "WORLD")
-        micsPage.Visible = (tab == "MISC")
-        setsPage.Visible = (tab == "SETS")
-
-        local btns = {{cBtn, "C"}, {mBtn, "M"}, {eBtn, "E"}, {sBtn, "ITEMS"}, {envBtn, "WORLD"}, {micsBtn, "MISC"}, {setsBtn, "SETS"}}
-        for _, item in ipairs(btns) do
-            local on = (item[2] == tab)
-            item[1].BackgroundColor3 = on and currentTheme.CardBg or currentTheme.Sidebar
-            item[1].TextColor3 = on and currentTheme.Accent or currentTheme.TextSecondary
-        end
-    end
-
-    bindTouch(cBtn, function() switch("C") end)
-    bindTouch(mBtn, function() switch("M") end)
-    bindTouch(eBtn, function() switch("E") end)
-    bindTouch(sBtn, function() switch("ITEMS") end)
-    bindTouch(envBtn, function() switch("WORLD") end)
-    bindTouch(micsBtn, function() switch("MISC") end)
-    bindTouch(setsBtn, function() switch("SETS") end)
-
-    local inspectorPanel = Instance.new("Frame", masterFrame)
-    inspectorPanel.Size = UDim2.new(0.35, 0, 1, 0)
-    inspectorPanel.BackgroundColor3 = currentTheme.Background
-    inspectorPanel.BorderSizePixel = 0
-    inspectorPanel.ZIndex = 5
-    Instance.new("UICorner", inspectorPanel).CornerRadius = UDim.new(0, 8)
-    local insStroke = Instance.new("UIStroke", inspectorPanel)
-    insStroke.Color = currentTheme.Border
-
-    local insAccent = Instance.new("Frame", inspectorPanel)
-    insAccent.Size = UDim2.new(1, -20, 0, 2)
-    insAccent.Position = UDim2.new(0, 10, 0, 2)
-    insAccent.BackgroundColor3 = currentTheme.Accent
-    insAccent.BorderSizePixel = 0
-    insAccent.ZIndex = 20
-    Instance.new("UICorner", insAccent).CornerRadius = UDim.new(1, 0)
-
-    local insGridFolder = Instance.new("Folder", inspectorPanel)
-    insGridFolder.Name = "XCPanelGrid"
-    for r = 0, gridRows - 1 do
-        for c = 0, 12 do
-            local square = Instance.new("Frame", insGridFolder)
-            square.Size = UDim2.new(0, 20, 0, 20)
-            square.Position = UDim2.new(c / 12, 0, r / gridRows, 0)
-            square.BackgroundColor3 = currentTheme.Sidebar
-            square.BackgroundTransparency = 0.82
-            square.BorderSizePixel = 0
-            square.ZIndex = 5
-            Instance.new("UICorner", square).CornerRadius = UDim.new(0, 3)
-        end
-    end
-
-    local insHeader = Instance.new("TextLabel", inspectorPanel)
-    insHeader.Size = UDim2.new(1, -38, 0, 26)
-    insHeader.Position = UDim2.new(0, 10, 0, 4)
-    insHeader.BackgroundTransparency = 1
-    insHeader.Text = "Settings"
-    insHeader.TextColor3 = currentTheme.TextPrimary
-    insHeader.TextSize = 10
-    insHeader.Font = Enum.Font.GothamBold
-    insHeader.TextXAlignment = Enum.TextXAlignment.Left
-    insHeader.ZIndex = 6
-
-    local closeBtn = Instance.new("TextButton", inspectorPanel)
-    closeBtn.Size = UDim2.new(0, 18, 0, 18)
-    closeBtn.Position = UDim2.new(1, -22, 0, 6)
-    closeBtn.BackgroundColor3 = currentTheme.CardBg
-    closeBtn.Text = "X"
-    closeBtn.TextColor3 = currentTheme.TextSecondary
-    closeBtn.TextSize = 9
-    closeBtn.Font = Enum.Font.GothamBold
-    closeBtn.ZIndex = 7
-    Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 4)
-    bindTouch(closeBtn, toggleMenu)
-
-    local insContent = Instance.new("ScrollingFrame", inspectorPanel)
-    insContent.Size = UDim2.new(1, 0, 1, -32)
-    insContent.Position = UDim2.new(0, 0, 0, 30)
-    insContent.BackgroundTransparency = 1
-    insContent.ScrollBarThickness = 2
-    insContent.CanvasSize = UDim2.new(0, 0, 0, 650)
-    insContent.ZIndex = 6
-
-    local function addPanelSlider(y, txt, min, max, cur, isFloat, onChange)
-        local lbl = Instance.new("TextLabel", insContent)
-        lbl.Size = UDim2.new(0.86, 0, 0, 12)
-        lbl.Position = UDim2.new(0.07, 0, 0, y)
-        lbl.BackgroundTransparency = 1
-        lbl.TextColor3 = currentTheme.TextSecondary
-        lbl.TextXAlignment = Enum.TextXAlignment.Left
-        lbl.TextSize = 8.5
-        lbl.Font = Enum.Font.GothamBold
-        lbl.ZIndex = 7
-        lbl.Text = isFloat and string.format("%s: %.2fx", txt, cur) or string.format("%s: %d", txt, cur)
-
-        local track = Instance.new("TextButton", insContent)
-        track.Size = UDim2.new(0.86, 0, 0, 6)
-        track.Position = UDim2.new(0.07, 0, 0, y + 14)
-        track.BackgroundColor3 = currentTheme.Border
-        track.Text = ""
-        track.AutoButtonColor = false
-        track.ZIndex = 7
-        Instance.new("UICorner", track).CornerRadius = UDim.new(1, 0)
-
-        local fill = Instance.new("Frame", track)
-        fill.Size = UDim2.new(math.clamp((cur - min) / (max - min), 0, 1), 0, 1, 0)
-        fill.BackgroundColor3 = currentTheme.Accent
-        fill.BorderSizePixel = 0
-        fill.ZIndex = 8
-        Instance.new("UICorner", fill).CornerRadius = UDim.new(1, 0)
-
-        local drag = false
-        local function update(input)
-            local pos = math.clamp(input.Position.X - track.AbsolutePosition.X, 0, track.AbsoluteSize.X)
-            local pct = pos / track.AbsoluteSize.X
-            local rawVal = min + (max - min) * pct
-            local val = isFloat and (math.floor(rawVal * 100) / 100) or math.floor(rawVal)
-            fill.Size = UDim2.new(pct, 0, 1, 0)
-            lbl.Text = isFloat and string.format("%s: %.2fx", txt, val) or string.format("%s: %d", txt, val)
-            onChange(val)
-        end
-
-        local trInBegan = track.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                drag = true 
-                update(input)
-            end
-        end)
-        table.insert(connections, trInBegan)
-
-        local trInEnded = UserInputService.InputEnded:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                drag = false
-            end
-        end)
-        table.insert(connections, trInEnded)
-
-        local trInChanged = UserInputService.InputChanged:Connect(function(input)
-            if drag and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-                update(input)
-            end
-        end)
-        table.insert(connections, trInChanged)
-    end
-
-    local function addPanelToggle(y, txt, default, onToggle)
-        local f = Instance.new("Frame", insContent)
-        f.Size = UDim2.new(0.86, 0, 0, 20)
-        f.Position = UDim2.new(0.07, 0, 0, y)
-        f.BackgroundTransparency = 1
-        f.ZIndex = 7
-
-        local t = Instance.new("TextLabel", f)
-        t.Size = UDim2.new(0.7, 0, 1, 0)
-        t.BackgroundTransparency = 1
-        t.Text = txt
-        t.TextColor3 = currentTheme.TextSecondary
-        t.TextXAlignment = Enum.TextXAlignment.Left
-        t.TextSize = 8.5
-        t.Font = Enum.Font.GothamBold
-        t.ZIndex = 7
-
-        local btn = Instance.new("TextButton", f)
-        btn.Size = UDim2.new(0, 26, 0, 14)
-        btn.Position = UDim2.new(1, -26, 0.5, -7)
-        btn.BackgroundColor3 = default and currentTheme.Accent or Color3.fromRGB(50, 53, 60)
-        btn.Text = ""
-        btn.ZIndex = 8
-        Instance.new("UICorner", btn).CornerRadius = UDim.new(1, 0)
-
-        local circle = Instance.new("Frame", btn)
-        circle.Size = UDim2.new(0, 10, 0, 10)
-        circle.Position = default and UDim2.new(1, -11, 0.5, -5) or UDim2.new(0, 2, 0.5, -5)
-        circle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        circle.ZIndex = 9
-        Instance.new("UICorner", circle).CornerRadius = UDim.new(1, 0)
-
-        local state = default
-        local function executeToggle()
-            state = not state
-            btn.BackgroundColor3 = state and currentTheme.Accent or Color3.fromRGB(50, 53, 60)
-            circle.Position = state and UDim2.new(1, -11, 0.5, -5) or UDim2.new(0, 2, 0.5, -5)
-            onToggle(state)
-        end
-
-        bindTouch(btn, executeToggle)
-    end
-
-    local function addPanelChoice(y, txt, choices, currentChoice, onSelect)
-        local row = Instance.new("Frame", insContent)
-        row.Size = UDim2.new(0.86, 0, 0, 28)
-        row.Position = UDim2.new(0.07, 0, 0, y)
-        row.BackgroundTransparency = 1
-        row.ZIndex = 20
-
-        local lbl = Instance.new("TextLabel", row)
-        lbl.Size = UDim2.new(0.34, 0, 1, 0)
-        lbl.BackgroundTransparency = 1
-        lbl.Text = txt
-        lbl.TextColor3 = currentTheme.TextSecondary
-        lbl.TextXAlignment = Enum.TextXAlignment.Left
-        lbl.TextSize = 8.5
-        lbl.Font = Enum.Font.GothamBold
-        lbl.ZIndex = 20
-
-        local dropdown = Instance.new("TextButton", row)
-        dropdown.Size = UDim2.new(0.66, 0, 0, 26)
-        dropdown.Position = UDim2.new(0.34, 0, 0.5, -13)
-        dropdown.BackgroundColor3 = currentTheme.CardBg
-        dropdown.BorderSizePixel = 0
-        dropdown.Text = ""
-        dropdown.AutoButtonColor = false
-        dropdown.ZIndex = 21
-        Instance.new("UICorner", dropdown).CornerRadius = UDim.new(0, 5)
-
-        local stroke = Instance.new("UIStroke", dropdown)
-        stroke.Color = currentTheme.Border
-        stroke.Thickness = 1
-
-        local selectedLabel = Instance.new("TextLabel", dropdown)
-        selectedLabel.Size = UDim2.new(1, -30, 1, 0)
-        selectedLabel.Position = UDim2.new(0, 10, 0, 0)
-        selectedLabel.BackgroundTransparency = 1
-        selectedLabel.Text = currentChoice
-        selectedLabel.TextColor3 = currentTheme.TextPrimary
-        selectedLabel.TextXAlignment = Enum.TextXAlignment.Left
-        selectedLabel.TextSize = 8
-        selectedLabel.Font = Enum.Font.GothamBold
-        selectedLabel.ZIndex = 22
-
-        local arrow = Instance.new("TextLabel", dropdown)
-        arrow.Size = UDim2.new(0, 22, 1, 0)
-        arrow.Position = UDim2.new(1, -24, 0, 0)
-        arrow.BackgroundTransparency = 1
-        arrow.Text = "v"
-        arrow.TextColor3 = currentTheme.TextSecondary
-        arrow.TextSize = 8
-        arrow.Font = Enum.Font.GothamBold
-        arrow.ZIndex = 22
-
-        local list = Instance.new("Frame", insContent)
-        list.Name = "PresetDropdown"
-        list.Size = UDim2.new(0.5676, 0, 0, 0)
-        list.Position = UDim2.new(0.3624, 0, 0, y + 31)
-        list.BackgroundColor3 = currentTheme.CardBg
-        list.BorderSizePixel = 0
-        list.Visible = false
-        list.ZIndex = 100
-        list.ClipsDescendants = true
-        Instance.new("UICorner", list).CornerRadius = UDim.new(0, 5)
-        local listStroke = Instance.new("UIStroke", list)
-        listStroke.Color = currentTheme.Border
-
-        local layout = Instance.new("UIListLayout", list)
-        layout.SortOrder = Enum.SortOrder.LayoutOrder
-        local open = false
-        local h = 25
-
-        local function close()
-            open = false
-            list.Visible = false
-            list.Size = UDim2.new(0.5676, 0, 0, 0)
-            arrow.Text = "v"
-        end
-        local function toggle()
-            open = not open
-            list.Visible = open
-            list.Size = open and UDim2.new(0.5676, 0, 0, #choices*h+2) or UDim2.new(0.5676, 0, 0, 0)
-            arrow.Text = open and "^" or "v"
-        end
-
-        for i, choiceName in ipairs(choices) do
-            local option = Instance.new("TextButton", list)
-            option.LayoutOrder = i
-            option.Size = UDim2.new(1, -2, 0, h)
-            option.BackgroundColor3 = choiceName == currentChoice and currentTheme.Accent or currentTheme.CardBg
-            option.Text = choiceName
-            option.TextColor3 = choiceName == currentChoice and Color3.fromRGB(255,255,255) or currentTheme.TextSecondary
-            option.TextSize = 8
-            option.Font = Enum.Font.GothamBold
-            option.AutoButtonColor = false
-            option.ZIndex = 101
-            Instance.new("UICorner", option).CornerRadius = UDim.new(0,4)
-            bindTouch(option, function()
-                currentChoice = choiceName
-                selectedLabel.Text = choiceName
-                for _, child in ipairs(list:GetChildren()) do
-                    if child:IsA("TextButton") then
-                        child.BackgroundColor3 = currentTheme.CardBg
-                        child.TextColor3 = currentTheme.TextSecondary
-                    end
-                end
-                option.BackgroundColor3 = currentTheme.Accent
-                option.TextColor3 = Color3.fromRGB(255,255,255)
-                close()
-                onSelect(choiceName)
-            end)
-        end
-        bindTouch(dropdown, toggle)
-    end
-
-    local function openPanelFor(moduleName)
-        insHeader.Text = moduleName
-        for _, child in pairs(insContent:GetChildren()) do child:Destroy() end
-
-        if moduleName == "Tracking" then
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 580)
-            addPanelSlider(6, "FOV Radius", 50, 400, XCConfig.aimFov, false, function(v) XCConfig.aimFov = v end)
-            addPanelSlider(38, "Speed", 1.0, 50.0, XCConfig.aimbotSpeed, true, function(v) XCConfig.aimbotSpeed = v end)
-            addPanelSlider(70, "Smoothness", 0.0, 0.95, XCConfig.aimbotSmoothness, true, function(v) XCConfig.aimbotSmoothness = v end)
-            addPanelSlider(102, "Prediction Factor", 0.05, 0.3, XCConfig.predictionFactor, true, function(v) XCConfig.predictionFactor = v end)
-            addPanelToggle(140, "Body Priority", XCConfig.bodyAimOnly, function(v) XCConfig.bodyAimOnly = v end)
-            addPanelToggle(166, "Snap Lock Mode", XCConfig.snapAimMode, function(v) XCConfig.snapAimMode = v end)
-            addPanelToggle(192, "Prediction", XCConfig.predictionEnabled, function(v) XCConfig.predictionEnabled = v end)
-            addPanelToggle(218, "Show FOV Circle", XCConfig.showFovCircle, function(v) XCConfig.showFovCircle = v end)
-            addPanelToggle(244, "Visibility Check", XCConfig.visibleCheck, function(v) XCConfig.visibleCheck = v end)
-        elseif moduleName == "Silent Aim" then
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 290)
-            addPanelSlider(6, "FOV", 10, 360, XCConfig.silentAimFov, false, function(v) XCConfig.silentAimFov = v end)
-            addPanelSlider(38, "Hit Chance", 1, 100, XCConfig.silentAimHitChance, false, function(v) XCConfig.silentAimHitChance = v end)
-            addPanelToggle(70, "Team Check", XCConfig.silentAimTeamCheck, function(v) XCConfig.silentAimTeamCheck = v end)
-            addPanelToggle(96, "Visible Check", XCConfig.silentAimVisibleCheck, function(v) XCConfig.silentAimVisibleCheck = v end)
-            addPanelToggle(122, "Aim Head", XCConfig.silentAimAimHead, function(v) XCConfig.silentAimAimHead = v end)
-            addPanelToggle(148, "Show Silent FOV", XCConfig.showSilentFovCircle, function(v) XCConfig.showSilentFovCircle = v end)
-            addPanelToggle(174, "pSilent (Raycast)", XCConfig.pSilentEnabled, function(v) XCConfig.pSilentEnabled = v end)
-            addPanelToggle(200, "Advanced Wallbang", XCConfig.wallbangEnabled, function(v) XCConfig.wallbangEnabled = v end)
-        elseif moduleName == "RageBot" then
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 150)
-            addPanelToggle(6, "Auto Fire", XCConfig.rageAutoFire, function(v) XCConfig.rageAutoFire = v end)
-            addPanelChoice(38, "Target Mode", {"Distance", "Health"}, XCConfig.rageTargetMode, function(v) XCConfig.rageTargetMode = v end)
-            addPanelSlider(76, "Rage FOV", 10, 360, XCConfig.rageFov, false, function(v) XCConfig.rageFov = v end)
-        elseif moduleName == "Chams" then
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 240)
-            addPanelSlider(6, "Fill Alpha", 0.0, 1.0, XCConfig.chamsFillTransparency, true, function(v) XCConfig.chamsFillTransparency = v end)
-            addPanelSlider(38, "Outline Alpha", 0.0, 1.0, XCConfig.chamsOutlineTransparency, true, function(v) XCConfig.chamsOutlineTransparency = v end)
-            addPanelToggle(76, "Team Check", XCConfig.chamsTeamCheck, function(v) XCConfig.chamsTeamCheck = v end)
-            addPanelToggle(102, "Show Teammates", XCConfig.chamsShowTeammates, function(v) XCConfig.chamsShowTeammates = v end)
-            addPanelToggle(128, "Occlusion Color (Walls)", XCConfig.chamsOcclusion, function(v) XCConfig.chamsOcclusion = v end)
-        elseif moduleName == "No Recoil" then
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 110)
-            addPanelSlider(6, "Recoil Dampener", 0.1, 1.0, XCConfig.recoilStrength, true, function(v)
-                XCConfig.recoilStrength = v
-            end)
-        elseif moduleName == "No Spread" then
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 80)
-            addPanelToggle(6, "XC Spread Hook", XCConfig.noSpreadEnabled, function(v)
-                XCConfig.noSpreadEnabled = v
-            end)
-        elseif moduleName == "FireRate" then
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 105)
-            addPanelToggle(6, "Enable FireRate", XCConfig.fireRateEnabled, function(v)
-                XCConfig.fireRateEnabled = v
-            end)
-            addPanelSlider(38, "FireRate", 0.01, 1.0, XCConfig.fireRate, true, function(v)
-                XCConfig.fireRate = math.clamp(tonumber(v) or 0.01, 0.01, 1.0)
-            end)
-        elseif moduleName == "Skin Changer" or moduleName == "Knife Changer" then
-            refreshXCSkinData()
-            local knifeModels = {"Karambit", "Butterfly Knife", "Flip Knife", "Gut Knife", "M9 Bayonet", "Skeleton Knife", "Stiletto Knife"}
-            local gloveModels = {}
-            for name in pairs(skinData.GloveSelections) do gloveModels[#gloveModels + 1] = name end
-            table.sort(gloveModels)
-
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 520)
-            addPanelToggle(6, "Weapon Skins", XCConfig.skinChangerEnabled, function(v)
-                XCConfig.skinChangerEnabled = v
-                if v then hookBloxStrikeModules() end
-            end)
-            addPanelToggle(32, "Glove Changer", XCConfig.gloveChangerEnabled, function(v)
-                XCConfig.gloveChangerEnabled = v
-            end)
-
-            addPanelChoice(64, "Knife Model", knifeModels, XCConfig.selectedKnifeType, function(selected)
-                XCConfig.selectedKnifeType = selected
-                XCConfig.weaponSkinSelections[selected] = XCConfig.weaponSkinSelections[selected] or XCConfig.selectedSkin
-                XCConfig.selectedSkin = XCConfig.weaponSkinSelections[selected] or "Default"
-                hookBloxStrikeModules()
-                scanAndMorphKnives(camera)
-                openPanelFor("Skin Changer")
-            end)
-
-            local knifeSkins = skinData.SkinSelections[XCConfig.selectedKnifeType] or {"Default"}
-            addPanelChoice(100, "Knife Skin", knifeSkins, XCConfig.selectedSkin, function(selected)
-                XCConfig.selectedSkin = selected
-                XCConfig.weaponSkinSelections[XCConfig.selectedKnifeType] = selected
-                scanAndMorphKnives(camera)
-            end)
-
-            if #gloveModels > 0 then
-                addPanelChoice(136, "Glove Model", gloveModels, XCConfig.selectedGloveModel, function(selected)
-                    XCConfig.selectedGloveModel = selected
-                    local choices = skinData.GloveSelections[selected] or {"Default"}
-                    XCConfig.selectedGloveSkin = choices[1] or "Default"
-                    applyXCGloves()
-                    openPanelFor("Skin Changer")
-                end)
-
-                local gloveSkins = skinData.GloveSelections[XCConfig.selectedGloveModel] or {"Default"}
-                addPanelChoice(172, "Glove Skin", gloveSkins, XCConfig.selectedGloveSkin, function(selected)
-                    XCConfig.selectedGloveSkin = selected
-                    applyXCGloves()
-                end)
-            end
-
-            local weaponNames = {}
-            for weaponName in pairs(skinData.SkinSelections) do
-                if not (weaponName:match("Glove") or weaponName:match("Gloves") or weaponName == "Hand Wraps") then
-                    weaponNames[#weaponNames + 1] = weaponName
-                end
-            end
-            table.sort(weaponNames)
-
-            local y = 208
-            for _, weaponName in ipairs(weaponNames) do
-                if y > 500 then break end
-                local choices = skinData.SkinSelections[weaponName]
-                if choices and #choices > 0 then
-                    addPanelChoice(y, weaponName, choices, XCConfig.weaponSkinSelections[weaponName] or choices[1], function(selected)
-                        XCConfig.weaponSkinSelections[weaponName] = selected
-                        if weaponName == XCConfig.selectedKnifeType then
-                            XCConfig.selectedSkin = selected
-                        end
-                        scanAndMorphKnives(camera)
-                    end)
-                    y = y + 36
-                end
-            end
-        elseif moduleName == "Third Person" then
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 115)
-            addPanelSlider(6, "Distance", 5, 25, XCConfig.thirdPersonDistance, false, function(v)
-                XCConfig.thirdPersonDistance = v
-                refreshThirdPerson()
-            end)
-            addPanelSlider(38, "Height", -1, 5, XCConfig.thirdPersonHeight, false, function(v)
-                XCConfig.thirdPersonHeight = v
-                refreshThirdPerson()
-            end)
-        elseif moduleName == "Hitmarker" then
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 170)
-            addPanelSlider(6, "Duration", 0.10, 0.60, XCConfig.hitmarkerDuration, true, function(v)
-                XCConfig.hitmarkerDuration = v
-            end)
-            addPanelSlider(38, "Size", 8, 24, XCConfig.hitmarkerSize, false, function(v)
-                XCConfig.hitmarkerSize = v
-                for _, line in ipairs(hitmarkerLines) do
-                    line.Size = UDim2.new(0, XCConfig.hitmarkerThickness, 0, XCConfig.hitmarkerSize)
-                end
-            end)
-            addPanelSlider(70, "Thickness", 1, 4, XCConfig.hitmarkerThickness, false, function(v)
-                XCConfig.hitmarkerThickness = v
-                for _, line in ipairs(hitmarkerLines) do
-                    line.Size = UDim2.new(0, XCConfig.hitmarkerThickness, 0, XCConfig.hitmarkerSize)
-                end
-            end)
-            addPanelToggle(108, "Neon Glow", XCConfig.hitmarkerGlow, function(v)
-                XCConfig.hitmarkerGlow = v
-                for _, line in ipairs(hitmarkerLines) do
-                    local glow = line:FindFirstChild("NeonGlow")
-                    if glow then glow.Thickness = XCConfig.hitmarkerGlow and 2.5 or 0 end
-                end
-            end)
-        elseif moduleName == "Watermark" then
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 170)
-            addPanelToggle(6, "Show FPS", XCConfig.watermarkShowFPS, function(v) XCConfig.watermarkShowFPS = v end)
-            addPanelToggle(34, "Show Ping", XCConfig.watermarkShowPing, function(v) XCConfig.watermarkShowPing = v end)
-            addPanelToggle(62, "Show Name", XCConfig.watermarkShowName, function(v) XCConfig.watermarkShowName = v end)
-            addPanelChoice(90, "Style", {"XC", "XC • Player"}, XCConfig.watermarkShowName and "XC • Player" or "XC", function(v) XCConfig.watermarkShowName = (v == "XC • Player") end)
-            addPanelToggle(126, "Accent Mode", true, function(v) end)
-        elseif moduleName == "No Fall Damage" then
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 90)
-            addPanelToggle(6, "Disable Ragdoll/Fall", XCConfig.noFallDamageEnabled, function(v) XCConfig.noFallDamageEnabled = v end)
-        elseif moduleName == "Spectator List" then
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 150)
-            addPanelToggle(6, "Watcher Counter", XCConfig.spectatorCounterEnabled, function(v) XCConfig.spectatorCounterEnabled = v end)
-            addPanelToggle(34, "Hide When Empty", XCConfig.spectatorHideEmpty, function(v) XCConfig.spectatorHideEmpty = v end)
-            addPanelChoice(62, "Name Mode", {"Username", "Display name", "Both"}, XCConfig.spectatorNameMode, function(v) XCConfig.spectatorNameMode = v end)
-            addPanelSlider(98, "Panel Width", 150, 350, 210, false, function(v) if spectatorFrame then spectatorFrame.Size = UDim2.new(0, v, spectatorFrame.Size.Y.Scale, spectatorFrame.Size.Y.Offset) end end)
-        elseif moduleName == "Animations" then
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 190)
-            addPanelToggle(6, "Loop", XCConfig.animationLoop, function(v) XCConfig.animationLoop = v end)
-            addPanelSlider(34, "Speed", 0.1, 3.0, XCConfig.animationSpeed, true, function(v) XCConfig.animationSpeed = v end)
-            addPanelChoice(68, "Preset", {"Take The L"}, "Take The L", function(v)
-                if v == "Take The L" then XCConfig.animationId = "73593666217037" end
-            end)
-            addPanelToggle(104, "Restart", false, function(v) if v then playXCAnimation() end end)
-        elseif moduleName == "Custom Hands" then
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 250)
-            addPanelSlider(6, "X Offset", -2, 2, XCConfig.customHandsX, true, function(v) XCConfig.customHandsX = v end)
-            addPanelSlider(38, "Y Offset", -2, 2, XCConfig.customHandsY, true, function(v) XCConfig.customHandsY = v end)
-            addPanelSlider(70, "Z Offset", -2, 2, XCConfig.customHandsZ, true, function(v) XCConfig.customHandsZ = v end)
-            addPanelSlider(102, "Pitch", -45, 45, XCConfig.customHandsPitch, false, function(v) XCConfig.customHandsPitch = v end)
-            addPanelSlider(134, "Yaw", -45, 45, XCConfig.customHandsYaw, false, function(v) XCConfig.customHandsYaw = v end)
-            addPanelSlider(166, "Roll", -90, 90, XCConfig.customHandsRoll, false, function(v) XCConfig.customHandsRoll = v end)
-        elseif moduleName == "Anti-Aim" then
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 100)
-            addPanelSlider(6, "Spin Speed", 10, 150, XCConfig.spinSpeed, false, function(v) 
-                XCConfig.spinSpeed = v 
-            end)
-        elseif moduleName == "Slide" then
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 180)
-            addPanelSlider(6, "Speed Boost", 1.2, 3.0, XCConfig.slideSpeedBoost, true, function(v) XCConfig.slideSpeedBoost = v end)
-            addPanelSlider(38, "Friction", 0.85, 0.99, XCConfig.slideFriction, true, function(v) XCConfig.slideFriction = v end)
-            addPanelSlider(70, "Min Speed Threshold", 8, 24, XCConfig.slideMinSpeed, false, function(v) XCConfig.slideMinSpeed = v end)
-        elseif moduleName == "Jump Circle" then
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 240)
-            addPanelSlider(6, "Radius", 1.5, 8.0, XCConfig.jumpCircleRadius, true, function(v)
-                XCConfig.jumpCircleRadius = v
-                if player.Character then initJumpCircleForCharacter(player.Character) end
-            end)
-            addPanelSlider(38, "Segments", 12, 64, XCConfig.jumpCircleSegmentCount, false, function(v)
-                XCConfig.jumpCircleSegmentCount = v
-                if player.Character then initJumpCircleForCharacter(player.Character) end
-            end)
-            addPanelChoice(80, "Style", {"GradientWave", "ChromaPulse", "StaticNeon"}, XCConfig.jumpCircleStyle, function(v)
-                XCConfig.jumpCircleStyle = v
-                if player.Character then initJumpCircleForCharacter(player.Character) end
-            end)
-        elseif moduleName == "Grenade ESP" then
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 220)
-            addPanelSlider(6, "Max Distance", 200, 3000, XCConfig.grenadeMaxDist, false, function(v) XCConfig.grenadeMaxDist = v end)
-            addPanelToggle(42, "Trajectory Path", XCConfig.showGrenadePath, function(v) XCConfig.showGrenadePath = v end)
-            addPanelToggle(70, "Molotov Radius", XCConfig.showMolotovRadius, function(v) XCConfig.showMolotovRadius = v end)
-            addPanelToggle(98, "Smoke Radius", XCConfig.showSmokeRadius, function(v) XCConfig.showSmokeRadius = v end)
-        elseif moduleName == "Bhop Engine" then
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 200)
-            addPanelSlider(6, "Jump Power", 30, 100, XCConfig.bhopJumpPower, false, function(v) XCConfig.bhopJumpPower = v end)
-            addPanelSlider(38, "Speed Boost", 1.0, 3.0, XCConfig.bhopSpeedBoost, true, function(v) XCConfig.bhopSpeedBoost = v end)
-            addPanelToggle(76, "Auto Jump (Always)", XCConfig.bhopAutoJump, function(v) XCConfig.bhopAutoJump = v end)
-            addPanelToggle(102, "Air Strafe", XCConfig.bhopAirStrafe, function(v) XCConfig.bhopAirStrafe = v end)
-        elseif moduleName == "Nametags" then
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 340)
-            addPanelSlider(6, "Max Distance", 100, 5000, XCConfig.espMaxDist, false, function(v) XCConfig.espMaxDist = v end)
-            addPanelSlider(38, "Text Size", 8, 20, XCConfig.espTextSize, false, function(v) XCConfig.espTextSize = v end)
-            addPanelSlider(70, "Transparency", 0.0, 0.9, XCConfig.tagTransparency, true, function(v) XCConfig.tagTransparency = v end)
-            addPanelToggle(108, "Show Distance", XCConfig.espShowDistance, function(v) XCConfig.espShowDistance = v end)
-            addPanelToggle(134, "Show Health", XCConfig.espShowHealth, function(v) XCConfig.espShowHealth = v end)
-            addPanelToggle(160, "Show Weapon", XCConfig.tagShowWeapon, function(v) XCConfig.tagShowWeapon = v end)
-        elseif moduleName == "Box Overlay" then
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 200)
-            addPanelSlider(6, "Max Distance", 100, 5000, XCConfig.espMaxDist, false, function(v) XCConfig.espMaxDist = v end)
-            addPanelSlider(38, "Thickness", 1.0, 3.0, XCConfig.boxThickness, true, function(v) XCConfig.boxThickness = v end)
-            addPanelToggle(76, "Corner Box", XCConfig.cornerBoxEnabled, function(v) XCConfig.cornerBoxEnabled = v end)
-            addPanelToggle(108, "Health Bar", XCConfig.healthBarEnabled, function(v) XCConfig.healthBarEnabled = v end)
-        elseif moduleName == "World Changer" then
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 520)
-            addPanelChoice(6, "World Preset", {"Midnight", "Nebula", "DeepBlood", "CyberPurple", "EmeraldNight", "PitchBlack"}, XCConfig.nightPreset, function(selected)
-                applyNightPreset(selected)
-            end)
-            addPanelSlider(48, "Brightness", 0.0, 5.0, XCConfig.nightBrightness, true, function(v) XCConfig.nightBrightness=v; if XCConfig.nightModeEnabled then Lighting.Brightness=v end end)
-            addPanelSlider(80, "Clock Time", 0.0, 24.0, XCConfig.nightClockTime, true, function(v) XCConfig.nightClockTime=v; if XCConfig.nightModeEnabled then Lighting.ClockTime=v end end)
-            addPanelToggle(112, "Custom Skybox", XCConfig.worldSkyboxEnabled, function(v) XCConfig.worldSkyboxEnabled=v; updateWorldChanger() end)
-            addPanelChoice(138, "Skybox", {"Night","Ocean Sunset","My Summer Car","Minecraft","Deep Space","Clouded Sky","City"}, XCConfig.worldSkyboxPreset, function(v) XCConfig.worldSkyboxPreset=v; updateWorldChanger() end)
-            addPanelSlider(174, "Fog Start", 0, 5000, XCConfig.worldFogStart, false, function(v) XCConfig.worldFogStart=v; updateWorldChanger() end)
-            addPanelSlider(206, "Fog End", 50, 100000, XCConfig.worldFogEnd, false, function(v) XCConfig.worldFogEnd=v; updateWorldChanger() end)
-            addPanelToggle(238, "Post FX", XCConfig.worldPostFXEnabled, function(v) XCConfig.worldPostFXEnabled=v; updateWorldPostFX() end)
-            addPanelSlider(264, "Exposure", -3, 3, XCConfig.worldExposure, true, function(v) XCConfig.worldExposure=v; updateWorldPostFX() end)
-            addPanelSlider(296, "Saturation", -1, 1, XCConfig.worldSaturation, true, function(v) XCConfig.worldSaturation=v; updateWorldPostFX() end)
-            addPanelSlider(328, "Contrast", -1, 1, XCConfig.worldContrast, true, function(v) XCConfig.worldContrast=v; updateWorldPostFX() end)
-            addPanelSlider(360, "Tint Red", 0, 255, XCConfig.worldColorR, false, function(v) XCConfig.worldColorR=v; updateWorldPostFX() end)
-            addPanelSlider(392, "Tint Green", 0, 255, XCConfig.worldColorG, false, function(v) XCConfig.worldColorG=v; updateWorldPostFX() end)
-            addPanelSlider(424, "Tint Blue", 0, 255, XCConfig.worldColorB, false, function(v) XCConfig.worldColorB=v; updateWorldPostFX() end)
-        elseif moduleName == "Bullet Trail" then
-            insContent.CanvasSize = UDim2.new(0,0,0,260)
-            addPanelChoice(6,"Tracer Style", {"Block","Cylinder"}, XCConfig.bulletTracerStyle, function(v) XCConfig.bulletTracerStyle=v end)
-            addPanelSlider(38,"Duration",0.05,3,XCConfig.bulletTracerDuration,true,function(v) XCConfig.bulletTracerDuration=v end)
-            addPanelSlider(70,"Width",0.02,0.5,XCConfig.bulletTracerWidth,true,function(v) XCConfig.bulletTracerWidth=v end)
-            addPanelToggle(102,"Rainbow",XCConfig.bulletTracerRainbow,function(v) XCConfig.bulletTracerRainbow=v end)
-            addPanelToggle(128,"Bullet Impacts",XCConfig.bulletImpactEnabled,function(v) XCConfig.bulletImpactEnabled=v end)
-            addPanelSlider(154,"Impact Size",0.05,1.5,XCConfig.bulletImpactSize,true,function(v) XCConfig.bulletImpactSize=v end)
-            addPanelSlider(186,"Tracer Red",0,255,XCConfig.bulletTracerColorR,false,function(v) XCConfig.bulletTracerColorR=v end)
-            addPanelSlider(218,"Tracer Green",0,255,XCConfig.bulletTracerColorG,false,function(v) XCConfig.bulletTracerColorG=v end)
-            addPanelSlider(250,"Tracer Blue",0,255,XCConfig.bulletTracerColorB,false,function(v) XCConfig.bulletTracerColorB=v end)
-        elseif moduleName == "Cube Checker" then
-            insContent.CanvasSize = UDim2.new(0,0,0,270)
-            addPanelToggle(6,"Rainbow",XCConfig.cubeCheckerRainbow,function(v) XCConfig.cubeCheckerRainbow=v end)
-            addPanelSlider(38,"Cube Size",0.1,5,XCConfig.cubeCheckerSize,true,function(v) XCConfig.cubeCheckerSize=v end)
-            addPanelSlider(70,"Max Distance",1,100,XCConfig.cubeCheckerDistance,false,function(v) XCConfig.cubeCheckerDistance=v end)
-            addPanelSlider(102,"Outline Thickness",0.01,0.2,XCConfig.cubeCheckerLineThickness,true,function(v) XCConfig.cubeCheckerLineThickness=v end)
-            addPanelSlider(134,"Outline Fade",0,1,XCConfig.cubeCheckerTransparency,true,function(v) XCConfig.cubeCheckerTransparency=v end)
-            addPanelSlider(166,"Color Red",0,255,XCConfig.bulletTracerColorR,false,function(v) XCConfig.bulletTracerColorR=v end)
-            addPanelSlider(198,"Color Green",0,255,XCConfig.bulletTracerColorG,false,function(v) XCConfig.bulletTracerColorG=v end)
-            addPanelSlider(230,"Color Blue",0,255,XCConfig.bulletTracerColorB,false,function(v) XCConfig.bulletTracerColorB=v end)
-        elseif moduleName == "Weapon Chams" then
-            insContent.CanvasSize = UDim2.new(0,0,0,300)
-            addPanelChoice(6,"Style",{"Glass","ForceField","Metal","Highlight","Neon"},XCConfig.weaponChamsMode,function(v) XCConfig.weaponChamsMode=v end)
-            addPanelSlider(38,"Fade",0,1,XCConfig.weaponChamsTransparency,true,function(v) XCConfig.weaponChamsTransparency=v end)
-            addPanelSlider(70,"Surface",0,1,XCConfig.weaponChamsReflectance,true,function(v) XCConfig.weaponChamsReflectance=v end)
-            addPanelSlider(102,"Tone R",0,255,XCConfig.weaponChamsColorR,false,function(v) XCConfig.weaponChamsColorR=v end)
-            addPanelSlider(134,"Tone G",0,255,XCConfig.weaponChamsColorG,false,function(v) XCConfig.weaponChamsColorG=v end)
-            addPanelSlider(166,"Tone B",0,255,XCConfig.weaponChamsColorB,false,function(v) XCConfig.weaponChamsColorB=v end)
-        elseif moduleName == "Custom FOV" then
-            insContent.CanvasSize = UDim2.new(0,0,0,120)
-            addPanelToggle(6,"Enable Custom FOV",XCConfig.customFovEnabled,function(v) XCConfig.customFovEnabled=v end)
-            addPanelSlider(38,"FOV Amount",70,120,XCConfig.customFov,false,function(v) XCConfig.customFov=v end)
-        elseif moduleName == "Custom Scope" then
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 600)
-            addPanelToggle(6,"Remove Original Scope",XCConfig.scopeRemoveOriginal,function(v) XCConfig.scopeRemoveOriginal=v end)
-            addPanelToggle(32,"Custom FOV",XCConfig.scopeFovEnabled,function(v) XCConfig.scopeFovEnabled=v end)
-            addPanelSlider(58,"Scope FOV",10,120,XCConfig.scopeFov,false,function(v) XCConfig.scopeFov=v end)
-            addPanelToggle(90,"Scope Crosshair",XCConfig.scopeCrosshairEnabled,function(v) XCConfig.scopeCrosshairEnabled=v end)
-            addPanelChoice(116,"Style",{"Cross","T","X","Dot"},XCConfig.scopeCrosshairStyle or "Cross",function(v) XCConfig.scopeCrosshairStyle=v end)
-            addPanelToggle(148,"Left Arm",XCConfig.scopeCrosshairLeft,function(v) XCConfig.scopeCrosshairLeft=v end)
-            addPanelToggle(174,"Right Arm",XCConfig.scopeCrosshairRight,function(v) XCConfig.scopeCrosshairRight=v end)
-            addPanelToggle(200,"Top Arm",XCConfig.scopeCrosshairTop,function(v) XCConfig.scopeCrosshairTop=v end)
-            addPanelToggle(226,"Bottom Arm",XCConfig.scopeCrosshairBottom,function(v) XCConfig.scopeCrosshairBottom=v end)
-            addPanelToggle(252,"Center Dot",XCConfig.scopeCrosshairDot,function(v) XCConfig.scopeCrosshairDot=v end)
-            addPanelToggle(278,"Dynamic Gap",XCConfig.scopeDynamicGap,function(v) XCConfig.scopeDynamicGap=v end)
-            addPanelSlider(304,"Length",5,300,XCConfig.scopeCrosshairLength,false,function(v) XCConfig.scopeCrosshairLength=v end)
-            addPanelSlider(336,"Thickness",1,12,XCConfig.scopeCrosshairThickness,false,function(v) XCConfig.scopeCrosshairThickness=v end)
-            addPanelSlider(368,"Gap",0,80,XCConfig.scopeCrosshairGap,false,function(v) XCConfig.scopeCrosshairGap=v end)
-            addPanelSlider(400,"Opacity",0,1,XCConfig.scopeCrosshairOpacity or 0,true,function(v) XCConfig.scopeCrosshairOpacity=v end)
-            addPanelSlider(432,"Red",0,255,XCConfig.scopeCrosshairColorR,false,function(v) XCConfig.scopeCrosshairColorR=v end)
-            addPanelSlider(464,"Green",0,255,XCConfig.scopeCrosshairColorG,false,function(v) XCConfig.scopeCrosshairColorG=v end)
-            addPanelSlider(496,"Blue",0,255,XCConfig.scopeCrosshairColorB,false,function(v) XCConfig.scopeCrosshairColorB=v end)
-            addPanelToggle(528,"Reticle Outline",XCConfig.scopeCrosshairOutline,function(v) XCConfig.scopeCrosshairOutline=v end)
-            addPanelSlider(554,"Outline Size",1,6,XCConfig.scopeCrosshairOutlineThickness or 1,false,function(v) XCConfig.scopeCrosshairOutlineThickness=v end)
-
-        elseif moduleName == "RCS" then
-            insContent.CanvasSize = UDim2.new(0, 0, 0, 240)
-            addPanelSlider(6, "RCS Strength", 10, 100, XCConfig.rcsStrength, false, function(v) XCConfig.rcsStrength = v end)
-            addPanelSlider(38, "Pitch Factor", 0.1, 2.0, XCConfig.rcsPitchFactor, true, function(v) XCConfig.rcsPitchFactor = v end)
-            addPanelSlider(70, "Yaw Factor", 0.1, 2.0, XCConfig.rcsYawFactor, true, function(v) XCConfig.rcsYawFactor = v end)
-        end
-    end
-
-    local function createModuleCard(parentGrid, title, configKey, onToggle, hasSettings)
-        local card = Instance.new("Frame", parentGrid)
-        card.BackgroundColor3 = currentTheme.CardBg
-        card.BorderSizePixel = 0
-        card.ClipsDescendants = true
-        card.ZIndex = 7
-        Instance.new("UICorner", card).CornerRadius = UDim.new(0, 6)
-
-        local initialVal = XCConfig[configKey]
-        local stroke = Instance.new("UIStroke", card)
-        stroke.Color = initialVal and currentTheme.Accent or currentTheme.Border
-        stroke.Thickness = initialVal and 1.2 or 0.8
-
-        local lbl = Instance.new("TextLabel", card)
-        lbl.Size = UDim2.new(1, -14, 0, 30)
-        lbl.Position = UDim2.new(0, 7, 0, 7)
-        lbl.BackgroundTransparency = 1
-        lbl.Text = title
-        lbl.TextColor3 = initialVal and currentTheme.TextPrimary or currentTheme.TextSecondary
-        lbl.TextSize = 9
-        lbl.Font = Enum.Font.GothamBold
-        lbl.TextWrapped = true
-        lbl.TextXAlignment = Enum.TextXAlignment.Left
-        lbl.TextYAlignment = Enum.TextYAlignment.Top
-        lbl.ZIndex = 8
-
-        local btn = Instance.new("TextButton", card)
-        btn.Size = UDim2.new(0, 46, 0, 18)
-        btn.Position = UDim2.new(0, 7, 1, -25)
-        btn.BackgroundColor3 = initialVal and currentTheme.Accent or currentTheme.Sidebar
-        btn.Text = initialVal and "ON" or "OFF"
-        btn.TextColor3 = initialVal and Color3.fromRGB(255, 255, 255) or currentTheme.TextSecondary
-        btn.TextSize = 7
-        btn.Font = Enum.Font.GothamBold
-        btn.ZIndex = 8
-        Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 7)
-
-        local function updateCardVisual(val)
-            btn.BackgroundColor3 = val and currentTheme.Accent or currentTheme.Sidebar
-            btn.TextColor3 = val and Color3.fromRGB(255, 255, 255) or currentTheme.TextSecondary
-            btn.Text = val and "ON" or "OFF"
-            lbl.TextColor3 = val and currentTheme.TextPrimary or currentTheme.TextSecondary
-            stroke.Color = val and currentTheme.Accent or currentTheme.Border
-            stroke.Thickness = val and 1.2 or 0.8
-        end
-
-        UI_Bind_Registry[configKey] = updateCardVisual
-
-        bindTouch(btn, function()
-            local newState = not XCConfig[configKey]
-            XCConfig[configKey] = newState
-            updateCardVisual(newState)
-            if onToggle then onToggle(newState) end
-            if configKey ~= "settingsShowNotifications" then
-                XCNotify(title, newState and "Enabled" or "Disabled", newState and "success" or "warning", 1.8)
-            end
-        end)
-
-        if hasSettings then
-            local setBtn = Instance.new("TextButton", card)
-            setBtn.Size = UDim2.new(0, 22, 0, 22)
-            setBtn.Position = UDim2.new(1, -25, 0, 4)
-            setBtn.BackgroundTransparency = 1
-            setBtn.Text = "⋮"
-            setBtn.TextColor3 = currentTheme.TextSecondary
-            setBtn.TextSize = 13
-            setBtn.Font = Enum.Font.GothamBold
-            setBtn.ZIndex = 9
-            bindTouch(setBtn, function()
-                openPanelFor(title)
-            end)
-        end
-        return card
-    end
-
-    -- PAGES SETUP
-    local cGrid = makeCategorySection(cPage, "Aim Assistants", 1, 5)
-    createModuleCard(cGrid, "Tracking", "aimbotEnabled", nil, true)
-    createModuleCard(cGrid, "Silent Aim", "silentAimEnabled", nil, true)
-    createModuleCard(cGrid, "Triggerbot", "triggerbotEnabled", nil, false)
-    createModuleCard(cGrid, "RCS", "rcsEnabled", nil, true)
-    createModuleCard(cGrid, "RageBot", "rageBotEnabled", nil, true)
-
-    local cGrid2 = makeCategorySection(cPage, "Weapon Mechanics", 2, 4)
-    createModuleCard(cGrid2, "No Recoil", "noRecoilEnabled", nil, true)
-    createModuleCard(cGrid2, "No Spread", "noSpreadEnabled", nil, true)
-    createModuleCard(cGrid2, "FireRate", "fireRateEnabled", nil, true)
-    createModuleCard(cGrid2, "Anti-Aim", "antiAimEnabled", nil, true)
-
-    local mGrid = makeCategorySection(mPage, "Locomotion", 1, 4)
-    createModuleCard(mGrid, "Bhop Engine", "bunnyHopEnabled", nil, true)
-    createModuleCard(mGrid, "Slide", "slideEnabled", function() updateMobileSlideVisibility() end, true)
-    createModuleCard(mGrid, "Flight", "flightEnabled", nil, false)
-    createModuleCard(mGrid, "Speed Boost", "speedEnabled", nil, false)
-    createModuleCard(mGrid, "No Fall Damage", "noFallDamageEnabled", nil, true)
-
-    local eGrid = makeCategorySection(ePage, "Visual Overlays", 1, 4)
-    createModuleCard(eGrid, "Chams", "chamsEnabled", nil, true)
-    createModuleCard(eGrid, "Nametags", "nametagsEnabled", nil, true)
-    createModuleCard(eGrid, "Box Overlay", "boxEspEnabled", nil, true)
-    createModuleCard(eGrid, "Grenade ESP", "grenadeEspEnabled", nil, true)
-
-    local eGrid2 = makeCategorySection(ePage, "Indicators", 2, 3)
-    createModuleCard(eGrid2, "Tracers", "tracersEnabled", nil, false)
-    createModuleCard(eGrid2, "Head Dot", "headDotEnabled", nil, false)
-    createModuleCard(eGrid2, "Jump Circle", "jumpCircleEnabled", function(v)
-        if v and player.Character then
-            initJumpCircleForCharacter(player.Character)
-        else
-            clearActiveJumpCircle()
-        end
-    end, true)
-
-    local bGrid = makeCategorySection(ePage, "Bullet Effects", 3, 3)
-    createModuleCard(bGrid, "Bullet Trail", "bulletTrailEnabled", nil, true)
-    createModuleCard(bGrid, "Bullet Flash", "bulletFlashEnabled", nil, false)
-    createModuleCard(bGrid, "Cube Checker", "cubeCheckerEnabled", nil, true)
-    createModuleCard(bGrid, "Weapon Chams", "weaponChamsEnabled", nil, true)
-
-    local sGrid = makeCategorySection(sPage, "Cosmetic Engine", 1, 2)
-    createModuleCard(sGrid, "Skin Changer", "skinChangerEnabled", function(v)
-        if v then
-            hookBloxStrikeModules()
-            scanAndMorphKnives(camera)
-            if player and player.Character then scanAndMorphKnives(player.Character) end
-            scanAndMorphKnives(Workspace)
-        end
-    end, true)
-    createModuleCard(sGrid, "Glove Changer", "gloveChangerEnabled", function(v)
-        if v then applyXCGloves() end
-    end, true)
-
-    local envGrid = makeCategorySection(envPage, "Atmosphere", 1, 5)
-    createModuleCard(envGrid, "World Changer", "nightModeEnabled", function(v)
-        if v then applyNightPreset(XCConfig.nightPreset); updateWorldChanger() else restoreLightingState() end
-    end, true)
-    createModuleCard(envGrid, "Custom Scope", "customScopeEnabled", nil, true)
-    createModuleCard(envGrid, "Custom FOV", "customFovEnabled", nil, true)
-    createModuleCard(envGrid, "FullBright", "fullBrightEnabled", function(v)
-        if not v and not XCConfig.nightModeEnabled then restoreLightingState() end
-    end, false)
-    createModuleCard(envGrid, "Remove Fog", "removeFogEnabled", function(v)
-        if not v then restoreLightingState() end
-    end, false)
-    createModuleCard(envGrid, "Anti Flash", "antiFlashEnabled", nil, false)
-
-    local micsGrid = makeCategorySection(micsPage, "Utilities", 1, 3)
-    createModuleCard(micsGrid, "Hitmarker", "hitmarkerEnabled", nil, true)
-    createModuleCard(micsGrid, "Third Person", "thirdPersonEnabled", function(v) setThirdPersonEnabled(v) end, true)
-    createModuleCard(micsGrid, "Anti AFK", "antiAfkEnabled", function(v) setAntiAfkEnabled(v) end, false)
-    createModuleCard(micsGrid, "Spectator List", "spectatorListEnabled", function(v) if v then buildSpectatorGui() end end, true)
-    createModuleCard(micsGrid, "Animations", "animationsEnabled", function(v) if v then playXCAnimation() else stopXCAnimation() end end, true)
-    createModuleCard(micsGrid, "Custom Hands", "customHandsEnabled", nil, true)
-
-    -- CONFIG & THEMES
-    local cfgFolder = "XCConfigs"
-    pcall(function()
-        if makefolder and not isfolder(cfgFolder) then
-            makefolder(cfgFolder)
-        end
-    end)
-
-    local setsGrid = makeCategorySection(setsPage, "Theme Settings", 1, 1)
-    local themeNames = {}
-    for name in pairs(themeLibrary) do table.insert(themeNames, name) end
-    table.sort(themeNames)
-
-    local themeCard = Instance.new("Frame", setsGrid)
-    themeCard.Size = UDim2.new(1, 0, 0, 50)
-    themeCard.BackgroundColor3 = currentTheme.CardBg
-    themeCard.BorderSizePixel = 0
-    Instance.new("UICorner", themeCard).CornerRadius = UDim.new(0, 6)
-    local themeStroke = Instance.new("UIStroke", themeCard)
-    themeStroke.Color = currentTheme.Border
-
-    local themeBtn = Instance.new("TextButton", themeCard)
-    themeBtn.Size = UDim2.new(1, -12, 0, 24)
-    themeBtn.Position = UDim2.new(0, 6, 0.5, -12)
-    themeBtn.BackgroundColor3 = currentTheme.Sidebar
-    themeBtn.Text = "THEME: " .. currentTheme.Name
-    themeBtn.TextColor3 = currentTheme.Accent
-    themeBtn.TextSize = 8.5
-    themeBtn.Font = Enum.Font.GothamBold
-    Instance.new("UICorner", themeBtn).CornerRadius = UDim.new(0, 4)
-
-    local currentThemeIndex = 1
-    bindTouch(themeBtn, function()
-        currentThemeIndex = (currentThemeIndex % #themeNames) + 1
-        local chosenName = themeNames[currentThemeIndex]
-        currentTheme = themeLibrary[chosenName]
-        themeBtn.Text = "THEME: " .. currentTheme.Name
-        refreshHitmarkerTheme()
-    end)
-
-    local settingsGrid = makeCategorySection(setsPage, "Interface", 2, 3)
-    createModuleCard(settingsGrid, "Notifications", "settingsShowNotifications", nil, false)
-    local uiScaleCard = Instance.new("Frame", settingsGrid)
-    uiScaleCard.Size = UDim2.new(1,0,0,50)
-    uiScaleCard.BackgroundColor3 = currentTheme.CardBg
-    uiScaleCard.BorderSizePixel = 0
-    Instance.new("UICorner", uiScaleCard).CornerRadius = UDim.new(0,6)
-    local uiScaleBtn = Instance.new("TextButton", uiScaleCard)
-    uiScaleBtn.Size = UDim2.new(1,-12,0,24)
-    uiScaleBtn.Position = UDim2.new(0,6,0.5,-12)
-    uiScaleBtn.BackgroundColor3 = currentTheme.Sidebar
-    uiScaleBtn.Text = "UI SCALE: 100%"
-    uiScaleBtn.TextColor3 = currentTheme.Accent
-    uiScaleBtn.TextSize = 8
-    uiScaleBtn.Font = Enum.Font.GothamBold
-    Instance.new("UICorner", uiScaleBtn).CornerRadius = UDim.new(0,4)
-    local scaleValues = {0.7, 0.8, 0.85, 0.9, 1.0, 1.1}
-    local scaleIndex = 3
-    local scaleObject = Instance.new("UIScale", masterFrame)
-    -- Keep the menu slightly smaller on touch devices. Desktop keeps the
-    -- configured scale, while phones are capped at 85%.
-    scaleObject.Scale = UserInputService.TouchEnabled
-        and math.min(XCConfig.uiScale or 1, 0.85)
-        or (XCConfig.uiScale or 1)
-    for i,v in ipairs(scaleValues) do if math.abs(v-scaleObject.Scale)<0.01 then scaleIndex=i end end
-    uiScaleBtn.Text = "UI SCALE: " .. math.floor(scaleObject.Scale*100) .. "%"
-    bindTouch(uiScaleBtn, function()
-        scaleIndex = (scaleIndex % #scaleValues) + 1
-        XCConfig.uiScale = scaleValues[scaleIndex]
-        scaleObject.Scale = UserInputService.TouchEnabled
-            and math.min(XCConfig.uiScale, 0.85)
-            or XCConfig.uiScale
-        uiScaleBtn.Text = "UI SCALE: " .. math.floor(scaleObject.Scale*100) .. "%"
-    end)
-
-    createModuleCard(settingsGrid, "Compact Mode", "settingsCompactMode", function(v)
-        if UI_Bind_Registry.settingsCompactMode then UI_Bind_Registry.settingsCompactMode(v) end
-    end, false)
-
-    createModuleCard(settingsGrid, "Watermark", "watermarkEnabled", nil, true)
-
-    local keyCard = Instance.new("Frame", settingsGrid)
-    keyCard.Size = UDim2.new(1,0,0,42)
-    keyCard.BackgroundColor3 = currentTheme.CardBg
-    keyCard.BorderSizePixel = 0
-    Instance.new("UICorner", keyCard).CornerRadius = UDim.new(0,6)
-    local keyBtn = Instance.new("TextButton", keyCard)
-    keyBtn.Size = UDim2.new(1,-10,0,24)
-    keyBtn.Position = UDim2.new(0,5,0,9)
-    keyBtn.BackgroundColor3 = currentTheme.Sidebar
-    keyBtn.Text = "MENU KEY: " .. (XCConfig.menuKey or "RightShift")
-    keyBtn.TextColor3 = currentTheme.Accent
-    keyBtn.TextSize = 8
-    keyBtn.Font = Enum.Font.GothamBold
-    Instance.new("UICorner", keyBtn).CornerRadius = UDim.new(0,4)
-    local menuKeys={"RightShift","LeftControl","RightControl","F6","F7","F8","F9","F10"}
-    local menuKeyIndex=1
-    for i,k in ipairs(menuKeys) do if k==XCConfig.menuKey then menuKeyIndex=i break end end
-    bindTouch(keyBtn,function()
-        menuKeyIndex=(menuKeyIndex%#menuKeys)+1
-        XCConfig.menuKey=menuKeys[menuKeyIndex]
-        keyBtn.Text="MENU KEY: "..XCConfig.menuKey
-    end)
-
-    local cfgSection = Instance.new("Frame", setsPage)
-    cfgSection.Size = UDim2.new(1, 0, 0, 235)
-    cfgSection.BackgroundTransparency = 1
-    cfgSection.LayoutOrder = 2
-    cfgSection.ZIndex = 6
-
-    local cfgHeader = Instance.new("TextLabel", cfgSection)
-    cfgHeader.Size = UDim2.new(1, 0, 0, 18)
-    cfgHeader.BackgroundTransparency = 1
-    cfgHeader.Text = "CONFIG MANAGER"
-    cfgHeader.TextColor3 = currentTheme.Accent
-    cfgHeader.TextSize = 8.5
-    cfgHeader.Font = Enum.Font.GothamBold
-    cfgHeader.TextXAlignment = Enum.TextXAlignment.Left
-
-    local cfgCard = Instance.new("Frame", cfgSection)
-    cfgCard.Size = UDim2.new(1, 0, 0, 210)
-    cfgCard.Position = UDim2.new(0, 0, 0, 20)
-    cfgCard.BackgroundColor3 = currentTheme.CardBg
-    cfgCard.BorderSizePixel = 0
-    Instance.new("UICorner", cfgCard).CornerRadius = UDim.new(0, 6)
-    local cfgStroke = Instance.new("UIStroke", cfgCard)
-    cfgStroke.Color = currentTheme.Border
-
-    local nameBox = Instance.new("TextBox", cfgCard)
-    nameBox.Size = UDim2.new(1, -16, 0, 24)
-    nameBox.Position = UDim2.new(0, 8, 0, 8)
-    nameBox.BackgroundColor3 = currentTheme.Sidebar
-    nameBox.Text = ""
-    nameBox.PlaceholderText = "Config name..."
-    nameBox.TextColor3 = currentTheme.TextPrimary
-    nameBox.PlaceholderColor3 = currentTheme.TextSecondary
-    nameBox.TextSize = 8.5
-    nameBox.Font = Enum.Font.GothamBold
-    Instance.new("UICorner", nameBox).CornerRadius = UDim.new(0, 4)
-
-    local btnSave = Instance.new("TextButton", cfgCard)
-    btnSave.Size = UDim2.new(0.31, 0, 0, 22)
-    btnSave.Position = UDim2.new(0, 8, 0, 36)
-    btnSave.BackgroundColor3 = Color3.fromRGB(45, 120, 60)
-    btnSave.Text = "SAVE"
-    btnSave.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btnSave.TextSize = 8
-    btnSave.Font = Enum.Font.GothamBold
-    Instance.new("UICorner", btnSave).CornerRadius = UDim.new(0, 4)
-
-    local btnLoad = Instance.new("TextButton", cfgCard)
-    btnLoad.Size = UDim2.new(0.31, 0, 0, 22)
-    btnLoad.Position = UDim2.new(0.345, 0, 0, 36)
-    btnLoad.BackgroundColor3 = Color3.fromRGB(45, 80, 140)
-    btnLoad.Text = "LOAD"
-    btnLoad.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btnLoad.TextSize = 8
-    btnLoad.Font = Enum.Font.GothamBold
-    Instance.new("UICorner", btnLoad).CornerRadius = UDim.new(0, 4)
-
-    local btnDel = Instance.new("TextButton", cfgCard)
-    btnDel.Size = UDim2.new(0.31, 0, 0, 22)
-    btnDel.Position = UDim2.new(0.69, -8, 0, 36)
-    btnDel.BackgroundColor3 = Color3.fromRGB(140, 45, 45)
-    btnDel.Text = "DELETE"
-    btnDel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btnDel.TextSize = 8
-    btnDel.Font = Enum.Font.GothamBold
-    Instance.new("UICorner", btnDel).CornerRadius = UDim.new(0, 4)
-
-    local cfgList = Instance.new("ScrollingFrame", cfgCard)
-    local btnReset = Instance.new("TextButton", cfgCard)
-    btnReset.Size = UDim2.new(0.31, 0, 0, 20)
-    btnReset.Position = UDim2.new(0, 8, 0, 62)
-    btnReset.BackgroundColor3 = currentTheme.Sidebar
-    btnReset.Text = "RESET DEFAULTS"
-    btnReset.TextColor3 = currentTheme.Accent
-    btnReset.TextSize = 7.5
-    btnReset.Font = Enum.Font.GothamBold
-    Instance.new("UICorner", btnReset).CornerRadius = UDim.new(0, 4)
-
-    local activeCfgLabel = Instance.new("TextLabel", cfgCard)
-    activeCfgLabel.Size = UDim2.new(0.62, -8, 0, 20)
-    activeCfgLabel.Position = UDim2.new(0.38, 0, 0, 62)
-    activeCfgLabel.BackgroundTransparency = 1
-    activeCfgLabel.Text = "ACTIVE: none"
-    activeCfgLabel.TextColor3 = currentTheme.TextSecondary
-    activeCfgLabel.TextSize = 7.5
-    activeCfgLabel.Font = Enum.Font.GothamBold
-    activeCfgLabel.TextXAlignment = Enum.TextXAlignment.Right
-
-    cfgList.Size = UDim2.new(1, -16, 0, 90)
-    cfgList.Position = UDim2.new(0, 8, 0, 86)
-    cfgList.BackgroundColor3 = currentTheme.Sidebar
-    cfgList.BorderSizePixel = 0
-    cfgList.ScrollBarThickness = 2
-    Instance.new("UICorner", cfgList).CornerRadius = UDim.new(0, 4)
-
-    local cfgListLayout = Instance.new("UIListLayout", cfgList)
-    cfgListLayout.Padding = UDim.new(0, 2)
-
-    local function refreshConfigList()
-        for _, c in ipairs(cfgList:GetChildren()) do
-            if c:IsA("TextButton") then c:Destroy() end
-        end
-        local files = {}
-        pcall(function()
-            if listfiles then files = listfiles(cfgFolder) end
-        end)
-        local totalH = 0
-        for _, f in ipairs(files) do
-            local nm = f:match("([^/\\]+)%.json$")
-            if nm then
-                local b = Instance.new("TextButton", cfgList)
-                b.Size = UDim2.new(1, -4, 0, 20)
-                b.BackgroundColor3 = currentTheme.CardBg
-                b.Text = "  " .. nm
-                b.TextColor3 = currentTheme.TextPrimary
-                b.TextXAlignment = Enum.TextXAlignment.Left
-                b.TextSize = 10
-                b.Font = Enum.Font.GothamBold
-                Instance.new("UICorner", b).CornerRadius = UDim.new(0, 3)
-                bindTouch(b, function()
-                    nameBox.Text = nm
-                end)
-                totalH = totalH + 22
-            end
-        end
-        cfgList.CanvasSize = UDim2.new(0, 0, 0, totalH)
-    end
-
-    local function saveConfig(name)
-        if name == "" or not writefile then return end
-        local ok, data = pcall(function() return HttpService:JSONEncode(XCConfig) end)
-        if ok then
-            writefile(cfgFolder .. "/" .. name .. ".json", data)
-            activeCfgLabel.Text = "ACTIVE: " .. name
-            refreshConfigList()
-        end
-    end
-
-    local function loadConfig(name)
-        if name == "" or not readfile then return end
-        local ok, content = pcall(function() return readfile(cfgFolder .. "/" .. name .. ".json") end)
-        if not ok then return end
-        local ok2, data = pcall(function() return HttpService:JSONDecode(content) end)
-        if ok2 and type(data) == "table" then
-            for k, v in pairs(data) do
-                XCConfig[k] = v
-                if UI_Bind_Registry[k] then UI_Bind_Registry[k](v) end
-            end
-            updateMobileSlideVisibility()
-            refreshThirdPerson()
-            if UI_Bind_Registry.settingsCompactMode then UI_Bind_Registry.settingsCompactMode(XCConfig.settingsCompactMode) end
-            setWeaponVisuals()
-            updateCustomScope()
-            updateWorldPostFX()
-            if XCConfig.nightModeEnabled then
-                applyNightPreset(XCConfig.nightPreset)
-            else
-                restoreLightingState()
-            end
-            activeCfgLabel.Text = "ACTIVE: " .. name
-        end
-    end
-
-    local function deleteConfig(name)
-        if name == "" or not delfile then return end
-        pcall(function() delfile(cfgFolder .. "/" .. name .. ".json") end)
-        refreshConfigList()
-    end
-
-    bindTouch(btnSave, function() saveConfig(nameBox.Text) end)
-    bindTouch(btnLoad, function() loadConfig(nameBox.Text) end)
-    bindTouch(btnDel, function() deleteConfig(nameBox.Text) end)
-    bindTouch(btnReset, function()
-        for k,v in pairs(XCConfigDefaults) do XCConfig[k] = deepCopyConfigValue(v) end
-        updateMobileSlideVisibility(); refreshThirdPerson(); setWeaponVisuals(); updateCustomScope(); updateWorldPostFX()
-        activeCfgLabel.Text = "ACTIVE: DEFAULTS"
-    end)
-
-    refreshConfigList()
-end
-
 -- ==========================================
 -- XC SKEET / GAMESENSE INTERFACE
 -- ==========================================
@@ -6016,6 +4726,11 @@ function buildXCUI()
     end
 
     local function specialToggle(key, value)
+        if value then
+            if key == "fireRateEnabled" then lazyFeatureRequests.fireRate = true end
+            if key == "noRecoilEnabled" or key == "noSpreadEnabled" then lazyFeatureRequests.recoilSpread = true end
+            if key == "silentAimEnabled" then lazyFeatureRequests.silentFallback = true end
+        end
         if key == "slideEnabled" then updateMobileSlideVisibility()
         elseif key == "jumpCircleEnabled" then
             if value and player.Character then initJumpCircleForCharacter(player.Character) else clearActiveJumpCircle() end
@@ -6030,6 +4745,8 @@ function buildXCUI()
         elseif key == "antiAfkEnabled" then setAntiAfkEnabled(value)
         elseif key == "spectatorListEnabled" and value then buildSpectatorGui()
         elseif key == "animationsEnabled" then if value then playXCAnimation() else stopXCAnimation() end
+        elseif key == "weaponChamsEnabled" then setWeaponVisuals()
+        elseif key == "customScopeEnabled" then updateCustomScope()
         elseif key == "settingsCompactMode" then updateScale()
         end
     end
@@ -6283,6 +5000,9 @@ function buildXCUI()
             assert(type(readfile) == "function", "File API unavailable")
             local data = HttpService:JSONDecode(readfile(configPath()))
             for key, value in pairs(data) do if XCConfig[key] ~= nil then XCConfig[key] = value end end
+            lazyFeatureRequests.fireRate = XCConfig.fireRateEnabled == true
+            lazyFeatureRequests.recoilSpread = XCConfig.noRecoilEnabled == true or XCConfig.noSpreadEnabled == true
+            lazyFeatureRequests.silentFallback = XCConfig.silentAimEnabled == true
             refreshAll()
             updateMobileSlideVisibility(); refreshThirdPerson(); setWeaponVisuals(); updateCustomScope(); updateWorldPostFX()
             setAntiAfkEnabled(XCConfig.antiAfkEnabled)
@@ -6293,6 +5013,9 @@ function buildXCUI()
     end)
     addButton(R, "RESET DEFAULTS", function()
         for key, value in pairs(XCConfigDefaults) do XCConfig[key] = deepCopyConfigValue(value) end
+        lazyFeatureRequests.fireRate = false
+        lazyFeatureRequests.recoilSpread = false
+        lazyFeatureRequests.silentFallback = false
         refreshAll(); updateMobileSlideVisibility(); refreshThirdPerson(); setWeaponVisuals(); updateCustomScope(); updateWorldPostFX()
         setAntiAfkEnabled(XCConfig.antiAfkEnabled)
         status.Text = "defaults restored"
@@ -6517,7 +5240,7 @@ task.spawn(function()
     local wasEnabled = false
     while xcSessionActive() and task.wait(0.1) do
         pcall(function()
-            if XCConfig.fireRateEnabled then
+            if XCConfig.fireRateEnabled and lazyFeatureRequests.fireRate then
                 if not xcFireRateScanDone then scanXCFireRateObjects() end
                 if #xcFireRateObjects == 0 then
                     -- The game can create weapon data after injection/respawn.
@@ -6628,7 +5351,8 @@ task.spawn(function()
 
     local attempts = 0
     while xcSessionActive() and not xcRecoilSpreadInstalled and attempts < 20 do
-        if XCConfig.noRecoilEnabled or XCConfig.noSpreadEnabled then
+        if lazyFeatureRequests.recoilSpread
+            and (XCConfig.noRecoilEnabled or XCConfig.noSpreadEnabled) then
             attempts += 1
             if installXCRecoilSpread() then break end
             task.wait(0.75)
@@ -6712,7 +5436,7 @@ setupSilentAimHooks()
 setupBloxStrikeShootHook()
 task.spawn(function()
     while xcSessionActive() and not xcSilentSendHooked do
-        if XCConfig.silentAimEnabled then
+        if XCConfig.silentAimEnabled and lazyFeatureRequests.silentFallback then
             setupXCSilentSendHook()
             if not xcSilentSendHooked then task.wait(1.5) end
         else
