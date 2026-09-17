@@ -234,7 +234,7 @@ local XCConfig = {
     boxThickness = 1.0,
     espBoxSmoothing = 0.42,
     espFixedScale = true,
-    espFixedBoxHeight = 42,
+    espFixedBoxHeight = 36,
     espBoxAspect = 0.52,
     espBoxOutline = true,
 
@@ -331,8 +331,12 @@ end
 for key, defaultValue in pairs(XCConfigDefaults) do
     if type(defaultValue) == "boolean" then XCConfig[key] = defaultValue end
 end
--- Migrate the oversized fixed-box default used by XC v16/v17.
-if tonumber(XCConfig.espFixedBoxHeight) == 64 then XCConfig.espFixedBoxHeight = 42 end
+-- XC uses one compact screen-space ESP size. Old presets must not restore
+-- the perspective-scaled/oversized box implementation.
+XCConfig.espFixedScale = true
+if tonumber(XCConfig.espFixedBoxHeight) == 64 or tonumber(XCConfig.espFixedBoxHeight) == 42 then
+    XCConfig.espFixedBoxHeight = 36
+end
 
 local UI_Bind_Registry = {}
 -- Expensive executor scans are opt-in for the current session. Persisted
@@ -4502,135 +4506,41 @@ function hideTacticalOverlay()
     end
 end
 
--- Produces a stable screen rectangle from a root-aligned 3D body volume.
--- Accessories and equipped tools are intentionally ignored: their meshes can
--- be much larger than the avatar and would make the ESP box jump or stretch.
+-- Produces one compact screen-space rectangle shared by Box ESP, Corner Box
+-- and Health Bar. Distance and camera FOV affect only its screen position;
+-- width and height never come from projected 3D body bounds.
 function getXCCharacterScreenRect(esp, char, rootPart)
-    if esp.Character ~= char or not esp.BodyParts then
+    if esp.Character ~= char then
         esp.Character = char
-        esp.BodyParts = {}
-        esp.BodyBounds = nil
-        esp.NextBoundsRefresh = 0
         esp.SmoothRect = nil
-        for _, object in ipairs(char:GetChildren()) do
-            if object:IsA("BasePart") and object ~= rootPart then
-                local lowerName = object.Name:lower()
-                local excluded = lowerName:find("weapon", 1, true)
-                    or lowerName:find("gun", 1, true)
-                    or lowerName:find("knife", 1, true)
-                    or lowerName:find("viewmodel", 1, true)
-                if not excluded then table.insert(esp.BodyParts, object) end
-            end
-        end
     end
 
-    local now = tick()
-    if not esp.BodyBounds or now >= esp.NextBoundsRefresh then
-        local minX, minY, minZ = math.huge, math.huge, math.huge
-        local maxX, maxY, maxZ = -math.huge, -math.huge, -math.huge
-        local validParts = 0
-        for _, part in ipairs(esp.BodyParts) do
-            if part.Parent and part:IsDescendantOf(char) then
-                local center = rootPart.CFrame:PointToObjectSpace(part.Position)
-                local half = part.Size * 0.5
-                -- A small rotation allowance covers animated limbs without making
-                -- the whole rectangle pulse as arms and legs move.
-                local horizontal = math.max(half.X, half.Z)
-                minX = math.min(minX, center.X - horizontal)
-                maxX = math.max(maxX, center.X + horizontal)
-                minY = math.min(minY, center.Y - half.Y)
-                maxY = math.max(maxY, center.Y + half.Y)
-                minZ = math.min(minZ, center.Z - horizontal)
-                maxZ = math.max(maxZ, center.Z + horizontal)
-                validParts += 1
-            end
-        end
-        if validParts == 0 then
-            minX, maxX, minY, maxY, minZ, maxZ = -1.6, 1.6, -3.1, 3.2, -1.2, 1.2
-        end
-        esp.BodyBounds = {minX, maxX, minY, maxY, minZ, maxZ}
-        esp.NextBoundsRefresh = now + 0.25
-    end
-
-    local bounds = esp.BodyBounds
-    local minX, maxX, minY, maxY, minZ, maxZ = bounds[1], bounds[2], bounds[3], bounds[4], bounds[5], bounds[6]
-
-    local centerX, centerY, centerZ = (minX + maxX) * 0.5, (minY + maxY) * 0.5, (minZ + maxZ) * 0.5
-    local halfX = math.max((maxX - minX) * 0.54, 1.2)
-    local halfY = math.max((maxY - minY) * 0.54, 2.8)
-    local halfZ = math.max((maxZ - minZ) * 0.54, 0.9)
     local rootScreen = camera:WorldToViewportPoint(rootPart.Position)
-    if rootScreen.Z <= math.max(1.25, halfZ + 0.2) then
+    if rootScreen.Z <= 0.2 then
         esp.SmoothRect = nil
         return nil
     end
-    local minScreenX, minScreenY = math.huge, math.huge
-    local maxScreenX, maxScreenY = -math.huge, -math.huge
-    local projected = 0
-
-    for xIndex = 0, 1 do
-        local xSign = xIndex == 0 and -1 or 1
-        for yIndex = 0, 1 do
-            local ySign = yIndex == 0 and -1 or 1
-            for zIndex = 0, 1 do
-                local zSign = zIndex == 0 and -1 or 1
-                local worldPoint = rootPart.CFrame:PointToWorldSpace(Vector3.new(
-                    centerX + halfX * xSign,
-                    centerY + halfY * ySign,
-                    centerZ + halfZ * zSign
-                ))
-                local screenPoint = camera:WorldToViewportPoint(worldPoint)
-                if screenPoint.Z <= 0.2 then
-                    esp.SmoothRect = nil
-                    return nil
-                end
-                minScreenX = math.min(minScreenX, screenPoint.X)
-                maxScreenX = math.max(maxScreenX, screenPoint.X)
-                minScreenY = math.min(minScreenY, screenPoint.Y)
-                maxScreenY = math.max(maxScreenY, screenPoint.Y)
-                projected += 1
-            end
-        end
-    end
-    if projected ~= 8 then return nil end
-
-    local rawWidth = math.max(maxScreenX - minScreenX, 1)
-    local rawHeight = math.max(maxScreenY - minScreenY, 1)
     local viewport = camera.ViewportSize
-    if rawHeight > viewport.Y * 1.35 or rawWidth > viewport.X * 1.35 then
-        esp.SmoothRect = nil
-        return nil
-    end
-    local centerScreenX = (minScreenX + maxScreenX) * 0.5
-    local centerScreenY = (minScreenY + maxScreenY) * 0.5
     local preferredAspect = math.clamp(tonumber(XCConfig.espBoxAspect) or 0.52, 0.38, 0.8)
-    local height, width
-    if XCConfig.espFixedScale then
-        -- Screen-space ESP: distance/FOV only move the marker; they never
-        -- squeeze or enlarge its proportions. The base size is normalized to
-        -- the mobile viewport so it does not cover distant player models.
-        local viewportScale = math.clamp(math.min(viewport.X / 1600, viewport.Y / 720), 0.68, 1.05)
-        height = math.clamp((tonumber(XCConfig.espFixedBoxHeight) or 42) * viewportScale, 24, 72)
-        width = height * preferredAspect
-    else
-        local minHeight = math.clamp(tonumber(XCConfig.espFixedBoxHeight) or 24, 16, 56)
-        height = math.max(rawHeight, minHeight)
-        width = math.max(rawWidth, height * 0.40)
-        width = math.min(width, height * 0.82)
-        if rawHeight < minHeight then width = math.max(width, height * preferredAspect) end
-    end
-
-    local target = {X = centerScreenX - width * 0.5, Y = centerScreenY - height * 0.5, W = width, H = height}
+    local viewportScale = math.clamp(math.min(viewport.X / 1600, viewport.Y / 720), 0.72, 1)
+    local height = math.floor(math.clamp((tonumber(XCConfig.espFixedBoxHeight) or 36) * viewportScale, 22, 56) + 0.5)
+    local width = math.floor(math.clamp(height * preferredAspect, 10, 38) + 0.5)
+    local centerScreenX = rootScreen.X
+    local centerScreenY = rootScreen.Y - math.floor(height * 0.06 + 0.5)
+    local target = {
+        X = centerScreenX - width * 0.5,
+        Y = centerScreenY - height * 0.5,
+        W = width,
+        H = height,
+    }
     local smooth = math.clamp(tonumber(XCConfig.espBoxSmoothing) or 0.42, 0, 0.9)
     local alpha = 1 - smooth
     local old = esp.SmoothRect
     if old then
         local jump = math.abs(old.X - target.X) + math.abs(old.Y - target.Y)
-        if jump < math.max(100, target.H * 2.5) then
+        if jump < 120 then
             target.X = old.X + (target.X - old.X) * alpha
             target.Y = old.Y + (target.Y - old.Y) * alpha
-            target.W = old.W + (target.W - old.W) * alpha
-            target.H = old.H + (target.H - old.H) * alpha
         end
     end
 
@@ -4687,11 +4597,12 @@ function renderTacticalOverlay()
 
                     if XCConfig.boxEspEnabled and not XCConfig.cornerBoxEnabled then
                         esp.BoxStroke.Color = sideColor
-                        esp.BoxStroke.Thickness = XCConfig.boxThickness
+                        local boxStrokeWidth = math.clamp(math.floor((tonumber(XCConfig.boxThickness) or 1) + 0.5), 1, 2)
+                        esp.BoxStroke.Thickness = boxStrokeWidth
                         esp.Box.Size = UDim2.new(0, boxWidth, 0, boxHeight)
                         esp.Box.Position = UDim2.new(0, boxPosX, 0, boxPosY)
                         esp.Box.Visible = true
-                        esp.BoxOutlineStroke.Thickness = XCConfig.boxThickness + 2
+                        esp.BoxOutlineStroke.Thickness = boxStrokeWidth + 2
                         esp.BoxOutline.Size = esp.Box.Size
                         esp.BoxOutline.Position = esp.Box.Position
                         esp.BoxOutline.Visible = XCConfig.espBoxOutline
@@ -4702,9 +4613,9 @@ function renderTacticalOverlay()
                     elseif XCConfig.cornerBoxEnabled then
                         esp.Box.Visible = false
                         esp.BoxOutline.Visible = false
-                        local lengthX = math.clamp(boxWidth * 0.28, 6, 20)
-                        local lengthY = math.clamp(boxHeight * 0.22, 7, 24)
-                        local thick = math.clamp(XCConfig.boxThickness + 0.5, 1.5, 3)
+                        local lengthX = math.floor(math.clamp(boxWidth * 0.34, 5, 12) + 0.5)
+                        local lengthY = math.floor(math.clamp(boxHeight * 0.23, 7, 14) + 0.5)
+                        local thick = math.clamp(math.floor((tonumber(XCConfig.boxThickness) or 1) + 0.5), 1, 2)
 
                         for _, corner in ipairs(esp.Corners) do
                             corner.H.BackgroundColor3 = sideColor
@@ -4756,16 +4667,18 @@ function renderTacticalOverlay()
                     if XCConfig.healthBarEnabled and health then
                         local hpPercent = math.clamp(health / maxHealth, 0, 1)
 
-                        local barWidth = 3
-                        local barGap = 4
+                        local barWidth = 4
+                        local barGap = 3
                         local barX = boxPosX - barWidth - barGap
                         local barY = boxPosY
+                        local fillHeight = math.max(1, math.floor((boxHeight - 2) * hpPercent + 0.5))
 
                         esp.HealthBarBg.Size = UDim2.new(0, barWidth, 0, boxHeight)
                         esp.HealthBarBg.Position = UDim2.new(0, barX, 0, barY)
                         esp.HealthBarBg.Visible = true
 
-                        esp.HealthBarFill.Size = UDim2.new(1, 0, hpPercent, 0)
+                        esp.HealthBarFill.Position = UDim2.new(0, 1, 1, -1)
+                        esp.HealthBarFill.Size = UDim2.fromOffset(barWidth - 2, fillHeight)
                         
                         esp.HealthBarFill.BackgroundColor3 = sideColor:Lerp(Color3.fromRGB(38, 40, 43), (1 - hpPercent) * 0.35)
                     else
@@ -6806,7 +6719,7 @@ function buildXCUI()
             local color = previewVisible and currentTheme.Enemy_Accent or currentTheme.Enemy_Hidden
             mode.Text = previewVisible and "VISIBLE" or "HIDDEN"
             mode.TextColor3 = color
-            local height = math.clamp(tonumber(XCConfig.espFixedBoxHeight) or 42, 28, 72)
+            local height = math.clamp(tonumber(XCConfig.espFixedBoxHeight) or 36, 24, 56)
             local width = height * math.clamp(tonumber(XCConfig.espBoxAspect) or 0.52, 0.38, 0.8)
             box.Size = UDim2.fromOffset(width, height)
             boxStroke.Color = color
@@ -6816,7 +6729,7 @@ function buildXCUI()
             head.BackgroundColor3 = color
             body.Visible = XCConfig.chamsEnabled
             healthBack.Position = UDim2.new(0.5, -width * 0.5 - 4, 0.55, 0)
-            healthBack.Size = UDim2.fromOffset(3, height)
+            healthBack.Size = UDim2.fromOffset(4, height)
             healthBack.Visible = XCConfig.healthBarEnabled
             tag.Position = UDim2.new(0.5, 0, 0.55, -height * 0.5 - 3)
             tag.TextColor3 = color
@@ -6824,7 +6737,7 @@ function buildXCUI()
 
             local left = canvas.AbsoluteSize.X * 0.5 - width * 0.5
             local top = canvas.AbsoluteSize.Y * 0.55 - height * 0.5
-            local length = math.clamp(math.min(width, height) * 0.28, 7, 18)
+            local length = math.floor(math.clamp(width * 0.34, 5, 12) + 0.5)
             local specs = {
                 {left, top, length, 1}, {left, top, 1, length},
                 {left + width - length, top, length, 1}, {left + width - 1, top, 1, length},
@@ -7175,11 +7088,10 @@ function buildXCUI()
     toggle(L, "Corner box", "cornerBoxEnabled")
     toggle(L, "Health bar", "healthBarEnabled")
     toggle(L, "Dark ESP outline", "espBoxOutline")
-    toggle(L, "Fixed ESP scale", "espFixedScale")
     addSlider(L, "ESP distance", "espMaxDist", 100, 5000, 50, "")
     addSlider(L, "Box stability", "espBoxSmoothing", 0, 0.9, 0.05, "")
-    addSlider(L, "Fixed box height", "espFixedBoxHeight", 24, 72, 2, "px")
-    addSlider(L, "Box width ratio", "espBoxAspect", 0.38, 0.8, 0.02, "x")
+    addSlider(L, "ESP size", "espFixedBoxHeight", 24, 56, 2, "px")
+    addSlider(L, "Box width ratio", "espBoxAspect", 0.42, 0.68, 0.02, "x")
     section(L, "Skeleton")
     toggle(L, "Skeleton ESP", "skeletonEspEnabled")
     toggle(L, "Distance fade", "skeletonDistanceFade")
