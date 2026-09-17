@@ -140,6 +140,7 @@ local XCConfig = {
     streamerKey = "F8",
     settingsShowNotifications = true,
     settingsCompactMode = false,
+    settingsAutoSave = false,
     menuKey = "RightShift",
 
     -- Sliders & Values
@@ -232,7 +233,8 @@ local XCConfig = {
     tagShowWeapon = true,
     boxThickness = 1.0,
     espBoxSmoothing = 0.42,
-    espMinBoxHeight = 28,
+    espFixedScale = true,
+    espFixedBoxHeight = 64,
     espBoxAspect = 0.52,
     espBoxOutline = true,
 
@@ -1106,22 +1108,54 @@ local hitmarkerLastHealth = {}
 -- ==========================================
 local skinData = {
     SkinsRoot = nil,
+    WeaponAssets = nil,
+    SkinLibrary = nil,
+    GetWeapon = nil,
+    KnifeSet = {},
+    KnifeChoices = {},
     SkinSelections = {},
     GloveSelections = {},
     GloveFolders = {},
-    Ready = false
+    ModifiedKnife = nil,
+    Ready = false,
+    LastRefresh = 0,
+    LastError = nil
 }
 
 function refreshXCSkinData()
-    if skinData.Ready and skinData.SkinsRoot and skinData.SkinsRoot.Parent then return end
+    if skinData.Ready and skinData.SkinsRoot and skinData.SkinsRoot.Parent and skinData.GetWeapon then return true end
+    if skinData.LastRefresh > 0 and os.clock() - skinData.LastRefresh < 1 then return skinData.Ready end
+    skinData.LastRefresh = os.clock()
 
     local assets = ReplicatedStorage:FindFirstChild("Assets")
     skinData.SkinsRoot = assets and assets:FindFirstChild("Skins")
-    if not skinData.SkinsRoot then return end
+    skinData.WeaponAssets = assets and assets:FindFirstChild("Weapons")
+    if not skinData.SkinsRoot then return false end
+
+    pcall(function()
+        local database = ReplicatedStorage:FindFirstChild("Database")
+        local components = database and database:FindFirstChild("Components")
+        local libraries = components and components:FindFirstChild("Libraries")
+        local module = libraries and libraries:FindFirstChild("Skins")
+        if module then skinData.SkinLibrary = require(module) end
+    end)
+    pcall(function()
+        local controllers = ReplicatedStorage:FindFirstChild("Controllers")
+        local module = controllers and controllers:FindFirstChild("InventoryController")
+        local inventory = module and require(module)
+        if inventory and type(inventory.peekCurrentEquippedForMovement) == "function" then
+            skinData.GetWeapon = inventory.peekCurrentEquippedForMovement
+        end
+    end)
 
     skinData.SkinSelections = {}
     skinData.GloveSelections = {}
     skinData.GloveFolders = {}
+    skinData.KnifeSet = {
+        ["CT Knife"] = true,
+        ["T Knife"] = true,
+        ["Knife"] = true
+    }
 
     for _, weaponFolder in ipairs(skinData.SkinsRoot:GetChildren()) do
         local skins = {}
@@ -1130,6 +1164,22 @@ function refreshXCSkinData()
         end
         table.sort(skins)
         skinData.SkinSelections[weaponFolder.Name] = skins
+
+        local lowerName = weaponFolder.Name:lower()
+        if lowerName:find("knife", 1, true) or lowerName:find("karambit", 1, true)
+            or lowerName:find("bayonet", 1, true) or lowerName:find("butterfly", 1, true) then
+            skinData.KnifeSet[weaponFolder.Name] = true
+        end
+
+        if skinData.SkinLibrary and type(skinData.SkinLibrary.GetAllSkinsForWeapon) == "function" then
+            pcall(function()
+                local entries = skinData.SkinLibrary.GetAllSkinsForWeapon(weaponFolder.Name)
+                local sample = type(entries) == "table" and entries[1]
+                if type(sample) == "table" and sample.type == "Melee" then
+                    skinData.KnifeSet[weaponFolder.Name] = true
+                end
+            end)
+        end
 
         if weaponFolder.Name:match("Glove") or weaponFolder.Name:match("Gloves") or weaponFolder.Name == "Hand Wraps" then
             skinData.GloveFolders[#skinData.GloveFolders + 1] = weaponFolder
@@ -1147,13 +1197,132 @@ function refreshXCSkinData()
         end
     end
 
-    skinData.Ready = true
+    skinData.KnifeChoices = {}
+    for knifeName in pairs(skinData.KnifeSet) do
+        local baseKnife = knifeName == "CT Knife" or knifeName == "T Knife" or knifeName == "Knife"
+        if not baseKnife then
+            if not skinData.WeaponAssets or skinData.WeaponAssets:FindFirstChild(knifeName) then
+                skinData.KnifeChoices[#skinData.KnifeChoices + 1] = knifeName
+            end
+        end
+    end
+    table.sort(skinData.KnifeChoices)
+    if XCConfig.selectedKnifeType ~= "Default" and skinData.WeaponAssets
+        and not skinData.WeaponAssets:FindFirstChild(XCConfig.selectedKnifeType)
+        and skinData.KnifeChoices[1] then
+        XCConfig.selectedKnifeType = skinData.KnifeChoices[1]
+    end
+
+    skinData.Ready = skinData.GetWeapon ~= nil
+    return skinData.Ready
 end
 
 refreshXCSkinData()
 
 function isBaseKnife(name)
     return name == "CT Knife" or name == "T Knife" or name == "Knife"
+end
+
+function getXCKnifeChoices()
+    refreshXCSkinData()
+    local choices = {}
+    for _, name in ipairs(skinData.KnifeChoices or {}) do choices[#choices + 1] = name end
+    if #choices == 0 then
+        choices = {"Butterfly Knife", "Karambit", "Bayonet"}
+    end
+    choices[#choices + 1] = "Default"
+    return choices
+end
+
+function constructXCKnifeView(view, character, weapon)
+    if not view or type(view.construct) ~= "function" or not character or not character.Parent then return false end
+    local readIdentity = getthreadidentity or getidentity
+    local writeIdentity = setthreadidentity or setidentity
+    local identity = readIdentity and writeIdentity and readIdentity()
+    local success, failure = pcall(function()
+        if identity then writeIdentity(2) end
+        local components = ReplicatedStorage:FindFirstChild("Components")
+        local common = components and components:FindFirstChild("Common")
+        local module = common and common:FindFirstChild("GetWeaponProperties")
+        if module then
+            local getProperties = require(module)
+            assert(getProperties(view.CameraModelWeapon or view.Weapon or weapon.Name), "knife properties unavailable")
+        end
+        view:construct(character, weapon)
+    end)
+    if identity then pcall(writeIdentity, identity) end
+    if success then skinData.LastError = nil else skinData.LastError = tostring(failure) end
+    return success
+end
+
+function restoreXCKnifeModel()
+    local record = skinData.ModifiedKnife
+    skinData.ModifiedKnife = nil
+    if not record then return end
+    local view, weapon = record.View, record.Weapon
+    if not view or not weapon or view.IsDestroyed or weapon.IsDestroyed then return end
+    view.CameraModelWeapon = record.CameraModelWeapon
+    view.Skin = record.Skin
+    view.Float = record.Float
+    constructXCKnifeView(view, weapon.Character or player.Character, weapon)
+end
+
+function applyXCKnifeChanger()
+    if not XCConfig.skinChangerEnabled then
+        restoreXCKnifeModel()
+        return false
+    end
+    if not refreshXCSkinData() or type(skinData.GetWeapon) ~= "function" then return false end
+
+    local ok, weapon = pcall(skinData.GetWeapon)
+    if not ok or not weapon or weapon.IsDestroyed then return false end
+    local view = weapon.Viewmodel
+    local properties = weapon.Properties
+    local melee = skinData.KnifeSet[weapon.Name]
+        or (type(properties) == "table" and properties.Class == "Melee")
+    if not view or not melee then
+        restoreXCKnifeModel()
+        return false
+    end
+
+    local selectedKnife = XCConfig.selectedKnifeType
+    if not selectedKnife or selectedKnife == "Default" then
+        restoreXCKnifeModel()
+        return true
+    end
+    if skinData.WeaponAssets and not skinData.WeaponAssets:FindFirstChild(selectedKnife) then
+        skinData.LastError = "knife asset unavailable: " .. tostring(selectedKnife)
+        return false
+    end
+    if skinData.ModifiedKnife and skinData.ModifiedKnife.View ~= view then restoreXCKnifeModel() end
+    if not skinData.ModifiedKnife then
+        skinData.ModifiedKnife = {
+            View = view,
+            Weapon = weapon,
+            CameraModelWeapon = view.CameraModelWeapon,
+            Skin = view.Skin,
+            Float = view.Float
+        }
+    end
+
+    local selectedSkin = XCConfig.selectedSkin or "Default"
+    local availableSkins = skinData.SkinSelections[selectedKnife]
+    if selectedSkin ~= "Default" and type(availableSkins) == "table"
+        and not table.find(availableSkins, selectedSkin) then
+        selectedSkin = "Default"
+    end
+    local modelChanged = view.CameraModelWeapon ~= selectedKnife
+    view.CameraModelWeapon = selectedKnife
+    view.Skin = selectedSkin ~= "Default" and selectedSkin or nil
+    view.Float = 0
+    if modelChanged or not view.Model or not view.Model.Parent then
+        if not constructXCKnifeView(view, weapon.Character or player.Character, weapon) then return false end
+    end
+    if view.Model and view.Model.Parent then
+        applySurfaceAppearanceSkin(view.Model, selectedKnife, selectedSkin)
+    end
+    skinData.LastError = nil
+    return true
 end
 
 function getCurrentWeaponModel()
@@ -1200,13 +1369,16 @@ function hookBloxStrikeModules(forceScan)
         if type(getgc) ~= "function" then return end
         for _, obj in ipairs(getgc(true)) do
             if type(obj) == "table" then
-                if rawget(obj, "EquippedMelee") ~= nil and XCConfig.skinChangerEnabled then
+                if rawget(obj, "EquippedMelee") ~= nil and XCConfig.skinChangerEnabled
+                    and XCConfig.selectedKnifeType ~= "Default" then
                     obj.EquippedMelee = XCConfig.selectedKnifeType
                 end
-                if rawget(obj, "MeleeSkin") ~= nil and XCConfig.skinChangerEnabled then
+                if rawget(obj, "MeleeSkin") ~= nil and XCConfig.skinChangerEnabled
+                    and XCConfig.selectedKnifeType ~= "Default" then
                     obj.MeleeSkin = XCConfig.selectedSkin
                 end
-                if rawget(obj, "Knife") ~= nil and type(obj.Knife) == "table" and XCConfig.skinChangerEnabled then
+                if rawget(obj, "Knife") ~= nil and type(obj.Knife) == "table" and XCConfig.skinChangerEnabled
+                    and XCConfig.selectedKnifeType ~= "Default" then
                     obj.Knife.Name = XCConfig.selectedKnifeType
                     obj.Knife.Skin = XCConfig.selectedSkin
                 end
@@ -1217,6 +1389,7 @@ end
 
 function scanAndMorphKnives(root)
     if not XCConfig.skinChangerEnabled or not root then return end
+    if applyXCKnifeChanger() then return end
     refreshXCSkinData()
     if not skinData.SkinsRoot then return end
 
@@ -1276,10 +1449,10 @@ end
 -- Compatibility with the existing XC render scanner.
 task.spawn(function()
     while xcSessionActive() do
-        task.wait(1)
+        task.wait(0.25)
         pcall(function()
             if XCConfig.skinChangerEnabled then
-                scanAndMorphKnives(camera)
+                applyXCKnifeChanger()
             end
             if XCConfig.gloveChangerEnabled then
                 applyXCGloves()
@@ -3158,6 +3331,7 @@ end))
 -- CLEANUP ROUTINES
 -- ==========================================
 function cleanup()
+    pcall(restoreXCKnifeModel)
     setXCStreamerMode(false)
     stopXCCameraMode()
     destroyXCWeather()
@@ -4310,12 +4484,20 @@ function getXCCharacterScreenRect(esp, char, rootPart)
     end
     local centerScreenX = (minScreenX + maxScreenX) * 0.5
     local centerScreenY = (minScreenY + maxScreenY) * 0.5
-    local minHeight = math.clamp(tonumber(XCConfig.espMinBoxHeight) or 28, 16, 64)
     local preferredAspect = math.clamp(tonumber(XCConfig.espBoxAspect) or 0.52, 0.38, 0.8)
-    local height = math.max(rawHeight, minHeight)
-    local width = math.max(rawWidth, height * 0.40)
-    width = math.min(width, height * 0.82)
-    if rawHeight < minHeight then width = math.max(width, height * preferredAspect) end
+    local height, width
+    if XCConfig.espFixedScale then
+        -- Screen-space ESP: distance/FOV only move the marker; they never
+        -- squeeze or enlarge its box and corner proportions.
+        height = math.clamp(tonumber(XCConfig.espFixedBoxHeight) or 64, 28, 140)
+        width = height * preferredAspect
+    else
+        local minHeight = math.clamp(tonumber(XCConfig.espFixedBoxHeight) or 28, 16, 64)
+        height = math.max(rawHeight, minHeight)
+        width = math.max(rawWidth, height * 0.40)
+        width = math.min(width, height * 0.82)
+        if rawHeight < minHeight then width = math.max(width, height * preferredAspect) end
+    end
 
     local target = {X = centerScreenX - width * 0.5, Y = centerScreenY - height * 0.5, W = width, H = height}
     local smooth = math.clamp(tonumber(XCConfig.espBoxSmoothing) or 0.42, 0, 0.9)
@@ -5620,6 +5802,8 @@ function buildXCUI()
     local searchableControls = {}
     local sectionGroups = {}
     local activeSectionByParent = {}
+    local moduleStatusRefreshers = {}
+    local scheduleConfigAutoSave = function() end
     local applySearch
 
     local searchBar = Instance.new("Frame")
@@ -5711,6 +5895,7 @@ function buildXCUI()
         customScopeEnabled = "Draws the XC scope overlay when scoped.",
         customHandsEnabled = "Offsets the detected first-person weapon or hands model.",
         spectatorListEnabled = "Shows players currently observing the local player when detectable.",
+        settingsAutoSave = "Saves the current profile shortly after a UI setting changes.",
         menuKey = "Keyboard shortcut used to show or hide XC.",
         tab_Rage = "Combat: aim assistants, targeting and weapon mechanics.",
         tab_AntiAim = "Movement: anti-aim, third person, bhop, slide and flight.",
@@ -5778,18 +5963,32 @@ function buildXCUI()
     local function attachHelp(target, key)
         local message = CONTROL_HELP[key]
         if not message then return end
+        local touchHelpShown = false
         target.MouseEnter:Connect(function() showHelp(target, message) end)
         target.MouseLeave:Connect(hideHelp)
         target.InputBegan:Connect(function(input)
             if input.UserInputType ~= Enum.UserInputType.Touch then return end
+            touchHelpShown = false
             helpToken += 1
             local token = helpToken
             task.delay(0.45, function()
-                if token == helpToken then showHelp(target, message) end
+                if token == helpToken then
+                    touchHelpShown = true
+                    target:SetAttribute("XCLongPressUntil", os.clock() + 0.4)
+                    showHelp(target, message)
+                end
             end)
         end)
         target.InputEnded:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.Touch then hideHelp() end
+            if input.UserInputType ~= Enum.UserInputType.Touch then return end
+            if touchHelpShown then
+                local shownToken = helpToken
+                task.delay(2.5, function()
+                    if shownToken == helpToken then hideHelp() end
+                end)
+            else
+                hideHelp()
+            end
         end)
     end
 
@@ -5939,17 +6138,37 @@ function buildXCUI()
         table.insert(searchableControls, {gui = gui, label = tostring(label):lower()})
     end
 
+    local function refreshConfigControls(key, value)
+        for _, refreshControl in ipairs(refreshers[key] or {}) do pcall(refreshControl, value) end
+    end
+
+    local function getModuleRuntimeStatus(key)
+        if XCConfig[key] ~= true then return "OFF", C.Muted end
+        if key == "skinChangerEnabled" then
+            if skinData.LastError then return "ERR", Color3.fromRGB(218, 82, 82) end
+            if not skinData.Ready then return "WAIT", Color3.fromRGB(220, 170, 72) end
+        elseif key == "antiAimEnabled" or key == "bunnyHopEnabled" then
+            if not xcCharacterInputHook.Ready and xcCharacterInputHook.LastError then
+                return "FALL", Color3.fromRGB(220, 170, 72)
+            end
+            if not xcCharacterInputHook.Ready then return "WAIT", Color3.fromRGB(220, 170, 72) end
+        elseif key == "silentAimEnabled" and not bloxStrikeShootHooked and not silentAimHooked then
+            return "WAIT", Color3.fromRGB(220, 170, 72)
+        end
+        return "ON", C.Lime
+    end
+
     local function addToggle(parent, label, key, onChanged)
         parent = activeSectionByParent[parent] or parent
         local row = Instance.new("TextButton")
         row.Name = key
-        row.Size = UDim2.new(1, 0, 0, 20)
+        row.Size = UDim2.new(1, 0, 0, UserInputService.TouchEnabled and 28 or 22)
         row.BackgroundTransparency = 1
         row.Text = ""
         row.AutoButtonColor = false
         row.Parent = parent
         local text = Instance.new("TextLabel")
-        text.Size = UDim2.new(1, -36, 1, 0)
+        text.Size = UDim2.new(1, -76, 1, 0)
         text.Position = UDim2.fromOffset(0, 0)
         text.BackgroundTransparency = 1
         text.Text = label
@@ -5958,6 +6177,21 @@ function buildXCUI()
         text.TextSize = 11
         text.TextXAlignment = Enum.TextXAlignment.Left
         text.Parent = row
+
+        local statusText = Instance.new("TextLabel")
+        statusText.Name = "RuntimeStatus"
+        statusText.Size = UDim2.fromOffset(34, 14)
+        statusText.Position = UDim2.new(1, -67, 0.5, -7)
+        statusText.BackgroundColor3 = C.Control
+        statusText.BackgroundTransparency = 0.15
+        statusText.BorderSizePixel = 0
+        statusText.Font = Enum.Font.Code
+        statusText.TextSize = 8
+        statusText.TextXAlignment = Enum.TextXAlignment.Center
+        statusText.Parent = row
+        local statusCorner = Instance.new("UICorner")
+        statusCorner.CornerRadius = UDim.new(0, 3)
+        statusCorner.Parent = statusText
 
         local track = Instance.new("Frame")
         track.Name = "SwitchTrack"
@@ -5982,20 +6216,34 @@ function buildXCUI()
         knobCorner.CornerRadius = UDim.new(1, 0)
         knobCorner.Parent = knob
 
+        local function refreshStatus()
+            local state, color = getModuleRuntimeStatus(key)
+            local background = state == "ERR" and Color3.fromRGB(45, 18, 18)
+                or (state == "WAIT" or state == "FALL") and Color3.fromRGB(43, 34, 17) or C.Control
+            if statusText.Text ~= state then statusText.Text = state end
+            if statusText.TextColor3 ~= color then statusText.TextColor3 = color end
+            if statusText.BackgroundColor3 ~= background then statusText.BackgroundColor3 = background end
+        end
         local function refresh(value)
             track.BackgroundColor3 = value and Color3.fromRGB(76, 102, 0) or C.Control2
             knob.BackgroundColor3 = value and C.Lime or C.Muted
             knob.Position = value and UDim2.new(1, -11, 0.5, -4) or UDim2.new(0, 2, 0.5, -4)
             text.TextColor3 = value and C.White or C.Text
+            refreshStatus()
         end
         refresh(XCConfig[key] == true)
         UI_Bind_Registry[key] = refresh
         refreshers[key] = refreshers[key] or {}
         table.insert(refreshers[key], refresh)
+        table.insert(moduleStatusRefreshers, function()
+            if row.Parent then refreshStatus() end
+        end)
         row.Activated:Connect(function()
+            if os.clock() < (row:GetAttribute("XCLongPressUntil") or 0) then return end
             XCConfig[key] = not XCConfig[key]
-            refresh(XCConfig[key])
+            refreshConfigControls(key, XCConfig[key])
             if onChanged then onChanged(XCConfig[key]) end
+            scheduleConfigAutoSave()
             if key ~= "settingsShowNotifications" then
                 XCNotify(label, XCConfig[key] and "Enabled" or "Disabled", XCConfig[key] and "success" or "warning", 1.5)
             end
@@ -6057,8 +6305,9 @@ function buildXCUI()
             local raw = minValue + (maxValue - minValue) * pct
             local value = math.floor(raw / step + 0.5) * step
             XCConfig[key] = value
-            refresh(value)
+            refreshConfigControls(key, value)
             if onChanged then onChanged(value) end
+            scheduleConfigAutoSave()
         end
         refresh(XCConfig[key])
         refreshers[key] = refreshers[key] or {}
@@ -6205,8 +6454,9 @@ function buildXCUI()
             end)
             optionButton.Activated:Connect(function()
                 XCConfig[key] = option
-                refresh(option)
+                refreshConfigControls(key, option)
                 if onChanged then onChanged(option) end
+                scheduleConfigAutoSave()
                 closeDropdown()
             end)
         end
@@ -6308,6 +6558,180 @@ function buildXCUI()
         return button
     end
 
+    local function addNote(parent, message)
+        parent = activeSectionByParent[parent] or parent
+        local note = Instance.new("TextLabel")
+        note.Size = UDim2.new(1, 0, 0, 30)
+        note.BackgroundColor3 = Color3.fromRGB(13, 13, 13)
+        note.BorderColor3 = C.Border
+        note.BorderSizePixel = 1
+        note.Text = message
+        note.TextColor3 = C.Muted
+        note.Font = Enum.Font.Code
+        note.TextSize = 8
+        note.TextWrapped = true
+        note.TextXAlignment = Enum.TextXAlignment.Left
+        note.Parent = parent
+        local padding = Instance.new("UIPadding")
+        padding.PaddingLeft = UDim.new(0, 6)
+        padding.PaddingRight = UDim.new(0, 6)
+        padding.Parent = note
+        registerSearch(note, message)
+        return note
+    end
+
+    local function addESPPreview(parent)
+        parent = activeSectionByParent[parent] or parent
+        local card = Instance.new("Frame")
+        card.Name = "ESPPreview"
+        card.Size = UDim2.new(1, 0, 0, 154)
+        card.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+        card.BorderColor3 = C.Border
+        card.BorderSizePixel = 1
+        card.Parent = parent
+
+        local title = Instance.new("TextLabel")
+        title.Size = UDim2.new(1, -76, 0, 20)
+        title.Position = UDim2.fromOffset(7, 3)
+        title.BackgroundTransparency = 1
+        title.Text = "LIVE ESP PREVIEW"
+        title.TextColor3 = C.Text
+        title.Font = Enum.Font.Code
+        title.TextSize = 9
+        title.TextXAlignment = Enum.TextXAlignment.Left
+        title.Parent = card
+
+        local previewVisible = true
+        local mode = Instance.new("TextButton")
+        mode.Size = UDim2.fromOffset(67, 18)
+        mode.Position = UDim2.new(1, -72, 0, 4)
+        mode.BackgroundColor3 = C.Control
+        mode.BorderColor3 = C.Border
+        mode.BorderSizePixel = 1
+        mode.TextColor3 = C.Lime
+        mode.Font = Enum.Font.Code
+        mode.TextSize = 8
+        mode.AutoButtonColor = false
+        mode.Parent = card
+
+        local canvas = Instance.new("Frame")
+        canvas.Size = UDim2.new(1, -12, 1, -31)
+        canvas.Position = UDim2.fromOffset(6, 26)
+        canvas.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+        canvas.BorderSizePixel = 0
+        canvas.ClipsDescendants = true
+        canvas.Parent = card
+
+        local body = Instance.new("Frame")
+        body.AnchorPoint = Vector2.new(0.5, 0.5)
+        body.Position = UDim2.fromScale(0.5, 0.55)
+        body.Size = UDim2.fromOffset(18, 62)
+        body.BackgroundColor3 = C.Lime
+        body.BackgroundTransparency = 0.72
+        body.BorderSizePixel = 0
+        body.Parent = canvas
+        local head = Instance.new("Frame")
+        head.AnchorPoint = Vector2.new(0.5, 1)
+        head.Position = UDim2.new(0.5, 0, 0, -2)
+        head.Size = UDim2.fromOffset(18, 18)
+        head.BackgroundColor3 = C.Lime
+        head.BackgroundTransparency = 0.72
+        head.BorderSizePixel = 0
+        head.Parent = body
+        local headCorner = Instance.new("UICorner")
+        headCorner.CornerRadius = UDim.new(1, 0)
+        headCorner.Parent = head
+
+        local box = Instance.new("Frame")
+        box.AnchorPoint = Vector2.new(0.5, 0.5)
+        box.Position = UDim2.fromScale(0.5, 0.55)
+        box.BackgroundTransparency = 1
+        box.Parent = canvas
+        local boxStroke = Instance.new("UIStroke")
+        boxStroke.Thickness = 1
+        boxStroke.Parent = box
+
+        local cornerLines = {}
+        for index = 1, 8 do
+            local line = Instance.new("Frame")
+            line.BorderSizePixel = 0
+            line.Parent = canvas
+            cornerLines[index] = line
+        end
+
+        local healthBack = Instance.new("Frame")
+        healthBack.AnchorPoint = Vector2.new(1, 0.5)
+        healthBack.BackgroundColor3 = Color3.fromRGB(4, 4, 4)
+        healthBack.BorderSizePixel = 0
+        healthBack.Parent = canvas
+        local healthFill = Instance.new("Frame")
+        healthFill.AnchorPoint = Vector2.new(0, 1)
+        healthFill.Position = UDim2.new(0, 1, 1, -1)
+        healthFill.Size = UDim2.new(1, -2, 0.72, -1)
+        healthFill.BackgroundColor3 = Color3.fromRGB(112, 196, 64)
+        healthFill.BorderSizePixel = 0
+        healthFill.Parent = healthBack
+
+        local tag = Instance.new("TextLabel")
+        tag.AnchorPoint = Vector2.new(0.5, 1)
+        tag.BackgroundTransparency = 1
+        tag.Text = "enemy [42m] [72HP]"
+        tag.Font = Enum.Font.Code
+        tag.TextSize = 9
+        tag.Parent = canvas
+
+        local function refreshPreview()
+            local color = previewVisible and currentTheme.Enemy_Accent or currentTheme.Enemy_Hidden
+            mode.Text = previewVisible and "VISIBLE" or "HIDDEN"
+            mode.TextColor3 = color
+            local height = math.clamp(tonumber(XCConfig.espFixedBoxHeight) or 64, 42, 96)
+            local width = height * math.clamp(tonumber(XCConfig.espBoxAspect) or 0.52, 0.38, 0.8)
+            box.Size = UDim2.fromOffset(width, height)
+            boxStroke.Color = color
+            boxStroke.Thickness = tonumber(XCConfig.boxThickness) or 1
+            box.Visible = XCConfig.boxEspEnabled and not XCConfig.cornerBoxEnabled
+            body.BackgroundColor3 = color
+            head.BackgroundColor3 = color
+            body.Visible = XCConfig.chamsEnabled
+            healthBack.Position = UDim2.new(0.5, -width * 0.5 - 4, 0.55, 0)
+            healthBack.Size = UDim2.fromOffset(3, height)
+            healthBack.Visible = XCConfig.healthBarEnabled
+            tag.Position = UDim2.new(0.5, 0, 0.55, -height * 0.5 - 3)
+            tag.TextColor3 = color
+            tag.Visible = XCConfig.nametagsEnabled
+
+            local left = canvas.AbsoluteSize.X * 0.5 - width * 0.5
+            local top = canvas.AbsoluteSize.Y * 0.55 - height * 0.5
+            local length = math.clamp(math.min(width, height) * 0.28, 7, 18)
+            local specs = {
+                {left, top, length, 1}, {left, top, 1, length},
+                {left + width - length, top, length, 1}, {left + width - 1, top, 1, length},
+                {left, top + height - 1, length, 1}, {left, top + height - length, 1, length},
+                {left + width - length, top + height - 1, length, 1}, {left + width - 1, top + height - length, 1, length},
+            }
+            for index, line in ipairs(cornerLines) do
+                local spec = specs[index]
+                line.Position = UDim2.fromOffset(spec[1], spec[2])
+                line.Size = UDim2.fromOffset(spec[3], spec[4])
+                line.BackgroundColor3 = color
+                line.Visible = XCConfig.cornerBoxEnabled
+            end
+        end
+
+        mode.Activated:Connect(function()
+            previewVisible = not previewVisible
+            refreshPreview()
+        end)
+        for _, key in ipairs({"boxEspEnabled", "cornerBoxEnabled", "healthBarEnabled", "nametagsEnabled", "chamsEnabled", "espFixedBoxHeight", "espBoxAspect", "boxThickness"}) do
+            refreshers[key] = refreshers[key] or {}
+            table.insert(refreshers[key], refreshPreview)
+        end
+        task.defer(refreshPreview)
+        table.insert(connections, canvas:GetPropertyChangedSignal("AbsoluteSize"):Connect(refreshPreview))
+        registerSearch(card, "esp preview visible hidden box corner health nametag chams")
+        return card
+    end
+
     local function specialToggle(key, value)
         if value then
             if key == "fireRateEnabled" then lazyFeatureRequests.fireRate = true end
@@ -6317,8 +6741,13 @@ function buildXCUI()
         if key == "slideEnabled" then updateMobileSlideVisibility()
         elseif key == "jumpCircleEnabled" then
             if value and player.Character then initJumpCircleForCharacter(player.Character) else clearActiveJumpCircle() end
-        elseif key == "skinChangerEnabled" and value then
-            hookBloxStrikeModules(true); scanAndMorphKnives(camera)
+        elseif key == "skinChangerEnabled" then
+            if value then
+                hookBloxStrikeModules(true)
+                applyXCKnifeChanger()
+            else
+                restoreXCKnifeModel()
+            end
         elseif key == "gloveChangerEnabled" and value then applyXCGloves()
         elseif key == "nightModeEnabled" then
             if value then
@@ -6624,10 +7053,11 @@ function buildXCUI()
     toggle(L, "Corner box", "cornerBoxEnabled")
     toggle(L, "Health bar", "healthBarEnabled")
     toggle(L, "Dark ESP outline", "espBoxOutline")
+    toggle(L, "Fixed ESP scale", "espFixedScale")
     addSlider(L, "ESP distance", "espMaxDist", 100, 5000, 50, "")
     addSlider(L, "Box stability", "espBoxSmoothing", 0, 0.9, 0.05, "")
-    addSlider(L, "Min box height", "espMinBoxHeight", 16, 64, 2, "px")
-    addSlider(L, "Far box width", "espBoxAspect", 0.38, 0.8, 0.02, "x")
+    addSlider(L, "Fixed box height", "espFixedBoxHeight", 28, 140, 2, "px")
+    addSlider(L, "Box width ratio", "espBoxAspect", 0.38, 0.8, 0.02, "x")
     section(L, "Skeleton")
     toggle(L, "Skeleton ESP", "skeletonEspEnabled")
     toggle(L, "Distance fade", "skeletonDistanceFade")
@@ -6638,6 +7068,8 @@ function buildXCUI()
     toggle(L, "Show distance", "espShowDistance")
     toggle(L, "Show health", "espShowHealth")
     toggle(L, "Show weapon", "tagShowWeapon")
+    section(R, "ESP preview")
+    addESPPreview(R)
     section(R, "ESP indicators")
     toggle(R, "Grenade ESP", "grenadeEspEnabled")
     toggle(R, "Tracers", "tracersEnabled")
@@ -6645,7 +7077,9 @@ function buildXCUI()
     section(R, "Hit feedback")
     toggle(R, "Hitmarker", "hitmarkerEnabled")
     toggle(R, "Hit sound", "hitSoundEnabled")
-    addChoice(R, "Hit sound preset", "hitSoundPreset", {"Skeet", "Neverlose", "Bell", "Bubble", "Rust", "Coins"})
+    addChoice(R, "Hit sound preset", "hitSoundPreset", {"Skeet", "Neverlose", "Bell", "Bubble", "Rust", "Coins"}, function()
+        playXCHitSound(true)
+    end)
     addSlider(R, "Hit sound volume", "hitSoundVolume", 0.1, 3, 0.1, "x")
     addButton(R, "TEST HIT SOUND", function() playXCHitSound(true) end)
     addSlider(R, "Hitmarker size", "hitmarkerSize", 5, 30, 1, "")
@@ -6715,8 +7149,12 @@ function buildXCUI()
     section(L, "Skin changer")
     toggle(L, "Skin changer", "skinChangerEnabled")
     toggle(L, "Glove changer", "gloveChangerEnabled")
-    addChoice(L, "Knife", "selectedKnifeType", {"Butterfly Knife", "Karambit", "Bayonet", "Default"})
-    addChoice(L, "Skin", "selectedSkin", {"Fade", "Doppler", "Crimson Web", "Default"})
+    addChoice(L, "Knife", "selectedKnifeType", getXCKnifeChoices(), function()
+        applyXCKnifeChanger()
+    end)
+    addChoice(L, "Skin", "selectedSkin", {"Fade", "Doppler", "Crimson Web", "Default"}, function()
+        applyXCKnifeChanger()
+    end)
     addChoice(L, "Glove model", "selectedGloveModel", {"Sports Gloves", "Driver Gloves", "Default"})
     section(L, "Weapon chams")
     toggle(L, "Weapon chams", "weaponChamsEnabled")
@@ -6781,11 +7219,13 @@ function buildXCUI()
     section(L, "menu & hud")
     toggle(L, "Notifications", "settingsShowNotifications")
     toggle(L, "Compact mode", "settingsCompactMode")
+    toggle(L, "Autosave config", "settingsAutoSave")
     toggle(L, "Watermark", "watermarkEnabled")
     toggle(L, "Show FPS", "watermarkShowFPS")
     toggle(L, "Show ping", "watermarkShowPing")
     toggle(L, "Show name", "watermarkShowName")
     addChoice(L, "Menu key", "menuKey", {"RightShift", "LeftControl", "RightControl", "F6", "F7", "F8", "F9", "F10"})
+    addNote(L, "STATUS: ON active  |  WAIT loading  |  FALL fallback  |  ERR failed")
     section(R, "profiles")
 
     local configName = "Default"
@@ -6814,6 +7254,38 @@ function buildXCUI()
     status.TextXAlignment = Enum.TextXAlignment.Left
     status.Parent = activeSectionByParent[R] or R
     local function configPath() return "XCConfigs/" .. safeName(nameBox.Text) .. ".json" end
+    local autoSaveSerial = 0
+    local function saveCurrentConfig(prefix)
+        local ok = pcall(function()
+            if type(makefolder) == "function" and type(isfolder) == "function" and not isfolder("XCConfigs") then makefolder("XCConfigs") end
+            assert(type(writefile) == "function", "File API unavailable")
+            local saveData = {}
+            for key, value in pairs(XCConfig) do saveData[key] = value end
+            if XCFeatureState.streamerSnapshot then
+                for key, value in pairs(XCFeatureState.streamerSnapshot) do saveData[key] = value end
+                saveData.streamerModeEnabled = false
+            end
+            writefile(configPath(), HttpService:JSONEncode(saveData))
+        end)
+        status.Text = ok and ((prefix or "saved") .. ": " .. safeName(nameBox.Text)) or "save unavailable"
+        status.TextColor3 = ok and C.Lime or Color3.fromRGB(218, 82, 82)
+        return ok
+    end
+    scheduleConfigAutoSave = function()
+        if not XCConfig.settingsAutoSave then return end
+        autoSaveSerial += 1
+        local serial = autoSaveSerial
+        task.delay(0.8, function()
+            if serial == autoSaveSerial and XCConfig.settingsAutoSave and screenGui.Parent then
+                saveCurrentConfig("autosaved")
+            end
+        end)
+    end
+    nameBox.FocusLost:Connect(function()
+        status.Text = configPath()
+        status.TextColor3 = C.Muted
+        scheduleConfigAutoSave()
+    end)
     local function refreshAll()
         for key, keyRefreshers in pairs(refreshers) do
             for _, refresh in ipairs(keyRefreshers) do refresh(XCConfig[key]) end
@@ -6847,18 +7319,7 @@ function buildXCUI()
         XCNotify("Camera", "Camera state restored", "success", 1.5)
     end)
     addButton(R, "SAVE CONFIG", function()
-        local ok = pcall(function()
-            if type(makefolder) == "function" and type(isfolder) == "function" and not isfolder("XCConfigs") then makefolder("XCConfigs") end
-            assert(type(writefile) == "function", "File API unavailable")
-            local saveData = {}
-            for key, value in pairs(XCConfig) do saveData[key] = value end
-            if XCFeatureState.streamerSnapshot then
-                for key, value in pairs(XCFeatureState.streamerSnapshot) do saveData[key] = value end
-                saveData.streamerModeEnabled = false
-            end
-            writefile(configPath(), HttpService:JSONEncode(saveData))
-        end)
-        status.Text = ok and ("saved: " .. safeName(nameBox.Text)) or "save failed"
+        saveCurrentConfig("saved")
     end)
     addButton(R, "LOAD CONFIG", function()
         local ok = pcall(function()
@@ -6938,6 +7399,12 @@ function buildXCUI()
         clearSearch.TextColor3 = query ~= "" and C.Lime or C.Muted
     end
     table.insert(connections, searchBox:GetPropertyChangedSignal("Text"):Connect(applySearch))
+    task.spawn(function()
+        while xcSessionActive() and screenGui.Parent do
+            task.wait(0.75)
+            for _, refreshStatus in ipairs(moduleStatusRefreshers) do pcall(refreshStatus) end
+        end
+    end)
     switchPage("Rage")
 
     local menuVisible = true
