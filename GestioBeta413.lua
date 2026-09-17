@@ -77,10 +77,12 @@ local XCConfig = {
     rcsEnabled = false,
     chamsEnabled = false,
     hitmarkerEnabled = false,
+    hitSoundEnabled = false,
     thirdPersonEnabled = false,
     skinChangerEnabled = false,
     triggerbotEnabled = false,
     antiAimEnabled = false,
+    antiAimMode = "Spin",
     bunnyHopEnabled = false,
     slideEnabled = false,
     speedEnabled = false,
@@ -89,11 +91,14 @@ local XCConfig = {
     boxEspEnabled = false,
     cornerBoxEnabled = false,
     healthBarEnabled = true,
+    skeletonEspEnabled = false,
+    skeletonDistanceFade = true,
     headDotEnabled = false,
     tracersEnabled = false,
     grenadeEspEnabled = false,
     jumpCircleEnabled = false,
     antiFlashEnabled = false,
+    noSmokeEnabled = false,
     fullBrightEnabled = false,
     removeFogEnabled = true,
     nightModeEnabled = false,
@@ -143,6 +148,9 @@ local XCConfig = {
     priorityPlayerName = "None",
     aimFov = 160,
     triggerbotFov = 160,
+    triggerbotDelay = 0.075,
+    triggerbotScopedOnly = false,
+    triggerbotHeadOnly = false,
     aimbotSpeed = 35.0,
     aimbotSmoothness = 0.15,
     predictionFactor = 0.165,
@@ -183,12 +191,23 @@ local XCConfig = {
     hitmarkerSize = 13,
     hitmarkerThickness = 2,
     hitmarkerGlow = true,
+    hitSoundPreset = "Skeet",
+    hitSoundVolume = 1,
 
     spinSpeed = 50,
+    antiAimYaw = 180,
+    antiAimJitter = 60,
+    antiAimInterval = 0.15,
+    skeletonThickness = 1.5,
     bhopJumpPower = 52,
     bhopSpeedBoost = 1.35,
     bhopAutoJump = false,
     bhopAirStrafe = true,
+    bhopMode = "Hold",
+    bhopMovingOnly = true,
+    bhopPauseWithMenu = true,
+    bhopGroundDelay = 0,
+    bhopAcceleration = 12,
     walkMultiplier = 2.0,
     flightSpeed = 50,
 
@@ -212,16 +231,32 @@ local XCConfig = {
     espShowHealth = true,
     tagShowWeapon = true,
     boxThickness = 1.0,
+    espBoxSmoothing = 0.42,
+    espMinBoxHeight = 28,
+    espBoxAspect = 0.52,
+    espBoxOutline = true,
 
     nightPreset = "Midnight",
     nightBrightness = 0.2,
     nightClockTime = 0.0,
     worldSkyboxPreset = "Night",
+    worldSkyRotation = 0,
+    worldSkyStars = 0,
+    worldSkyCelestial = false,
     worldFogStart = 0,
     worldFogEnd = 100000,
     worldExposure = 0,
     worldSaturation = 0,
     worldContrast = 0,
+    worldTonePreset = "Neutral",
+    worldAtmosphereEnabled = false,
+    worldAtmosphereDensity = 0.3,
+    worldAtmosphereHaze = 0,
+    worldAtmosphereGlare = 0,
+    worldBloomEnabled = false,
+    worldBloomIntensity = 0.35,
+    worldBloomSize = 24,
+    worldBloomThreshold = 1,
     worldColorR = 255,
     worldColorG = 255,
     worldColorB = 255,
@@ -312,6 +347,7 @@ local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
+local GuiService = game:GetService("GuiService")
 local Lighting = game:GetService("Lighting")
 local Workspace = game:GetService("Workspace")
 local Stats = game:GetService("Stats")
@@ -413,13 +449,15 @@ local themeLibrary = {
         TextSecondary = Color3.fromRGB(150, 150, 160),
         Border = Color3.fromRGB(45, 45, 55),
         GridSquare = Color3.fromRGB(25, 25, 30),
-        Enemy_Accent = Color3.fromRGB(235, 75, 75),
-        Enemy_Fill = Color3.fromRGB(220, 50, 50),
-        Enemy_Hidden = Color3.fromRGB(120, 125, 135),
-        NametagTextColor = Color3.fromRGB(255,255,255),
-        HealthHigh = Color3.fromRGB(70,200,110),
-        HealthMid = Color3.fromRGB(230,190,40),
-        HealthLow = Color3.fromRGB(230,70,70),
+        -- Unified XC palette: visible ESP uses the menu lime, while hidden
+        -- targets use a darker olive shade so visibility remains readable.
+        Enemy_Accent = Color3.fromRGB(152, 204, 0),
+        Enemy_Fill = Color3.fromRGB(112, 151, 0),
+        Enemy_Hidden = Color3.fromRGB(78, 98, 35),
+        NametagTextColor = Color3.fromRGB(235, 235, 235),
+        HealthHigh = Color3.fromRGB(152, 204, 0),
+        HealthMid = Color3.fromRGB(205, 170, 42),
+        HealthLow = Color3.fromRGB(205, 72, 72),
         MolotovColor = Color3.fromRGB(255,95,35),
         SmokeColor = Color3.fromRGB(180,185,195),
         HEColor = Color3.fromRGB(255,45,55)
@@ -1040,10 +1078,10 @@ end
 -- ==========================================
 -- CHAMS COLORS NO WORK & HITMARKER VARS NO WORK
 -- ==========================================
-local chamsColorVisible = Color3.fromRGB(255, 45, 85)
-local chamsColorHidden = Color3.fromRGB(110, 115, 125)
-local chamsColorAlly = Color3.fromRGB(0, 230, 255)
-local chamsOutlineColor = Color3.fromRGB(240, 240, 245)
+local chamsColorVisible = Color3.fromRGB(152, 204, 0)
+local chamsColorHidden = Color3.fromRGB(78, 98, 35)
+local chamsColorAlly = Color3.fromRGB(194, 220, 112)
+local chamsOutlineColor = Color3.fromRGB(235, 235, 235)
 
 local hitmarkerLastHealth = {}
 
@@ -1449,8 +1487,6 @@ end))
 -- ==========================================
 -- TRIGGERBOT NO WORK & MOVEMENT STATE NO WORK
 -- ==========================================
-local triggerbotDelay = 0.02
-local triggerbotHeadOnly = false
 local triggerbotMobileAutoFire = true
 local lastTriggerTick = 0
 
@@ -1527,6 +1563,8 @@ local defaultLighting = {
     GlobalShadows = Lighting.GlobalShadows,
     Ambient = Lighting.Ambient,
     OutdoorAmbient = Lighting.OutdoorAmbient,
+    ExposureCompensation = Lighting.ExposureCompensation,
+    FogStart = Lighting.FogStart,
     FogEnd = Lighting.FogEnd,
     FogColor = Lighting.FogColor
 }
@@ -1606,6 +1644,7 @@ function refreshHitmarkerTheme()
 end
 
 function showHitmarker()
+    if type(playXCHitSound) == "function" then playXCHitSound() end
     if not XCConfig.hitmarkerEnabled then return end
 
     hitmarkerSerial += 1
@@ -1784,10 +1823,22 @@ function restoreLightingState()
         Lighting.FogEnd = defaultLighting.FogEnd
         Lighting.FogStart = defaultLighting.FogStart or 0
         Lighting.FogColor = defaultLighting.FogColor
-        Lighting.ExposureCompensation = 0
+        Lighting.ExposureCompensation = defaultLighting.ExposureCompensation or 0
         restoreWorldSkybox()
         local fx = Lighting:FindFirstChild("XCWorldColorFX")
         if fx then fx:Destroy() end
+        if XCFeatureState and XCFeatureState.worldAtmosphere then
+            XCFeatureState.worldAtmosphere:Destroy()
+            XCFeatureState.worldAtmosphere = nil
+        end
+        if XCFeatureState and XCFeatureState.worldOriginalAtmosphere then
+            XCFeatureState.worldOriginalAtmosphere.Parent = Lighting
+            XCFeatureState.worldOriginalAtmosphere = nil
+        end
+        if XCFeatureState and XCFeatureState.worldBloom then
+            XCFeatureState.worldBloom:Destroy()
+            XCFeatureState.worldBloom = nil
+        end
     end)
 end
 
@@ -1798,10 +1849,15 @@ local worldSkyboxData = {
     ["Night"] = {"rbxassetid://1514717643","rbxassetid://1514716936","rbxassetid://1514715910","rbxassetid://1514714945","rbxassetid://1514714011","rbxassetid://1514713374"},
     ["Ocean Sunset"] = {"rbxassetid://17525686840","rbxassetid://17525678473","rbxassetid://17525684686","rbxassetid://17525680663","rbxassetid://17525682665","rbxassetid://17525674545"},
     ["My Summer Car"] = {"rbxassetid://16648590964","rbxassetid://16648617436","rbxassetid://16648595424","rbxassetid://16648566370","rbxassetid://16648577071","rbxassetid://16648598180"},
+    ["Standard"] = {"rbxassetid://91458024","rbxassetid://91457980","rbxassetid://91458024","rbxassetid://91458024","rbxassetid://91458024","rbxassetid://91458002"},
     ["Minecraft"] = {"http://www.roblox.com/asset/?id=8735166756","http://www.roblox.com/asset/?id=8735166707","http://www.roblox.com/asset/?id=8735231668","http://www.roblox.com/asset/?id=8735166755","http://www.roblox.com/asset/?id=8735166751","http://www.roblox.com/asset/?id=8735166729"},
+    ["Spongebob"] = {"rbxassetid://277099484","rbxassetid://277099500","rbxassetid://277099554","rbxassetid://277099531","rbxassetid://277099589","rbxassetid://277101591"},
     ["Deep Space"] = {"http://www.roblox.com/asset/?id=159248188","http://www.roblox.com/asset/?id=159248183","http://www.roblox.com/asset/?id=159248187","http://www.roblox.com/asset/?id=159248173","http://www.roblox.com/asset/?id=159248192","http://www.roblox.com/asset/?id=159248176"},
     ["Clouded Sky"] = {"http://www.roblox.com/asset/?id=252760981","http://www.roblox.com/asset/?id=252763035","http://www.roblox.com/asset/?id=252761439","http://www.roblox.com/asset/?id=252760980","http://www.roblox.com/asset/?id=252760986","http://www.roblox.com/asset/?id=252762652"},
-    ["City"] = {"http://www.roblox.com/asset/?id=9134792889","http://www.roblox.com/asset/?id=9134791975","http://www.roblox.com/asset/?id=9134793457","http://www.roblox.com/asset/?id=9134791234","http://www.roblox.com/asset/?id=9134790419","http://www.roblox.com/asset/?id=9134791633"}
+    ["Retro"] = {"rbxasset://sky/null_plainsky512_bk.jpg","rbxasset://sky/null_plainsky512_dn.jpg","rbxasset://sky/null_plainsky512_ft.jpg","rbxasset://sky/null_plainsky512_lf.jpg","rbxasset://sky/null_plainsky512_rt.jpg","rbxasset://sky/null_plainsky512_up.jpg"},
+    ["City"] = {"http://www.roblox.com/asset/?id=9134792889","http://www.roblox.com/asset/?id=9134791975","http://www.roblox.com/asset/?id=9134793457","http://www.roblox.com/asset/?id=9134791234","http://www.roblox.com/asset/?id=9134790419","http://www.roblox.com/asset/?id=9134791633"},
+    ["Purple Nebula"] = {"rbxassetid://15983968922","rbxassetid://15983966825","rbxassetid://15983965025","rbxassetid://15983967420","rbxassetid://15983966246","rbxassetid://15983964246"},
+    ["Pink Sky"] = {"rbxassetid://7890140060","rbxassetid://7890140060","rbxassetid://7890140060","rbxassetid://7890140060","rbxassetid://7890140060","rbxassetid://7890140060"}
 }
 
 local originalSkybox = nil
@@ -2036,8 +2092,11 @@ function applyWorldSkybox()
     if not data or not XCConfig.worldSkyboxEnabled then return end
     pcall(function()
         if not originalSkybox then
-            originalSkybox = Lighting:FindFirstChildOfClass("Sky")
-            if originalSkybox then originalSkybox = originalSkybox:Clone() end
+            local existing = Lighting:FindFirstChildOfClass("Sky")
+            if existing and existing.Name ~= "XCWorldSky" then
+                originalSkybox = existing:Clone()
+                existing:Destroy()
+            end
         end
         local sky = Lighting:FindFirstChild("XCWorldSky")
         if not sky then
@@ -2047,6 +2106,11 @@ function applyWorldSkybox()
         end
         sky.SkyboxBk, sky.SkyboxDn, sky.SkyboxFt = data[1], data[2], data[3]
         sky.SkyboxLf, sky.SkyboxRt, sky.SkyboxUp = data[4], data[5], data[6]
+        pcall(function()
+            sky.SkyboxOrientation = Vector3.new(0, tonumber(XCConfig.worldSkyRotation) or 0, 0)
+            sky.StarCount = math.clamp(tonumber(XCConfig.worldSkyStars) or 0, 0, 5000)
+            sky.CelestialBodiesShown = XCConfig.worldSkyCelestial == true
+        end)
     end)
 end
 
@@ -2062,10 +2126,10 @@ function restoreWorldSkybox()
 end
 
 function updateWorldPostFX()
-    if not XCConfig.worldPostFXEnabled then
+    if not XCConfig.nightModeEnabled or not XCConfig.worldPostFXEnabled then
         local fx = Lighting:FindFirstChild("XCWorldColorFX")
         if fx then fx:Destroy() end
-        Lighting.ExposureCompensation = 0
+        Lighting.ExposureCompensation = defaultLighting.ExposureCompensation or 0
         return
     end
     local fx = Lighting:FindFirstChild("XCWorldColorFX")
@@ -2076,19 +2140,69 @@ function updateWorldPostFX()
     end
     fx.Saturation = math.clamp(XCConfig.worldSaturation or 0, -1, 1)
     fx.Contrast = math.clamp(XCConfig.worldContrast or 0, -1, 1)
-    fx.TintColor = rgb(XCConfig.worldColorR, XCConfig.worldColorG, XCConfig.worldColorB)
+    fx.TintColor = XCFeatureState.worldTonePresets[XCConfig.worldTonePreset]
+        or rgb(XCConfig.worldColorR, XCConfig.worldColorG, XCConfig.worldColorB)
     Lighting.ExposureCompensation = math.clamp(XCConfig.worldExposure or 0, -5, 5)
+end
+
+function updateXCWorldAtmosphere()
+    local weatherOwnsFog = XCConfig.weatherEnabled and XCConfig.weatherMode == "Fog"
+    if not XCConfig.nightModeEnabled or not XCConfig.worldAtmosphereEnabled or weatherOwnsFog then
+        if XCFeatureState.worldAtmosphere then XCFeatureState.worldAtmosphere:Destroy() end
+        XCFeatureState.worldAtmosphere = nil
+        if XCFeatureState.worldOriginalAtmosphere and not weatherOwnsFog then
+            XCFeatureState.worldOriginalAtmosphere.Parent = Lighting
+            XCFeatureState.worldOriginalAtmosphere = nil
+        end
+        return
+    end
+    if not XCFeatureState.worldAtmosphere or not XCFeatureState.worldAtmosphere.Parent then
+        if not XCFeatureState.worldOriginalAtmosphere then
+            for _, object in ipairs(Lighting:GetChildren()) do
+                if object:IsA("Atmosphere") and object.Name ~= "XCWeatherAtmosphere" then
+                    XCFeatureState.worldOriginalAtmosphere = object:Clone()
+                    object:Destroy()
+                    break
+                end
+            end
+        end
+        XCFeatureState.worldAtmosphere = Instance.new("Atmosphere")
+        XCFeatureState.worldAtmosphere.Name = "XCWorldAtmosphere"
+        XCFeatureState.worldAtmosphere.Parent = Lighting
+    end
+    local atmosphere = XCFeatureState.worldAtmosphere
+    atmosphere.Density = math.clamp(tonumber(XCConfig.worldAtmosphereDensity) or 0.3, 0, 1)
+    atmosphere.Haze = math.clamp(tonumber(XCConfig.worldAtmosphereHaze) or 0, 0, 10)
+    atmosphere.Glare = math.clamp(tonumber(XCConfig.worldAtmosphereGlare) or 0, 0, 10)
+    atmosphere.Color = XCFeatureState.worldTonePresets[XCConfig.worldTonePreset] or Color3.fromRGB(220, 230, 210)
+    atmosphere.Decay = Color3.fromRGB(92, 102, 82)
+end
+
+function updateXCWorldBloom()
+    if not XCConfig.nightModeEnabled or not XCConfig.worldBloomEnabled then
+        if XCFeatureState.worldBloom then XCFeatureState.worldBloom:Destroy() end
+        XCFeatureState.worldBloom = nil
+        return
+    end
+    if not XCFeatureState.worldBloom or not XCFeatureState.worldBloom.Parent then
+        XCFeatureState.worldBloom = Instance.new("BloomEffect")
+        XCFeatureState.worldBloom.Name = "XCWorldBloom"
+        XCFeatureState.worldBloom.Parent = Lighting
+    end
+    XCFeatureState.worldBloom.Intensity = math.clamp(tonumber(XCConfig.worldBloomIntensity) or 0.35, 0, 3)
+    XCFeatureState.worldBloom.Size = math.clamp(tonumber(XCConfig.worldBloomSize) or 24, 0, 56)
+    XCFeatureState.worldBloom.Threshold = math.clamp(tonumber(XCConfig.worldBloomThreshold) or 1, 0, 5)
 end
 
 function updateWorldChanger()
     if not XCConfig.nightModeEnabled then
-        restoreWorldSkybox()
-        local fx = Lighting:FindFirstChild("XCWorldColorFX")
-        if fx then fx:Destroy() end
+        restoreLightingState()
         return
     end
     if XCConfig.worldSkyboxEnabled then applyWorldSkybox() else restoreWorldSkybox() end
     updateWorldPostFX()
+    updateXCWorldAtmosphere()
+    updateXCWorldBloom()
     if XCConfig.worldFogEnd and XCConfig.worldFogEnd > 0 then
         Lighting.FogStart = math.max(0, XCConfig.worldFogStart or 0)
         Lighting.FogEnd = math.max(Lighting.FogStart + 1, XCConfig.worldFogEnd)
@@ -2291,7 +2405,7 @@ function updateCustomScope()
     end
 end
 
-table.insert(connections, RunService.RenderStepped:Connect(function()
+table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     if not XCConfig.weaponChamsEnabled
         and not XCConfig.customScopeEnabled
         and not XCConfig.customFovEnabled
@@ -2299,8 +2413,8 @@ table.insert(connections, RunService.RenderStepped:Connect(function()
         return
     end
     pcall(function()
-        setWeaponVisuals()
-        updateCustomScope()
+        if XCConfig.weaponChamsEnabled then setWeaponVisuals() end
+        if XCConfig.customScopeEnabled then updateCustomScope() end
         -- XC Custom FOV: apply the camera FOV every render frame while enabled.
         if XCConfig.customFovEnabled then
             local cam = Workspace.CurrentCamera or camera
@@ -2308,7 +2422,13 @@ table.insert(connections, RunService.RenderStepped:Connect(function()
                 cam.FieldOfView = math.clamp(tonumber(XCConfig.customFov) or 90, 70, 120)
             end
         end
-        if XCConfig.nightModeEnabled then updateWorldChanger() end
+        if XCConfig.nightModeEnabled then
+            XCFeatureState.worldUpdateAccumulator += dt
+            if XCFeatureState.worldUpdateAccumulator >= 0.2 then
+                XCFeatureState.worldUpdateAccumulator = 0
+                updateWorldChanger()
+            end
+        end
     end)
 end))
 
@@ -2547,13 +2667,130 @@ XCFeatureState = {
     cameraTouchLast = nil,
     cameraTouchDelta = Vector2.zero,
     streamerSnapshot = nil,
+    noSmokeRecords = setmetatable({}, {__mode = "k"}),
+    noSmokeAccumulator = 0,
+    antiAimNextChange = 0,
+    antiAimRandomYaw = 180,
+    bhopGroundSince = nil,
+    bhopLastJump = 0,
+    bhopWindowFocused = true,
+    menuOpen = true,
+    worldUpdateAccumulator = 0,
+    worldAtmosphere = nil,
+    worldOriginalAtmosphere = nil,
+    worldBloom = nil,
+    worldTonePresets = {
+        Neutral = Color3.fromRGB(255, 255, 255),
+        ["XC Lime"] = Color3.fromRGB(225, 242, 185),
+        Cold = Color3.fromRGB(205, 225, 255),
+        Warm = Color3.fromRGB(255, 224, 190),
+        Purple = Color3.fromRGB(225, 200, 255),
+    },
+    hitSounds = {
+        Skeet = "rbxassetid://83717596220569",
+        Neverlose = "rbxassetid://139452805868562",
+        Bell = "rbxassetid://96481309571950",
+        Bubble = "rbxassetid://104824514322839",
+        Rust = "rbxassetid://1255040462",
+        Coins = "rbxassetid://5613553529",
+    },
+    skeletonEdges = {
+        {"Head", "Neck"}, {"Neck", "Waist"},
+        {"Neck", "LeftShoulder"}, {"LeftShoulder", "LeftHand"},
+        {"Neck", "RightShoulder"}, {"RightShoulder", "RightHand"},
+        {"Waist", "LeftHip"}, {"LeftHip", "LeftFoot"},
+        {"Waist", "RightHip"}, {"RightHip", "RightFoot"},
+    },
     streamerHiddenKeys = {
         "watermarkEnabled", "spectatorListEnabled", "nametagsEnabled", "boxEspEnabled",
         "cornerBoxEnabled", "healthBarEnabled", "headDotEnabled", "tracersEnabled",
-        "grenadeEspEnabled", "jumpCircleEnabled", "hitmarkerEnabled", "chamsEnabled",
+        "grenadeEspEnabled", "jumpCircleEnabled", "hitmarkerEnabled", "chamsEnabled", "skeletonEspEnabled",
         "showFovCircle", "showSilentFovCircle",
     },
 }
+
+function isXCSmokeObject(object)
+    if not object or not (object:IsA("ParticleEmitter") or object:IsA("Smoke")) then return false end
+    local cursor = object
+    for _ = 1, 6 do
+        if not cursor then break end
+        local name = cursor.Name:lower()
+        if name:find("smoke", 1, true) or name:find("voxel", 1, true) then return true end
+        cursor = cursor.Parent
+    end
+    return false
+end
+
+function trackXCSmokeObject(object)
+    if not XCConfig.noSmokeEnabled or not isXCSmokeObject(object) then return end
+    local record = XCFeatureState.noSmokeRecords[object]
+    if not record then
+        record = {Enabled = object.Enabled}
+        XCFeatureState.noSmokeRecords[object] = record
+    end
+    pcall(function() object.Enabled = false end)
+end
+
+function restoreXCSmoke()
+    for object, record in pairs(XCFeatureState.noSmokeRecords) do
+        pcall(function()
+            if object and object.Parent then object.Enabled = record.Enabled end
+        end)
+        XCFeatureState.noSmokeRecords[object] = nil
+    end
+end
+
+function applyXCSmokeState()
+    if not XCConfig.noSmokeEnabled then restoreXCSmoke() return end
+    task.spawn(function()
+        for _, rootName in ipairs({"Debris", "Effects"}) do
+            local root = Workspace:FindFirstChild(rootName)
+            if root then
+                for _, object in ipairs(root:GetDescendants()) do
+                    if not XCConfig.noSmokeEnabled then return end
+                    if object:IsA("ParticleEmitter") or object:IsA("Smoke") then trackXCSmokeObject(object) end
+                end
+            end
+        end
+    end)
+end
+
+function playXCHitSound()
+    if not XCConfig.hitSoundEnabled then return end
+    pcall(function()
+        local sound = Instance.new("Sound")
+        sound.Name = "XCHitSound"
+        sound.SoundId = XCFeatureState.hitSounds[XCConfig.hitSoundPreset] or XCFeatureState.hitSounds.Skeet
+        sound.Volume = math.clamp(tonumber(XCConfig.hitSoundVolume) or 1, 0.1, 3)
+        sound.Parent = game:GetService("SoundService")
+        sound:Play()
+        game:GetService("Debris"):AddItem(sound, 4)
+    end)
+end
+
+table.insert(connections, Workspace.DescendantAdded:Connect(function(object)
+    if XCConfig.noSmokeEnabled then trackXCSmokeObject(object) end
+end))
+table.insert(connections, RunService.Heartbeat:Connect(function(dt)
+    if not XCConfig.noSmokeEnabled then return end
+    XCFeatureState.noSmokeAccumulator += dt
+    if XCFeatureState.noSmokeAccumulator < 0.5 then return end
+    XCFeatureState.noSmokeAccumulator = 0
+    for object in pairs(XCFeatureState.noSmokeRecords) do
+        if object and object.Parent then
+            pcall(function() object.Enabled = false end)
+        else
+            XCFeatureState.noSmokeRecords[object] = nil
+        end
+    end
+end))
+table.insert(connections, UserInputService.WindowFocusReleased:Connect(function()
+    XCFeatureState.bhopWindowFocused = false
+    XCFeatureState.bhopGroundSince = nil
+end))
+table.insert(connections, UserInputService.WindowFocused:Connect(function()
+    XCFeatureState.bhopWindowFocused = true
+end))
 
 function destroyXCWeather()
     if XCFeatureState.weatherRig then pcall(function() XCFeatureState.weatherRig:Destroy() end) end
@@ -2668,6 +2905,25 @@ function applyXCWeather()
             NumberSequenceKeypoint.new(1, 0.8),
         })
         XCFeatureState.weatherEmitter.Color = ColorSequence.new(Color3.fromRGB(135, 135, 135))
+    elseif mode == "Hell Fire" then
+        XCFeatureState.weatherRig.Size = Vector3.new(90, 1, 90)
+        XCFeatureState.weatherEmitter.Texture = "rbxassetid://242205518"
+        XCFeatureState.weatherEmitter.Rate = intensity * 2
+        XCFeatureState.weatherEmitter.Lifetime = NumberRange.new(2, 3.5)
+        XCFeatureState.weatherEmitter.Speed = NumberRange.new(18, 32)
+        XCFeatureState.weatherEmitter.Acceleration = Vector3.new(wind * 0.4, -12, 0)
+        XCFeatureState.weatherEmitter.SpreadAngle = Vector2.new(20, 20)
+        XCFeatureState.weatherEmitter.Size = NumberSequence.new({
+            NumberSequenceKeypoint.new(0, 0.35),
+            NumberSequenceKeypoint.new(1, 0.85),
+        })
+        XCFeatureState.weatherEmitter.Transparency = NumberSequence.new({
+            NumberSequenceKeypoint.new(0, 0.12),
+            NumberSequenceKeypoint.new(1, 0.9),
+        })
+        XCFeatureState.weatherEmitter.Color = ColorSequence.new(
+            Color3.fromRGB(255, 145, 35), Color3.fromRGB(170, 25, 10)
+        )
     end
 end
 
@@ -2890,12 +3146,14 @@ function cleanup()
     for _, esp in pairs(screenEspCache) do
         pcall(function()
             esp.Box:Destroy()
+            esp.BoxOutline:Destroy()
             esp.TagCard:Destroy()
             esp.HealthBarBg:Destroy()
             for _, corner in pairs(esp.Corners) do
                 corner.H:Destroy()
                 corner.V:Destroy()
             end
+            for _, line in ipairs(esp.SkeletonLines or {}) do line:Destroy() end
         end)
     end
     for _, gUi in pairs(grenadePool) do
@@ -2931,6 +3189,7 @@ function cleanup()
     grenadePool = {}
     
     restoreLightingState()
+    restoreXCSmoke()
 
     pcall(function() if targetGui:FindFirstChild("XCScreenGui") then targetGui.XCScreenGui:Destroy() end end)
     pcall(function() if targetGui:FindFirstChild("XCToggleGui") then targetGui.XCToggleGui:Destroy() end end)
@@ -3593,8 +3852,14 @@ function runMobileTriggerbot()
     local cam = Workspace.CurrentCamera or camera
     if not cam then return end
 
+    if XCConfig.triggerbotScopedOnly then
+        local nativeScope = findSniperScope()
+        if not ((nativeScope and nativeScope.Visible) or cam.FieldOfView < 68) then return end
+    end
+
     local now = tick()
-    if (now - lastTriggerTick) < triggerbotDelay then return end
+    local delay = math.clamp(tonumber(XCConfig.triggerbotDelay) or 0.075, 0.01, 0.5)
+    if (now - lastTriggerTick) < delay then return end
 
     local vp = cam.ViewportSize
     local origin = cam.CFrame.Position
@@ -3615,7 +3880,7 @@ function runMobileTriggerbot()
         local hum = firstModel:FindFirstChildOfClass("Humanoid")
         if hum and hum.Health <= 0 then return end
         if not isTargetEnemy(firstPlayer, firstModel) then return end
-        if triggerbotHeadOnly and first.Instance.Name ~= "Head" then return end
+        if XCConfig.triggerbotHeadOnly and first.Instance.Name ~= "Head" then return end
 
         lastTriggerTick = now
         if triggerbotMobileAutoFire then triggerbotFire(vp) end
@@ -3632,7 +3897,7 @@ function runMobileTriggerbot()
             if char and hum and hum.Health > 0 and not char:GetAttribute("Dead") and not char:GetAttribute("Invincible") then
                 local targetPart = char:FindFirstChild("Head") or char:FindFirstChild("UpperTorso") or char:FindFirstChild("HumanoidRootPart")
                 if targetPart then
-                    if not triggerbotHeadOnly or targetPart.Name == "Head" then
+                    if not XCConfig.triggerbotHeadOnly or targetPart.Name == "Head" then
                         local screenPos, onScreen = cam:WorldToViewportPoint(targetPart.Position)
                         if onScreen and screenPos.Z > 0 then
                             local center = Vector2.new(vp.X * 0.5, vp.Y * 0.5)
@@ -3662,6 +3927,72 @@ end
 -- ==========================================
 -- 2D ESP 
 -- ==========================================
+function hideXCSkeleton(esp)
+    if not esp or not esp.SkeletonLines then return end
+    for _, line in ipairs(esp.SkeletonLines) do line.Visible = false end
+end
+
+function setXCSkeletonLine(line, from, to, color, alpha)
+    local delta = to - from
+    local length = delta.Magnitude
+    if length < 0.5 then line.Visible = false return end
+    line.AnchorPoint = Vector2.new(0.5, 0.5)
+    line.Position = UDim2.fromOffset((from.X + to.X) * 0.5, (from.Y + to.Y) * 0.5)
+    line.Size = UDim2.fromOffset(length, math.clamp(tonumber(XCConfig.skeletonThickness) or 1.5, 1, 4))
+    line.Rotation = math.deg(math.atan2(delta.Y, delta.X))
+    line.BackgroundColor3 = color
+    line.BackgroundTransparency = 1 - alpha
+    line.Visible = true
+end
+
+function renderXCSkeleton(esp, char, color, distance)
+    if not XCConfig.skeletonEspEnabled or not char then hideXCSkeleton(esp) return end
+    local head = char:FindFirstChild("Head")
+    local torso = char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso")
+    local waistPart = char:FindFirstChild("LowerTorso") or torso
+    if not head or not torso or not waistPart then hideXCSkeleton(esp) return end
+
+    local leftArm = char:FindFirstChild("LeftUpperArm") or char:FindFirstChild("Left Arm")
+    local rightArm = char:FindFirstChild("RightUpperArm") or char:FindFirstChild("Right Arm")
+    local leftHand = char:FindFirstChild("LeftHand") or char:FindFirstChild("LeftLowerArm") or leftArm
+    local rightHand = char:FindFirstChild("RightHand") or char:FindFirstChild("RightLowerArm") or rightArm
+    local leftLeg = char:FindFirstChild("LeftUpperLeg") or char:FindFirstChild("Left Leg")
+    local rightLeg = char:FindFirstChild("RightUpperLeg") or char:FindFirstChild("Right Leg")
+    local leftFoot = char:FindFirstChild("LeftFoot") or char:FindFirstChild("LeftLowerLeg") or leftLeg
+    local rightFoot = char:FindFirstChild("RightFoot") or char:FindFirstChild("RightLowerLeg") or rightLeg
+
+    local points = {
+        Head = head.Position,
+        Neck = torso.CFrame:PointToWorldSpace(Vector3.new(0, torso.Size.Y * 0.42, 0)),
+        Waist = waistPart.CFrame:PointToWorldSpace(Vector3.new(0, -waistPart.Size.Y * 0.25, 0)),
+        LeftShoulder = leftArm and leftArm.CFrame:PointToWorldSpace(Vector3.new(0, leftArm.Size.Y * 0.4, 0)),
+        RightShoulder = rightArm and rightArm.CFrame:PointToWorldSpace(Vector3.new(0, rightArm.Size.Y * 0.4, 0)),
+        LeftHand = leftHand and leftHand.CFrame:PointToWorldSpace(Vector3.new(0, -leftHand.Size.Y * 0.45, 0)),
+        RightHand = rightHand and rightHand.CFrame:PointToWorldSpace(Vector3.new(0, -rightHand.Size.Y * 0.45, 0)),
+        LeftHip = leftLeg and leftLeg.CFrame:PointToWorldSpace(Vector3.new(0, leftLeg.Size.Y * 0.4, 0)),
+        RightHip = rightLeg and rightLeg.CFrame:PointToWorldSpace(Vector3.new(0, rightLeg.Size.Y * 0.4, 0)),
+        LeftFoot = leftFoot and leftFoot.CFrame:PointToWorldSpace(Vector3.new(0, -leftFoot.Size.Y * 0.45, 0)),
+        RightFoot = rightFoot and rightFoot.CFrame:PointToWorldSpace(Vector3.new(0, -rightFoot.Size.Y * 0.45, 0)),
+    }
+    local alpha = XCConfig.skeletonDistanceFade
+        and math.clamp(1 - distance / math.max(1, XCConfig.espMaxDist), 0.18, 1) or 1
+    for index, edge in ipairs(XCFeatureState.skeletonEdges) do
+        local line = esp.SkeletonLines[index]
+        local a, b = points[edge[1]], points[edge[2]]
+        if a and b then
+            local pa, va = camera:WorldToViewportPoint(a)
+            local pb, vb = camera:WorldToViewportPoint(b)
+            if va and vb and pa.Z > 0 and pb.Z > 0 then
+                setXCSkeletonLine(line, Vector2.new(pa.X, pa.Y), Vector2.new(pb.X, pb.Y), color, alpha)
+            else
+                line.Visible = false
+            end
+        else
+            line.Visible = false
+        end
+    end
+end
+
 function getOrCreateScreenEsp(plr)
     if screenEspCache[plr] then return screenEspCache[plr] end
 
@@ -3670,6 +4001,20 @@ function getOrCreateScreenEsp(plr)
     box.BackgroundTransparency = 1
     box.BorderSizePixel = 0
     box.Visible = false
+    box.ZIndex = 7
+
+    local boxOutline = Instance.new("Frame", overlayContainer)
+    boxOutline.Name = "BoxOutline_" .. plr.Name
+    boxOutline.BackgroundTransparency = 1
+    boxOutline.BorderSizePixel = 0
+    boxOutline.Visible = false
+    boxOutline.ZIndex = 6
+
+    local outlineStroke = Instance.new("UIStroke", boxOutline)
+    outlineStroke.Color = Color3.fromRGB(5, 7, 9)
+    outlineStroke.Thickness = XCConfig.boxThickness + 2
+    outlineStroke.Transparency = 0.12
+    outlineStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
     local stroke = Instance.new("UIStroke", box)
     stroke.Color = currentTheme.Enemy_Accent
@@ -3702,14 +4047,24 @@ function getOrCreateScreenEsp(plr)
         hLine.BackgroundColor3 = currentTheme.Enemy_Accent
         hLine.BorderSizePixel = 0
         hLine.Visible = false
+        hLine.ZIndex = 7
+        local hOutline = Instance.new("UIStroke", hLine)
+        hOutline.Color = Color3.fromRGB(5, 7, 9)
+        hOutline.Thickness = 1
+        hOutline.Transparency = 0.1
 
         local vLine = Instance.new("Frame", overlayContainer)
         vLine.Name = "CornerV_" .. plr.Name .. "_" .. i
         vLine.BackgroundColor3 = currentTheme.Enemy_Accent
         vLine.BorderSizePixel = 0
         vLine.Visible = false
+        vLine.ZIndex = 7
+        local vOutline = Instance.new("UIStroke", vLine)
+        vOutline.Color = Color3.fromRGB(5, 7, 9)
+        vOutline.Thickness = 1
+        vOutline.Transparency = 0.1
 
-        table.insert(corners, {H = hLine, V = vLine})
+        table.insert(corners, {H = hLine, V = vLine, HOutline = hOutline, VOutline = vOutline})
     end
 
     local tagCard = Instance.new("Frame", overlayContainer)
@@ -3739,16 +4094,33 @@ function getOrCreateScreenEsp(plr)
     tagLabel.TextSize = XCConfig.espTextSize
     tagLabel.Font = Enum.Font.GothamBold
 
+    local skeletonLines = {}
+    for index = 1, #XCFeatureState.skeletonEdges do
+        local line = Instance.new("Frame", overlayContainer)
+        line.Name = "Skeleton_" .. plr.Name .. "_" .. index
+        line.BorderSizePixel = 0
+        line.Visible = false
+        skeletonLines[index] = line
+    end
+
     local data = {
         Box = box,
         BoxStroke = stroke,
+        BoxOutline = boxOutline,
+        BoxOutlineStroke = outlineStroke,
         HealthBarBg = healthBarBg,
         HealthBarFill = healthBarFill,
         Corners = corners,
         TagCard = tagCard,
         TagCardStroke = cardStroke,
         TagLabel = tagLabel,
-        LastText = ""
+        SkeletonLines = skeletonLines,
+        LastText = "",
+        Character = nil,
+        BodyParts = nil,
+        BodyBounds = nil,
+        NextBoundsRefresh = 0,
+        SmoothRect = nil,
     }
     screenEspCache[plr] = data
     return data
@@ -3765,12 +4137,14 @@ table.insert(connections, Players.PlayerRemoving:Connect(function(plr)
     if cache then
         pcall(function()
             cache.Box:Destroy()
+            cache.BoxOutline:Destroy()
             cache.HealthBarBg:Destroy()
             cache.TagCard:Destroy()
             for _, corner in pairs(cache.Corners) do
                 corner.H:Destroy()
                 corner.V:Destroy()
             end
+            for _, line in ipairs(cache.SkeletonLines) do line:Destroy() end
         end)
         screenEspCache[plr] = nil
     end
@@ -3783,17 +4157,142 @@ local tacticalOverlayWasActive = false
 function hideTacticalOverlay()
     for _, esp in pairs(screenEspCache) do
         esp.Box.Visible = false
+        esp.BoxOutline.Visible = false
         esp.HealthBarBg.Visible = false
         esp.TagCard.Visible = false
         for _, corner in ipairs(esp.Corners) do
             corner.H.Visible = false
             corner.V.Visible = false
         end
+        hideXCSkeleton(esp)
     end
 end
 
+-- Produces a stable screen rectangle from a root-aligned 3D body volume.
+-- Accessories and equipped tools are intentionally ignored: their meshes can
+-- be much larger than the avatar and would make the ESP box jump or stretch.
+function getXCCharacterScreenRect(esp, char, rootPart)
+    if esp.Character ~= char or not esp.BodyParts then
+        esp.Character = char
+        esp.BodyParts = {}
+        esp.BodyBounds = nil
+        esp.NextBoundsRefresh = 0
+        esp.SmoothRect = nil
+        for _, object in ipairs(char:GetChildren()) do
+            if object:IsA("BasePart") and object ~= rootPart then
+                local lowerName = object.Name:lower()
+                local excluded = lowerName:find("weapon", 1, true)
+                    or lowerName:find("gun", 1, true)
+                    or lowerName:find("knife", 1, true)
+                    or lowerName:find("viewmodel", 1, true)
+                if not excluded then table.insert(esp.BodyParts, object) end
+            end
+        end
+    end
+
+    local now = tick()
+    if not esp.BodyBounds or now >= esp.NextBoundsRefresh then
+        local minX, minY, minZ = math.huge, math.huge, math.huge
+        local maxX, maxY, maxZ = -math.huge, -math.huge, -math.huge
+        local validParts = 0
+        for _, part in ipairs(esp.BodyParts) do
+            if part.Parent and part:IsDescendantOf(char) then
+                local center = rootPart.CFrame:PointToObjectSpace(part.Position)
+                local half = part.Size * 0.5
+                -- A small rotation allowance covers animated limbs without making
+                -- the whole rectangle pulse as arms and legs move.
+                local horizontal = math.max(half.X, half.Z)
+                minX = math.min(minX, center.X - horizontal)
+                maxX = math.max(maxX, center.X + horizontal)
+                minY = math.min(minY, center.Y - half.Y)
+                maxY = math.max(maxY, center.Y + half.Y)
+                minZ = math.min(minZ, center.Z - horizontal)
+                maxZ = math.max(maxZ, center.Z + horizontal)
+                validParts += 1
+            end
+        end
+        if validParts == 0 then
+            minX, maxX, minY, maxY, minZ, maxZ = -1.6, 1.6, -3.1, 3.2, -1.2, 1.2
+        end
+        esp.BodyBounds = {minX, maxX, minY, maxY, minZ, maxZ}
+        esp.NextBoundsRefresh = now + 0.25
+    end
+
+    local bounds = esp.BodyBounds
+    local minX, maxX, minY, maxY, minZ, maxZ = bounds[1], bounds[2], bounds[3], bounds[4], bounds[5], bounds[6]
+
+    local centerX, centerY, centerZ = (minX + maxX) * 0.5, (minY + maxY) * 0.5, (minZ + maxZ) * 0.5
+    local halfX = math.max((maxX - minX) * 0.54, 1.2)
+    local halfY = math.max((maxY - minY) * 0.54, 2.8)
+    local halfZ = math.max((maxZ - minZ) * 0.54, 0.9)
+    local minScreenX, minScreenY = math.huge, math.huge
+    local maxScreenX, maxScreenY = -math.huge, -math.huge
+    local projected = 0
+
+    for xIndex = 0, 1 do
+        local xSign = xIndex == 0 and -1 or 1
+        for yIndex = 0, 1 do
+            local ySign = yIndex == 0 and -1 or 1
+            for zIndex = 0, 1 do
+                local zSign = zIndex == 0 and -1 or 1
+                local worldPoint = rootPart.CFrame:PointToWorldSpace(Vector3.new(
+                    centerX + halfX * xSign,
+                    centerY + halfY * ySign,
+                    centerZ + halfZ * zSign
+                ))
+                local screenPoint = camera:WorldToViewportPoint(worldPoint)
+                if screenPoint.Z > 0.05 then
+                    minScreenX = math.min(minScreenX, screenPoint.X)
+                    maxScreenX = math.max(maxScreenX, screenPoint.X)
+                    minScreenY = math.min(minScreenY, screenPoint.Y)
+                    maxScreenY = math.max(maxScreenY, screenPoint.Y)
+                    projected += 1
+                end
+            end
+        end
+    end
+    if projected < 4 then return nil end
+
+    local rawWidth = math.max(maxScreenX - minScreenX, 1)
+    local rawHeight = math.max(maxScreenY - minScreenY, 1)
+    local centerScreenX = (minScreenX + maxScreenX) * 0.5
+    local centerScreenY = (minScreenY + maxScreenY) * 0.5
+    local minHeight = math.clamp(tonumber(XCConfig.espMinBoxHeight) or 28, 16, 64)
+    local preferredAspect = math.clamp(tonumber(XCConfig.espBoxAspect) or 0.52, 0.38, 0.8)
+    local height = math.max(rawHeight, minHeight)
+    local width = math.max(rawWidth, height * 0.40)
+    width = math.min(width, height * 0.82)
+    if rawHeight < minHeight then width = math.max(width, height * preferredAspect) end
+
+    local target = {X = centerScreenX - width * 0.5, Y = centerScreenY - height * 0.5, W = width, H = height}
+    local smooth = math.clamp(tonumber(XCConfig.espBoxSmoothing) or 0.42, 0, 0.9)
+    local alpha = 1 - smooth
+    local old = esp.SmoothRect
+    if old then
+        local jump = math.abs(old.X - target.X) + math.abs(old.Y - target.Y)
+        if jump < math.max(100, target.H * 2.5) then
+            target.X = old.X + (target.X - old.X) * alpha
+            target.Y = old.Y + (target.Y - old.Y) * alpha
+            target.W = old.W + (target.W - old.W) * alpha
+            target.H = old.H + (target.H - old.H) * alpha
+        end
+    end
+
+    target.X = math.floor(target.X + 0.5)
+    target.Y = math.floor(target.Y + 0.5)
+    target.W = math.max(2, math.floor(target.W + 0.5))
+    target.H = math.max(2, math.floor(target.H + 0.5))
+    esp.SmoothRect = target
+
+    local viewport = camera.ViewportSize
+    if target.X > viewport.X or target.Y > viewport.Y or target.X + target.W < 0 or target.Y + target.H < 0 then
+        return nil
+    end
+    return target
+end
+
 function renderTacticalOverlay()
-    local active = XCConfig.nametagsEnabled or XCConfig.boxEspEnabled or XCConfig.cornerBoxEnabled
+    local active = XCConfig.nametagsEnabled or XCConfig.boxEspEnabled or XCConfig.cornerBoxEnabled or XCConfig.skeletonEspEnabled
     if not active then
         if tacticalOverlayWasActive then hideTacticalOverlay() end
         tacticalOverlayWasActive = false
@@ -3814,25 +4313,20 @@ function renderTacticalOverlay()
         local isEnemy = isTargetEnemy(plr, char)
         local isAlive = isEntityAlive(char, hum)
 
-        if isEnemy and isAlive and rootPart and (XCConfig.nametagsEnabled or XCConfig.boxEspEnabled or XCConfig.cornerBoxEnabled) then
+        if isEnemy and isAlive and rootPart and active then
             local dist = (rootPart.Position - camPos).Magnitude
 
             if dist <= XCConfig.espMaxDist then
                 local isVisible = isVisibleThroughWalls(head or rootPart, char)
                 local sideColor = isVisible and currentTheme.Enemy_Accent or currentTheme.Enemy_Hidden
 
-                local headOffset = head and Vector3.new(0, 0.6, 0) or Vector3.new(0, 2.0, 0)
-                local topWorld = (head and head.Position or rootPart.Position) + headOffset
-                local bottomWorld = rootPart.Position - Vector3.new(0, 3.0, 0)
+                local screenRect = getXCCharacterScreenRect(esp, char, rootPart)
 
-                local topScreen, topVisible = camera:WorldToViewportPoint(topWorld)
-                local bottomScreen, _ = camera:WorldToViewportPoint(bottomWorld)
-
-                if topVisible and topScreen.Z > 0 then
-                    local boxHeight = math.abs(bottomScreen.Y - topScreen.Y)
-                    local boxWidth = boxHeight * 0.65
-                    local boxPosX = topScreen.X - (boxWidth * 0.5)
-                    local boxPosY = topScreen.Y
+                if screenRect then
+                    local boxHeight = screenRect.H
+                    local boxWidth = screenRect.W
+                    local boxPosX = screenRect.X
+                    local boxPosY = screenRect.Y
 
                     if XCConfig.boxEspEnabled and not XCConfig.cornerBoxEnabled then
                         esp.BoxStroke.Color = sideColor
@@ -3840,19 +4334,26 @@ function renderTacticalOverlay()
                         esp.Box.Size = UDim2.new(0, boxWidth, 0, boxHeight)
                         esp.Box.Position = UDim2.new(0, boxPosX, 0, boxPosY)
                         esp.Box.Visible = true
+                        esp.BoxOutlineStroke.Thickness = XCConfig.boxThickness + 2
+                        esp.BoxOutline.Size = esp.Box.Size
+                        esp.BoxOutline.Position = esp.Box.Position
+                        esp.BoxOutline.Visible = XCConfig.espBoxOutline
                         for _, corner in ipairs(esp.Corners) do
                             corner.H.Visible = false
                             corner.V.Visible = false
                         end
                     elseif XCConfig.cornerBoxEnabled then
                         esp.Box.Visible = false
-                        local lengthX = math.max(boxWidth * 0.25, 4)
-                        local lengthY = math.max(boxHeight * 0.25, 4)
-                        local thick = XCConfig.boxThickness + 0.5
+                        esp.BoxOutline.Visible = false
+                        local lengthX = math.clamp(boxWidth * 0.28, 6, 20)
+                        local lengthY = math.clamp(boxHeight * 0.22, 7, 24)
+                        local thick = math.clamp(XCConfig.boxThickness + 0.5, 1.5, 3)
 
                         for _, corner in ipairs(esp.Corners) do
                             corner.H.BackgroundColor3 = sideColor
                             corner.V.BackgroundColor3 = sideColor
+                            corner.HOutline.Enabled = XCConfig.espBoxOutline
+                            corner.VOutline.Enabled = XCConfig.espBoxOutline
                         end
 
                         esp.Corners[1].H.Size = UDim2.new(0, lengthX, 0, thick)
@@ -3888,6 +4389,7 @@ function renderTacticalOverlay()
                         esp.Corners[4].V.Visible = true
                     else
                         esp.Box.Visible = false
+                        esp.BoxOutline.Visible = false
                         for _, corner in ipairs(esp.Corners) do
                             corner.H.Visible = false
                             corner.V.Visible = false
@@ -3948,37 +4450,44 @@ function renderTacticalOverlay()
                             esp.LastText = infoText
                         end
 
-                        esp.TagCard.Position = UDim2.new(0, topScreen.X, 0, topScreen.Y - 4)
+                        esp.TagCard.Position = UDim2.new(0, boxPosX + boxWidth * 0.5, 0, boxPosY - 4)
                         esp.TagCard.Visible = true
                     else
                         esp.TagCard.Visible = false
                     end
+                    renderXCSkeleton(esp, char, sideColor, dist)
                 else
                     esp.Box.Visible = false
+                    esp.BoxOutline.Visible = false
                     esp.HealthBarBg.Visible = false
                     for _, corner in ipairs(esp.Corners) do
                         corner.H.Visible = false
                         corner.V.Visible = false
                     end
                     esp.TagCard.Visible = false
+                    hideXCSkeleton(esp)
                 end
             else
                 esp.Box.Visible = false
+                esp.BoxOutline.Visible = false
                 esp.HealthBarBg.Visible = false
                 for _, corner in ipairs(esp.Corners) do
                     corner.H.Visible = false
                     corner.V.Visible = false
                 end
                 esp.TagCard.Visible = false
+                hideXCSkeleton(esp)
             end
         else
             esp.Box.Visible = false
+            esp.BoxOutline.Visible = false
             esp.HealthBarBg.Visible = false
             for _, corner in ipairs(esp.Corners) do
                 corner.H.Visible = false
                 corner.V.Visible = false
             end
             esp.TagCard.Visible = false
+            hideXCSkeleton(esp)
         end
     end
 end
@@ -4135,7 +4644,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
             local aimPos = getKinematicAimPosition(target.Part)
             camera.CFrame = CFrame.lookAt(camera.CFrame.Position, aimPos)
             
-            if XCConfig.rageAutoFire and tick() - lastTriggerTick > triggerbotDelay then
+            if XCConfig.rageAutoFire and tick() - lastTriggerTick > math.clamp(tonumber(XCConfig.triggerbotDelay) or 0.075, 0.01, 0.5) then
                 lastTriggerTick = tick()
                 pcall(function()
                     local vp = camera.ViewportSize
@@ -4294,12 +4803,6 @@ end))
 -- ANTI-AIM ROTATION SHLAK
 -- ==========================================
 table.insert(connections, RunService.RenderStepped:Connect(function(dt)
-    if not XCConfig.flightEnabled
-        and not XCConfig.slideEnabled
-        and not XCConfig.bunnyHopEnabled
-        and not XCConfig.speedEnabled then
-        return
-    end
     local char = player.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
     local hum = char and char:FindFirstChildOfClass("Humanoid")
@@ -4319,8 +4822,30 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         hum.AutoRotate = false
     end
 
-    currentSpinAngle = (currentSpinAngle + (XCConfig.spinSpeed * dt * 60)) % 360
-    hrp.CFrame = CFrame.new(hrp.Position) * CFrame.Angles(0, math.rad(currentSpinAngle), 0)
+    local mode = tostring(XCConfig.antiAimMode or "Spin")
+    local activeCamera = Workspace.CurrentCamera or camera
+    if not activeCamera then return end
+    local _, cameraYaw = activeCamera.CFrame:ToOrientation()
+    local targetYaw
+    if mode == "Spin" then
+        currentSpinAngle = (currentSpinAngle + (XCConfig.spinSpeed * dt * 60)) % 360
+        targetYaw = math.rad(currentSpinAngle)
+    elseif mode == "Backwards" then
+        targetYaw = cameraYaw + math.pi
+    elseif mode == "Jitter" then
+        local interval = math.max(0.04, tonumber(XCConfig.antiAimInterval) or 0.15)
+        local side = math.floor(os.clock() / interval) % 2 == 0 and -1 or 1
+        targetYaw = cameraYaw + math.rad((tonumber(XCConfig.antiAimYaw) or 180) + side * (tonumber(XCConfig.antiAimJitter) or 60))
+    elseif mode == "Random" then
+        if os.clock() >= XCFeatureState.antiAimNextChange then
+            XCFeatureState.antiAimNextChange = os.clock() + math.max(0.04, tonumber(XCConfig.antiAimInterval) or 0.15)
+            XCFeatureState.antiAimRandomYaw = math.random(-180, 180)
+        end
+        targetYaw = cameraYaw + math.rad(XCFeatureState.antiAimRandomYaw)
+    else
+        targetYaw = cameraYaw + math.rad(tonumber(XCConfig.antiAimYaw) or 180)
+    end
+    hrp.CFrame = CFrame.new(hrp.Position) * CFrame.Angles(0, targetYaw, 0)
 end))
 
 -- ==========================================
@@ -4559,6 +5084,8 @@ table.insert(connections, player.CharacterAdded:Connect(function(char)
     currentSlideVel = Vector3.zero
     mobileSlideInputActive = false
     defaultHipHeightCaptured = false
+    XCFeatureState.bhopGroundSince = nil
+    XCFeatureState.bhopLastJump = 0
     local hum = char:WaitForChild("Humanoid", 5)
     if hum then
         defaultHipHeight = hum.HipHeight
@@ -4608,7 +5135,7 @@ table.insert(connections, inEndedConn)
 -- HITMARKER & PHYSICS LOOP NO WORK
 -- ==========================================
 table.insert(connections, RunService.Heartbeat:Connect(function()
-    if not XCConfig.hitmarkerEnabled then
+    if not XCConfig.hitmarkerEnabled and not XCConfig.hitSoundEnabled then
         hitmarkerLastHealth = {}
         return
     end
@@ -4674,28 +5201,59 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     end
 
     if activeMode == "Normal" and XCConfig.bunnyHopEnabled then
-        local grounded = isPlayerGrounded(char, hrp) or hum.FloorMaterial ~= Enum.Material.Air
-        local isSpacePressed = UserInputService:IsKeyDown(Enum.KeyCode.Space)
-        local shouldJump = XCConfig.bhopAutoJump or isMobileJumpHeld or hum.Jump or isSpacePressed
+        local paused = not XCFeatureState.bhopWindowFocused
+            or UserInputService:GetFocusedTextBox() ~= nil
+            or GuiService.MenuIsOpen
+            or player:GetAttribute("IsPlayerChatting") == true
+            or (XCConfig.bhopPauseWithMenu and XCFeatureState.menuOpen)
+        if paused then
+            XCFeatureState.bhopGroundSince = nil
+        else
+            local now = os.clock()
+            local grounded = isPlayerGrounded(char, hrp) or hum.FloorMaterial ~= Enum.Material.Air
+            local isSpacePressed = UserInputService:IsKeyDown(Enum.KeyCode.Space)
+            local automatic = XCConfig.bhopMode == "Automatic" or XCConfig.bhopAutoJump
+            local requested = automatic or isMobileJumpHeld or hum.Jump or isSpacePressed
+            local moving = currentMove.Magnitude > 0.05
+            local movementAllowed = not XCConfig.bhopMovingOnly or moving
 
-        if grounded and shouldJump then
-            activeMode = "Bhop"
-            hum.Jump = true
-            
-            local currentX = finalVelocity and finalVelocity.X or currentVel.X
-            local currentZ = finalVelocity and finalVelocity.Z or currentVel.Z
-            finalVelocity = Vector3.new(currentX, XCConfig.bhopJumpPower, currentZ)
-            
-            pcall(function() hum:ChangeState(Enum.HumanoidStateType.Jumping) end)
-            
-        elseif not grounded and XCConfig.bhopAirStrafe and currentMove.Magnitude > 0.05 then
-            activeMode = "AutoStrafe"
-            local targetSpeed = 16 * XCConfig.bhopSpeedBoost
-            local targetVel = currentMove * targetSpeed
-            
-            local currentY = finalVelocity and finalVelocity.Y or currentVel.Y
-            finalVelocity = Vector3.new(targetVel.X, currentY, targetVel.Z)
+            if grounded then
+                XCFeatureState.bhopGroundSince = XCFeatureState.bhopGroundSince or now
+            else
+                XCFeatureState.bhopGroundSince = nil
+            end
+
+            local groundDelay = math.clamp(tonumber(XCConfig.bhopGroundDelay) or 0, 0, 0.25)
+            local canJump = grounded and requested and movementAllowed
+                and XCFeatureState.bhopGroundSince
+                and now - XCFeatureState.bhopGroundSince >= groundDelay
+                and now - XCFeatureState.bhopLastJump >= 0.05
+
+            if canJump then
+                activeMode = "Bhop"
+                XCFeatureState.bhopLastJump = now
+                XCFeatureState.bhopGroundSince = nil
+                hum.Jump = true
+                finalVelocity = Vector3.new(currentVel.X, math.clamp(tonumber(XCConfig.bhopJumpPower) or 52, 30, 100), currentVel.Z)
+                pcall(function() hum:ChangeState(Enum.HumanoidStateType.Jumping) end)
+            end
+
+            if moving and (grounded or XCConfig.bhopAirStrafe) then
+                activeMode = canJump and "Bhop" or (grounded and "Bhop accelerate" or "AutoStrafe")
+                local targetSpeed = 16 * math.clamp(tonumber(XCConfig.bhopSpeedBoost) or 1.35, 1, 3)
+                local targetVel = currentMove.Unit * targetSpeed
+                local acceleration = math.clamp(tonumber(XCConfig.bhopAcceleration) or 12, 2, 30)
+                local blend = 1 - math.exp(-acceleration * math.max(dt, 0))
+                local base = finalVelocity or currentVel
+                finalVelocity = Vector3.new(
+                    base.X + (targetVel.X - base.X) * blend,
+                    base.Y,
+                    base.Z + (targetVel.Z - base.Z) * blend
+                )
+            end
         end
+    else
+        XCFeatureState.bhopGroundSince = nil
     end
 
     if activeMode == "Normal" and XCConfig.speedEnabled and currentMove.Magnitude > 0 then
@@ -4898,17 +5456,35 @@ function buildXCUI()
         aimbotEnabled = "Tracks a valid target inside the configured field of view.",
         silentAimEnabled = "Redirects supported shot data without visibly snapping the camera.",
         triggerbotEnabled = "Fires when a valid target is under the crosshair.",
+        triggerbotDelay = "Minimum delay between automatic trigger shots.",
+        triggerbotScopedOnly = "Allows Triggerbot to fire only while a native scope is active.",
+        triggerbotHeadOnly = "Triggerbot fires only when the detected hit part is the head.",
         rageBotEnabled = "Aggressive target selection using the Rage FOV and priority settings.",
         noRecoilEnabled = "Suppresses supported weapon and camera recoil callbacks.",
         noSpreadEnabled = "Requests zero spread from supported weapon calculations.",
         wallbangEnabled = "Allows target selection through surfaces when supported by the game.",
         thirdPersonEnabled = "Moves the native camera behind the character.",
+        bunnyHopEnabled = "Smooth XC Bhop with grounded timing and optional air control.",
+        bhopMode = "Hold requires jump input; Automatic keeps hopping while movement is active.",
+        bhopMovingOnly = "Prevents automatic jumps while no movement direction is pressed.",
+        bhopPauseWithMenu = "Pauses Bhop while the XC menu or a text box is open.",
+        bhopGroundDelay = "Delay after touching the ground before the next jump.",
+        bhopAcceleration = "How quickly horizontal velocity approaches the configured Bhop speed.",
         flightEnabled = "Moves the character along the camera direction.",
         chamsEnabled = "Adds a local highlight to valid player models.",
         grenadeEspEnabled = "Shows nearby grenade labels, paths and effect radiuses.",
+        skeletonEspEnabled = "Draws a lightweight R6/R15 skeleton at 30 updates per second.",
+        skeletonDistanceFade = "Gradually fades skeleton lines at long distances.",
+        noSmokeEnabled = "Disables detected BloxStrike smoke emitters and restores them when turned off.",
+        hitSoundEnabled = "Plays the selected local sound when enemy health decreases.",
+        antiAimMode = "Spin, backwards, jitter, random or static anti-aim direction.",
         nightModeEnabled = "Applies the selected lighting preset locally.",
         worldSkyboxEnabled = "Applies the selected custom skybox locally.",
         worldPostFXEnabled = "Enables local color correction and post-processing.",
+        worldSkyboxPreset = "Selects a local sky preset from the supplied World visual scripts.",
+        worldTonePreset = "Applies a coordinated tint preset to Post FX and atmosphere.",
+        worldAtmosphereEnabled = "Adds a configurable local Atmosphere without deleting the game's original one.",
+        worldBloomEnabled = "Adds a lightweight local Bloom effect with configurable intensity.",
         weatherEnabled = "Local weather layer. Uses one particle emitter to avoid frame spikes.",
         weatherMode = "Rain, snow, fog or ash. The effect follows the active camera.",
         weatherIntensity = "Controls particle rate or fog density.",
@@ -5223,7 +5799,9 @@ function buildXCUI()
         local function refresh(value)
             value = math.clamp(tonumber(value) or minValue, minValue, maxValue)
             fill.Size = UDim2.new((value - minValue) / (maxValue - minValue), 0, 1, 0)
-            local shown = step < 1 and string.format("%.2f", value) or tostring(math.floor(value + 0.5))
+            local shown = step < 0.01 and string.format("%.3f", value)
+                or step < 1 and string.format("%.2f", value)
+                or tostring(math.floor(value + 0.5))
             valueLabel.Text = shown .. (suffix or "")
         end
         local function setFromX(x)
@@ -5505,7 +6083,13 @@ function buildXCUI()
         elseif key == "animationsEnabled" then if value then playXCAnimation() else stopXCAnimation() end
         elseif key == "weaponChamsEnabled" then setWeaponVisuals()
         elseif key == "customScopeEnabled" then updateCustomScope()
-        elseif key == "weatherEnabled" then applyXCWeather()
+        elseif key == "customFovEnabled" and not value then
+            local cam = Workspace.CurrentCamera or camera
+            if cam then cam.FieldOfView = 70 end
+        elseif key == "weatherEnabled" then applyXCWeather(); updateWorldChanger()
+        elseif key == "noSmokeEnabled" then applyXCSmokeState()
+        elseif key == "worldSkyboxEnabled" or key == "worldSkyCelestial" or key == "worldPostFXEnabled"
+            or key == "worldAtmosphereEnabled" or key == "worldBloomEnabled" then updateWorldChanger()
         elseif key == "freecamEnabled" then setXCCameraMode("Freecam", value)
         elseif key == "freelookEnabled" then setXCCameraMode("Freelook", value)
         elseif key == "streamerModeEnabled" then setXCStreamerMode(value)
@@ -5708,6 +6292,10 @@ function buildXCUI()
     toggle(L, "Silent head", "silentAimAimHead")
     toggle(L, "Perfect silent", "pSilentEnabled")
     toggle(L, "Wall penetration", "wallbangEnabled")
+    section(L, "smart trigger")
+    addSlider(L, "Trigger delay", "triggerbotDelay", 0.01, 0.5, 0.005, "s")
+    toggle(L, "Scoped only", "triggerbotScopedOnly")
+    toggle(L, "Head only", "triggerbotHeadOnly")
 
     section(R, "weapon")
     toggle(R, "No recoil", "noRecoilEnabled")
@@ -5726,19 +6314,27 @@ function buildXCUI()
     L, R = columns("AntiAim", "Anti-aim", "Movement")
     section(L, "orientation")
     toggle(L, "Anti-aim", "antiAimEnabled")
+    addChoice(L, "Anti-aim mode", "antiAimMode", {"Spin", "Backwards", "Jitter", "Random", "Static"})
     addSlider(L, "Spin speed", "spinSpeed", 10, 150, 1, "")
+    addSlider(L, "Base yaw", "antiAimYaw", -180, 180, 1, "°")
+    addSlider(L, "Jitter range", "antiAimJitter", 0, 180, 1, "°")
+    addSlider(L, "Switch interval", "antiAimInterval", 0.04, 0.5, 0.01, "s")
     toggle(L, "Third person", "thirdPersonEnabled")
     addSlider(L, "Third person distance", "thirdPersonDistance", 5, 25, 1, "")
     addSlider(L, "Third person height", "thirdPersonHeight", -3, 6, 0.5, "")
     section(R, "movement")
     toggle(R, "Bhop engine", "bunnyHopEnabled")
+    addChoice(R, "Bhop mode", "bhopMode", {"Hold", "Automatic"})
+    toggle(R, "Moving only", "bhopMovingOnly")
+    toggle(R, "Pause with menu", "bhopPauseWithMenu")
     toggle(R, "Slide", "slideEnabled")
     toggle(R, "Flight", "flightEnabled")
     toggle(R, "Speed boost", "speedEnabled")
     toggle(R, "No fall damage", "noFallDamageEnabled")
     addSlider(R, "Bhop power", "bhopJumpPower", 30, 100, 1, "")
     addSlider(R, "Bhop speed", "bhopSpeedBoost", 1, 3, 0.1, "x")
-    toggle(R, "Auto jump", "bhopAutoJump")
+    addSlider(R, "Ground delay", "bhopGroundDelay", 0, 0.25, 0.01, "s")
+    addSlider(R, "Acceleration", "bhopAcceleration", 2, 30, 1, "")
     toggle(R, "Air strafe", "bhopAirStrafe")
     addSlider(R, "Slide boost", "slideSpeedBoost", 1.2, 3, 0.1, "x")
     addSlider(R, "Flight speed", "flightSpeed", 10, 150, 1, "")
@@ -5750,10 +6346,17 @@ function buildXCUI()
     toggle(L, "Chams", "chamsEnabled")
     toggle(L, "Nametags", "nametagsEnabled")
     toggle(L, "Box overlay", "boxEspEnabled")
+    toggle(L, "Dark ESP outline", "espBoxOutline")
     toggle(L, "Grenade ESP", "grenadeEspEnabled")
     toggle(L, "Tracers", "tracersEnabled")
     toggle(L, "Head dot", "headDotEnabled")
+    toggle(L, "Skeleton ESP", "skeletonEspEnabled")
+    toggle(L, "Skeleton distance fade", "skeletonDistanceFade")
+    addSlider(L, "Skeleton thickness", "skeletonThickness", 1, 4, 0.5, "px")
     addSlider(L, "ESP distance", "espMaxDist", 100, 5000, 50, "")
+    addSlider(L, "Box stability", "espBoxSmoothing", 0, 0.9, 0.05, "")
+    addSlider(L, "Min box height", "espMinBoxHeight", 16, 64, 2, "px")
+    addSlider(L, "Far box width", "espBoxAspect", 0.38, 0.8, 0.02, "x")
     addSlider(L, "Text size", "espTextSize", 8, 20, 1, "")
     toggle(L, "Show distance", "espShowDistance")
     toggle(L, "Show health", "espShowHealth")
@@ -5761,6 +6364,9 @@ function buildXCUI()
     section(R, "combat feedback")
     toggle(R, "Jump circle", "jumpCircleEnabled")
     toggle(R, "Hitmarker", "hitmarkerEnabled")
+    toggle(R, "Hit sound", "hitSoundEnabled")
+    addChoice(R, "Hit sound preset", "hitSoundPreset", {"Skeet", "Neverlose", "Bell", "Bubble", "Rust", "Coins"})
+    addSlider(R, "Hit sound volume", "hitSoundVolume", 0.1, 3, 0.1, "x")
     addSlider(R, "Hitmarker size", "hitmarkerSize", 5, 30, 1, "")
     addSlider(R, "Hitmarker duration", "hitmarkerDuration", 0.05, 1, 0.05, "s")
     addSlider(R, "Jump radius", "jumpCircleRadius", 1.5, 8, 0.5, "")
@@ -5775,14 +6381,33 @@ function buildXCUI()
     toggle(L, "Fullbright", "fullBrightEnabled")
     toggle(L, "Remove fog", "removeFogEnabled")
     toggle(L, "Anti flash", "antiFlashEnabled")
+    toggle(L, "No smoke", "noSmokeEnabled")
     addChoice(L, "Night preset", "nightPreset", {"Midnight", "Nebula", "DeepBlood", "CyberPurple", "EmeraldNight", "PitchBlack"}, function(v) if XCConfig.nightModeEnabled then applyNightPreset(v) end end)
     addSlider(L, "Brightness", "nightBrightness", 0, 5, 0.1, "")
     addSlider(L, "Clock time", "nightClockTime", 0, 24, 0.5, "h")
+    section(L, "sky & tone")
     toggle(L, "Custom skybox", "worldSkyboxEnabled")
+    addChoice(L, "Skybox preset", "worldSkyboxPreset", {"Night", "Ocean Sunset", "My Summer Car", "Standard", "Minecraft", "Spongebob", "Deep Space", "Clouded Sky", "Retro", "City", "Purple Nebula", "Pink Sky"}, function() updateWorldChanger() end)
+    addSlider(L, "Sky rotation", "worldSkyRotation", -180, 180, 1, "°", function() updateWorldChanger() end)
+    addSlider(L, "Stars", "worldSkyStars", 0, 5000, 100, "", function() updateWorldChanger() end)
+    toggle(L, "Sun & moon", "worldSkyCelestial")
     toggle(L, "Post FX", "worldPostFXEnabled")
+    addChoice(L, "Tone preset", "worldTonePreset", {"Neutral", "XC Lime", "Cold", "Warm", "Purple"}, function() updateWorldChanger() end)
+    addSlider(L, "Exposure", "worldExposure", -3, 3, 0.1, "", function() updateWorldChanger() end)
+    addSlider(L, "Saturation", "worldSaturation", -1, 1, 0.05, "", function() updateWorldChanger() end)
+    addSlider(L, "Contrast", "worldContrast", -1, 1, 0.05, "", function() updateWorldChanger() end)
+    section(L, "atmosphere & bloom")
+    toggle(L, "Atmosphere", "worldAtmosphereEnabled")
+    addSlider(L, "Atmosphere density", "worldAtmosphereDensity", 0, 1, 0.05, "", function() updateWorldChanger() end)
+    addSlider(L, "Atmosphere haze", "worldAtmosphereHaze", 0, 10, 0.1, "", function() updateWorldChanger() end)
+    addSlider(L, "Atmosphere glare", "worldAtmosphereGlare", 0, 10, 0.1, "", function() updateWorldChanger() end)
+    toggle(L, "Bloom", "worldBloomEnabled")
+    addSlider(L, "Bloom intensity", "worldBloomIntensity", 0, 3, 0.05, "", function() updateWorldChanger() end)
+    addSlider(L, "Bloom size", "worldBloomSize", 0, 56, 1, "", function() updateWorldChanger() end)
+    addSlider(L, "Bloom threshold", "worldBloomThreshold", 0, 5, 0.1, "", function() updateWorldChanger() end)
     section(L, "weather")
     toggle(L, "Weather effects", "weatherEnabled")
-    addChoice(L, "Weather type", "weatherMode", {"Rain", "Snow", "Fog", "Ash"}, function() applyXCWeather() end)
+    addChoice(L, "Weather type", "weatherMode", {"Rain", "Snow", "Fog", "Ash", "Hell Fire"}, function() applyXCWeather(); updateWorldChanger() end)
     addSlider(L, "Weather intensity", "weatherIntensity", 1, 100, 1, "%", function() applyXCWeather() end)
     addSlider(L, "Wind", "weatherWind", -40, 40, 1, "", function() applyXCWeather() end)
     section(R, "scope")
@@ -5959,6 +6584,7 @@ function buildXCUI()
             refreshAll()
             updateMobileSlideVisibility(); refreshThirdPerson(); setWeaponVisuals(); updateCustomScope(); updateWorldPostFX()
             applyXCWeather()
+            applyXCSmokeState()
             if XCConfig.freecamEnabled then setXCCameraMode("Freecam", true)
             elseif XCConfig.freelookEnabled then setXCCameraMode("Freelook", true)
             else stopXCCameraMode() end
@@ -5976,7 +6602,7 @@ function buildXCUI()
         lazyFeatureRequests.recoilSpread = false
         lazyFeatureRequests.silentFallback = false
         refreshAll(); updateMobileSlideVisibility(); refreshThirdPerson(); setWeaponVisuals(); updateCustomScope(); updateWorldPostFX()
-        stopXCCameraMode(); destroyXCWeather()
+        stopXCCameraMode(); destroyXCWeather(); restoreXCSmoke(); restoreLightingState()
         setAntiAfkEnabled(XCConfig.antiAfkEnabled)
         status.Text = "defaults restored"
     end)
@@ -6023,6 +6649,7 @@ function buildXCUI()
         hideHelp()
         main.Visible = not main.Visible
         menuVisible = main.Visible
+        XCFeatureState.menuOpen = main.Visible
     end
     table.insert(connections, UserInputService.InputBegan:Connect(function(input, processed)
         if processed then return end
