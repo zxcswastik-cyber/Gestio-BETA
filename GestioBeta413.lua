@@ -4838,8 +4838,8 @@ function buildXCUI()
 
     local content = Instance.new("Frame")
     content.Name = "Content"
-    content.Size = UDim2.new(1, -64, 1, -18)
-    content.Position = UDim2.fromOffset(56, 10)
+    content.Size = UDim2.new(1, -64, 1, -46)
+    content.Position = UDim2.fromOffset(56, 38)
     content.BackgroundTransparency = 1
     content.Parent = main
 
@@ -4849,6 +4849,50 @@ function buildXCUI()
     local refreshers = {}
     local activeSliderInput
     local activeSliderMove
+    local searchableControls = {}
+    local sectionGroups = {}
+    local activeSectionByParent = {}
+    local applySearch
+
+    local searchBar = Instance.new("Frame")
+    searchBar.Name = "QuickSearch"
+    searchBar.Size = UDim2.new(1, -64, 0, 24)
+    searchBar.Position = UDim2.fromOffset(56, 10)
+    searchBar.BackgroundColor3 = C.Panel
+    searchBar.BorderColor3 = C.Border
+    searchBar.BorderSizePixel = 1
+    searchBar.Parent = main
+    local searchIcon = Instance.new("TextLabel")
+    searchIcon.Size = UDim2.fromOffset(24, 22)
+    searchIcon.BackgroundTransparency = 1
+    searchIcon.Text = ">"
+    searchIcon.TextColor3 = C.Lime
+    searchIcon.Font = Enum.Font.Code
+    searchIcon.TextSize = 13
+    searchIcon.Parent = searchBar
+    local searchBox = Instance.new("TextBox")
+    searchBox.Size = UDim2.new(1, -50, 1, 0)
+    searchBox.Position = UDim2.fromOffset(23, 0)
+    searchBox.BackgroundTransparency = 1
+    searchBox.ClearTextOnFocus = false
+    searchBox.PlaceholderText = "Search modules in this tab..."
+    searchBox.PlaceholderColor3 = C.Muted
+    searchBox.Text = ""
+    searchBox.TextColor3 = C.Text
+    searchBox.Font = Enum.Font.Code
+    searchBox.TextSize = 10
+    searchBox.TextXAlignment = Enum.TextXAlignment.Left
+    searchBox.Parent = searchBar
+    local clearSearch = Instance.new("TextButton")
+    clearSearch.Size = UDim2.fromOffset(24, 22)
+    clearSearch.Position = UDim2.new(1, -25, 0, 0)
+    clearSearch.BackgroundTransparency = 1
+    clearSearch.Text = "x"
+    clearSearch.TextColor3 = C.Muted
+    clearSearch.Font = Enum.Font.Code
+    clearSearch.TextSize = 12
+    clearSearch.Parent = searchBar
+    clearSearch.Activated:Connect(function() searchBox.Text = "" end)
 
     local CONTROL_HELP = {
         aimbotEnabled = "Tracks a valid target inside the configured field of view.",
@@ -4882,6 +4926,14 @@ function buildXCUI()
         customHandsEnabled = "Offsets the detected first-person weapon or hands model.",
         spectatorListEnabled = "Shows players currently observing the local player when detectable.",
         menuKey = "Keyboard shortcut used to show or hide XC.",
+        tab_Rage = "Combat: aim assistants, targeting and weapon mechanics.",
+        tab_AntiAim = "Movement: anti-aim, third person, bhop, slide and flight.",
+        tab_Visuals = "Visuals: ESP, chams and on-screen combat feedback.",
+        tab_World = "World: lighting, weather, scope and camera tools.",
+        tab_Misc = "Utilities: session helpers, animations and viewmodel controls.",
+        tab_Skins = "Cosmetics: knives, gloves, weapon materials and bullet effects.",
+        tab_Players = "Players: target rules, priority player and ESP details.",
+        tab_Configs = "Settings: interface, quick actions and configuration profiles.",
     }
 
     local helpPopup = Instance.new("Frame")
@@ -5012,18 +5064,60 @@ function buildXCUI()
     end
 
     local function section(parent, text)
-        local label = Instance.new("TextLabel")
-        label.Size = UDim2.new(1, 0, 0, 17)
-        label.BackgroundTransparency = 1
-        label.Text = text:upper()
-        label.TextColor3 = C.Lime
-        label.Font = Enum.Font.Code
-        label.TextSize = 10
-        label.TextXAlignment = Enum.TextXAlignment.Left
-        label.Parent = parent
+        local outer = Instance.new("Frame")
+        outer.Name = "Section_" .. text:gsub("%W", "_")
+        outer.Size = UDim2.new(1, 0, 0, 0)
+        outer.AutomaticSize = Enum.AutomaticSize.Y
+        outer.BackgroundTransparency = 1
+        outer.Parent = parent
+        local outerLayout = Instance.new("UIListLayout")
+        outerLayout.Padding = UDim.new(0, 3)
+        outerLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        outerLayout.Parent = outer
+
+        local header = Instance.new("TextButton")
+        header.Size = UDim2.new(1, 0, 0, 19)
+        header.LayoutOrder = 1
+        header.BackgroundColor3 = Color3.fromRGB(18, 20, 15)
+        header.BorderColor3 = C.Border
+        header.BorderSizePixel = 1
+        header.Text = "  v  " .. text:upper()
+        header.TextColor3 = C.Lime
+        header.Font = Enum.Font.Code
+        header.TextSize = 10
+        header.TextXAlignment = Enum.TextXAlignment.Left
+        header.AutoButtonColor = false
+        header.Parent = outer
+
+        local body = Instance.new("Frame")
+        body.Name = "Body"
+        body.Size = UDim2.new(1, 0, 0, 0)
+        body.LayoutOrder = 2
+        body.AutomaticSize = Enum.AutomaticSize.Y
+        body.BackgroundTransparency = 1
+        body.Parent = outer
+        local bodyLayout = Instance.new("UIListLayout")
+        bodyLayout.Padding = UDim.new(0, 4)
+        bodyLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        bodyLayout.Parent = body
+
+        local group = {outer = outer, body = body, header = header, collapsed = false}
+        table.insert(sectionGroups, group)
+        activeSectionByParent[parent] = body
+        header.Activated:Connect(function()
+            group.collapsed = not group.collapsed
+            body.Visible = not group.collapsed
+            header.Text = group.collapsed and ("  >  " .. text:upper()) or ("  v  " .. text:upper())
+        end)
+        return body
+    end
+
+    local function registerSearch(gui, label)
+        table.insert(searchableControls, {gui = gui, label = tostring(label):lower()})
     end
 
     local function addToggle(parent, label, key, onChanged)
+        parent = activeSectionByParent[parent] or parent
         local row = Instance.new("TextButton")
         row.Name = key
         row.Size = UDim2.new(1, 0, 0, 20)
@@ -5084,10 +5178,12 @@ function buildXCUI()
             end
         end)
         attachHelp(row, key)
+        registerSearch(row, label .. " " .. key)
         return row
     end
 
     local function addSlider(parent, label, key, minValue, maxValue, step, suffix, onChanged)
+        parent = activeSectionByParent[parent] or parent
         local holder = Instance.new("Frame")
         holder.Name = key
         holder.Size = UDim2.new(1, 0, 0, 36)
@@ -5150,6 +5246,7 @@ function buildXCUI()
             end
         end)
         attachHelp(holder, key)
+        registerSearch(holder, label .. " " .. key)
     end
 
     table.insert(connections, UserInputService.InputChanged:Connect(function(input)
@@ -5242,18 +5339,24 @@ function buildXCUI()
             optionButton.Size = UDim2.new(1, 0, 0, rowHeight)
             optionButton.BackgroundColor3 = selected and Color3.fromRGB(32, 39, 17) or Color3.fromRGB(18, 18, 18)
             optionButton.BorderSizePixel = 0
-            optionButton.Text = tostring(option)
-            optionButton.TextColor3 = selected and C.White or C.Text
+            optionButton.Text = ""
             optionButton.Font = Enum.Font.Code
             optionButton.TextSize = UserInputService.TouchEnabled and 11 or 10
-            optionButton.TextXAlignment = Enum.TextXAlignment.Left
             optionButton.AutoButtonColor = false
             optionButton.ZIndex = 201
             optionButton.Parent = popup
-            local optionPadding = Instance.new("UIPadding")
-            optionPadding.PaddingLeft = UDim.new(0, 18)
-            optionPadding.PaddingRight = UDim.new(0, 8)
-            optionPadding.Parent = optionButton
+
+            local optionText = Instance.new("TextLabel")
+            optionText.Size = UDim2.new(1, -28, 1, 0)
+            optionText.Position = UDim2.fromOffset(19, 0)
+            optionText.BackgroundTransparency = 1
+            optionText.Text = tostring(option)
+            optionText.TextColor3 = selected and C.White or C.Text
+            optionText.Font = Enum.Font.Code
+            optionText.TextSize = UserInputService.TouchEnabled and 11 or 10
+            optionText.TextXAlignment = Enum.TextXAlignment.Left
+            optionText.ZIndex = 202
+            optionText.Parent = optionButton
 
             local marker = Instance.new("Frame")
             marker.Name = "SelectionMarker"
@@ -5269,11 +5372,11 @@ function buildXCUI()
 
             optionButton.MouseEnter:Connect(function()
                 optionButton.BackgroundColor3 = selected and Color3.fromRGB(38, 48, 18) or C.Control2
-                optionButton.TextColor3 = C.White
+                optionText.TextColor3 = C.White
             end)
             optionButton.MouseLeave:Connect(function()
                 optionButton.BackgroundColor3 = selected and Color3.fromRGB(32, 39, 17) or Color3.fromRGB(18, 18, 18)
-                optionButton.TextColor3 = selected and C.White or C.Text
+                optionText.TextColor3 = selected and C.White or C.Text
             end)
             optionButton.Activated:Connect(function()
                 XCConfig[key] = option
@@ -5289,6 +5392,7 @@ function buildXCUI()
     end
 
     local function addChoice(parent, label, key, values, onChanged)
+        parent = activeSectionByParent[parent] or parent
         local holder = Instance.new("Frame")
         holder.Size = UDim2.new(1, 0, 0, 38)
         holder.BackgroundTransparency = 1
@@ -5358,9 +5462,11 @@ function buildXCUI()
             openDropdown(button, key, values, onChanged, refresh)
         end)
         attachHelp(holder, key)
+        registerSearch(holder, label .. " " .. key)
     end
 
     local function addButton(parent, label, callback)
+        parent = activeSectionByParent[parent] or parent
         local button = Instance.new("TextButton")
         button.Size = UDim2.new(1, 0, 0, 24)
         button.BackgroundColor3 = C.Control
@@ -5373,6 +5479,7 @@ function buildXCUI()
         button.AutoButtonColor = false
         button.Parent = parent
         button.Activated:Connect(callback)
+        registerSearch(button, label)
         return button
     end
 
@@ -5532,6 +5639,7 @@ function buildXCUI()
             data.active.Visible = tabName == name
             recolorTabIcon(data.icon, tabName == name and ICON_ON or ICON_OFF)
         end
+        if applySearch then applySearch() end
     end
     for index, info in ipairs(tabs) do
         local holder = Instance.new("Frame")
@@ -5561,6 +5669,7 @@ function buildXCUI()
             if currentPage ~= info[1] then recolorTabIcon(icon, ICON_OFF) end
         end)
         button.Activated:Connect(function() switchPage(info[1]) end)
+        attachHelp(button, "tab_" .. info[1])
         tabData[info[1]] = {button = button, active = active, icon = icon}
         createPage(info[1])
     end
@@ -5615,6 +5724,7 @@ function buildXCUI()
 
     task.wait()
     L, R = columns("AntiAim", "Anti-aim", "Movement")
+    section(L, "orientation")
     toggle(L, "Anti-aim", "antiAimEnabled")
     addSlider(L, "Spin speed", "spinSpeed", 10, 150, 1, "")
     toggle(L, "Third person", "thirdPersonEnabled")
@@ -5636,6 +5746,7 @@ function buildXCUI()
 
     task.wait()
     L, R = columns("Visuals", "Player ESP", "Indicators")
+    section(L, "player overlay")
     toggle(L, "Chams", "chamsEnabled")
     toggle(L, "Nametags", "nametagsEnabled")
     toggle(L, "Box overlay", "boxEspEnabled")
@@ -5647,6 +5758,7 @@ function buildXCUI()
     toggle(L, "Show distance", "espShowDistance")
     toggle(L, "Show health", "espShowHealth")
     toggle(L, "Show weapon", "tagShowWeapon")
+    section(R, "combat feedback")
     toggle(R, "Jump circle", "jumpCircleEnabled")
     toggle(R, "Hitmarker", "hitmarkerEnabled")
     addSlider(R, "Hitmarker size", "hitmarkerSize", 5, 30, 1, "")
@@ -5658,6 +5770,7 @@ function buildXCUI()
 
     task.wait()
     L, R = columns("World", "Environment", "Scope & camera")
+    section(L, "lighting")
     toggle(L, "World changer", "nightModeEnabled")
     toggle(L, "Fullbright", "fullBrightEnabled")
     toggle(L, "Remove fog", "removeFogEnabled")
@@ -5672,6 +5785,7 @@ function buildXCUI()
     addChoice(L, "Weather type", "weatherMode", {"Rain", "Snow", "Fog", "Ash"}, function() applyXCWeather() end)
     addSlider(L, "Weather intensity", "weatherIntensity", 1, 100, 1, "%", function() applyXCWeather() end)
     addSlider(L, "Wind", "weatherWind", -40, 40, 1, "", function() applyXCWeather() end)
+    section(R, "scope")
     toggle(R, "Custom scope", "customScopeEnabled")
     toggle(R, "Custom FOV", "customFovEnabled")
     addSlider(R, "Camera FOV", "customFov", 70, 120, 1, "°")
@@ -5692,6 +5806,7 @@ function buildXCUI()
 
     task.wait()
     L, R = columns("Skins", "Cosmetics", "Bullet effects")
+    section(L, "weapon cosmetics")
     toggle(L, "Skin changer", "skinChangerEnabled")
     toggle(L, "Glove changer", "gloveChangerEnabled")
     addChoice(L, "Knife", "selectedKnifeType", {"Butterfly Knife", "Karambit", "Bayonet", "Default"})
@@ -5699,6 +5814,7 @@ function buildXCUI()
     addChoice(L, "Glove model", "selectedGloveModel", {"Sports Gloves", "Driver Gloves", "Default"})
     toggle(L, "Weapon chams", "weaponChamsEnabled")
     addChoice(L, "Weapon material", "weaponChamsMode", {"Glass", "ForceField", "Metal", "Highlight", "Neon"})
+    section(R, "projectiles")
     toggle(R, "Bullet trail", "bulletTrailEnabled")
     toggle(R, "Bullet flash", "bulletFlashEnabled")
     toggle(R, "Cube checker", "cubeCheckerEnabled")
@@ -5711,6 +5827,7 @@ function buildXCUI()
 
     task.wait()
     L, R = columns("Misc", "Utilities", "Viewmodel")
+    section(L, "session tools")
     toggle(L, "Anti AFK", "antiAfkEnabled")
     toggle(L, "Spectator list", "spectatorListEnabled")
     toggle(L, "Animations", "animationsEnabled")
@@ -5719,6 +5836,7 @@ function buildXCUI()
     addChoice(L, "Streamer bind", "streamerKey", {"F6", "F7", "F8", "F9", "F10"})
     addSlider(L, "Animation speed", "animationSpeed", 0.1, 3, 0.1, "x")
     toggle(L, "Animation loop", "animationLoop")
+    section(R, "viewmodel position")
     addSlider(R, "Hands X", "customHandsX", -2, 2, 0.1, "")
     addSlider(R, "Hands Y", "customHandsY", -2, 2, 0.1, "")
     addSlider(R, "Hands Z", "customHandsZ", -2, 2, 0.1, "")
@@ -5728,6 +5846,7 @@ function buildXCUI()
 
     task.wait()
     L, R = columns("Players", "Target filtering", "Overlay options")
+    section(L, "target rules")
     toggle(L, "Ignore teammates", "silentAimTeamCheck")
     toggle(L, "Visible targets only", "silentAimVisibleCheck")
     toggle(L, "Show teammates", "chamsShowTeammates")
@@ -5736,6 +5855,7 @@ function buildXCUI()
     addChoice(L, "Priority player", "priorityPlayerName", currentPlayerChoices())
     addSlider(L, "Chams fill", "chamsFillTransparency", 0, 1, 0.05, "")
     addSlider(L, "Chams outline", "chamsOutlineTransparency", 0, 1, 0.05, "")
+    section(R, "esp details")
     toggle(R, "Nametag distance", "espShowDistance")
     toggle(R, "Nametag health", "espShowHealth")
     toggle(R, "Nametag weapon", "tagShowWeapon")
@@ -5745,6 +5865,7 @@ function buildXCUI()
 
     task.wait()
     L, R = columns("Configs", "Interface", "Config manager")
+    section(L, "menu & hud")
     toggle(L, "Notifications", "settingsShowNotifications")
     toggle(L, "Compact mode", "settingsCompactMode")
     toggle(L, "Watermark", "watermarkEnabled")
@@ -5752,6 +5873,7 @@ function buildXCUI()
     toggle(L, "Show ping", "watermarkShowPing")
     toggle(L, "Show name", "watermarkShowName")
     addChoice(L, "Menu key", "menuKey", {"RightShift", "LeftControl", "RightControl", "F6", "F7", "F8", "F9", "F10"})
+    section(R, "profiles")
 
     local configName = "Default"
     local function safeName(value)
@@ -5768,7 +5890,7 @@ function buildXCUI()
     nameBox.TextColor3 = C.Text
     nameBox.Font = Enum.Font.Code
     nameBox.TextSize = 10
-    nameBox.Parent = R
+    nameBox.Parent = activeSectionByParent[R] or R
     local status = Instance.new("TextLabel")
     status.Size = UDim2.new(1, 0, 0, 20)
     status.BackgroundTransparency = 1
@@ -5777,7 +5899,7 @@ function buildXCUI()
     status.Font = Enum.Font.Code
     status.TextSize = 9
     status.TextXAlignment = Enum.TextXAlignment.Left
-    status.Parent = R
+    status.Parent = activeSectionByParent[R] or R
     local function configPath() return "XCConfigs/" .. safeName(nameBox.Text) .. ".json" end
     local function refreshAll()
         for key, keyRefreshers in pairs(refreshers) do
@@ -5785,6 +5907,32 @@ function buildXCUI()
         end
         updateScale()
     end
+
+    section(L, "quick actions")
+    addButton(L, "PANIC: DISABLE ACTIVE MODULES", function()
+        for _, key in ipairs({
+            "aimbotEnabled", "silentAimEnabled", "triggerbotEnabled", "rageBotEnabled",
+            "flightEnabled", "speedEnabled", "antiAimEnabled", "chamsEnabled",
+            "grenadeEspEnabled", "freecamEnabled", "freelookEnabled", "thirdPersonEnabled"
+        }) do
+            if XCConfig[key] then
+                XCConfig[key] = false
+                if UI_Bind_Registry[key] then UI_Bind_Registry[key](false) end
+                pcall(specialToggle, key, false)
+            end
+        end
+        XCNotify("Panic", "Active combat and camera modules disabled", "warning", 2)
+    end)
+    addButton(L, "RESET CAMERA", function()
+        for _, key in ipairs({"freecamEnabled", "freelookEnabled", "thirdPersonEnabled", "customFovEnabled"}) do
+            XCConfig[key] = false
+            if UI_Bind_Registry[key] then UI_Bind_Registry[key](false) end
+        end
+        stopXCCameraMode()
+        setThirdPersonEnabled(false)
+        if camera then camera.FieldOfView = 70 end
+        XCNotify("Camera", "Camera state restored", "success", 1.5)
+    end)
     addButton(R, "SAVE CONFIG", function()
         local ok = pcall(function()
             if type(makefolder) == "function" and type(isfolder) == "function" and not isfolder("XCConfigs") then makefolder("XCConfigs") end
@@ -5837,6 +5985,36 @@ function buildXCUI()
         status.Text = ok and "config deleted" or "delete failed"
     end)
 
+    applySearch = function()
+        local query = searchBox.Text:lower():gsub("^%s+", ""):gsub("%s+$", "")
+        local page = pages[currentPage]
+        for _, entry in ipairs(searchableControls) do
+            if page and entry.gui:IsDescendantOf(page) then
+                entry.gui.Visible = query == "" or entry.label:find(query, 1, true) ~= nil
+            else
+                entry.gui.Visible = true
+            end
+        end
+        for _, group in ipairs(sectionGroups) do
+            if page and group.outer:IsDescendantOf(page) then
+                local anyVisible = false
+                for _, child in ipairs(group.body:GetChildren()) do
+                    if child:IsA("GuiObject") and child.Visible then anyVisible = true break end
+                end
+                group.outer.Visible = query == "" or anyVisible
+                if query ~= "" then
+                    group.body.Visible = anyVisible
+                else
+                    group.body.Visible = not group.collapsed
+                end
+            else
+                group.outer.Visible = true
+                group.body.Visible = not group.collapsed
+            end
+        end
+        clearSearch.TextColor3 = query ~= "" and C.Lime or C.Muted
+    end
+    table.insert(connections, searchBox:GetPropertyChangedSignal("Text"):Connect(applySearch))
     switchPage("Rage")
 
     local menuVisible = true
