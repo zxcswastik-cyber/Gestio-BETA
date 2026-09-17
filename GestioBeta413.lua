@@ -26,7 +26,7 @@ local XCIcons = {
     Info = "ⓘ",
 }
 
-local function XCIcon(parent, glyph, size, color)
+function XCIcon(parent, glyph, size, color)
     local label = Instance.new("TextLabel")
     label.Name = "XCIcon"
     label.BackgroundTransparency = 1
@@ -265,7 +265,7 @@ local XCConfig = {
 }
 
 -- Immutable startup snapshot used by Settings > Config Manager > RESET.
-local function deepCopyConfigValue(v)
+function deepCopyConfigValue(v)
     if type(v) ~= "table" then return v end
     local out = {}
     for k,val in pairs(v) do out[k] = deepCopyConfigValue(val) end
@@ -384,7 +384,7 @@ local activeJumpCircleData = nil
 local genv = (type(getgenv) == "function") and getgenv() or nil
 local xcSessionToken = {}
 if genv then genv.XCSessionToken = xcSessionToken end
-local function xcSessionActive()
+function xcSessionActive()
     return not genv or genv.XCSessionToken == xcSessionToken
 end
 if genv and not genv.XCSavedPos then
@@ -435,7 +435,7 @@ local XCNotificationGui = nil
 local XCNotificationHolder = nil
 local XCNotificationSerial = 0
 
-local function ensureXCNotifications()
+function ensureXCNotifications()
     if XCNotificationGui and XCNotificationGui.Parent and XCNotificationHolder and XCNotificationHolder.Parent then
         return true
     end
@@ -607,7 +607,7 @@ local lastTargetSwitchTick = 0
 local TARGET_HYSTERESIS_TIME = 0.12
 local aimboneIndex = 1
 
-local function rgb(r,g,b)
+function rgb(r,g,b)
     return Color3.fromRGB(
         math.clamp(math.floor(tonumber(r) or 255), 0, 255),
         math.clamp(math.floor(tonumber(g) or 255), 0, 255),
@@ -623,7 +623,7 @@ local silentAimHooked = false
 local silentAimCamHooked = false
 local bloxStrikeShootHooked = false
 
-local function setupBloxStrikeShootHook()
+function setupBloxStrikeShootHook()
     if bloxStrikeShootHooked then return end
     
     pcall(function()
@@ -948,7 +948,7 @@ silentAimCamPosAim = function(targetPart)
     return camPos, aimPos
 end
 
-local function setupSilentAimHooks()
+function setupSilentAimHooks()
     if silentAimHooked and silentAimCamHooked then return end
 
     if not silentAimHooked and hookmetamethod then
@@ -1058,7 +1058,7 @@ local skinData = {
     Ready = false
 }
 
-local function refreshXCSkinData()
+function refreshXCSkinData()
     if skinData.Ready and skinData.SkinsRoot and skinData.SkinsRoot.Parent then return end
 
     local assets = ReplicatedStorage:FindFirstChild("Assets")
@@ -1098,11 +1098,11 @@ end
 
 refreshXCSkinData()
 
-local function isBaseKnife(name)
+function isBaseKnife(name)
     return name == "CT Knife" or name == "T Knife" or name == "Knife"
 end
 
-local function getCurrentWeaponModel()
+function getCurrentWeaponModel()
     local cam = Workspace.CurrentCamera or camera
     if not cam then return nil end
     for _, child in ipairs(cam:GetChildren()) do
@@ -1113,7 +1113,7 @@ local function getCurrentWeaponModel()
     return nil
 end
 
-local function applySurfaceAppearanceSkin(model, weaponName, skinName)
+function applySurfaceAppearanceSkin(model, weaponName, skinName)
     if not model or not skinData.SkinsRoot then return end
     if not weaponName or not skinName or skinName == "Default" then return end
 
@@ -1137,7 +1137,7 @@ local function applySurfaceAppearanceSkin(model, weaponName, skinName)
 end
 
 local lastBloxModuleScan = 0
-local function hookBloxStrikeModules(forceScan)
+function hookBloxStrikeModules(forceScan)
     local now = os.clock()
     if not forceScan and lastBloxModuleScan > 0 and (now - lastBloxModuleScan) < 5 then return end
     lastBloxModuleScan = now
@@ -1161,7 +1161,7 @@ local function hookBloxStrikeModules(forceScan)
     end)
 end
 
-local function scanAndMorphKnives(root)
+function scanAndMorphKnives(root)
     if not XCConfig.skinChangerEnabled or not root then return end
     refreshXCSkinData()
     if not skinData.SkinsRoot then return end
@@ -1179,7 +1179,7 @@ local function scanAndMorphKnives(root)
     end
 end
 
-local function applyXCGloves()
+function applyXCGloves()
     if not XCConfig.gloveChangerEnabled then return end
     refreshXCSkinData()
     if not skinData.SkinsRoot then return end
@@ -1251,7 +1251,7 @@ local spectatorCounterLabel = nil
 local handsLastModel = nil
 local handsLastPivot = nil
 
-local function setNoFallDamage(enabled)
+function setNoFallDamage(enabled)
     if not enabled then return end
     local char = player and player.Character
     local hum = char and char:FindFirstChildOfClass("Humanoid")
@@ -1262,7 +1262,7 @@ local function setNoFallDamage(enabled)
     end)
 end
 
-local function stopXCAnimation()
+function stopXCAnimation()
     if animationTrack then
         pcall(function() animationTrack:Stop(0.12) end)
         animationTrack = nil
@@ -1273,7 +1273,7 @@ local function stopXCAnimation()
     end
 end
 
-local function playXCAnimation()
+function playXCAnimation()
     stopXCAnimation()
     if not XCConfig.animationsEnabled then return end
     local char = player and player.Character
@@ -1300,7 +1300,7 @@ local function playXCAnimation()
     animationTrack:Play(0.15, 1, math.clamp(XCConfig.animationSpeed, 0.1, 3))
 end
 
-local function getSpectatorNames()
+function getSpectatorNames()
     local names = {}
     for _, plr in ipairs(Players:GetPlayers()) do
         if plr ~= player and plr:GetAttribute("IsSpectating") == true then
@@ -1311,7 +1311,7 @@ local function getSpectatorNames()
     return names
 end
 
-local function buildSpectatorGui()
+function buildSpectatorGui()
     if spectatorGui and spectatorGui.Parent then return end
     spectatorGui = Instance.new("ScreenGui")
     spectatorGui.Name = "XCSpectatorGui"
@@ -1362,7 +1362,7 @@ local function buildSpectatorGui()
     spectatorListLabel.TextYAlignment = Enum.TextYAlignment.Top
 end
 
-local function updateSpectatorGui()
+function updateSpectatorGui()
     buildSpectatorGui()
     local names = getSpectatorNames()
     local watching = player and player:GetAttribute("Spectators")
@@ -1384,7 +1384,7 @@ local function updateSpectatorGui()
     spectatorFrame.Size = UDim2.new(0, 210, 0, math.max(88, 64 + math.min(#lines, 8) * 14))
 end
 
-local function applyXCHandsOffset()
+function applyXCHandsOffset()
     if not XCConfig.customHandsEnabled then
         handsLastModel = nil
         handsLastPivot = nil
@@ -1652,14 +1652,14 @@ end
 local isThirdPersonActive = false
 local thirdPersonSaved = nil
 
-local function getThirdPersonTarget()
+function getThirdPersonTarget()
     local char = player.Character
     local hum = char and char:FindFirstChildOfClass("Humanoid")
     if not char or not hum or hum.Health <= 0 then return nil, nil end
     return char, hum
 end
 
-local function restoreThirdPerson()
+function restoreThirdPerson()
     isThirdPersonActive = false
 
     local char = player.Character
@@ -1818,7 +1818,7 @@ if XCConfig.weaponChamsMode == "Field" then XCConfig.weaponChamsMode = "ForceFie
 if XCConfig.weaponChamsMode == "Chrome" then XCConfig.weaponChamsMode = "Metal" end
 if XCConfig.weaponChamsMode == "Glow" then XCConfig.weaponChamsMode = "Highlight" end
 
-local function resolveWeaponModel()
+function resolveWeaponModel()
     local cam = Workspace.CurrentCamera or camera
     if not cam then return nil end
 
@@ -1860,7 +1860,7 @@ local function resolveWeaponModel()
     return nil
 end
 
-local function saveWeaponPartState(part)
+function saveWeaponPartState(part)
     if weaponVisualState[part] then return end
     local state = {
         material = part.Material,
@@ -1884,7 +1884,7 @@ local function saveWeaponPartState(part)
     weaponVisualState[part] = state
 end
 
-local function restoreWeaponPart(part, state)
+function restoreWeaponPart(part, state)
     if not part or not state then return end
     pcall(function()
         part.Material = state.material
@@ -1905,7 +1905,7 @@ local function restoreWeaponPart(part, state)
     end)
 end
 
-local function clearWeaponVisuals()
+function clearWeaponVisuals()
     for part, state in pairs(weaponVisualState) do
         if part and part.Parent then
             restoreWeaponPart(part, state)
@@ -1918,7 +1918,7 @@ local function clearWeaponVisuals()
     end
 end
 
-local function clearWeaponGlow(part)
+function clearWeaponGlow(part)
     local glow = weaponGlowObjects[part]
     if glow then
         pcall(function() glow:Destroy() end)
@@ -1926,7 +1926,7 @@ local function clearWeaponGlow(part)
     end
 end
 
-local function setWeaponVisuals()
+function setWeaponVisuals()
     if not XCConfig.weaponChamsEnabled then
         clearWeaponVisuals()
         return
@@ -2031,7 +2031,7 @@ local function setWeaponVisuals()
     end
 end
 
-local function applyWorldSkybox()
+function applyWorldSkybox()
     local data = worldSkyboxData[XCConfig.worldSkyboxPreset]
     if not data or not XCConfig.worldSkyboxEnabled then return end
     pcall(function()
@@ -2050,7 +2050,7 @@ local function applyWorldSkybox()
     end)
 end
 
-local function restoreWorldSkybox()
+function restoreWorldSkybox()
     pcall(function()
         local sky = Lighting:FindFirstChild("XCWorldSky")
         if sky then sky:Destroy() end
@@ -2061,7 +2061,7 @@ local function restoreWorldSkybox()
     end)
 end
 
-local function updateWorldPostFX()
+function updateWorldPostFX()
     if not XCConfig.worldPostFXEnabled then
         local fx = Lighting:FindFirstChild("XCWorldColorFX")
         if fx then fx:Destroy() end
@@ -2080,7 +2080,7 @@ local function updateWorldPostFX()
     Lighting.ExposureCompensation = math.clamp(XCConfig.worldExposure or 0, -5, 5)
 end
 
-local function updateWorldChanger()
+function updateWorldChanger()
     if not XCConfig.nightModeEnabled then
         restoreWorldSkybox()
         local fx = Lighting:FindFirstChild("XCWorldColorFX")
@@ -2166,7 +2166,7 @@ do
 end
 
 -- Scope overlay adapted from XC: FOV override, removable scope and configurable crosshair.
-local function findSniperScope()
+function findSniperScope()
     local pg = player and player:FindFirstChildOfClass("PlayerGui")
     if not pg then return nil end
     local main = pg:FindFirstChild("MainGui")
@@ -2175,7 +2175,7 @@ local function findSniperScope()
     return middle and middle:FindFirstChild("SniperScope") or nil
 end
 
-local function ensureScopeGui()
+function ensureScopeGui()
     if scopeGui and scopeGui.Parent then return end
     scopeGui = Instance.new("ScreenGui")
     scopeGui.Name = "XCCustomScope"
@@ -2197,7 +2197,7 @@ local function ensureScopeGui()
     dot.Name="Dot"; dot.AnchorPoint=Vector2.new(.5,.5); dot.BorderSizePixel=0; dot.Parent=scopeContainer
 end
 
-local function updateCustomScope()
+function updateCustomScope()
     ensureScopeGui()
     local scope = findSniperScope()
     local scoped = scope and scope.Visible == true
@@ -2319,7 +2319,7 @@ local jumpRayParams = RaycastParams.new()
 jumpRayParams.FilterType = Enum.RaycastFilterType.Exclude
 jumpRayParams.IgnoreWater = true
 
-local function getGroundY(originPos, char)
+function getGroundY(originPos, char)
     jumpRayParams.FilterDescendantsInstances = {char, jumpCircleFolder, camera}
     local cast = Workspace:Raycast(originPos + Vector3.new(0, 2, 0), Vector3.new(0, -15, 0), jumpRayParams)
     if cast then
@@ -2531,45 +2531,65 @@ end
 -- Inspired by the useful visual/camera ideas shown in the GameSense review.
 -- Both systems are local-only and use a single lightweight render path.
 -- ==========================================
-local weatherRig
-local weatherEmitter
-local weatherAtmosphere
-local weatherUpdateAccumulator = 0
-local weatherSignature
+XCFeatureState = {
+    weatherRig = nil,
+    weatherEmitter = nil,
+    weatherAtmosphere = nil,
+    weatherUpdateAccumulator = 0,
+    weatherSignature = nil,
+    cameraMode = nil,
+    savedCameraState = nil,
+    cameraFrame = nil,
+    cameraPosition = nil,
+    cameraYaw = 0,
+    cameraPitch = 0,
+    cameraTouch = nil,
+    cameraTouchLast = nil,
+    cameraTouchDelta = Vector2.zero,
+    streamerSnapshot = nil,
+    streamerHiddenKeys = {
+        "watermarkEnabled", "spectatorListEnabled", "nametagsEnabled", "boxEspEnabled",
+        "cornerBoxEnabled", "healthBarEnabled", "headDotEnabled", "tracersEnabled",
+        "grenadeEspEnabled", "jumpCircleEnabled", "hitmarkerEnabled", "chamsEnabled",
+        "showFovCircle", "showSilentFovCircle",
+    },
+}
 
-local function destroyXCWeather()
-    if weatherRig then pcall(function() weatherRig:Destroy() end) end
-    if weatherAtmosphere then pcall(function() weatherAtmosphere:Destroy() end) end
-    weatherRig = nil
-    weatherEmitter = nil
-    weatherAtmosphere = nil
-    weatherSignature = nil
+function destroyXCWeather()
+    if XCFeatureState.weatherRig then pcall(function() XCFeatureState.weatherRig:Destroy() end) end
+    if XCFeatureState.weatherAtmosphere then pcall(function() XCFeatureState.weatherAtmosphere:Destroy() end) end
+    XCFeatureState.weatherRig = nil
+    XCFeatureState.weatherEmitter = nil
+    XCFeatureState.weatherAtmosphere = nil
+    XCFeatureState.weatherSignature = nil
 end
 
-local function ensureXCWeatherObjects()
-    if not weatherRig or not weatherRig.Parent then
-        weatherRig = Instance.new("Part")
-        weatherRig.Name = "XCWeatherEmitter"
-        weatherRig.Size = Vector3.new(1, 1, 1)
-        weatherRig.Transparency = 1
-        weatherRig.Anchored = true
-        weatherRig.CanCollide = false
-        pcall(function() weatherRig.CanQuery = false; weatherRig.CanTouch = false end)
-        weatherRig.Parent = Workspace
+function ensureXCWeatherObjects()
+    if not XCFeatureState.weatherRig or not XCFeatureState.weatherRig.Parent then
+        XCFeatureState.weatherRig = Instance.new("Part")
+        XCFeatureState.weatherRig.Name = "XCWeatherEmitter"
+        XCFeatureState.weatherRig.Size = Vector3.new(1, 1, 1)
+        XCFeatureState.weatherRig.Transparency = 1
+        XCFeatureState.weatherRig.Anchored = true
+        XCFeatureState.weatherRig.CanCollide = false
+        pcall(function() XCFeatureState.weatherRig.CanQuery = false; XCFeatureState.weatherRig.CanTouch = false end)
+        XCFeatureState.weatherRig.Parent = Workspace
 
-        weatherEmitter = Instance.new("ParticleEmitter")
-        weatherEmitter.Name = "XCWeatherParticles"
-        weatherEmitter.LockedToPart = false
-        weatherEmitter.LightInfluence = 0
-        weatherEmitter.Orientation = Enum.ParticleOrientation.FacingCamera
-        weatherEmitter.Shape = Enum.ParticleEmitterShape.Box
-        weatherEmitter.ShapeStyle = Enum.ParticleEmitterShapeStyle.Volume
-        weatherEmitter.ShapeInOut = Enum.ParticleEmitterShapeInOut.Outward
-        weatherEmitter.Parent = weatherRig
+        XCFeatureState.weatherEmitter = Instance.new("ParticleEmitter")
+        XCFeatureState.weatherEmitter.Name = "XCWeatherParticles"
+        XCFeatureState.weatherEmitter.LockedToPart = false
+        XCFeatureState.weatherEmitter.LightInfluence = 0
+        XCFeatureState.weatherEmitter.Orientation = Enum.ParticleOrientation.FacingCamera
+        pcall(function()
+            XCFeatureState.weatherEmitter.Shape = Enum.ParticleEmitterShape.Box
+            XCFeatureState.weatherEmitter.ShapeStyle = Enum.ParticleEmitterShapeStyle.Volume
+            XCFeatureState.weatherEmitter.ShapeInOut = Enum.ParticleEmitterShapeInOut.Outward
+        end)
+        XCFeatureState.weatherEmitter.Parent = XCFeatureState.weatherRig
     end
 end
 
-local function applyXCWeather()
+function applyXCWeather()
     if not XCConfig.weatherEnabled then
         destroyXCWeather()
         return
@@ -2580,117 +2600,99 @@ local function applyXCWeather()
     local intensity = math.clamp(tonumber(XCConfig.weatherIntensity) or 45, 1, 100)
     local wind = math.clamp(tonumber(XCConfig.weatherWind) or 0, -40, 40)
     local signature = mode .. ":" .. tostring(intensity) .. ":" .. tostring(wind)
-    if weatherSignature == signature and weatherEmitter and weatherEmitter.Parent then return end
-    weatherSignature = signature
-    weatherEmitter.Enabled = mode ~= "Fog"
+    if XCFeatureState.weatherSignature == signature and XCFeatureState.weatherEmitter and XCFeatureState.weatherEmitter.Parent then return end
+    XCFeatureState.weatherSignature = signature
+    XCFeatureState.weatherEmitter.Enabled = mode ~= "Fog"
 
-    if weatherAtmosphere then
-        weatherAtmosphere.Density = mode == "Fog" and (0.18 + intensity * 0.0045) or 0
-        weatherAtmosphere.Haze = mode == "Fog" and (1 + intensity * 0.045) or 0
+    if XCFeatureState.weatherAtmosphere then
+        XCFeatureState.weatherAtmosphere.Density = mode == "Fog" and (0.18 + intensity * 0.0045) or 0
+        XCFeatureState.weatherAtmosphere.Haze = mode == "Fog" and (1 + intensity * 0.045) or 0
     elseif mode == "Fog" then
-        weatherAtmosphere = Instance.new("Atmosphere")
-        weatherAtmosphere.Name = "XCWeatherAtmosphere"
-        weatherAtmosphere.Color = Color3.fromRGB(190, 198, 205)
-        weatherAtmosphere.Decay = Color3.fromRGB(90, 96, 105)
-        weatherAtmosphere.Density = 0.18 + intensity * 0.0045
-        weatherAtmosphere.Haze = 1 + intensity * 0.045
-        weatherAtmosphere.Glare = 0
-        weatherAtmosphere.Parent = Lighting
+        XCFeatureState.weatherAtmosphere = Instance.new("Atmosphere")
+        XCFeatureState.weatherAtmosphere.Name = "XCWeatherAtmosphere"
+        XCFeatureState.weatherAtmosphere.Color = Color3.fromRGB(190, 198, 205)
+        XCFeatureState.weatherAtmosphere.Decay = Color3.fromRGB(90, 96, 105)
+        XCFeatureState.weatherAtmosphere.Density = 0.18 + intensity * 0.0045
+        XCFeatureState.weatherAtmosphere.Haze = 1 + intensity * 0.045
+        XCFeatureState.weatherAtmosphere.Glare = 0
+        XCFeatureState.weatherAtmosphere.Parent = Lighting
     end
 
     if mode == "Rain" then
-        weatherRig.Size = Vector3.new(90, 1, 90)
-        weatherEmitter.Texture = "rbxasset://textures/particles/sparkles_main.dds"
-        weatherEmitter.Rate = intensity * 3.2
-        weatherEmitter.Lifetime = NumberRange.new(0.65, 1.05)
-        weatherEmitter.Speed = NumberRange.new(65, 90)
-        weatherEmitter.Acceleration = Vector3.new(wind, -65, 0)
-        weatherEmitter.SpreadAngle = Vector2.new(4, 4)
-        weatherEmitter.Size = NumberSequence.new(0.075)
-        weatherEmitter.Transparency = NumberSequence.new({
+        XCFeatureState.weatherRig.Size = Vector3.new(90, 1, 90)
+        XCFeatureState.weatherEmitter.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+        XCFeatureState.weatherEmitter.Rate = intensity * 3.2
+        XCFeatureState.weatherEmitter.Lifetime = NumberRange.new(0.65, 1.05)
+        XCFeatureState.weatherEmitter.Speed = NumberRange.new(65, 90)
+        XCFeatureState.weatherEmitter.Acceleration = Vector3.new(wind, -65, 0)
+        XCFeatureState.weatherEmitter.SpreadAngle = Vector2.new(4, 4)
+        XCFeatureState.weatherEmitter.Size = NumberSequence.new(0.075)
+        XCFeatureState.weatherEmitter.Transparency = NumberSequence.new({
             NumberSequenceKeypoint.new(0, 0.3),
             NumberSequenceKeypoint.new(0.85, 0.45),
             NumberSequenceKeypoint.new(1, 1),
         })
-        weatherEmitter.Color = ColorSequence.new(Color3.fromRGB(190, 220, 255))
+        XCFeatureState.weatherEmitter.Color = ColorSequence.new(Color3.fromRGB(190, 220, 255))
     elseif mode == "Snow" then
-        weatherRig.Size = Vector3.new(100, 1, 100)
-        weatherEmitter.Texture = "rbxasset://textures/particles/sparkles_main.dds"
-        weatherEmitter.Rate = intensity * 1.45
-        weatherEmitter.Lifetime = NumberRange.new(4.5, 7)
-        weatherEmitter.Speed = NumberRange.new(5, 11)
-        weatherEmitter.Acceleration = Vector3.new(wind * 0.35, -2.5, 0)
-        weatherEmitter.SpreadAngle = Vector2.new(18, 18)
-        weatherEmitter.Size = NumberSequence.new({
+        XCFeatureState.weatherRig.Size = Vector3.new(100, 1, 100)
+        XCFeatureState.weatherEmitter.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+        XCFeatureState.weatherEmitter.Rate = intensity * 1.45
+        XCFeatureState.weatherEmitter.Lifetime = NumberRange.new(4.5, 7)
+        XCFeatureState.weatherEmitter.Speed = NumberRange.new(5, 11)
+        XCFeatureState.weatherEmitter.Acceleration = Vector3.new(wind * 0.35, -2.5, 0)
+        XCFeatureState.weatherEmitter.SpreadAngle = Vector2.new(18, 18)
+        XCFeatureState.weatherEmitter.Size = NumberSequence.new({
             NumberSequenceKeypoint.new(0, 0.12),
             NumberSequenceKeypoint.new(0.5, 0.28),
             NumberSequenceKeypoint.new(1, 0.08),
         })
-        weatherEmitter.Transparency = NumberSequence.new({
+        XCFeatureState.weatherEmitter.Transparency = NumberSequence.new({
             NumberSequenceKeypoint.new(0, 0.18),
             NumberSequenceKeypoint.new(1, 0.55),
         })
-        weatherEmitter.Color = ColorSequence.new(Color3.fromRGB(245, 248, 255))
+        XCFeatureState.weatherEmitter.Color = ColorSequence.new(Color3.fromRGB(245, 248, 255))
     elseif mode == "Ash" then
-        weatherRig.Size = Vector3.new(85, 1, 85)
-        weatherEmitter.Texture = "rbxasset://textures/particles/smoke_main.dds"
-        weatherEmitter.Rate = intensity * 1.15
-        weatherEmitter.Lifetime = NumberRange.new(3.5, 6)
-        weatherEmitter.Speed = NumberRange.new(4, 9)
-        weatherEmitter.Acceleration = Vector3.new(wind * 0.5, 5, 0)
-        weatherEmitter.SpreadAngle = Vector2.new(22, 22)
-        weatherEmitter.Size = NumberSequence.new({
+        XCFeatureState.weatherRig.Size = Vector3.new(85, 1, 85)
+        XCFeatureState.weatherEmitter.Texture = "rbxasset://textures/particles/smoke_main.dds"
+        XCFeatureState.weatherEmitter.Rate = intensity * 1.15
+        XCFeatureState.weatherEmitter.Lifetime = NumberRange.new(3.5, 6)
+        XCFeatureState.weatherEmitter.Speed = NumberRange.new(4, 9)
+        XCFeatureState.weatherEmitter.Acceleration = Vector3.new(wind * 0.5, 5, 0)
+        XCFeatureState.weatherEmitter.SpreadAngle = Vector2.new(22, 22)
+        XCFeatureState.weatherEmitter.Size = NumberSequence.new({
             NumberSequenceKeypoint.new(0, 0.16),
             NumberSequenceKeypoint.new(1, 0.26),
         })
-        weatherEmitter.Transparency = NumberSequence.new({
+        XCFeatureState.weatherEmitter.Transparency = NumberSequence.new({
             NumberSequenceKeypoint.new(0, 0.3),
             NumberSequenceKeypoint.new(1, 0.8),
         })
-        weatherEmitter.Color = ColorSequence.new(Color3.fromRGB(135, 135, 135))
+        XCFeatureState.weatherEmitter.Color = ColorSequence.new(Color3.fromRGB(135, 135, 135))
     end
 end
 
-local xcCameraMode
-local xcSavedCameraState
-local xcCameraFrame
-local xcCameraPosition
-local xcCameraYaw = 0
-local xcCameraPitch = 0
-local xcCameraTouch
-local xcCameraTouchLast
-local xcCameraTouchDelta = Vector2.zero
-local streamerSnapshot
-
-local STREAMER_HIDDEN_KEYS = {
-    "watermarkEnabled", "spectatorListEnabled", "nametagsEnabled", "boxEspEnabled",
-    "cornerBoxEnabled", "healthBarEnabled", "headDotEnabled", "tracersEnabled",
-    "grenadeEspEnabled", "jumpCircleEnabled", "hitmarkerEnabled", "chamsEnabled",
-    "showFovCircle", "showSilentFovCircle",
-}
-
-local function refreshXCToggle(key)
+function refreshXCToggle(key)
     local refresh = UI_Bind_Registry[key]
     if refresh then pcall(refresh, XCConfig[key] == true) end
 end
 
-local function setXCStreamerMode(enabled)
+function setXCStreamerMode(enabled)
     enabled = enabled == true
-    if enabled and not streamerSnapshot then
-        streamerSnapshot = {}
-        for _, key in ipairs(STREAMER_HIDDEN_KEYS) do
-            streamerSnapshot[key] = XCConfig[key]
+    if enabled and not XCFeatureState.streamerSnapshot then
+        XCFeatureState.streamerSnapshot = {}
+        for _, key in ipairs(XCFeatureState.streamerHiddenKeys) do
+            XCFeatureState.streamerSnapshot[key] = XCConfig[key]
             XCConfig[key] = false
             refreshXCToggle(key)
         end
         XCConfig.streamerModeEnabled = true
         clearActiveJumpCircle()
-    elseif not enabled and streamerSnapshot then
-        for key, value in pairs(streamerSnapshot) do
+    elseif not enabled and XCFeatureState.streamerSnapshot then
+        for key, value in pairs(XCFeatureState.streamerSnapshot) do
             XCConfig[key] = value
             refreshXCToggle(key)
         end
-        streamerSnapshot = nil
+        XCFeatureState.streamerSnapshot = nil
         XCConfig.streamerModeEnabled = false
         if XCConfig.jumpCircleEnabled and player.Character then
             initJumpCircleForCharacter(player.Character)
@@ -2701,39 +2703,39 @@ local function setXCStreamerMode(enabled)
     refreshXCToggle("streamerModeEnabled")
 end
 
-local function stopXCCameraMode()
-    xcCameraMode = nil
+function stopXCCameraMode()
+    XCFeatureState.cameraMode = nil
     XCConfig.freecamEnabled = false
     XCConfig.freelookEnabled = false
     local cam = Workspace.CurrentCamera or camera
-    if cam and xcSavedCameraState then
+    if cam and XCFeatureState.savedCameraState then
         pcall(function()
-            cam.CameraType = xcSavedCameraState.CameraType or Enum.CameraType.Custom
-            if xcSavedCameraState.CameraSubject then cam.CameraSubject = xcSavedCameraState.CameraSubject end
-            cam.CFrame = xcSavedCameraState.CFrame or cam.CFrame
+            cam.CameraType = XCFeatureState.savedCameraState.CameraType or Enum.CameraType.Custom
+            if XCFeatureState.savedCameraState.CameraSubject then cam.CameraSubject = XCFeatureState.savedCameraState.CameraSubject end
+            cam.CFrame = XCFeatureState.savedCameraState.CFrame or cam.CFrame
         end)
     end
-    if xcSavedCameraState then
+    if XCFeatureState.savedCameraState then
         pcall(function()
-            UserInputService.MouseBehavior = xcSavedCameraState.MouseBehavior
-            UserInputService.MouseIconEnabled = xcSavedCameraState.MouseIconEnabled
+            UserInputService.MouseBehavior = XCFeatureState.savedCameraState.MouseBehavior
+            UserInputService.MouseIconEnabled = XCFeatureState.savedCameraState.MouseIconEnabled
         end)
     end
-    xcSavedCameraState = nil
+    XCFeatureState.savedCameraState = nil
     refreshXCToggle("freecamEnabled")
     refreshXCToggle("freelookEnabled")
 end
 
-local function setXCCameraMode(mode, enabled)
+function setXCCameraMode(mode, enabled)
     if not enabled then
-        if xcCameraMode == mode then stopXCCameraMode() end
+        if XCFeatureState.cameraMode == mode then stopXCCameraMode() end
         return
     end
 
     local cam = Workspace.CurrentCamera or camera
     if not cam then return end
-    if not xcSavedCameraState then
-        xcSavedCameraState = {
+    if not XCFeatureState.savedCameraState then
+        XCFeatureState.savedCameraState = {
             CameraType = cam.CameraType,
             CameraSubject = cam.CameraSubject,
             CFrame = cam.CFrame,
@@ -2742,14 +2744,14 @@ local function setXCCameraMode(mode, enabled)
         }
     end
 
-    xcCameraMode = mode
+    XCFeatureState.cameraMode = mode
     XCConfig.freecamEnabled = mode == "Freecam"
     XCConfig.freelookEnabled = mode == "Freelook"
-    xcCameraFrame = cam.CFrame
-    xcCameraPosition = cam.CFrame.Position
+    XCFeatureState.cameraFrame = cam.CFrame
+    XCFeatureState.cameraPosition = cam.CFrame.Position
     local pitch, yaw = cam.CFrame:ToOrientation()
-    xcCameraPitch = pitch
-    xcCameraYaw = yaw
+    XCFeatureState.cameraPitch = pitch
+    XCFeatureState.cameraYaw = yaw
     cam.CameraType = Enum.CameraType.Scriptable
     if not UserInputService.TouchEnabled then
         UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
@@ -2760,12 +2762,12 @@ local function setXCCameraMode(mode, enabled)
 end
 
 table.insert(connections, UserInputService.InputBegan:Connect(function(input, processed)
-    if input.UserInputType == Enum.UserInputType.Touch and xcCameraMode and not processed then
+    if input.UserInputType == Enum.UserInputType.Touch and XCFeatureState.cameraMode and not processed then
         local cam = Workspace.CurrentCamera or camera
         if cam and input.Position.X >= cam.ViewportSize.X * 0.45 then
-            xcCameraTouch = input
-            xcCameraTouchLast = input.Position
-            xcCameraTouchDelta = Vector2.zero
+            XCFeatureState.cameraTouch = input
+            XCFeatureState.cameraTouchLast = input.Position
+            XCFeatureState.cameraTouchDelta = Vector2.zero
         end
     end
     if processed then return end
@@ -2782,56 +2784,56 @@ table.insert(connections, UserInputService.InputBegan:Connect(function(input, pr
 end))
 
 table.insert(connections, UserInputService.InputChanged:Connect(function(input)
-    if input == xcCameraTouch and xcCameraTouchLast then
+    if input == XCFeatureState.cameraTouch and XCFeatureState.cameraTouchLast then
         local current = input.Position
-        xcCameraTouchDelta += Vector2.new(current.X - xcCameraTouchLast.X, current.Y - xcCameraTouchLast.Y)
-        xcCameraTouchLast = current
+        XCFeatureState.cameraTouchDelta += Vector2.new(current.X - XCFeatureState.cameraTouchLast.X, current.Y - XCFeatureState.cameraTouchLast.Y)
+        XCFeatureState.cameraTouchLast = current
     end
 end))
 
 table.insert(connections, UserInputService.InputEnded:Connect(function(input)
-    if input == xcCameraTouch then
-        xcCameraTouch = nil
-        xcCameraTouchLast = nil
-        xcCameraTouchDelta = Vector2.zero
+    if input == XCFeatureState.cameraTouch then
+        XCFeatureState.cameraTouch = nil
+        XCFeatureState.cameraTouchLast = nil
+        XCFeatureState.cameraTouchDelta = Vector2.zero
     end
 end))
 
 table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     if XCConfig.weatherEnabled then
-        weatherUpdateAccumulator += dt
-        if weatherUpdateAccumulator >= 0.1 then
-            weatherUpdateAccumulator = 0
+        XCFeatureState.weatherUpdateAccumulator += dt
+        if XCFeatureState.weatherUpdateAccumulator >= 0.1 then
+            XCFeatureState.weatherUpdateAccumulator = 0
             applyXCWeather()
             local cam = Workspace.CurrentCamera or camera
-            if weatherRig and cam then
-                weatherRig.CFrame = CFrame.new(cam.CFrame.Position + Vector3.new(0, 30, 0))
+            if XCFeatureState.weatherRig and cam then
+                XCFeatureState.weatherRig.CFrame = CFrame.new(cam.CFrame.Position + Vector3.new(0, 30, 0))
             end
         end
-    elseif weatherRig or weatherAtmosphere then
+    elseif XCFeatureState.weatherRig or XCFeatureState.weatherAtmosphere then
         destroyXCWeather()
     end
 
-    if not xcCameraMode then return end
+    if not XCFeatureState.cameraMode then return end
     local cam = Workspace.CurrentCamera or camera
     if not cam then return end
-    if (xcCameraMode == "Freecam" and not XCConfig.freecamEnabled)
-        or (xcCameraMode == "Freelook" and not XCConfig.freelookEnabled) then
+    if (XCFeatureState.cameraMode == "Freecam" and not XCConfig.freecamEnabled)
+        or (XCFeatureState.cameraMode == "Freelook" and not XCConfig.freelookEnabled) then
         stopXCCameraMode()
         return
     end
 
     cam.CameraType = Enum.CameraType.Scriptable
-    local delta = UserInputService:GetMouseDelta() + xcCameraTouchDelta * 0.55
-    xcCameraTouchDelta = Vector2.zero
-    local sensitivity = xcCameraMode == "Freecam"
+    local delta = UserInputService:GetMouseDelta() + XCFeatureState.cameraTouchDelta * 0.55
+    XCFeatureState.cameraTouchDelta = Vector2.zero
+    local sensitivity = XCFeatureState.cameraMode == "Freecam"
         and (tonumber(XCConfig.freecamSensitivity) or 0.18)
         or (tonumber(XCConfig.freelookSensitivity) or 0.16)
-    xcCameraYaw -= math.rad(delta.X * sensitivity)
-    xcCameraPitch = math.clamp(xcCameraPitch - math.rad(delta.Y * sensitivity), math.rad(-85), math.rad(85))
-    local rotation = CFrame.Angles(0, xcCameraYaw, 0) * CFrame.Angles(xcCameraPitch, 0, 0)
+    XCFeatureState.cameraYaw -= math.rad(delta.X * sensitivity)
+    XCFeatureState.cameraPitch = math.clamp(XCFeatureState.cameraPitch - math.rad(delta.Y * sensitivity), math.rad(-85), math.rad(85))
+    local rotation = CFrame.Angles(0, XCFeatureState.cameraYaw, 0) * CFrame.Angles(XCFeatureState.cameraPitch, 0, 0)
 
-    if xcCameraMode == "Freecam" then
+    if XCFeatureState.cameraMode == "Freecam" then
         local movement = Vector3.zero
         if UserInputService:IsKeyDown(Enum.KeyCode.W) then movement += Vector3.new(0, 0, -1) end
         if UserInputService:IsKeyDown(Enum.KeyCode.S) then movement += Vector3.new(0, 0, 1) end
@@ -2842,19 +2844,19 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         local speed = math.max(5, tonumber(XCConfig.freecamSpeed) or 55)
         if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then speed *= 2.5 end
         if movement.Magnitude > 0 then
-            xcCameraPosition += rotation:VectorToWorldSpace(movement.Unit) * speed * dt
+            XCFeatureState.cameraPosition += rotation:VectorToWorldSpace(movement.Unit) * speed * dt
         end
         if UserInputService.TouchEnabled then
             local character = player and player.Character
             local humanoid = character and character:FindFirstChildOfClass("Humanoid")
             if humanoid and humanoid.MoveDirection.Magnitude > 0.05 then
-                xcCameraPosition += humanoid.MoveDirection.Unit * speed * dt
+                XCFeatureState.cameraPosition += humanoid.MoveDirection.Unit * speed * dt
             end
         end
     end
 
-    xcCameraFrame = CFrame.new(xcCameraPosition) * rotation
-    cam.CFrame = xcCameraFrame
+    XCFeatureState.cameraFrame = CFrame.new(XCFeatureState.cameraPosition) * rotation
+    cam.CFrame = XCFeatureState.cameraFrame
 end))
 
 -- ==========================================
@@ -2935,6 +2937,7 @@ function cleanup()
     pcall(function() if targetGui:FindFirstChild("XCFovGui") then targetGui.XCFovGui:Destroy() end end)
     pcall(function() if targetGui:FindFirstChild("XCWatermarkGui") then targetGui.XCWatermarkGui:Destroy() end end)
     pcall(function() if targetGui:FindFirstChild("XCNotificationsGui") then targetGui.XCNotificationsGui:Destroy() end end)
+    pcall(function() if targetGui:FindFirstChild("XCFallbackGui") then targetGui.XCFallbackGui:Destroy() end end)
     pcall(function() if spectatorGui then spectatorGui:Destroy() end end)
     stopXCAnimation()
     pcall(function() if targetGui:FindFirstChild("XCMainContainer") then targetGui.XCMainContainer:Destroy() end end)
@@ -3276,7 +3279,7 @@ function isTargetVisible(originPos, targetPart, targetChar)
     return false
 end
 
-local function getPingLatency()
+function getPingLatency()
     local ping = 0.03
     pcall(function()
         local serverStats = Stats:FindFirstChild("Network") and Stats.Network:FindFirstChild("ServerStatsItem")
@@ -3481,11 +3484,11 @@ local triggerMaterialVariantLimits = {
     ["Sandy Brick"] = 0.25,
 }
 
-local function triggerIsCharacterPart(part, targetModel)
+function triggerIsCharacterPart(part, targetModel)
     return part and targetModel and part:IsDescendantOf(targetModel)
 end
 
-local function triggerFindTargetAlongRay(origin, direction, targetModel)
+function triggerFindTargetAlongRay(origin, direction, targetModel)
     local params = RaycastParams.new()
     params.FilterType = Enum.RaycastFilterType.Exclude
     params.IgnoreWater = true
@@ -3567,7 +3570,7 @@ local function triggerFindTargetAlongRay(origin, direction, targetModel)
     return nil
 end
 
-local function triggerbotFire(vp)
+function triggerbotFire(vp)
     pcall(function()
         local myChar = player.Character
         local equippedTool = myChar and myChar:FindFirstChildOfClass("Tool")
@@ -3777,7 +3780,7 @@ end))
 -- TACTICAL ESP
 -- ==========================================
 local tacticalOverlayWasActive = false
-local function hideTacticalOverlay()
+function hideTacticalOverlay()
     for _, esp in pairs(screenEspCache) do
         esp.Box.Visible = false
         esp.HealthBarBg.Visible = false
@@ -5788,8 +5791,8 @@ function buildXCUI()
             assert(type(writefile) == "function", "File API unavailable")
             local saveData = {}
             for key, value in pairs(XCConfig) do saveData[key] = value end
-            if streamerSnapshot then
-                for key, value in pairs(streamerSnapshot) do saveData[key] = value end
+            if XCFeatureState.streamerSnapshot then
+                for key, value in pairs(XCFeatureState.streamerSnapshot) do saveData[key] = value end
                 saveData.streamerModeEnabled = false
             end
             writefile(configPath(), HttpService:JSONEncode(saveData))
@@ -5904,7 +5907,7 @@ end
 local thirdPersonCameraConnection
 local thirdPersonMetaInstalled = false
 
-local function installThirdPersonProtection()
+function installThirdPersonProtection()
     if thirdPersonMetaInstalled then return end
     if type(getrawmetatable) ~= "function" or type(setreadonly) ~= "function" then return end
     if type(newcclosure) ~= "function" then return end
@@ -5941,7 +5944,7 @@ local function installThirdPersonProtection()
     end)
 end
 
-local function reconnectThirdPersonCamera()
+function reconnectThirdPersonCamera()
     if thirdPersonCameraConnection then
         thirdPersonCameraConnection:Disconnect()
         thirdPersonCameraConnection = nil
@@ -5995,7 +5998,7 @@ local xcFireRateOriginal = {}
 local xcFireRateScanDone = false
 local xcRecoilSpreadRetrying = false
 
-local function scanXCFireRateObjects()
+function scanXCFireRateObjects()
     if xcFireRateScanDone then return #xcFireRateObjects > 0 end
     if type(getgc) ~= "function" then return false end
 
@@ -6026,7 +6029,7 @@ local function scanXCFireRateObjects()
     return found or #xcFireRateObjects > 0
 end
 
-local function restoreXCFireRates()
+function restoreXCFireRates()
     for _, obj in ipairs(xcFireRateObjects) do
         pcall(function()
             if type(setreadonly) == "function" then setreadonly(obj, false) end
@@ -6039,7 +6042,7 @@ local function restoreXCFireRates()
     end
 end
 
-local function applyXCFireRate()
+function applyXCFireRate()
     local value = math.max(tonumber(XCConfig.fireRate) or 0.01, 0.01)
     for _, obj in ipairs(xcFireRateObjects) do
         pcall(function()
@@ -6070,7 +6073,7 @@ task.spawn(function()
     end
 end)
 
-local function installXCRecoilSpread()
+function installXCRecoilSpread()
     if xcRecoilSpreadInstalled then return true end
     if type(getgc) ~= "function" or type(hookfunction) ~= "function" then
         return false
@@ -6182,7 +6185,7 @@ end)
 -- XC-STYLE SEND HOOK FALLBACK FOR SILENT AIM
 -- ==========================================
 local xcSilentSendHooked = false
-local function setupXCSilentSendHook()
+function setupXCSilentSendHook()
     if xcSilentSendHooked then return end
     if type(getgc) ~= "function" or type(hookfunction) ~= "function" then return end
 
@@ -6246,8 +6249,8 @@ end
 -- ==========================================
 -- ENGINE LAUNCH / XC VISUAL EXTENSION
 -- ==========================================
-setupSilentAimHooks()
-setupBloxStrikeShootHook()
+pcall(setupSilentAimHooks)
+pcall(setupBloxStrikeShootHook)
 task.spawn(function()
     while xcSessionActive() and not xcSilentSendHooked do
         if XCConfig.silentAimEnabled and lazyFeatureRequests.silentFallback then
@@ -6258,10 +6261,35 @@ task.spawn(function()
         end
     end
 end)
-buildXCUI()
+XCFeatureState.uiBuildOK, XCFeatureState.uiBuildError = pcall(buildXCUI)
+if not XCFeatureState.uiBuildOK then
+    warn("[XC] UI startup failed: " .. tostring(XCFeatureState.uiBuildError))
+    pcall(function()
+        if targetGui:FindFirstChild("XCScreenGui") then targetGui.XCScreenGui:Destroy() end
+        if targetGui:FindFirstChild("XCToggleGui") then targetGui.XCToggleGui:Destroy() end
+        XCFeatureState.fallbackGui = Instance.new("ScreenGui")
+        XCFeatureState.fallbackGui.Name = "XCFallbackGui"
+        XCFeatureState.fallbackGui.ResetOnSpawn = false
+        XCFeatureState.fallbackGui.IgnoreGuiInset = true
+        XCFeatureState.fallbackGui.DisplayOrder = 999
+        XCFeatureState.fallbackGui.Parent = targetGui
+        XCFeatureState.fallbackCard = Instance.new("TextLabel")
+        XCFeatureState.fallbackCard.Size = UDim2.fromOffset(340, 82)
+        XCFeatureState.fallbackCard.Position = UDim2.new(0.5, -170, 0, 22)
+        XCFeatureState.fallbackCard.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+        XCFeatureState.fallbackCard.BorderColor3 = Color3.fromRGB(152, 204, 0)
+        XCFeatureState.fallbackCard.BorderSizePixel = 1
+        XCFeatureState.fallbackCard.TextColor3 = Color3.fromRGB(235, 235, 235)
+        XCFeatureState.fallbackCard.Font = Enum.Font.Code
+        XCFeatureState.fallbackCard.TextSize = 12
+        XCFeatureState.fallbackCard.TextWrapped = true
+        XCFeatureState.fallbackCard.Text = "XC STARTUP ERROR\n" .. tostring(XCFeatureState.uiBuildError):sub(1, 220)
+        XCFeatureState.fallbackCard.Parent = XCFeatureState.fallbackGui
+    end)
+end
 
 -- XC-style active navigation accent.
-local function XCApplyXCTabAccent(button, active)
+function XCApplyXCTabAccent(button, active)
     pcall(function()
         local accent = button:FindFirstChild("XCActiveAccent")
         if active then
@@ -6291,36 +6319,36 @@ local XCConfigSystem = {}
 XCConfigSystem.Folder = "XCConfigs"
 XCConfigSystem.ActiveName = "Default"
 
-local function cfgFileAPI()
+function cfgFileAPI()
     return type(isfile)=="function" and type(readfile)=="function" and type(writefile)=="function"
 end
 
-local function cfgSafeName(name)
+function cfgSafeName(name)
     name=tostring(name or "Default"):gsub("[^%w%-%_ ]",""):sub(1,48)
     return name~="" and name or "Default"
 end
 
-local function cfgPath(name)
+function cfgPath(name)
     return XCConfigSystem.Folder.."/"..cfgSafeName(name)..".json"
 end
 
-local function cfgJSONEncode(v)
+function cfgJSONEncode(v)
     local ok,res=pcall(function() return game:GetService("HttpService"):JSONEncode(v) end)
     return ok and res or nil
 end
 
-local function cfgJSONDecode(v)
+function cfgJSONDecode(v)
     local ok,res=pcall(function() return game:GetService("HttpService"):JSONDecode(v) end)
     return ok and res or nil
 end
 
-local function cfgEnsureFolder()
+function cfgEnsureFolder()
     if type(makefolder)=="function" and type(isfolder)=="function" then
         pcall(function() if not isfolder(XCConfigSystem.Folder) then makefolder(XCConfigSystem.Folder) end end)
     end
 end
 
-local function cfgSerialize()
+function cfgSerialize()
     local out={}
     for k,v in pairs(XCConfig) do
         local t=typeof(v)
@@ -6332,14 +6360,14 @@ local function cfgSerialize()
             out[k]={__type="UDim2",xs=v.X.Scale,xo=v.X.Offset,ys=v.Y.Scale,yo=v.Y.Offset}
         end
     end
-    if streamerSnapshot then
-        for key,value in pairs(streamerSnapshot) do out[key]=value end
+    if XCFeatureState.streamerSnapshot then
+        for key,value in pairs(XCFeatureState.streamerSnapshot) do out[key]=value end
         out.streamerModeEnabled=false
     end
     return out
 end
 
-local function cfgApply(data)
+function cfgApply(data)
     if type(data)~="table" then return false end
     setXCStreamerMode(false)
     local requestedStreamerMode=data.streamerModeEnabled==true
