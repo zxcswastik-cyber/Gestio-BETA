@@ -234,7 +234,7 @@ local XCConfig = {
     boxThickness = 1.0,
     espBoxSmoothing = 0.42,
     espFixedScale = true,
-    espFixedBoxHeight = 64,
+    espFixedBoxHeight = 42,
     espBoxAspect = 0.52,
     espBoxOutline = true,
 
@@ -331,6 +331,8 @@ end
 for key, defaultValue in pairs(XCConfigDefaults) do
     if type(defaultValue) == "boolean" then XCConfig[key] = defaultValue end
 end
+-- Migrate the oversized fixed-box default used by XC v16/v17.
+if tonumber(XCConfig.espFixedBoxHeight) == 64 then XCConfig.espFixedBoxHeight = 42 end
 
 local UI_Bind_Registry = {}
 -- Expensive executor scans are opt-in for the current session. Persisted
@@ -659,9 +661,41 @@ local silentAimResolved = nil
 -- Forward declarations: the shoot hook is defined before the Silent Aim helpers.
 local getSilentAimTarget
 local silentAimCamPosAim
+local registerXCLocalHitCandidate
+local hitmarkerPendingHits = {}
 local silentAimHooked = false
 local silentAimCamHooked = false
 local bloxStrikeShootHooked = false
+
+-- The InventoryController hook can survive reinjection. Keep its callback in
+-- getgenv so a persistent wrapper always forwards shots to the current XC
+-- session instead of retaining a stale pending-hit table.
+local function recordXCLocalHitPayload(data)
+    if not registerXCLocalHitCandidate or type(data) ~= "table" or type(data.Bullets) ~= "table" then
+        return
+    end
+    for _, bullet in pairs(data.Bullets) do
+        if type(bullet) == "table" and type(bullet.Hits) == "table" then
+            for _, hitData in pairs(bullet.Hits) do
+                if type(hitData) == "table" then
+                    local hitInstance = hitData.Instance or hitData.instance
+                    if typeof(hitInstance) == "Instance" then
+                        registerXCLocalHitCandidate(hitInstance)
+                    end
+                end
+            end
+        end
+    end
+end
+
+if sharedXCEnv then
+    sharedXCEnv.XCRecordLocalHitPayload = recordXCLocalHitPayload
+end
+
+local function dispatchXCLocalHitPayload(data)
+    local recorder = sharedXCEnv and sharedXCEnv.XCRecordLocalHitPayload or recordXCLocalHitPayload
+    if type(recorder) == "function" then recorder(data) end
+end
 
 function setupBloxStrikeShootHook()
     if bloxStrikeShootHooked then return end
@@ -756,6 +790,18 @@ function setupBloxStrikeShootHook()
         if type(inventoryController) ~= "table" then return end
         if type(inventoryController.ShootWeapon) ~= "function" then return end
         if rawget(inventoryController, "__XCShootHooked") then
+            -- Upgrade an older persistent XC shoot hook without stacking the
+            -- silent-aim rewrite. This thin wrapper only dispatches the final
+            -- local shot payload to the current session's hit confirmer.
+            if not rawget(inventoryController, "__XCHitConfirmHookV18") then
+                local existingShootWeapon = inventoryController.ShootWeapon
+                inventoryController.ShootWeapon = function(self, data, ...)
+                    local results = table.pack(existingShootWeapon(self, data, ...))
+                    dispatchXCLocalHitPayload(data)
+                    return table.unpack(results, 1, results.n)
+                end
+                rawset(inventoryController, "__XCHitConfirmHookV18", true)
+            end
             bloxStrikeShootHooked = true
             return
         end
@@ -822,10 +868,16 @@ function setupBloxStrikeShootHook()
                 end
             end
 
+            -- The payload belongs to the local InventoryController. Record only
+            -- enemy parts predicted by this exact shot; health changes from other
+            -- players are ignored by the hit feedback system below.
+            dispatchXCLocalHitPayload(data)
+
             return originalShootWeapon(self, data, ...)
         end
 
         rawset(inventoryController, "__XCShootHooked", true)
+        rawset(inventoryController, "__XCHitConfirmHookV18", true)
         bloxStrikeShootHooked = true
     end)
 end
@@ -889,6 +941,39 @@ function getXCHealth(char, plr, hum)
     if type(health) ~= "number" or health ~= health then return nil, nil end
     if type(maximum) ~= "number" or maximum ~= maximum or maximum <= 0 then maximum = 100 end
     return math.clamp(health, 0, maximum), maximum
+end
+
+registerXCLocalHitCandidate = function(hitInstance)
+    local cursor = hitInstance
+    local targetPlayer, targetCharacter
+    while cursor and cursor ~= Workspace do
+        if cursor:IsA("Model") then
+            local candidate = Players:GetPlayerFromCharacter(cursor)
+            if candidate then
+                targetPlayer, targetCharacter = candidate, cursor
+                break
+            end
+        end
+        cursor = cursor.Parent
+    end
+    if not targetPlayer or not isTargetEnemy(targetPlayer, targetCharacter) then return end
+    local hum = targetCharacter:FindFirstChildOfClass("Humanoid")
+    local health = getXCHealth(targetCharacter, targetPlayer, hum)
+    if health == nil then return end
+    local healthKey = hum or targetCharacter
+    local pending = hitmarkerPendingHits[healthKey]
+    if pending and pending.Expires > os.clock() then
+        pending.Expires = os.clock() + 0.8
+        pending.HitCount += 1
+        return
+    end
+    hitmarkerPendingHits[healthKey] = {
+        Character = targetCharacter,
+        Player = targetPlayer,
+        Health = health,
+        Expires = os.clock() + 0.8,
+        HitCount = 1,
+    }
 end
 
 function getTargetHitbox(char)
@@ -1100,8 +1185,6 @@ local chamsColorVisible = Color3.fromRGB(152, 204, 0)
 local chamsColorHidden = Color3.fromRGB(112, 116, 122)
 local chamsColorAlly = Color3.fromRGB(194, 220, 112)
 local chamsOutlineColor = Color3.fromRGB(235, 235, 235)
-
-local hitmarkerLastHealth = {}
 
 -- ==========================================
 -- XC SKINCHANGER
@@ -1800,7 +1883,7 @@ local grenadePool = {}
 local mobileSlideBtn = nil
 
 -- ==========================================
--- HITMARKER NO WORK
+-- HITMARKER & DAMAGE FEEDBACK
 -- ==========================================
 local hitmarkerGui = Instance.new("ScreenGui")
 hitmarkerGui.Name = "XCHitmarkerGui"
@@ -1840,6 +1923,23 @@ for i, rotation in ipairs({45, -45, 135, -135}) do
     hitmarkerLines[i] = line
 end
 
+local hitmarkerDamage = Instance.new("TextLabel")
+hitmarkerDamage.Name = "Damage"
+hitmarkerDamage.AnchorPoint = Vector2.new(0.5, 0)
+hitmarkerDamage.Position = UDim2.fromOffset(0, XCConfig.hitmarkerSize + 7)
+hitmarkerDamage.Size = UDim2.fromOffset(92, 18)
+hitmarkerDamage.BackgroundTransparency = 1
+hitmarkerDamage.Text = ""
+hitmarkerDamage.TextColor3 = Color3.fromRGB(152, 204, 0)
+hitmarkerDamage.TextStrokeColor3 = Color3.fromRGB(8, 8, 8)
+hitmarkerDamage.TextStrokeTransparency = 0.15
+hitmarkerDamage.TextTransparency = 1
+hitmarkerDamage.Font = Enum.Font.Code
+hitmarkerDamage.TextSize = 13
+hitmarkerDamage.TextXAlignment = Enum.TextXAlignment.Center
+hitmarkerDamage.Visible = false
+hitmarkerDamage.Parent = hitmarkerCenter
+
 function refreshHitmarkerTheme()
     for _, line in ipairs(hitmarkerLines) do
         line.BackgroundColor3 = currentTheme.Accent
@@ -1851,7 +1951,7 @@ function refreshHitmarkerTheme()
     end
 end
 
-function showHitmarker()
+function showHitmarker(damage)
     if type(playXCHitSound) == "function" then playXCHitSound() end
     if not XCConfig.hitmarkerEnabled then return end
 
@@ -1859,10 +1959,25 @@ function showHitmarker()
     local serial = hitmarkerSerial
     hitmarkerCenter.Visible = true
 
+    local size = math.clamp(tonumber(XCConfig.hitmarkerSize) or 13, 5, 30)
+    local thickness = math.clamp(tonumber(XCConfig.hitmarkerThickness) or 2, 1, 6)
+
     for _, line in ipairs(hitmarkerLines) do
+        line.Size = UDim2.fromOffset(thickness, size)
         line.BackgroundTransparency = 0
         local glow = line:FindFirstChild("NeonGlow")
         if glow then glow.Transparency = 0.05 end
+    end
+
+    local shownDamage = tonumber(damage)
+    if shownDamage and shownDamage > 0 then
+        hitmarkerDamage.Position = UDim2.fromOffset(0, size + 7)
+        hitmarkerDamage.Text = string.format("-%d HP", math.max(1, math.floor(shownDamage + 0.5)))
+        hitmarkerDamage.TextTransparency = 0
+        hitmarkerDamage.TextStrokeTransparency = 0.15
+        hitmarkerDamage.Visible = true
+    else
+        hitmarkerDamage.Visible = false
     end
 
     local fadeInfo = TweenInfo.new(
@@ -1881,10 +1996,14 @@ function showHitmarker()
             TweenService:Create(glow, fadeInfo, {Transparency = 1}):Play()
         end
     end
+    if hitmarkerDamage.Visible then
+        TweenService:Create(hitmarkerDamage, fadeInfo, {TextTransparency = 1, TextStrokeTransparency = 1}):Play()
+    end
 
     task.delay(math.max(0.05, XCConfig.hitmarkerDuration), function()
         if serial == hitmarkerSerial then
             hitmarkerCenter.Visible = false
+            hitmarkerDamage.Visible = false
         end
     end)
 end
@@ -3344,7 +3463,7 @@ function cleanup()
     end
     savedAutoRotate = nil
     hitmarkerSerial += 1
-    hitmarkerLastHealth = {}
+    hitmarkerPendingHits = {}
     restoreXCCharacterInputHook()
 
     for _, c in pairs(connections) do 
@@ -4344,9 +4463,9 @@ table.insert(connections, Players.PlayerRemoving:Connect(function(plr)
     local oldChar = plr.Character
     local oldHum = oldChar and oldChar:FindFirstChildOfClass("Humanoid")
     if oldHum then
-        hitmarkerLastHealth[oldHum] = nil
+        hitmarkerPendingHits[oldHum] = nil
     end
-    if oldChar then hitmarkerLastHealth[oldChar] = nil end
+    if oldChar then hitmarkerPendingHits[oldChar] = nil end
 
     local cache = screenEspCache[plr]
     if cache then
@@ -4488,11 +4607,13 @@ function getXCCharacterScreenRect(esp, char, rootPart)
     local height, width
     if XCConfig.espFixedScale then
         -- Screen-space ESP: distance/FOV only move the marker; they never
-        -- squeeze or enlarge its box and corner proportions.
-        height = math.clamp(tonumber(XCConfig.espFixedBoxHeight) or 64, 28, 140)
+        -- squeeze or enlarge its proportions. The base size is normalized to
+        -- the mobile viewport so it does not cover distant player models.
+        local viewportScale = math.clamp(math.min(viewport.X / 1600, viewport.Y / 720), 0.68, 1.05)
+        height = math.clamp((tonumber(XCConfig.espFixedBoxHeight) or 42) * viewportScale, 24, 72)
         width = height * preferredAspect
     else
-        local minHeight = math.clamp(tonumber(XCConfig.espFixedBoxHeight) or 28, 16, 64)
+        local minHeight = math.clamp(tonumber(XCConfig.espFixedBoxHeight) or 24, 16, 56)
         height = math.max(rawHeight, minHeight)
         width = math.max(rawWidth, height * 0.40)
         width = math.min(width, height * 0.82)
@@ -5523,29 +5644,30 @@ end)
 table.insert(connections, inEndedConn)
 
 -- ==========================================
--- HITMARKER & PHYSICS LOOP NO WORK
+-- LOCAL-SHOT HIT CONFIRMATION & PHYSICS LOOP
 -- ==========================================
 table.insert(connections, RunService.Heartbeat:Connect(function()
     if not XCConfig.hitmarkerEnabled and not XCConfig.hitSoundEnabled then
-        hitmarkerLastHealth = {}
+        hitmarkerPendingHits = {}
         return
     end
 
-    for _, targetPlr in ipairs(Players:GetPlayers()) do
-        if targetPlr ~= player then
-            local char = targetPlr.Character
-            local hum = char and char:FindFirstChildOfClass("Humanoid")
-            local currentHealth = char and getXCHealth(char, targetPlr, hum)
-            local healthKey = hum or char
-
-            if char and currentHealth ~= nil and isTargetEnemy(targetPlr, char) then
-                local previousHealth = hitmarkerLastHealth[healthKey]
-
-                if previousHealth and currentHealth < previousHealth and (previousHealth - currentHealth) > 0.01 then
-                    showHitmarker()
-                end
-
-                hitmarkerLastHealth[healthKey] = currentHealth
+    local now = os.clock()
+    for healthKey, pending in pairs(hitmarkerPendingHits) do
+        local char = pending.Character
+        local targetPlr = pending.Player
+        if now > pending.Expires or not char or not char.Parent or not targetPlr
+            or not isTargetEnemy(targetPlr, char) then
+            hitmarkerPendingHits[healthKey] = nil
+        else
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            local currentHealth = getXCHealth(char, targetPlr, hum)
+            if currentHealth ~= nil and currentHealth < pending.Health then
+                local damage = pending.Health - currentHealth
+                hitmarkerPendingHits[healthKey] = nil
+                showHitmarker(damage)
+            elseif currentHealth ~= nil and currentHealth > pending.Health then
+                pending.Health = currentHealth
             end
         end
     end
@@ -6684,7 +6806,7 @@ function buildXCUI()
             local color = previewVisible and currentTheme.Enemy_Accent or currentTheme.Enemy_Hidden
             mode.Text = previewVisible and "VISIBLE" or "HIDDEN"
             mode.TextColor3 = color
-            local height = math.clamp(tonumber(XCConfig.espFixedBoxHeight) or 64, 42, 96)
+            local height = math.clamp(tonumber(XCConfig.espFixedBoxHeight) or 42, 28, 72)
             local width = height * math.clamp(tonumber(XCConfig.espBoxAspect) or 0.52, 0.38, 0.8)
             box.Size = UDim2.fromOffset(width, height)
             boxStroke.Color = color
@@ -7056,7 +7178,7 @@ function buildXCUI()
     toggle(L, "Fixed ESP scale", "espFixedScale")
     addSlider(L, "ESP distance", "espMaxDist", 100, 5000, 50, "")
     addSlider(L, "Box stability", "espBoxSmoothing", 0, 0.9, 0.05, "")
-    addSlider(L, "Fixed box height", "espFixedBoxHeight", 28, 140, 2, "px")
+    addSlider(L, "Fixed box height", "espFixedBoxHeight", 24, 72, 2, "px")
     addSlider(L, "Box width ratio", "espBoxAspect", 0.38, 0.8, 0.02, "x")
     section(L, "Skeleton")
     toggle(L, "Skeleton ESP", "skeletonEspEnabled")
