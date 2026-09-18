@@ -3732,6 +3732,10 @@ function cleanup()
     
     restoreLightingState()
     restoreXCSmoke()
+    if genv and type(genv.XCRestoreWeaponState) == "function" then
+        pcall(genv.XCRestoreWeaponState)
+        genv.XCRestoreWeaponState = nil
+    end
 
     pcall(function() if targetGui:FindFirstChild("XCScreenGui") then targetGui.XCScreenGui:Destroy() end end)
     pcall(function() if targetGui:FindFirstChild("XCToggleGui") then targetGui.XCToggleGui:Destroy() end end)
@@ -8567,7 +8571,15 @@ local function restoreXCNativeFireRate(exceptWeapon)
     for weapon, record in pairs(xcFireRateWeaponRecords) do
         if weapon ~= exceptWeapon then
             pcall(function()
-                if weapon.Properties == record.Applied then weapon.Properties = record.Original end
+                local properties = record.Properties
+                if type(properties) == "table" then
+                    if type(setreadonly) == "function" then setreadonly(properties, false) end
+                    rawset(properties, "FireRate", record.OriginalFireRate)
+                    rawset(properties, "Automatic", record.OriginalAutomatic)
+                    if type(setreadonly) == "function" and record.Readonly ~= nil then
+                        setreadonly(properties, record.Readonly)
+                    end
+                end
             end)
             xcFireRateWeaponRecords[weapon] = nil
         end
@@ -8582,31 +8594,53 @@ local function applyXCNativeFireRate()
 
     restoreXCNativeFireRate(weapon)
     local record = xcFireRateWeaponRecords[weapon]
-    if record and weapon.Properties ~= record.Applied then
+    if record and weapon.Properties ~= record.Properties then
+        restoreXCNativeFireRate(nil)
         record = nil
-        xcFireRateWeaponRecords[weapon] = nil
     end
     if not record then
-        record = {Original = weapon.Properties}
+        local readonly = nil
+        if type(isreadonly) == "function" then
+            local okReadonly, value = pcall(isreadonly, weapon.Properties)
+            if okReadonly then readonly = value == true end
+        end
+        record = {
+            Properties = weapon.Properties,
+            OriginalFireRate = rawget(weapon.Properties, "FireRate"),
+            OriginalAutomatic = rawget(weapon.Properties, "Automatic"),
+            Readonly = readonly,
+        }
         xcFireRateWeaponRecords[weapon] = record
     end
 
     local requested = math.max(tonumber(XCConfig.fireRate) or 0.03, 0.01)
-    local originalRate = tonumber(record.Original.FireRate) or requested
+    local originalRate = tonumber(record.OriginalFireRate) or requested
     local stableRate = math.max(requested, 0.03, originalRate * 0.40)
-    if record.Applied and record.Rate == stableRate and weapon.Properties == record.Applied then
+    if record.Rate == stableRate
+        and rawget(record.Properties, "FireRate") == stableRate
+        and rawget(record.Properties, "Automatic") == true then
         return true
     end
 
-    local properties = table.clone(record.Original)
-    properties.FireRate = stableRate
-    -- Fire Rate on a semi-automatic weapon otherwise changes only cooldown:
-    -- holding the mobile fire button still produces exactly one shot.
-    properties.Automatic = true
-    weapon.Properties = properties
-    record.Applied = properties
+    -- Mutate the existing Properties table instead of replacing it. Mobile
+    -- weapon controls retain this exact table reference; replacing it causes
+    -- their fire/aim/reload buttons to detach and disappear.
+    local properties = record.Properties
+    if type(setreadonly) == "function" then setreadonly(properties, false) end
+    rawset(properties, "FireRate", stableRate)
+    rawset(properties, "Automatic", true)
+    if type(setreadonly) == "function" and record.Readonly ~= nil then
+        setreadonly(properties, record.Readonly)
+    end
     record.Rate = stableRate
     return true
+end
+
+if genv then
+    genv.XCRestoreWeaponState = function()
+        restoreXCNativeFireRate(nil)
+        restoreXCFireRates()
+    end
 end
 
 function scanXCFireRateObjects()
