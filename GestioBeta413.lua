@@ -678,6 +678,18 @@ local silentAimCamHooked = false
 local bloxStrikeShootHooked = false
 local xcNativeSilentHooked = false
 
+local function setXCSilentAimRequested(value)
+    if sharedXCEnv then sharedXCEnv.XCSilentAimRequestedV25 = value == true end
+end
+
+local function isXCSilentAimRequested()
+    if sharedXCEnv and sharedXCEnv.XCSilentAimRequestedV25 ~= nil then
+        return sharedXCEnv.XCSilentAimRequestedV25 == true
+    end
+    return XCConfig.silentAimEnabled == true
+end
+setXCSilentAimRequested(XCConfig.silentAimEnabled)
+
 -- The InventoryController hook can survive reinjection. Keep its callback in
 -- getgenv so a persistent wrapper always forwards shots to the current XC
 -- session instead of retaining a stale pending-hit table.
@@ -907,7 +919,7 @@ function setupBloxStrikeShootHook()
         local inventoryController = require(moduleScript)
         if type(inventoryController) ~= "table" then return end
         if type(inventoryController.ShootWeapon) ~= "function" then return end
-        if rawget(inventoryController, "__XCSilentAimSafeHookV23") then
+        if rawget(inventoryController, "__XCSilentAimSafeHookV25") then
             bloxStrikeShootHooked = true
             return
         end
@@ -917,6 +929,9 @@ function setupBloxStrikeShootHook()
         -- fresh payload a second time.
         local originalShootWeapon = inventoryController.ShootWeapon
         inventoryController.ShootWeapon = function(self, data, ...)
+            -- Capture the user's real toggle before a persistent inner wrapper
+            -- masks XCConfig to suppress its obsolete payload mutation.
+            setXCSilentAimRequested(XCConfig.silentAimEnabled)
             local shotData = dispatchXCPrepareSilentShotPayload(data)
 
             -- The payload belongs to the local InventoryController. Record only
@@ -930,6 +945,7 @@ function setupBloxStrikeShootHook()
         rawset(inventoryController, "__XCShootHooked", true)
         rawset(inventoryController, "__XCHitConfirmHookV18", true)
         rawset(inventoryController, "__XCSilentAimSafeHookV23", true)
+        rawset(inventoryController, "__XCSilentAimSafeHookV25", true)
         bloxStrikeShootHooked = true
     end)
 end
@@ -1285,7 +1301,9 @@ local function castXCNativeSilentShot(origin, direction, properties)
 end
 
 local function redirectXCNativeSilentShot(bullet, shot)
-    if not XCConfig.silentAimEnabled or type(shot) ~= "table"
+    -- Use a dedicated request flag: persistent v23/v24 payload wrappers may
+    -- temporarily mask XCConfig.silentAimEnabled while calling the game.
+    if not isXCSilentAimRequested() or type(shot) ~= "table"
         or typeof(shot.Origin) ~= "Vector3" then return shot end
     if type(bullet) ~= "table" or bullet.IsDestroyed or bullet.IsActive == false then return shot end
     local weapon = bullet.Weapon
@@ -5789,11 +5807,13 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     end
 
     if XCConfig.silentAimEnabled then
+        setXCSilentAimRequested(true)
         -- Cache only the current target for legacy camera/mouse hooks.
         -- The native bullet ray hook resolves again at fire time and performs
         -- Hit Chance exactly once for each real shot.
         silentAimResolved = getSilentAimTarget()
     else
+        setXCSilentAimRequested(false)
         silentAimResolved = nil
     end
 
@@ -8527,6 +8547,67 @@ local xcFireRateOriginal = {}
 local xcFireRateReadonly = {}
 local xcFireRateScanDone = false
 local xcRecoilSpreadRetrying = false
+local xcFireRateGetWeapon = nil
+local xcFireRateWeaponRecords = setmetatable({}, {__mode = "k"})
+
+local function resolveXCFireRateGetWeapon()
+    if type(xcFireRateGetWeapon) == "function" then return true end
+    pcall(function()
+        local controllers = ReplicatedStorage:FindFirstChild("Controllers")
+        local scriptObject = controllers and controllers:FindFirstChild("InventoryController")
+        local inventory = scriptObject and require(scriptObject)
+        if type(inventory) == "table" and type(inventory.peekCurrentEquippedForMovement) == "function" then
+            xcFireRateGetWeapon = inventory.peekCurrentEquippedForMovement
+        end
+    end)
+    return type(xcFireRateGetWeapon) == "function"
+end
+
+local function restoreXCNativeFireRate(exceptWeapon)
+    for weapon, record in pairs(xcFireRateWeaponRecords) do
+        if weapon ~= exceptWeapon then
+            pcall(function()
+                if weapon.Properties == record.Applied then weapon.Properties = record.Original end
+            end)
+            xcFireRateWeaponRecords[weapon] = nil
+        end
+    end
+end
+
+local function applyXCNativeFireRate()
+    if not resolveXCFireRateGetWeapon() then return false end
+    local okWeapon, weapon = pcall(xcFireRateGetWeapon)
+    if not okWeapon or type(weapon) ~= "table" or weapon.IsDestroyed
+        or type(weapon.Properties) ~= "table" then return false end
+
+    restoreXCNativeFireRate(weapon)
+    local record = xcFireRateWeaponRecords[weapon]
+    if record and weapon.Properties ~= record.Applied then
+        record = nil
+        xcFireRateWeaponRecords[weapon] = nil
+    end
+    if not record then
+        record = {Original = weapon.Properties}
+        xcFireRateWeaponRecords[weapon] = record
+    end
+
+    local requested = math.max(tonumber(XCConfig.fireRate) or 0.03, 0.01)
+    local originalRate = tonumber(record.Original.FireRate) or requested
+    local stableRate = math.max(requested, 0.03, originalRate * 0.40)
+    if record.Applied and record.Rate == stableRate and weapon.Properties == record.Applied then
+        return true
+    end
+
+    local properties = table.clone(record.Original)
+    properties.FireRate = stableRate
+    -- Fire Rate on a semi-automatic weapon otherwise changes only cooldown:
+    -- holding the mobile fire button still produces exactly one shot.
+    properties.Automatic = true
+    weapon.Properties = properties
+    record.Applied = properties
+    record.Rate = stableRate
+    return true
+end
 
 function scanXCFireRateObjects()
     if xcFireRateScanDone then return #xcFireRateObjects > 0 end
@@ -8602,14 +8683,22 @@ task.spawn(function()
     while xcSessionActive() and task.wait(0.1) do
         pcall(function()
             if XCConfig.fireRateEnabled and lazyFeatureRequests.fireRate then
-                if not xcFireRateScanDone then scanXCFireRateObjects() end
-                if #xcFireRateObjects == 0 then
-                    -- The game can create weapon data after injection/respawn.
-                    xcFireRateScanDone = false
-                    scanXCFireRateObjects()
+                local nativeApplied = applyXCNativeFireRate()
+                if nativeApplied then
+                    -- Undo the broad legacy getgc writer once the equipped
+                    -- weapon can be modified through its native Properties.
+                    if #xcFireRateObjects > 0 then restoreXCFireRates() end
+                else
+                    if not xcFireRateScanDone then scanXCFireRateObjects() end
+                    if #xcFireRateObjects == 0 then
+                        -- The game can create weapon data after injection/respawn.
+                        xcFireRateScanDone = false
+                        scanXCFireRateObjects()
+                    end
+                    applyXCFireRate()
                 end
-                applyXCFireRate()
             elseif wasEnabled then
+                restoreXCNativeFireRate(nil)
                 restoreXCFireRates()
             end
             wasEnabled = XCConfig.fireRateEnabled
