@@ -234,8 +234,7 @@ local XCConfig = {
     boxThickness = 1.0,
     espBoxSmoothing = 0.42,
     espFixedScale = true,
-    espFixedBoxHeight = 36,
-    espPerspectiveScale = 1.0,
+    espFixedBoxHeight = 64,
     espBoxAspect = 0.52,
     espBoxOutline = true,
 
@@ -332,11 +331,6 @@ end
 for key, defaultValue in pairs(XCConfigDefaults) do
     if type(defaultValue) == "boolean" then XCConfig[key] = defaultValue end
 end
--- Keep legacy values valid while the v20 renderer uses perspective scale.
-if tonumber(XCConfig.espFixedBoxHeight) == 64 or tonumber(XCConfig.espFixedBoxHeight) == 42 then
-    XCConfig.espFixedBoxHeight = 36
-end
-XCConfig.espPerspectiveScale = math.clamp(tonumber(XCConfig.espPerspectiveScale) or 1, 0.65, 1.5)
 
 local UI_Bind_Registry = {}
 -- Expensive executor scans are opt-in for the current session. Persisted
@@ -665,41 +659,9 @@ local silentAimResolved = nil
 -- Forward declarations: the shoot hook is defined before the Silent Aim helpers.
 local getSilentAimTarget
 local silentAimCamPosAim
-local registerXCLocalHitCandidate
-local hitmarkerPendingHits = {}
 local silentAimHooked = false
 local silentAimCamHooked = false
 local bloxStrikeShootHooked = false
-
--- The InventoryController hook can survive reinjection. Keep its callback in
--- getgenv so a persistent wrapper always forwards shots to the current XC
--- session instead of retaining a stale pending-hit table.
-local function recordXCLocalHitPayload(data)
-    if not registerXCLocalHitCandidate or type(data) ~= "table" or type(data.Bullets) ~= "table" then
-        return
-    end
-    for _, bullet in pairs(data.Bullets) do
-        if type(bullet) == "table" and type(bullet.Hits) == "table" then
-            for _, hitData in pairs(bullet.Hits) do
-                if type(hitData) == "table" then
-                    local hitInstance = hitData.Instance or hitData.instance
-                    if typeof(hitInstance) == "Instance" then
-                        registerXCLocalHitCandidate(hitInstance)
-                    end
-                end
-            end
-        end
-    end
-end
-
-if sharedXCEnv then
-    sharedXCEnv.XCRecordLocalHitPayload = recordXCLocalHitPayload
-end
-
-local function dispatchXCLocalHitPayload(data)
-    local recorder = sharedXCEnv and sharedXCEnv.XCRecordLocalHitPayload or recordXCLocalHitPayload
-    if type(recorder) == "function" then recorder(data) end
-end
 
 function setupBloxStrikeShootHook()
     if bloxStrikeShootHooked then return end
@@ -794,18 +756,6 @@ function setupBloxStrikeShootHook()
         if type(inventoryController) ~= "table" then return end
         if type(inventoryController.ShootWeapon) ~= "function" then return end
         if rawget(inventoryController, "__XCShootHooked") then
-            -- Upgrade an older persistent XC shoot hook without stacking the
-            -- silent-aim rewrite. This thin wrapper only dispatches the final
-            -- local shot payload to the current session's hit confirmer.
-            if not rawget(inventoryController, "__XCHitConfirmHookV18") then
-                local existingShootWeapon = inventoryController.ShootWeapon
-                inventoryController.ShootWeapon = function(self, data, ...)
-                    local results = table.pack(existingShootWeapon(self, data, ...))
-                    dispatchXCLocalHitPayload(data)
-                    return table.unpack(results, 1, results.n)
-                end
-                rawset(inventoryController, "__XCHitConfirmHookV18", true)
-            end
             bloxStrikeShootHooked = true
             return
         end
@@ -872,16 +822,10 @@ function setupBloxStrikeShootHook()
                 end
             end
 
-            -- The payload belongs to the local InventoryController. Record only
-            -- enemy parts predicted by this exact shot; health changes from other
-            -- players are ignored by the hit feedback system below.
-            dispatchXCLocalHitPayload(data)
-
             return originalShootWeapon(self, data, ...)
         end
 
         rawset(inventoryController, "__XCShootHooked", true)
-        rawset(inventoryController, "__XCHitConfirmHookV18", true)
         bloxStrikeShootHooked = true
     end)
 end
@@ -945,39 +889,6 @@ function getXCHealth(char, plr, hum)
     if type(health) ~= "number" or health ~= health then return nil, nil end
     if type(maximum) ~= "number" or maximum ~= maximum or maximum <= 0 then maximum = 100 end
     return math.clamp(health, 0, maximum), maximum
-end
-
-registerXCLocalHitCandidate = function(hitInstance)
-    local cursor = hitInstance
-    local targetPlayer, targetCharacter
-    while cursor and cursor ~= Workspace do
-        if cursor:IsA("Model") then
-            local candidate = Players:GetPlayerFromCharacter(cursor)
-            if candidate then
-                targetPlayer, targetCharacter = candidate, cursor
-                break
-            end
-        end
-        cursor = cursor.Parent
-    end
-    if not targetPlayer or not isTargetEnemy(targetPlayer, targetCharacter) then return end
-    local hum = targetCharacter:FindFirstChildOfClass("Humanoid")
-    local health = getXCHealth(targetCharacter, targetPlayer, hum)
-    if health == nil then return end
-    local healthKey = hum or targetCharacter
-    local pending = hitmarkerPendingHits[healthKey]
-    if pending and pending.Expires > os.clock() then
-        pending.Expires = os.clock() + 0.8
-        pending.HitCount += 1
-        return
-    end
-    hitmarkerPendingHits[healthKey] = {
-        Character = targetCharacter,
-        Player = targetPlayer,
-        Health = health,
-        Expires = os.clock() + 0.8,
-        HitCount = 1,
-    }
 end
 
 function getTargetHitbox(char)
@@ -1189,6 +1100,8 @@ local chamsColorVisible = Color3.fromRGB(152, 204, 0)
 local chamsColorHidden = Color3.fromRGB(112, 116, 122)
 local chamsColorAlly = Color3.fromRGB(194, 220, 112)
 local chamsOutlineColor = Color3.fromRGB(235, 235, 235)
+
+local hitmarkerLastHealth = {}
 
 -- ==========================================
 -- XC SKINCHANGER
@@ -1887,7 +1800,7 @@ local grenadePool = {}
 local mobileSlideBtn = nil
 
 -- ==========================================
--- HITMARKER & DAMAGE FEEDBACK
+-- HITMARKER NO WORK
 -- ==========================================
 local hitmarkerGui = Instance.new("ScreenGui")
 hitmarkerGui.Name = "XCHitmarkerGui"
@@ -1927,23 +1840,6 @@ for i, rotation in ipairs({45, -45, 135, -135}) do
     hitmarkerLines[i] = line
 end
 
-local hitmarkerDamage = Instance.new("TextLabel")
-hitmarkerDamage.Name = "Damage"
-hitmarkerDamage.AnchorPoint = Vector2.new(0.5, 0)
-hitmarkerDamage.Position = UDim2.fromOffset(0, XCConfig.hitmarkerSize + 7)
-hitmarkerDamage.Size = UDim2.fromOffset(92, 18)
-hitmarkerDamage.BackgroundTransparency = 1
-hitmarkerDamage.Text = ""
-hitmarkerDamage.TextColor3 = Color3.fromRGB(152, 204, 0)
-hitmarkerDamage.TextStrokeColor3 = Color3.fromRGB(8, 8, 8)
-hitmarkerDamage.TextStrokeTransparency = 0.15
-hitmarkerDamage.TextTransparency = 1
-hitmarkerDamage.Font = Enum.Font.Code
-hitmarkerDamage.TextSize = 13
-hitmarkerDamage.TextXAlignment = Enum.TextXAlignment.Center
-hitmarkerDamage.Visible = false
-hitmarkerDamage.Parent = hitmarkerCenter
-
 function refreshHitmarkerTheme()
     for _, line in ipairs(hitmarkerLines) do
         line.BackgroundColor3 = currentTheme.Accent
@@ -1955,7 +1851,7 @@ function refreshHitmarkerTheme()
     end
 end
 
-function showHitmarker(damage)
+function showHitmarker()
     if type(playXCHitSound) == "function" then playXCHitSound() end
     if not XCConfig.hitmarkerEnabled then return end
 
@@ -1963,25 +1859,10 @@ function showHitmarker(damage)
     local serial = hitmarkerSerial
     hitmarkerCenter.Visible = true
 
-    local size = math.clamp(tonumber(XCConfig.hitmarkerSize) or 13, 5, 30)
-    local thickness = math.clamp(tonumber(XCConfig.hitmarkerThickness) or 2, 1, 6)
-
     for _, line in ipairs(hitmarkerLines) do
-        line.Size = UDim2.fromOffset(thickness, size)
         line.BackgroundTransparency = 0
         local glow = line:FindFirstChild("NeonGlow")
         if glow then glow.Transparency = 0.05 end
-    end
-
-    local shownDamage = tonumber(damage)
-    if shownDamage and shownDamage > 0 then
-        hitmarkerDamage.Position = UDim2.fromOffset(0, size + 7)
-        hitmarkerDamage.Text = string.format("-%d HP", math.max(1, math.floor(shownDamage + 0.5)))
-        hitmarkerDamage.TextTransparency = 0
-        hitmarkerDamage.TextStrokeTransparency = 0.15
-        hitmarkerDamage.Visible = true
-    else
-        hitmarkerDamage.Visible = false
     end
 
     local fadeInfo = TweenInfo.new(
@@ -2000,14 +1881,10 @@ function showHitmarker(damage)
             TweenService:Create(glow, fadeInfo, {Transparency = 1}):Play()
         end
     end
-    if hitmarkerDamage.Visible then
-        TweenService:Create(hitmarkerDamage, fadeInfo, {TextTransparency = 1, TextStrokeTransparency = 1}):Play()
-    end
 
     task.delay(math.max(0.05, XCConfig.hitmarkerDuration), function()
         if serial == hitmarkerSerial then
             hitmarkerCenter.Visible = false
-            hitmarkerDamage.Visible = false
         end
     end)
 end
@@ -3467,7 +3344,7 @@ function cleanup()
     end
     savedAutoRotate = nil
     hitmarkerSerial += 1
-    hitmarkerPendingHits = {}
+    hitmarkerLastHealth = {}
     restoreXCCharacterInputHook()
 
     for _, c in pairs(connections) do 
@@ -4467,9 +4344,9 @@ table.insert(connections, Players.PlayerRemoving:Connect(function(plr)
     local oldChar = plr.Character
     local oldHum = oldChar and oldChar:FindFirstChildOfClass("Humanoid")
     if oldHum then
-        hitmarkerPendingHits[oldHum] = nil
+        hitmarkerLastHealth[oldHum] = nil
     end
-    if oldChar then hitmarkerPendingHits[oldChar] = nil end
+    if oldChar then hitmarkerLastHealth[oldChar] = nil end
 
     local cache = screenEspCache[plr]
     if cache then
@@ -4506,62 +4383,133 @@ function hideTacticalOverlay()
     end
 end
 
--- Produces one perspective-correct rectangle shared by Box ESP, Corner Box
--- and Health Bar. A stable world-space body height is projected to the screen,
--- so near targets grow and distant targets shrink without width distortion.
+-- Produces a stable screen rectangle from a root-aligned 3D body volume.
+-- Accessories and equipped tools are intentionally ignored: their meshes can
+-- be much larger than the avatar and would make the ESP box jump or stretch.
 function getXCCharacterScreenRect(esp, char, rootPart)
-    if esp.Character ~= char then
+    if esp.Character ~= char or not esp.BodyParts then
         esp.Character = char
+        esp.BodyParts = {}
+        esp.BodyBounds = nil
+        esp.NextBoundsRefresh = 0
         esp.SmoothRect = nil
+        for _, object in ipairs(char:GetChildren()) do
+            if object:IsA("BasePart") and object ~= rootPart then
+                local lowerName = object.Name:lower()
+                local excluded = lowerName:find("weapon", 1, true)
+                    or lowerName:find("gun", 1, true)
+                    or lowerName:find("knife", 1, true)
+                    or lowerName:find("viewmodel", 1, true)
+                if not excluded then table.insert(esp.BodyParts, object) end
+            end
+        end
     end
 
-    local rootPosition = rootPart.Position
-    local rootScreen = camera:WorldToViewportPoint(rootPosition)
-    if rootScreen.Z <= 0.2 then
+    local now = tick()
+    if not esp.BodyBounds or now >= esp.NextBoundsRefresh then
+        local minX, minY, minZ = math.huge, math.huge, math.huge
+        local maxX, maxY, maxZ = -math.huge, -math.huge, -math.huge
+        local validParts = 0
+        for _, part in ipairs(esp.BodyParts) do
+            if part.Parent and part:IsDescendantOf(char) then
+                local center = rootPart.CFrame:PointToObjectSpace(part.Position)
+                local half = part.Size * 0.5
+                -- A small rotation allowance covers animated limbs without making
+                -- the whole rectangle pulse as arms and legs move.
+                local horizontal = math.max(half.X, half.Z)
+                minX = math.min(minX, center.X - horizontal)
+                maxX = math.max(maxX, center.X + horizontal)
+                minY = math.min(minY, center.Y - half.Y)
+                maxY = math.max(maxY, center.Y + half.Y)
+                minZ = math.min(minZ, center.Z - horizontal)
+                maxZ = math.max(maxZ, center.Z + horizontal)
+                validParts += 1
+            end
+        end
+        if validParts == 0 then
+            minX, maxX, minY, maxY, minZ, maxZ = -1.6, 1.6, -3.1, 3.2, -1.2, 1.2
+        end
+        esp.BodyBounds = {minX, maxX, minY, maxY, minZ, maxZ}
+        esp.NextBoundsRefresh = now + 0.25
+    end
+
+    local bounds = esp.BodyBounds
+    local minX, maxX, minY, maxY, minZ, maxZ = bounds[1], bounds[2], bounds[3], bounds[4], bounds[5], bounds[6]
+
+    local centerX, centerY, centerZ = (minX + maxX) * 0.5, (minY + maxY) * 0.5, (minZ + maxZ) * 0.5
+    local halfX = math.max((maxX - minX) * 0.54, 1.2)
+    local halfY = math.max((maxY - minY) * 0.54, 2.8)
+    local halfZ = math.max((maxZ - minZ) * 0.54, 0.9)
+    local rootScreen = camera:WorldToViewportPoint(rootPart.Position)
+    if rootScreen.Z <= math.max(1.25, halfZ + 0.2) then
         esp.SmoothRect = nil
         return nil
     end
+    local minScreenX, minScreenY = math.huge, math.huge
+    local maxScreenX, maxScreenY = -math.huge, -math.huge
+    local projected = 0
+
+    for xIndex = 0, 1 do
+        local xSign = xIndex == 0 and -1 or 1
+        for yIndex = 0, 1 do
+            local ySign = yIndex == 0 and -1 or 1
+            for zIndex = 0, 1 do
+                local zSign = zIndex == 0 and -1 or 1
+                local worldPoint = rootPart.CFrame:PointToWorldSpace(Vector3.new(
+                    centerX + halfX * xSign,
+                    centerY + halfY * ySign,
+                    centerZ + halfZ * zSign
+                ))
+                local screenPoint = camera:WorldToViewportPoint(worldPoint)
+                if screenPoint.Z <= 0.2 then
+                    esp.SmoothRect = nil
+                    return nil
+                end
+                minScreenX = math.min(minScreenX, screenPoint.X)
+                maxScreenX = math.max(maxScreenX, screenPoint.X)
+                minScreenY = math.min(minScreenY, screenPoint.Y)
+                maxScreenY = math.max(maxScreenY, screenPoint.Y)
+                projected += 1
+            end
+        end
+    end
+    if projected ~= 8 then return nil end
+
+    local rawWidth = math.max(maxScreenX - minScreenX, 1)
+    local rawHeight = math.max(maxScreenY - minScreenY, 1)
     local viewport = camera.ViewportSize
-    local preferredAspect = math.clamp(tonumber(XCConfig.espBoxAspect) or 0.52, 0.38, 0.8)
-    local perspectiveScale = math.clamp(tonumber(XCConfig.espPerspectiveScale) or 1, 0.65, 1.5)
-
-    -- Use a constant six-stud body span instead of animated limbs/accessories.
-    -- This makes size respond only to distance/FOV and prevents flattening.
-    local topScreen = camera:WorldToViewportPoint(rootPosition + Vector3.new(0, 3.15, 0))
-    local bottomScreen = camera:WorldToViewportPoint(rootPosition - Vector3.new(0, 2.85, 0))
-    if topScreen.Z <= 0.2 or bottomScreen.Z <= 0.2 then
+    if rawHeight > viewport.Y * 1.35 or rawWidth > viewport.X * 1.35 then
         esp.SmoothRect = nil
         return nil
     end
+    local centerScreenX = (minScreenX + maxScreenX) * 0.5
+    local centerScreenY = (minScreenY + maxScreenY) * 0.5
+    local preferredAspect = math.clamp(tonumber(XCConfig.espBoxAspect) or 0.52, 0.38, 0.8)
+    local height, width
+    if XCConfig.espFixedScale then
+        -- Screen-space ESP: distance/FOV only move the marker; they never
+        -- squeeze or enlarge its box and corner proportions.
+        height = math.clamp(tonumber(XCConfig.espFixedBoxHeight) or 64, 28, 140)
+        width = height * preferredAspect
+    else
+        local minHeight = math.clamp(tonumber(XCConfig.espFixedBoxHeight) or 28, 16, 64)
+        height = math.max(rawHeight, minHeight)
+        width = math.max(rawWidth, height * 0.40)
+        width = math.min(width, height * 0.82)
+        if rawHeight < minHeight then width = math.max(width, height * preferredAspect) end
+    end
 
-    local projectedHeight = math.abs(bottomScreen.Y - topScreen.Y) * perspectiveScale
-    local maxHeight = math.max(80, viewport.Y * 0.72)
-    local height = math.clamp(projectedHeight, 16, maxHeight)
-    local width = height * preferredAspect
-    local centerScreenX = rootScreen.X
-    local centerScreenY = (topScreen.Y + bottomScreen.Y) * 0.5
-    local target = {
-        X = centerScreenX - width * 0.5,
-        Y = centerScreenY - height * 0.5,
-        W = width,
-        H = height,
-    }
+    local target = {X = centerScreenX - width * 0.5, Y = centerScreenY - height * 0.5, W = width, H = height}
     local smooth = math.clamp(tonumber(XCConfig.espBoxSmoothing) or 0.42, 0, 0.9)
     local alpha = 1 - smooth
     local old = esp.SmoothRect
     if old then
-        local oldCenterX = old.X + old.W * 0.5
-        local oldCenterY = old.Y + old.H * 0.5
-        local jump = math.abs(oldCenterX - centerScreenX) + math.abs(oldCenterY - centerScreenY)
-        if jump < math.max(140, viewport.Y * 0.28) then
-            centerScreenX = oldCenterX + (centerScreenX - oldCenterX) * alpha
-            centerScreenY = oldCenterY + (centerScreenY - oldCenterY) * alpha
-            height = old.H + (height - old.H) * alpha
-            width = height * preferredAspect
-            target.X = centerScreenX - width * 0.5
-            target.Y = centerScreenY - height * 0.5
-            target.W = width
-            target.H = height
+        local jump = math.abs(old.X - target.X) + math.abs(old.Y - target.Y)
+        if jump < math.max(100, target.H * 2.5) then
+            target.X = old.X + (target.X - old.X) * alpha
+            target.Y = old.Y + (target.Y - old.Y) * alpha
+            target.W = old.W + (target.W - old.W) * alpha
+            target.H = old.H + (target.H - old.H) * alpha
         end
     end
 
@@ -4618,12 +4566,11 @@ function renderTacticalOverlay()
 
                     if XCConfig.boxEspEnabled and not XCConfig.cornerBoxEnabled then
                         esp.BoxStroke.Color = sideColor
-                        local boxStrokeWidth = math.clamp(math.floor((tonumber(XCConfig.boxThickness) or 1) + 0.5), 1, 2)
-                        esp.BoxStroke.Thickness = boxStrokeWidth
+                        esp.BoxStroke.Thickness = XCConfig.boxThickness
                         esp.Box.Size = UDim2.new(0, boxWidth, 0, boxHeight)
                         esp.Box.Position = UDim2.new(0, boxPosX, 0, boxPosY)
                         esp.Box.Visible = true
-                        esp.BoxOutlineStroke.Thickness = boxStrokeWidth + 2
+                        esp.BoxOutlineStroke.Thickness = XCConfig.boxThickness + 2
                         esp.BoxOutline.Size = esp.Box.Size
                         esp.BoxOutline.Position = esp.Box.Position
                         esp.BoxOutline.Visible = XCConfig.espBoxOutline
@@ -4634,15 +4581,9 @@ function renderTacticalOverlay()
                     elseif XCConfig.cornerBoxEnabled then
                         esp.Box.Visible = false
                         esp.BoxOutline.Visible = false
-                        local lengthX = math.min(
-                            math.floor(math.clamp(boxWidth * 0.30, 3, 28) + 0.5),
-                            math.max(2, math.floor(boxWidth * 0.48))
-                        )
-                        local lengthY = math.min(
-                            math.floor(math.clamp(boxHeight * 0.20, 5, 36) + 0.5),
-                            math.max(3, math.floor(boxHeight * 0.48))
-                        )
-                        local thick = math.clamp(math.floor((tonumber(XCConfig.boxThickness) or 1) + 0.5), 1, 2)
+                        local lengthX = math.clamp(boxWidth * 0.28, 6, 20)
+                        local lengthY = math.clamp(boxHeight * 0.22, 7, 24)
+                        local thick = math.clamp(XCConfig.boxThickness + 0.5, 1.5, 3)
 
                         for _, corner in ipairs(esp.Corners) do
                             corner.H.BackgroundColor3 = sideColor
@@ -4694,18 +4635,16 @@ function renderTacticalOverlay()
                     if XCConfig.healthBarEnabled and health then
                         local hpPercent = math.clamp(health / maxHealth, 0, 1)
 
-                        local barWidth = boxHeight < 32 and 3 or 4
-                        local barGap = boxHeight < 32 and 2 or 3
+                        local barWidth = 3
+                        local barGap = 4
                         local barX = boxPosX - barWidth - barGap
                         local barY = boxPosY
-                        local fillHeight = math.max(1, math.floor((boxHeight - 2) * hpPercent + 0.5))
 
                         esp.HealthBarBg.Size = UDim2.new(0, barWidth, 0, boxHeight)
                         esp.HealthBarBg.Position = UDim2.new(0, barX, 0, barY)
                         esp.HealthBarBg.Visible = true
 
-                        esp.HealthBarFill.Position = UDim2.new(0, 1, 1, -1)
-                        esp.HealthBarFill.Size = UDim2.fromOffset(barWidth - 2, fillHeight)
+                        esp.HealthBarFill.Size = UDim2.new(1, 0, hpPercent, 0)
                         
                         esp.HealthBarFill.BackgroundColor3 = sideColor:Lerp(Color3.fromRGB(38, 40, 43), (1 - hpPercent) * 0.35)
                     else
@@ -5584,30 +5523,29 @@ end)
 table.insert(connections, inEndedConn)
 
 -- ==========================================
--- LOCAL-SHOT HIT CONFIRMATION & PHYSICS LOOP
+-- HITMARKER & PHYSICS LOOP NO WORK
 -- ==========================================
 table.insert(connections, RunService.Heartbeat:Connect(function()
     if not XCConfig.hitmarkerEnabled and not XCConfig.hitSoundEnabled then
-        hitmarkerPendingHits = {}
+        hitmarkerLastHealth = {}
         return
     end
 
-    local now = os.clock()
-    for healthKey, pending in pairs(hitmarkerPendingHits) do
-        local char = pending.Character
-        local targetPlr = pending.Player
-        if now > pending.Expires or not char or not char.Parent or not targetPlr
-            or not isTargetEnemy(targetPlr, char) then
-            hitmarkerPendingHits[healthKey] = nil
-        else
-            local hum = char:FindFirstChildOfClass("Humanoid")
-            local currentHealth = getXCHealth(char, targetPlr, hum)
-            if currentHealth ~= nil and currentHealth < pending.Health then
-                local damage = pending.Health - currentHealth
-                hitmarkerPendingHits[healthKey] = nil
-                showHitmarker(damage)
-            elseif currentHealth ~= nil and currentHealth > pending.Health then
-                pending.Health = currentHealth
+    for _, targetPlr in ipairs(Players:GetPlayers()) do
+        if targetPlr ~= player then
+            local char = targetPlr.Character
+            local hum = char and char:FindFirstChildOfClass("Humanoid")
+            local currentHealth = char and getXCHealth(char, targetPlr, hum)
+            local healthKey = hum or char
+
+            if char and currentHealth ~= nil and isTargetEnemy(targetPlr, char) then
+                local previousHealth = hitmarkerLastHealth[healthKey]
+
+                if previousHealth and currentHealth < previousHealth and (previousHealth - currentHealth) > 0.01 then
+                    showHitmarker()
+                end
+
+                hitmarkerLastHealth[healthKey] = currentHealth
             end
         end
     end
@@ -6746,7 +6684,7 @@ function buildXCUI()
             local color = previewVisible and currentTheme.Enemy_Accent or currentTheme.Enemy_Hidden
             mode.Text = previewVisible and "VISIBLE" or "HIDDEN"
             mode.TextColor3 = color
-            local height = 58 * math.clamp(tonumber(XCConfig.espPerspectiveScale) or 1, 0.65, 1.5)
+            local height = math.clamp(tonumber(XCConfig.espFixedBoxHeight) or 64, 42, 96)
             local width = height * math.clamp(tonumber(XCConfig.espBoxAspect) or 0.52, 0.38, 0.8)
             box.Size = UDim2.fromOffset(width, height)
             boxStroke.Color = color
@@ -6756,7 +6694,7 @@ function buildXCUI()
             head.BackgroundColor3 = color
             body.Visible = XCConfig.chamsEnabled
             healthBack.Position = UDim2.new(0.5, -width * 0.5 - 4, 0.55, 0)
-            healthBack.Size = UDim2.fromOffset(4, height)
+            healthBack.Size = UDim2.fromOffset(3, height)
             healthBack.Visible = XCConfig.healthBarEnabled
             tag.Position = UDim2.new(0.5, 0, 0.55, -height * 0.5 - 3)
             tag.TextColor3 = color
@@ -6764,7 +6702,7 @@ function buildXCUI()
 
             local left = canvas.AbsoluteSize.X * 0.5 - width * 0.5
             local top = canvas.AbsoluteSize.Y * 0.55 - height * 0.5
-            local length = math.floor(math.clamp(width * 0.30, 4, 28) + 0.5)
+            local length = math.clamp(math.min(width, height) * 0.28, 7, 18)
             local specs = {
                 {left, top, length, 1}, {left, top, 1, length},
                 {left + width - length, top, length, 1}, {left + width - 1, top, 1, length},
@@ -6784,7 +6722,7 @@ function buildXCUI()
             previewVisible = not previewVisible
             refreshPreview()
         end)
-        for _, key in ipairs({"boxEspEnabled", "cornerBoxEnabled", "healthBarEnabled", "nametagsEnabled", "chamsEnabled", "espPerspectiveScale", "espBoxAspect", "boxThickness"}) do
+        for _, key in ipairs({"boxEspEnabled", "cornerBoxEnabled", "healthBarEnabled", "nametagsEnabled", "chamsEnabled", "espFixedBoxHeight", "espBoxAspect", "boxThickness"}) do
             refreshers[key] = refreshers[key] or {}
             table.insert(refreshers[key], refreshPreview)
         end
@@ -7115,10 +7053,11 @@ function buildXCUI()
     toggle(L, "Corner box", "cornerBoxEnabled")
     toggle(L, "Health bar", "healthBarEnabled")
     toggle(L, "Dark ESP outline", "espBoxOutline")
+    toggle(L, "Fixed ESP scale", "espFixedScale")
     addSlider(L, "ESP distance", "espMaxDist", 100, 5000, 50, "")
     addSlider(L, "Box stability", "espBoxSmoothing", 0, 0.9, 0.05, "")
-    addSlider(L, "ESP scale", "espPerspectiveScale", 0.65, 1.5, 0.05, "x")
-    addSlider(L, "Box width ratio", "espBoxAspect", 0.42, 0.68, 0.02, "x")
+    addSlider(L, "Fixed box height", "espFixedBoxHeight", 28, 140, 2, "px")
+    addSlider(L, "Box width ratio", "espBoxAspect", 0.38, 0.8, 0.02, "x")
     section(L, "Skeleton")
     toggle(L, "Skeleton ESP", "skeletonEspEnabled")
     toggle(L, "Distance fade", "skeletonDistanceFade")
