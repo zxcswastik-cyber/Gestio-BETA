@@ -96,6 +96,9 @@ local XCConfig = {
     headDotEnabled = false,
     tracersEnabled = false,
     grenadeEspEnabled = false,
+    grenadeDangerZonesEnabled = false,
+    soundPositionEspEnabled = false,
+    weaponEspEnabled = false,
     jumpCircleEnabled = false,
     antiFlashEnabled = false,
     noSmokeEnabled = false,
@@ -224,6 +227,9 @@ local XCConfig = {
     showGrenadePath = true,
     showMolotovRadius = true,
     showSmokeRadius = true,
+    grenadeDangerOpacity = 0.82,
+    soundEspDuration = 1.15,
+    soundEspMaxDist = 1200,
 
     espMaxDist = 3000,
     espTextSize = 8.5,
@@ -235,6 +241,7 @@ local XCConfig = {
     espBoxSmoothing = 0.42,
     espFixedScale = true,
     espFixedBoxHeight = 36,
+    espPerspectiveScale = 1.0,
     espBoxAspect = 0.52,
     espBoxOutline = true,
 
@@ -331,12 +338,11 @@ end
 for key, defaultValue in pairs(XCConfigDefaults) do
     if type(defaultValue) == "boolean" then XCConfig[key] = defaultValue end
 end
--- XC uses one compact screen-space ESP size. Old presets must not restore
--- the perspective-scaled/oversized box implementation.
-XCConfig.espFixedScale = true
+-- Keep legacy values valid while the v20 renderer uses perspective scale.
 if tonumber(XCConfig.espFixedBoxHeight) == 64 or tonumber(XCConfig.espFixedBoxHeight) == 42 then
     XCConfig.espFixedBoxHeight = 36
 end
+XCConfig.espPerspectiveScale = math.clamp(tonumber(XCConfig.espPerspectiveScale) or 1, 0.65, 1.5)
 
 local UI_Bind_Registry = {}
 -- Expensive executor scans are opt-in for the current session. Persisted
@@ -1884,6 +1890,10 @@ local jumpCircleFolder = Instance.new("Folder", Workspace)
 jumpCircleFolder.Name = "XC_JumpCircleWorld"
 
 local grenadePool = {}
+local grenadeDangerPool = setmetatable({}, {__mode = "k"})
+local grenadeDangerScanStarted = false
+local soundEspTracked = setmetatable({}, {__mode = "k"})
+local soundEspPulses = {}
 local mobileSlideBtn = nil
 
 -- ==========================================
@@ -3033,7 +3043,8 @@ XCFeatureState = {
     streamerHiddenKeys = {
         "watermarkEnabled", "spectatorListEnabled", "nametagsEnabled", "boxEspEnabled",
         "cornerBoxEnabled", "healthBarEnabled", "headDotEnabled", "tracersEnabled",
-        "grenadeEspEnabled", "jumpCircleEnabled", "hitmarkerEnabled", "chamsEnabled", "skeletonEspEnabled",
+        "grenadeEspEnabled", "grenadeDangerZonesEnabled", "soundPositionEspEnabled", "weaponEspEnabled",
+        "jumpCircleEnabled", "hitmarkerEnabled", "chamsEnabled", "skeletonEspEnabled",
         "showFovCircle", "showSilentFovCircle",
     },
 }
@@ -3486,6 +3497,7 @@ function cleanup()
             esp.BoxOutline:Destroy()
             esp.TagCard:Destroy()
             esp.HealthBarBg:Destroy()
+            esp.WeaponCard:Destroy()
             for _, corner in pairs(esp.Corners) do
                 corner.H:Destroy()
                 corner.V:Destroy()
@@ -3499,6 +3511,12 @@ function cleanup()
             gUi.RadiusCircle:Destroy()
             for _, l in ipairs(gUi.Lines) do l:Destroy() end
         end)
+    end
+    for _, danger in pairs(grenadeDangerPool) do
+        pcall(function() destroyXCGrenadeDanger(danger) end)
+    end
+    for _, pulse in ipairs(soundEspPulses) do
+        pcall(function() destroyXCSoundPulse(pulse) end)
     end
     clearActiveJumpCircle()
     pcall(function() jumpCircleFolder:Destroy() end)
@@ -3524,6 +3542,10 @@ function cleanup()
     activeEspHolders = {}
     screenEspCache = {}
     grenadePool = {}
+    grenadeDangerPool = setmetatable({}, {__mode = "k"})
+    grenadeDangerScanStarted = false
+    soundEspTracked = setmetatable({}, {__mode = "k"})
+    soundEspPulses = {}
     
     restoreLightingState()
     restoreXCSmoke()
@@ -3854,6 +3876,464 @@ function renderGrenadeOverlays()
         end
     end
 end
+
+-- ==========================================
+-- GRENADE DANGER ZONES
+-- ==========================================
+function classifyXCGrenadeDanger(object)
+    if not object or not object.Parent or isEntityCharacter(object) then return nil end
+    local name = object.Name:lower()
+    local grenadeAttribute = object:GetAttribute("GrenadeName")
+    if type(grenadeAttribute) == "string" then name ..= " " .. grenadeAttribute:lower() end
+    if name:find("smokezone", 1, true) or name:find("smoke_zone", 1, true)
+        or name:find("voxelsmoke", 1, true) or name:find("smokearea", 1, true)
+        or name:find("gaszone", 1, true) then
+        return "SMOKE", currentTheme.SmokeColor, 20, true
+    end
+    if name:find("firezone", 1, true) or name:find("fire_zone", 1, true)
+        or name:find("voxelfire", 1, true) or name:find("molotov", 1, true)
+        or name:find("incendiary", 1, true) or name:find("ignite", 1, true)
+        or name:find("flamezone", 1, true) or name:find("burnzone", 1, true) then
+        return "FIRE", currentTheme.MolotovColor, 17, name:find("zone", 1, true) ~= nil or name:find("voxel", 1, true) ~= nil
+    end
+    if name:find("flashbang", 1, true) or name:find("flash_grenade", 1, true) or name:find("flash grenade", 1, true) then
+        return "FLASH", Color3.fromRGB(245, 235, 120), 10, false
+    end
+    if name:find("smokegrenade", 1, true) or name:find("smoke_grenade", 1, true) or name:find("smoke grenade", 1, true) then
+        return "SMOKE", currentTheme.SmokeColor, 20, false
+    end
+    if name:find("hegrenade", 1, true) or name:find("he_grenade", 1, true) or name:find("he grenade", 1, true)
+        or name:find("frag", 1, true) or name == "grenade" or name:find("grenadeprojectile", 1, true) then
+        return "HE", currentTheme.HEColor, 15, false
+    end
+    return nil
+end
+
+function getXCDangerPart(object)
+    if object:IsA("BasePart") then return object end
+    if object:IsA("Model") and object.PrimaryPart then return object.PrimaryPart end
+    return object:FindFirstChildWhichIsA("BasePart", true)
+end
+
+function createXCGrenadeDanger(object)
+    if grenadeDangerPool[object] then return grenadeDangerPool[object] end
+    local kind, color, radius, isZone = classifyXCGrenadeDanger(object)
+    if not kind then return nil end
+
+    local data = {
+        Object = object,
+        Kind = kind,
+        Color = color,
+        Radius = radius,
+        IsZone = isZone,
+        Center = nil,
+        NextPhysics = 0,
+        Segments = {},
+    }
+    for index = 1, 24 do
+        local line = Instance.new("Frame", grenadeContainer)
+        line.Name = "Danger_" .. kind .. "_" .. index
+        line.AnchorPoint = Vector2.new(0.5, 0.5)
+        line.BorderSizePixel = 0
+        line.BackgroundColor3 = color
+        line.Visible = false
+        line.ZIndex = 5
+        data.Segments[index] = line
+    end
+
+    local label = Instance.new("TextLabel", grenadeContainer)
+    label.Name = "DangerLabel_" .. kind
+    label.AnchorPoint = Vector2.new(0.5, 1)
+    label.Size = UDim2.fromOffset(84, 16)
+    label.BackgroundColor3 = Color3.fromRGB(10, 11, 13)
+    label.BackgroundTransparency = 0.24
+    label.BorderSizePixel = 0
+    label.Text = "! " .. kind
+    label.TextColor3 = color
+    label.TextSize = 9
+    label.Font = Enum.Font.GothamBold
+    label.Visible = false
+    label.ZIndex = 6
+    Instance.new("UICorner", label).CornerRadius = UDim.new(0, 3)
+    data.Label = label
+    grenadeDangerPool[object] = data
+    return data
+end
+
+function destroyXCGrenadeDanger(data)
+    if not data then return end
+    for _, line in ipairs(data.Segments or {}) do pcall(function() line:Destroy() end) end
+    pcall(function() data.Label:Destroy() end)
+end
+
+function hideXCGrenadeDanger(data)
+    for _, line in ipairs(data.Segments) do line.Visible = false end
+    data.Label.Visible = false
+end
+
+function computeXCZoneBounds(object, fallbackPart, fallbackRadius)
+    local sumX, sumZ, minY, count = 0, 0, math.huge, 0
+    local parts = {}
+    if object:IsA("BasePart") then table.insert(parts, object) end
+    for _, descendant in ipairs(object:GetDescendants()) do
+        if descendant:IsA("BasePart") then table.insert(parts, descendant) end
+    end
+    for _, part in ipairs(parts) do
+        if part.Transparency < 1 or part.CanQuery then
+            sumX += part.Position.X
+            sumZ += part.Position.Z
+            minY = math.min(minY, part.Position.Y - part.Size.Y * 0.5)
+            count += 1
+        end
+    end
+    if count == 0 then return fallbackPart.Position, fallbackRadius end
+    local center = Vector3.new(sumX / count, minY, sumZ / count)
+    local radius = 0
+    for _, part in ipairs(parts) do
+        local horizontal = Vector2.new(part.Position.X - center.X, part.Position.Z - center.Z).Magnitude
+        radius = math.max(radius, horizontal + math.max(part.Size.X, part.Size.Z) * 0.5)
+    end
+    return center, math.clamp(radius, 2, fallbackRadius * 1.35)
+end
+
+function updateXCGrenadeDangerPhysics(data, now)
+    if now < data.NextPhysics then return end
+    data.NextPhysics = now + 0.12
+    local object = data.Object
+    local part = getXCDangerPart(object)
+    if not part then data.Center = nil return end
+
+    if data.IsZone then
+        data.Center, data.RenderRadius = computeXCZoneBounds(object, part, data.Radius)
+        return
+    end
+
+    local position = part.Position
+    local velocity = part.AssemblyLinearVelocity
+    grenadeRayParams.FilterDescendantsInstances = {player.Character, object, camera}
+    if velocity.Magnitude > 1.5 then
+        local gravity = Vector3.new(0, -Workspace.Gravity, 0)
+        local stepTime = 0.08
+        for _ = 1, 32 do
+            local nextPosition = position + velocity * stepTime + gravity * (0.5 * stepTime * stepTime)
+            local result = Workspace:Raycast(position, nextPosition - position, grenadeRayParams)
+            if result then
+                position = result.Position
+                if result.Normal.Y > 0.42 then break end
+                velocity = (velocity - 2 * velocity:Dot(result.Normal) * result.Normal) * 0.42
+                position += result.Normal * 0.08
+            else
+                position = nextPosition
+            end
+            velocity += gravity * stepTime
+        end
+    end
+    local ground = Workspace:Raycast(position + Vector3.new(0, 3, 0), Vector3.new(0, -45, 0), grenadeRayParams)
+    data.Center = ground and ground.Position or position
+    data.RenderRadius = data.Radius
+end
+
+function renderXCGrenadeDangerZones()
+    local now = os.clock()
+    if not XCConfig.grenadeDangerZonesEnabled then
+        grenadeDangerScanStarted = false
+        for object, data in pairs(grenadeDangerPool) do
+            if not object.Parent then destroyXCGrenadeDanger(data) grenadeDangerPool[object] = nil
+            else hideXCGrenadeDanger(data) end
+        end
+        return
+    end
+
+    if not grenadeDangerScanStarted then
+        grenadeDangerScanStarted = true
+        task.spawn(function()
+            local queue, index, visited = {Workspace}, 1, 0
+            while queue[index] and xcSessionActive() and XCConfig.grenadeDangerZonesEnabled do
+                local parent = queue[index]
+                index += 1
+                for _, child in ipairs(parent:GetChildren()) do
+                    if classifyXCGrenadeDanger(child) then createXCGrenadeDanger(child) end
+                    if child:IsA("Folder") or child:IsA("Model") then table.insert(queue, child) end
+                    visited += 1
+                    if visited % 160 == 0 then task.wait() end
+                end
+            end
+        end)
+    end
+
+    local camPosition = camera.CFrame.Position
+    for object, data in pairs(grenadeDangerPool) do
+        if not object.Parent or isEntityCharacter(object) then
+            destroyXCGrenadeDanger(data)
+            grenadeDangerPool[object] = nil
+        else
+            updateXCGrenadeDangerPhysics(data, now)
+            local center = data.Center
+            if not center or (center - camPosition).Magnitude > XCConfig.grenadeMaxDist then
+                hideXCGrenadeDanger(data)
+                continue
+            end
+
+            local radius = (data.RenderRadius or data.Radius) * (0.985 + math.sin(now * 4) * 0.015)
+            local opacity = math.clamp(tonumber(XCConfig.grenadeDangerOpacity) or 0.82, 0.1, 1)
+            local allPoints = {}
+            for index = 1, #data.Segments do
+                local angle = math.pi * 2 * ((index - 1) / #data.Segments)
+                local worldPoint = center + Vector3.new(math.cos(angle) * radius, 0.18, math.sin(angle) * radius)
+                local screenPoint, visible = camera:WorldToViewportPoint(worldPoint)
+                allPoints[index] = visible and screenPoint.Z > 0 and Vector2.new(screenPoint.X, screenPoint.Y) or nil
+            end
+            for index, line in ipairs(data.Segments) do
+                local a = allPoints[index]
+                local b = allPoints[index == #data.Segments and 1 or index + 1]
+                if a and b then
+                    local delta = b - a
+                    line.Size = UDim2.fromOffset(delta.Magnitude + 1, 2)
+                    line.Position = UDim2.fromOffset((a.X + b.X) * 0.5, (a.Y + b.Y) * 0.5)
+                    line.Rotation = math.deg(math.atan2(delta.Y, delta.X))
+                    line.BackgroundColor3 = data.Color
+                    line.BackgroundTransparency = 1 - opacity
+                    line.Visible = true
+                else
+                    line.Visible = false
+                end
+            end
+            local centerScreen, centerVisible = camera:WorldToViewportPoint(center + Vector3.new(0, 0.35, 0))
+            data.Label.TextColor3 = data.Color
+            data.Label.Position = UDim2.fromOffset(centerScreen.X, centerScreen.Y - 4)
+            data.Label.Visible = centerVisible and centerScreen.Z > 0
+        end
+    end
+end
+
+table.insert(connections, Workspace.DescendantAdded:Connect(function(object)
+    if XCConfig.grenadeDangerZonesEnabled and classifyXCGrenadeDanger(object) then
+        createXCGrenadeDanger(object)
+    end
+end))
+
+-- ==========================================
+-- ENEMY SOUND POSITION ESP
+-- ==========================================
+function getXCSoundSource(sound)
+    local cursor = sound.Parent
+    local sourcePart
+    while cursor and cursor ~= Workspace do
+        if not sourcePart then
+            if cursor:IsA("Attachment") then
+                sourcePart = cursor
+            elseif cursor:IsA("BasePart") then
+                sourcePart = cursor
+            end
+        end
+        if cursor:IsA("Model") then
+            local owner = Players:GetPlayerFromCharacter(cursor)
+            if owner then
+                local position
+                if sourcePart and sourcePart:IsA("Attachment") then position = sourcePart.WorldPosition
+                elseif sourcePart and sourcePart:IsA("BasePart") then position = sourcePart.Position end
+                local root = cursor:FindFirstChild("HumanoidRootPart") or cursor:FindFirstChild("Torso") or cursor:FindFirstChild("UpperTorso")
+                return owner, position or (root and root.Position), cursor
+            end
+        end
+        for _, attributeName in ipairs({"Player", "Owner", "UserId", "CreatorId"}) do
+            local ownerValue = cursor:GetAttribute(attributeName)
+            local owner
+            if typeof(ownerValue) == "Instance" and ownerValue:IsA("Player") then owner = ownerValue
+            elseif type(ownerValue) == "number" then owner = Players:GetPlayerByUserId(ownerValue) end
+            if not owner and type(ownerValue) == "string" then
+                owner = Players:FindFirstChild(ownerValue)
+                if not owner then
+                    local numericId = tonumber(ownerValue)
+                    if numericId then owner = Players:GetPlayerByUserId(numericId) end
+                end
+            end
+            if owner then
+                local character = owner.Character
+                local root = character and (character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("Torso"))
+                local position = sourcePart and (sourcePart:IsA("Attachment") and sourcePart.WorldPosition or sourcePart.Position)
+                return owner, position or (root and root.Position), character
+            end
+        end
+        cursor = cursor.Parent
+    end
+
+    local position = sourcePart and (sourcePart:IsA("Attachment") and sourcePart.WorldPosition or sourcePart.Position)
+    if position and classifyXCSound(sound) ~= "SOUND" then
+        local closestPlayer, closestCharacter, closestDistance = nil, nil, 5
+        for _, candidate in ipairs(Players:GetPlayers()) do
+            local character = candidate.Character
+            local root = character and (character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("Torso"))
+            if root and isTargetEnemy(candidate, character) then
+                local distance = (root.Position - position).Magnitude
+                if distance < closestDistance then
+                    closestPlayer, closestCharacter, closestDistance = candidate, character, distance
+                end
+            end
+        end
+        if closestPlayer then return closestPlayer, position, closestCharacter end
+    end
+    return nil
+end
+
+function classifyXCSound(sound)
+    local name = sound.Name:lower()
+    if name:find("foot", 1, true) or name:find("step", 1, true)
+        or name:find("walk", 1, true) or name:find("run", 1, true) then return "STEP" end
+    if name:find("shoot", 1, true) or name:find("shot", 1, true)
+        or name:find("fire", 1, true) or name:find("gun", 1, true) then return "SHOT" end
+    if name:find("reload", 1, true) or name:find("mag", 1, true) then return "RELOAD" end
+    if name:find("jump", 1, true) or name:find("land", 1, true) then return "MOVE" end
+    return "SOUND"
+end
+
+function destroyXCSoundPulse(pulse)
+    pcall(function() pulse.Root:Destroy() end)
+end
+
+function createXCSoundPulse(position, category)
+    if #soundEspPulses >= 24 then
+        destroyXCSoundPulse(table.remove(soundEspPulses, 1))
+    end
+
+    local root = Instance.new("Frame", overlayContainer)
+    root.Name = "SoundESP_" .. category
+    root.AnchorPoint = Vector2.new(0.5, 0.5)
+    root.Size = UDim2.fromOffset(1, 1)
+    root.BackgroundTransparency = 1
+    root.Visible = false
+    root.ZIndex = 20
+
+    local ring = Instance.new("Frame", root)
+    ring.AnchorPoint = Vector2.new(0.5, 0.5)
+    ring.Position = UDim2.fromScale(0.5, 0.5)
+    ring.BackgroundTransparency = 1
+    ring.BorderSizePixel = 0
+    ring.ZIndex = 20
+    Instance.new("UICorner", ring).CornerRadius = UDim.new(1, 0)
+    local stroke = Instance.new("UIStroke", ring)
+    stroke.Color = currentTheme.Accent
+    stroke.Thickness = 2
+    stroke.Transparency = 0
+
+    local dot = Instance.new("Frame", root)
+    dot.AnchorPoint = Vector2.new(0.5, 0.5)
+    dot.Position = UDim2.fromScale(0.5, 0.5)
+    dot.Size = UDim2.fromOffset(5, 5)
+    dot.BackgroundColor3 = currentTheme.Accent
+    dot.BorderSizePixel = 0
+    dot.ZIndex = 21
+    Instance.new("UICorner", dot).CornerRadius = UDim.new(1, 0)
+
+    local label = Instance.new("TextLabel", root)
+    label.AnchorPoint = Vector2.new(0.5, 0)
+    label.Position = UDim2.fromOffset(0, 11)
+    label.Size = UDim2.fromOffset(58, 14)
+    label.BackgroundColor3 = Color3.fromRGB(10, 11, 13)
+    label.BackgroundTransparency = 0.28
+    label.BorderSizePixel = 0
+    label.Font = Enum.Font.GothamBold
+    label.TextSize = 8
+    label.Text = category
+    label.TextColor3 = currentTheme.Accent
+    label.ZIndex = 21
+    Instance.new("UICorner", label).CornerRadius = UDim.new(0, 3)
+
+    table.insert(soundEspPulses, {
+        Root = root,
+        Ring = ring,
+        Stroke = stroke,
+        Dot = dot,
+        Label = label,
+        Position = position,
+        Created = os.clock(),
+        Duration = math.clamp(tonumber(XCConfig.soundEspDuration) or 1.15, 0.35, 3),
+    })
+end
+
+function triggerXCSoundPosition(sound)
+    if not XCConfig.soundPositionEspEnabled or not sound or not sound.Parent then return end
+    local owner, position, character = getXCSoundSource(sound)
+    if not owner or not position or not isTargetEnemy(owner, character) then return end
+    local cam = Workspace.CurrentCamera or camera
+    if not cam or (position - cam.CFrame.Position).Magnitude > (tonumber(XCConfig.soundEspMaxDist) or 1200) then return end
+    local now = os.clock()
+    local record = soundEspTracked[sound]
+    if record and now - (record.LastPulse or 0) < 0.09 then return end
+    if not record then record = {} soundEspTracked[sound] = record end
+    record.LastPulse = now
+    createXCSoundPulse(position, classifyXCSound(sound))
+end
+
+function trackXCSound(sound)
+    if not sound:IsA("Sound") then return end
+    local record = soundEspTracked[sound]
+    if record and record.Hooked then return end
+    record = record or {}
+    record.Hooked = true
+    soundEspTracked[sound] = record
+    pcall(function()
+        table.insert(connections, sound.Played:Connect(function()
+            triggerXCSoundPosition(sound)
+        end))
+    end)
+    table.insert(connections, sound:GetPropertyChangedSignal("Playing"):Connect(function()
+        if sound.Playing then triggerXCSoundPosition(sound) end
+    end))
+end
+
+function hookXCSoundCharacter(plr, character)
+    if plr == player or not character then return end
+    for _, object in ipairs(character:GetDescendants()) do
+        if object:IsA("Sound") then trackXCSound(object) end
+    end
+    table.insert(connections, character.DescendantAdded:Connect(function(object)
+        if object:IsA("Sound") then trackXCSound(object) end
+    end))
+end
+
+function hookXCSoundPlayer(plr)
+    if plr == player then return end
+    if plr.Character then hookXCSoundCharacter(plr, plr.Character) end
+    table.insert(connections, plr.CharacterAdded:Connect(function(character)
+        hookXCSoundCharacter(plr, character)
+    end))
+end
+
+function renderXCSoundPositionEsp()
+    local now = os.clock()
+    for index = #soundEspPulses, 1, -1 do
+        local pulse = soundEspPulses[index]
+        local alpha = (now - pulse.Created) / pulse.Duration
+        if not XCConfig.soundPositionEspEnabled or alpha >= 1 then
+            destroyXCSoundPulse(pulse)
+            table.remove(soundEspPulses, index)
+        else
+            local point, visible = camera:WorldToViewportPoint(pulse.Position)
+            if visible and point.Z > 0 then
+                local size = 12 + alpha * 34
+                pulse.Root.Position = UDim2.fromOffset(point.X, point.Y)
+                pulse.Ring.Size = UDim2.fromOffset(size, size)
+                pulse.Stroke.Color = currentTheme.Accent
+                pulse.Stroke.Transparency = math.clamp(alpha, 0, 1)
+                pulse.Dot.BackgroundColor3 = currentTheme.Accent
+                pulse.Dot.BackgroundTransparency = math.clamp(alpha * 0.8, 0, 1)
+                pulse.Label.TextColor3 = currentTheme.Accent
+                pulse.Label.TextTransparency = math.clamp(alpha, 0, 1)
+                pulse.Label.BackgroundTransparency = 0.28 + alpha * 0.72
+                pulse.Root.Visible = true
+            else
+                pulse.Root.Visible = false
+            end
+        end
+    end
+end
+
+for _, otherPlayer in ipairs(Players:GetPlayers()) do hookXCSoundPlayer(otherPlayer) end
+table.insert(connections, Players.PlayerAdded:Connect(hookXCSoundPlayer))
+table.insert(connections, Workspace.DescendantAdded:Connect(function(object)
+    if object:IsA("Sound") then trackXCSound(object) end
+end))
 
 -- ==========================================
 --  AIM ENGINE SHLAK
@@ -4377,6 +4857,46 @@ function getOrCreateScreenEsp(plr)
     healthBarFill.BorderSizePixel = 0
     Instance.new("UICorner", healthBarFill).CornerRadius = UDim.new(0, 2)
 
+    local weaponCard = Instance.new("Frame", overlayContainer)
+    weaponCard.Name = "WeaponIcon_" .. plr.Name
+    weaponCard.AnchorPoint = Vector2.new(0.5, 0)
+    weaponCard.Size = UDim2.fromOffset(54, 22)
+    weaponCard.BackgroundColor3 = Color3.fromRGB(10, 11, 13)
+    weaponCard.BackgroundTransparency = 0.28
+    weaponCard.BorderSizePixel = 0
+    weaponCard.ClipsDescendants = true
+    weaponCard.Visible = false
+    weaponCard.ZIndex = 8
+    Instance.new("UICorner", weaponCard).CornerRadius = UDim.new(0, 3)
+    local weaponCardStroke = Instance.new("UIStroke", weaponCard)
+    weaponCardStroke.Color = currentTheme.Border
+    weaponCardStroke.Thickness = 1
+    weaponCardStroke.Transparency = 0.15
+
+    local weaponImage = Instance.new("ImageLabel", weaponCard)
+    weaponImage.Name = "Image"
+    weaponImage.Size = UDim2.new(1, -6, 1, -4)
+    weaponImage.Position = UDim2.fromOffset(3, 2)
+    weaponImage.BackgroundTransparency = 1
+    weaponImage.ScaleType = Enum.ScaleType.Fit
+    weaponImage.ImageColor3 = currentTheme.Enemy_Accent
+    weaponImage.Visible = false
+    weaponImage.ZIndex = 9
+
+    local weaponViewport = Instance.new("ViewportFrame", weaponCard)
+    weaponViewport.Name = "Viewport"
+    weaponViewport.Size = UDim2.new(1, -4, 1, -2)
+    weaponViewport.Position = UDim2.fromOffset(2, 1)
+    weaponViewport.BackgroundTransparency = 1
+    weaponViewport.Ambient = Color3.fromRGB(190, 190, 190)
+    weaponViewport.LightColor = Color3.fromRGB(255, 255, 255)
+    weaponViewport.LightDirection = Vector3.new(-1, -0.6, -1)
+    weaponViewport.Visible = false
+    weaponViewport.ZIndex = 9
+    local weaponWorld = Instance.new("WorldModel", weaponViewport)
+    local weaponCamera = Instance.new("Camera", weaponViewport)
+    weaponViewport.CurrentCamera = weaponCamera
+
     local corners = {}
     for i = 1, 4 do
         local hLine = Instance.new("Frame", overlayContainer)
@@ -4447,6 +4967,15 @@ function getOrCreateScreenEsp(plr)
         BoxOutlineStroke = outlineStroke,
         HealthBarBg = healthBarBg,
         HealthBarFill = healthBarFill,
+        WeaponCard = weaponCard,
+        WeaponCardStroke = weaponCardStroke,
+        WeaponImage = weaponImage,
+        WeaponViewport = weaponViewport,
+        WeaponWorld = weaponWorld,
+        WeaponCamera = weaponCamera,
+        WeaponRaw = nil,
+        WeaponName = nil,
+        WeaponReady = false,
         Corners = corners,
         TagCard = tagCard,
         TagCardStroke = cardStroke,
@@ -4463,6 +4992,136 @@ function getOrCreateScreenEsp(plr)
     return data
 end
 
+function getXCEquippedWeapon(plr, char)
+    local raw = plr:GetAttribute("CurrentEquipped")
+    local weaponName
+    if type(raw) == "string" and raw ~= "" then
+        pcall(function()
+            local decoded = HttpService:JSONDecode(raw)
+            if type(decoded) == "table" then
+                weaponName = decoded.Name or decoded.Weapon or decoded.ItemName
+            end
+        end)
+    end
+    local tool = char and char:FindFirstChildOfClass("Tool")
+    if type(weaponName) ~= "string" or weaponName == "" then
+        weaponName = tool and tool.Name or nil
+    end
+    return weaponName, tool, raw
+end
+
+function clearXCWeaponPreview(esp)
+    esp.WeaponImage.Image = ""
+    esp.WeaponImage.Visible = false
+    esp.WeaponViewport.Visible = false
+    esp.WeaponWorld:ClearAllChildren()
+    esp.WeaponReady = false
+end
+
+function findXCWeaponAsset(weaponName)
+    if type(weaponName) ~= "string" or weaponName == "" then return nil end
+    local assets = ReplicatedStorage:FindFirstChild("Assets")
+    local weapons = assets and assets:FindFirstChild("Weapons")
+    if not weapons then return nil end
+    local direct = weapons:FindFirstChild(weaponName)
+    if direct then return direct end
+    local normalized = weaponName:lower():gsub("[^%w]", "")
+    for _, candidate in ipairs(weapons:GetChildren()) do
+        if candidate.Name:lower():gsub("[^%w]", "") == normalized then return candidate end
+    end
+    return nil
+end
+
+function buildXCWeaponViewport(esp, weaponName, tool)
+    clearXCWeaponPreview(esp)
+
+    if tool and type(tool.TextureId) == "string" and tool.TextureId ~= "" then
+        esp.WeaponImage.Image = tool.TextureId
+        esp.WeaponImage.Visible = true
+        esp.WeaponReady = true
+        return true
+    end
+    if tool then
+        local embedded = tool:FindFirstChildWhichIsA("ImageLabel", true)
+        if embedded and embedded.Image ~= "" then
+            esp.WeaponImage.Image = embedded.Image
+            esp.WeaponImage.Visible = true
+            esp.WeaponReady = true
+            return true
+        end
+    end
+
+    local asset = findXCWeaponAsset(weaponName)
+    local source = asset and (
+        asset:FindFirstChild("World")
+        or asset:FindFirstChild("Dropped")
+        or asset:FindFirstChild("ThirdPerson")
+        or asset:FindFirstChild("Camera")
+        or asset
+    ) or tool
+    if not source then return false end
+
+    local ok, clone = pcall(function() return source:Clone() end)
+    if not ok or not clone then return false end
+    clone.Parent = esp.WeaponWorld
+    local cloneObjects = {clone}
+    for _, object in ipairs(clone:GetDescendants()) do table.insert(cloneObjects, object) end
+    for _, object in ipairs(cloneObjects) do
+        if object:IsA("LuaSourceContainer") then
+            object:Destroy()
+        elseif object:IsA("BasePart") then
+            local lower = object.Name:lower()
+            if lower:find("arm", 1, true) or lower:find("hand", 1, true) or lower:find("glove", 1, true) then
+                object:Destroy()
+            else
+                object.Anchored = true
+                object.CanCollide = false
+                object.CanTouch = false
+                object.CanQuery = false
+            end
+        end
+    end
+
+    local boundsOk, boundsCFrame, boundsSize = pcall(function()
+        return esp.WeaponWorld:GetBoundingBox()
+    end)
+    if not boundsOk or not boundsCFrame or not boundsSize or boundsSize.Magnitude < 0.01 then
+        clearXCWeaponPreview(esp)
+        return false
+    end
+
+    local radius = math.max(boundsSize.X, boundsSize.Y, boundsSize.Z, 0.5)
+    local center = boundsCFrame.Position
+    local viewDirection = Vector3.new(1, 0.28, 1).Unit
+    esp.WeaponCamera.FieldOfView = 32
+    esp.WeaponCamera.CFrame = CFrame.lookAt(center + viewDirection * radius * 2.25, center)
+    esp.WeaponViewport.Visible = true
+    esp.WeaponReady = true
+    return true
+end
+
+function updateXCWeaponPreview(esp, plr, char, sideColor, boxPosX, boxPosY, boxWidth, boxHeight)
+    if not XCConfig.weaponEspEnabled then
+        esp.WeaponCard.Visible = false
+        return
+    end
+
+    local weaponName, tool, raw = getXCEquippedWeapon(plr, char)
+    local key = tostring(raw or "") .. "|" .. tostring(weaponName or "") .. "|" .. tostring(tool)
+    local now = os.clock()
+    if key ~= esp.WeaponRaw or (not esp.WeaponReady and now >= (esp.WeaponNextRetry or 0)) then
+        esp.WeaponRaw = key
+        esp.WeaponName = weaponName
+        esp.WeaponNextRetry = now + 1
+        buildXCWeaponViewport(esp, weaponName, tool)
+    end
+
+    esp.WeaponCardStroke.Color = sideColor
+    esp.WeaponImage.ImageColor3 = sideColor
+    esp.WeaponCard.Position = UDim2.fromOffset(boxPosX + boxWidth * 0.5, boxPosY + boxHeight + 4)
+    esp.WeaponCard.Visible = weaponName ~= nil and esp.WeaponReady
+end
+
 table.insert(connections, Players.PlayerRemoving:Connect(function(plr)
     local oldChar = plr.Character
     local oldHum = oldChar and oldChar:FindFirstChildOfClass("Humanoid")
@@ -4477,6 +5136,7 @@ table.insert(connections, Players.PlayerRemoving:Connect(function(plr)
             cache.Box:Destroy()
             cache.BoxOutline:Destroy()
             cache.HealthBarBg:Destroy()
+            cache.WeaponCard:Destroy()
             cache.TagCard:Destroy()
             for _, corner in pairs(cache.Corners) do
                 corner.H:Destroy()
@@ -4497,6 +5157,7 @@ function hideTacticalOverlay()
         esp.Box.Visible = false
         esp.BoxOutline.Visible = false
         esp.HealthBarBg.Visible = false
+        esp.WeaponCard.Visible = false
         esp.TagCard.Visible = false
         for _, corner in ipairs(esp.Corners) do
             corner.H.Visible = false
@@ -4506,27 +5167,40 @@ function hideTacticalOverlay()
     end
 end
 
--- Produces one compact screen-space rectangle shared by Box ESP, Corner Box
--- and Health Bar. Distance and camera FOV affect only its screen position;
--- width and height never come from projected 3D body bounds.
+-- Produces one perspective-correct rectangle shared by Box ESP, Corner Box
+-- and Health Bar. A stable world-space body height is projected to the screen,
+-- so near targets grow and distant targets shrink without width distortion.
 function getXCCharacterScreenRect(esp, char, rootPart)
     if esp.Character ~= char then
         esp.Character = char
         esp.SmoothRect = nil
     end
 
-    local rootScreen = camera:WorldToViewportPoint(rootPart.Position)
+    local rootPosition = rootPart.Position
+    local rootScreen = camera:WorldToViewportPoint(rootPosition)
     if rootScreen.Z <= 0.2 then
         esp.SmoothRect = nil
         return nil
     end
     local viewport = camera.ViewportSize
     local preferredAspect = math.clamp(tonumber(XCConfig.espBoxAspect) or 0.52, 0.38, 0.8)
-    local viewportScale = math.clamp(math.min(viewport.X / 1600, viewport.Y / 720), 0.72, 1)
-    local height = math.floor(math.clamp((tonumber(XCConfig.espFixedBoxHeight) or 36) * viewportScale, 22, 56) + 0.5)
-    local width = math.floor(math.clamp(height * preferredAspect, 10, 38) + 0.5)
+    local perspectiveScale = math.clamp(tonumber(XCConfig.espPerspectiveScale) or 1, 0.65, 1.5)
+
+    -- Use a constant six-stud body span instead of animated limbs/accessories.
+    -- This makes size respond only to distance/FOV and prevents flattening.
+    local topScreen = camera:WorldToViewportPoint(rootPosition + Vector3.new(0, 3.15, 0))
+    local bottomScreen = camera:WorldToViewportPoint(rootPosition - Vector3.new(0, 2.85, 0))
+    if topScreen.Z <= 0.2 or bottomScreen.Z <= 0.2 then
+        esp.SmoothRect = nil
+        return nil
+    end
+
+    local projectedHeight = math.abs(bottomScreen.Y - topScreen.Y) * perspectiveScale
+    local maxHeight = math.max(80, viewport.Y * 0.72)
+    local height = math.clamp(projectedHeight, 16, maxHeight)
+    local width = height * preferredAspect
     local centerScreenX = rootScreen.X
-    local centerScreenY = rootScreen.Y - math.floor(height * 0.06 + 0.5)
+    local centerScreenY = (topScreen.Y + bottomScreen.Y) * 0.5
     local target = {
         X = centerScreenX - width * 0.5,
         Y = centerScreenY - height * 0.5,
@@ -4537,10 +5211,18 @@ function getXCCharacterScreenRect(esp, char, rootPart)
     local alpha = 1 - smooth
     local old = esp.SmoothRect
     if old then
-        local jump = math.abs(old.X - target.X) + math.abs(old.Y - target.Y)
-        if jump < 120 then
-            target.X = old.X + (target.X - old.X) * alpha
-            target.Y = old.Y + (target.Y - old.Y) * alpha
+        local oldCenterX = old.X + old.W * 0.5
+        local oldCenterY = old.Y + old.H * 0.5
+        local jump = math.abs(oldCenterX - centerScreenX) + math.abs(oldCenterY - centerScreenY)
+        if jump < math.max(140, viewport.Y * 0.28) then
+            centerScreenX = oldCenterX + (centerScreenX - oldCenterX) * alpha
+            centerScreenY = oldCenterY + (centerScreenY - oldCenterY) * alpha
+            height = old.H + (height - old.H) * alpha
+            width = height * preferredAspect
+            target.X = centerScreenX - width * 0.5
+            target.Y = centerScreenY - height * 0.5
+            target.W = width
+            target.H = height
         end
     end
 
@@ -4558,7 +5240,7 @@ end
 
 function renderTacticalOverlay()
     local active = XCConfig.nametagsEnabled or XCConfig.boxEspEnabled or XCConfig.cornerBoxEnabled
-        or XCConfig.healthBarEnabled or XCConfig.skeletonEspEnabled
+        or XCConfig.healthBarEnabled or XCConfig.skeletonEspEnabled or XCConfig.weaponEspEnabled
     if not active then
         if tacticalOverlayWasActive then hideTacticalOverlay() end
         tacticalOverlayWasActive = false
@@ -4613,8 +5295,14 @@ function renderTacticalOverlay()
                     elseif XCConfig.cornerBoxEnabled then
                         esp.Box.Visible = false
                         esp.BoxOutline.Visible = false
-                        local lengthX = math.floor(math.clamp(boxWidth * 0.34, 5, 12) + 0.5)
-                        local lengthY = math.floor(math.clamp(boxHeight * 0.23, 7, 14) + 0.5)
+                        local lengthX = math.min(
+                            math.floor(math.clamp(boxWidth * 0.30, 3, 28) + 0.5),
+                            math.max(2, math.floor(boxWidth * 0.48))
+                        )
+                        local lengthY = math.min(
+                            math.floor(math.clamp(boxHeight * 0.20, 5, 36) + 0.5),
+                            math.max(3, math.floor(boxHeight * 0.48))
+                        )
                         local thick = math.clamp(math.floor((tonumber(XCConfig.boxThickness) or 1) + 0.5), 1, 2)
 
                         for _, corner in ipairs(esp.Corners) do
@@ -4667,8 +5355,8 @@ function renderTacticalOverlay()
                     if XCConfig.healthBarEnabled and health then
                         local hpPercent = math.clamp(health / maxHealth, 0, 1)
 
-                        local barWidth = 4
-                        local barGap = 3
+                        local barWidth = boxHeight < 32 and 3 or 4
+                        local barGap = boxHeight < 32 and 2 or 3
                         local barX = boxPosX - barWidth - barGap
                         local barY = boxPosY
                         local fillHeight = math.max(1, math.floor((boxHeight - 2) * hpPercent + 0.5))
@@ -4700,7 +5388,7 @@ function renderTacticalOverlay()
                         if XCConfig.espShowHealth and health then
                             infoText = string.format("%s [%dHP]", infoText, math.floor(health + 0.5))
                         end
-                        if XCConfig.tagShowWeapon then
+                        if XCConfig.tagShowWeapon and not XCConfig.weaponEspEnabled then
                             local tool = char:FindFirstChildOfClass("Tool")
                             if tool then
                                 infoText = string.format("%s {%s}", infoText, tool.Name)
@@ -4717,11 +5405,13 @@ function renderTacticalOverlay()
                     else
                         esp.TagCard.Visible = false
                     end
+                    updateXCWeaponPreview(esp, plr, char, sideColor, boxPosX, boxPosY, boxWidth, boxHeight)
                     renderXCSkeleton(esp, char, sideColor, dist)
                 else
                     esp.Box.Visible = false
                     esp.BoxOutline.Visible = false
                     esp.HealthBarBg.Visible = false
+                    esp.WeaponCard.Visible = false
                     for _, corner in ipairs(esp.Corners) do
                         corner.H.Visible = false
                         corner.V.Visible = false
@@ -4733,6 +5423,7 @@ function renderTacticalOverlay()
                 esp.Box.Visible = false
                 esp.BoxOutline.Visible = false
                 esp.HealthBarBg.Visible = false
+                esp.WeaponCard.Visible = false
                 for _, corner in ipairs(esp.Corners) do
                     corner.H.Visible = false
                     corner.V.Visible = false
@@ -4744,6 +5435,7 @@ function renderTacticalOverlay()
             esp.Box.Visible = false
             esp.BoxOutline.Visible = false
             esp.HealthBarBg.Visible = false
+            esp.WeaponCard.Visible = false
             for _, corner in ipairs(esp.Corners) do
                 corner.H.Visible = false
                 corner.V.Visible = false
@@ -4945,6 +5637,8 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         visualOverlayAccumulator = 0
         renderTacticalOverlay()
         renderGrenadeOverlays()
+        renderXCGrenadeDangerZones()
+        renderXCSoundPositionEsp()
 
         local threeDEspActive = XCConfig.chamsEnabled or XCConfig.headDotEnabled or XCConfig.tracersEnabled
         if threeDEspActive or threeDEspWasActive then
@@ -6719,7 +7413,7 @@ function buildXCUI()
             local color = previewVisible and currentTheme.Enemy_Accent or currentTheme.Enemy_Hidden
             mode.Text = previewVisible and "VISIBLE" or "HIDDEN"
             mode.TextColor3 = color
-            local height = math.clamp(tonumber(XCConfig.espFixedBoxHeight) or 36, 24, 56)
+            local height = 58 * math.clamp(tonumber(XCConfig.espPerspectiveScale) or 1, 0.65, 1.5)
             local width = height * math.clamp(tonumber(XCConfig.espBoxAspect) or 0.52, 0.38, 0.8)
             box.Size = UDim2.fromOffset(width, height)
             boxStroke.Color = color
@@ -6737,7 +7431,7 @@ function buildXCUI()
 
             local left = canvas.AbsoluteSize.X * 0.5 - width * 0.5
             local top = canvas.AbsoluteSize.Y * 0.55 - height * 0.5
-            local length = math.floor(math.clamp(width * 0.34, 5, 12) + 0.5)
+            local length = math.floor(math.clamp(width * 0.30, 4, 28) + 0.5)
             local specs = {
                 {left, top, length, 1}, {left, top, 1, length},
                 {left + width - length, top, length, 1}, {left + width - 1, top, 1, length},
@@ -6757,7 +7451,7 @@ function buildXCUI()
             previewVisible = not previewVisible
             refreshPreview()
         end)
-        for _, key in ipairs({"boxEspEnabled", "cornerBoxEnabled", "healthBarEnabled", "nametagsEnabled", "chamsEnabled", "espFixedBoxHeight", "espBoxAspect", "boxThickness"}) do
+        for _, key in ipairs({"boxEspEnabled", "cornerBoxEnabled", "healthBarEnabled", "nametagsEnabled", "chamsEnabled", "espPerspectiveScale", "espBoxAspect", "boxThickness"}) do
             refreshers[key] = refreshers[key] or {}
             table.insert(refreshers[key], refreshPreview)
         end
@@ -7090,8 +7784,10 @@ function buildXCUI()
     toggle(L, "Dark ESP outline", "espBoxOutline")
     addSlider(L, "ESP distance", "espMaxDist", 100, 5000, 50, "")
     addSlider(L, "Box stability", "espBoxSmoothing", 0, 0.9, 0.05, "")
-    addSlider(L, "ESP size", "espFixedBoxHeight", 24, 56, 2, "px")
+    addSlider(L, "ESP scale", "espPerspectiveScale", 0.65, 1.5, 0.05, "x")
     addSlider(L, "Box width ratio", "espBoxAspect", 0.42, 0.68, 0.02, "x")
+    section(L, "Weapon ESP")
+    toggle(L, "Weapon image", "weaponEspEnabled")
     section(L, "Skeleton")
     toggle(L, "Skeleton ESP", "skeletonEspEnabled")
     toggle(L, "Distance fade", "skeletonDistanceFade")
@@ -7106,6 +7802,9 @@ function buildXCUI()
     addESPPreview(R)
     section(R, "ESP indicators")
     toggle(R, "Grenade ESP", "grenadeEspEnabled")
+    toggle(R, "Grenade danger zones", "grenadeDangerZonesEnabled")
+    toggle(R, "Sound position ESP", "soundPositionEspEnabled")
+    addSlider(R, "Sound marker duration", "soundEspDuration", 0.4, 2.5, 0.05, "s")
     toggle(R, "Tracers", "tracersEnabled")
     toggle(R, "Head dot", "headDotEnabled")
     section(R, "Hit feedback")
