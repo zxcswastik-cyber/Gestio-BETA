@@ -1,2 +1,2 @@
-# Gestio-BETA
-Bloxstrike | By veskon
+# XoseCity
+Bloxstrike | By eclyx
