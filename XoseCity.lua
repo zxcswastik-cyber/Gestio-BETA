@@ -1,3 +1,9389 @@
--- Obfuscated with Matcha Obfuscator
--- https://github.com/matcha-obfuscator
-local _0x991,_0x1,_0x7,_0x993,_0x8,_0xd,_0xe,_0x997,_0x13,_0x14,_0x15,_0x16,_0x17,_0x18,_0x19,_0x999,_0x1a,_0x1b,_0x1c,_0x1d,_0x1e,_0x1f,_0x20,_0x99d,_0x22,_0x25,_0x99f,_0x26,_0x27,_0x28,_0x29,_0x2a,_0x2b,_0x2c,_0x2d,_0x2e,_0x2f,_0x30,_0x31,_0x9a3,_0x32,_0x33,_0x34,_0x9a5,_0x35,_0x36,_0x37,_0x38,_0x39,_0x3a,_0x3b,_0x9a8,_0x4d,_0x9a9,_0x4e,_0x4f,_0x50,_0x51,_0x55,_0x9ac,_0x56,_0x57,_0x58,_0x9ad,_0x59,_0x5a,_0x5b,_0x5c,_0x5d,_0x5e,_0x5f,_0x60,_0x61,_0x67,_0x69,_0x7c,_0x7e,_0x97,_0x98,_0x9b0,_0x99,_0x9b1,_0xa7,_0x9b3,_0xbb,_0xbc,_0xbd,_0xc8,_0xde,_0x9b4,_0xdf,_0xe0,_0xe3,_0xed,_0xee,_0xef,_0xf0,_0xf1,_0x116,_0x9b8,_0x123,_0x124,_0x125,_0x9b9,_0x126,_0x127,_0x128,_0x129,_0x12a,_0x12b,_0x137,_0x138,_0x9be,_0x13a,_0x13b,_0x13c,_0x9bf,_0x13d,_0x13e,_0x13f,_0x140,_0x141,_0x142,_0x143,_0x144,_0x145,_0x146,_0x147,_0x148,_0x149,_0x14a,_0x14b,_0x14c,_0x14d,_0x9c5,_0x14e,_0x14f,_0x150,_0x151,_0x9c6,_0x9c7,_0x152,_0x153,_0x158,_0x9ca,_0x9cb,_0x9ce,_0x15d,_0x15e,_0x163,_0x164,_0x165,_0x166,_0x167,_0x9d3,_0x9d5,_0x192,_0x9e3,_0x9e4,_0x9e5,_0x1e0,_0x9e7,_0x9e8,_0x9e9,_0x1e1,_0x1e2,_0x9ea,_0x1e3,_0x9eb,_0x1e4,_0x1e5,_0x9ed,_0x1e6,_0x1e7,_0x9ee,_0x1e8,_0x1e9,_0x1ea,_0x9f2,_0x1eb,_0x9f4,_0x9f5,_0x1ec,_0x1ed,_0x1ee,_0x1ef,_0x1f0,_0x9fb,_0x1f1,_0x1f2,_0x9fd,_0x240,_0xa09,_0xa0a,_0x259,_0x25a,_0x25b,_0xa0c,_0x2c4,_0xa10,_0x2ee,_0x2ef,_0x315,_0xa12,_0x316,_0x317,_0xa13,_0x325,_0x326,_0xa16,_0x327,_0x3eb,_0x3ec,_0xa18,_0xa1b,_0xa1c,_0x3ef,_0x3f0,_0x3f1,_0x3f2,_0x3f3,_0x3f4,_0x3f5,_0x3f6,_0x3f7,_0x3f8,_0x3f9,_0x3fa,_0x3fc,_0x415,_0x41d,_0xa23,_0xa25,_0xa27,_0xa28,_0xa29;local _0xae0=1;while true do if _0xae0 == 4097 then if false then local _0xa14=nil end;_0xae0=4106 elseif _0xae0 == 3999 then _0x315.IgnoreWater=true;_0xae0=4006 elseif _0xae0 == 2836 then if false then local _0x9ec=nil end;_0xae0=2843 elseif _0xae0 == 1781 then _0x152.Visible=false;_0xae0=1790 elseif _0xae0 == 2752 then _0x1e2=Instance.new(__0xae1d(1),_0x1e1);_0xae0=2761 elseif _0xae0 == 2179 then function clearWeaponVisuals() for _0xaf,_0xa4 in pairs(_0x166) do if _0xaf and _0xaf.Parent then restoreWeaponPart(_0xaf,_0xa4) end;_0x166[_0xaf]=nil;if false then local _0x557=nil end end;for _0xaf,_0x119 in pairs(_0x167) do if _0x119 and _0x119.Parent then pcall(function() _0x119:Destroy() end) end;_0x167[_0xaf]=nil end end;_0xae0=2188 elseif _0xae0 == 925 then _0xa7=RaycastParams.new();_0xae0=935 elseif _0xae0 == 4621 then function cfgSafeName(_0x100) _0x100=tostring(_0x100 or __0xae1d(2)):gsub(__0xae1d(3),""):sub(2 - 1,57 + 30 - 39);return _0x100 ~= "" and _0x100 or __0xae1d(4) end;_0xae0=4631 elseif _0xae0 == 1935 then _0x158.TextXAlignment=Enum.TextXAlignment.Center;_0xae0=1942 elseif _0xae0 == 1223 then task.spawn(function() while xcSessionActive() do task.wait(0.25);pcall(function() if _0x8.skinChangerEnabled then applyXCKnifeChanger() end;if _0x8.gloveChangerEnabled then applyXCGloves() end end) end end);_0xae0=1229 elseif _0xae0 == 2683 then _0x1e0.IgnoreGuiInset=true;_0xae0=2691 elseif _0xae0 == 4670 then function cfgEnsureFolder() local _0x96d,_0x96e;local _0xad7=3;while true do if _0xad7 == 19 then _0x96e=math.random() * 0;_0xad7=41 elseif _0xad7 == 3 then _0x96d=math.random() * 0;_0xad7=11 elseif _0xad7 == 11 then if type(makefolder) == __0xae1d(5) and type(isfolder) == __0xae1d(6) then pcall(function() if not isfolder(_0x41d.Folder) then makefolder(_0x41d.Folder) end end) end;_0xad7=19 else break end end end;_0xae0=4679 elseif _0xae0 == 2056 then function restoreLightingState() pcall(function() _0x1b.Brightness=_0x146.Brightness;_0x1b.ClockTime=_0x146.ClockTime;_0x1b.GlobalShadows=_0x146.GlobalShadows;_0x1b.Ambient=_0x146.Ambient;_0x1b.OutdoorAmbient=_0x146.OutdoorAmbient;_0x1b.FogEnd=_0x146.FogEnd;_0x1b.FogStart=_0x146.FogStart or 1 - 1;_0x1b.FogColor=_0x146.FogColor;_0x1b.ExposureCompensation=_0x146.ExposureCompensation or 1 - 1;restoreWorldSkybox();local _0x162=_0x1b:FindFirstChild(__0xae1d(7));if _0x162 then _0x162:Destroy() end;if XCFeatureState and XCFeatureState.worldAtmosphere then XCFeatureState.worldAtmosphere:Destroy();XCFeatureState.worldAtmosphere=nil end;if XCFeatureState and XCFeatureState.worldOriginalAtmosphere then XCFeatureState.worldOriginalAtmosphere.Parent=_0x1b;XCFeatureState.worldOriginalAtmosphere=nil end;if XCFeatureState and XCFeatureState.worldBloom then XCFeatureState.worldBloom:Destroy();XCFeatureState.worldBloom=nil end end) end;_0xae0=2061 elseif _0xae0 == 3601 then if false then local _0xa06=nil end;_0xae0=3608 elseif _0xae0 == 736 then _0x5f=function(_0x11) if _0xe then local _0x455=(90 + 0) * 1;_0xe.XCSilentAimRequestedV25=_0x11 == true end end;_0xae0=747 elseif _0xae0 == 4455 then if 1 > 2 then local _0xa21=nil end;_0xae0=4461 elseif _0xae0 == 3063 then _0x1ea.PaddingRight=UDim.new(1 - 1,13 + 12 - 17);_0xae0=3071 elseif _0xae0 == 1804 then _0x153={};_0xae0=1809 elseif _0xae0 == 444 then _0x9a3=(85 + 0) * 1;_0xae0=453 elseif _0xae0 == 4399 then _0x3f8=setmetatable({},{__mode=__0xae1d(8)});_0xae0=4406 elseif _0xae0 == 1958 then _0x158.Parent=_0x152;_0xae0=1962 elseif _0xae0 == 1144 then function getXCKnifeChoices() local _0x101;local _0xa46=3;while true do if _0xa46 == 39 then return _0x101 elseif _0xa46 == 30 then _0x101[#_0x101 + (2 - 1)]=__0xae1d(9);_0xa46=39 elseif _0xa46 == 16 then for _0x63,_0x100 in ipairs(_0xf1.KnifeChoices or {}) do if false then local _0x4c0=nil end;_0x101[#_0x101 + (2 - 1)]=_0x100 end;_0xa46=24 elseif _0xa46 == 3 then refreshXCSkinData();_0xa46=12 elseif _0xa46 == 24 then if #_0x101 == 1 - 1 then _0x101={__0xae1d(10),__0xae1d(11),__0xae1d(12)} end;_0xa46=30 elseif _0xa46 == 12 then _0x101={};_0xa46=16 else break end end end;_0xae0=1152 elseif _0xae0 == 4034 then _0x317=false;_0xae0=4040 elseif _0xae0 == 2550 then function refreshXCToggle(_0x10) local _0x1ce=_0x13[_0x10];if _0x1ce then if false then local _0x5e0=nil end;pcall(_0x1ce,_0x8[_0x10] == true) end end;_0xae0=2556 elseif _0xae0 == 1822 then _0x9ca=(37 + 0) * 1;_0xae0=1829 elseif _0xae0 == 136 then _0x13={};_0xae0=142 elseif _0xae0 == 2972 then _0x1e8.AutomaticSize=Enum.AutomaticSize.X;_0xae0=2979 elseif _0xae0 == 164 then _0x17=game:GetService(__0xae1d(13));_0xae0=169 elseif _0xae0 == 254 then if 1 > 2 then local _0x99c=nil end;_0xae0=264 elseif _0xae0 == 4244 then _0x3ec=false;_0xae0=4252 elseif _0xae0 == 1179 then function applySurfaceAppearanceSkin(_0x110,_0xfd,_0x111) local _0xd0,_0x112,_0x113,_0x114;local _0xa4b=3;while true do if _0xa4b == 40 then _0x113=_0x112 and _0x112:FindFirstChild(__0xae1d(14));_0xa4b=46 elseif _0xa4b == 46 then if false then local _0x4db=nil end;_0xa4b=53 elseif _0xa4b == 29 then _0x112=_0xd0 and _0xd0:FindFirstChild(_0x111);_0xa4b=40 elseif _0xa4b == 25 then _0xd0=_0xf1.SkinsRoot:FindFirstChild(_0xfd);_0xa4b=29 elseif _0xa4b == 66 then for _0x63,_0x115 in ipairs(_0x114:GetChildren()) do if _0x115:IsA(__0xae1d(15)) then local _0x6c=_0x110:FindFirstChild(_0x115.Name,true);if _0x6c and _0x6c:IsA(__0xae1d(16)) then for _0x63,_0x3c in ipairs(_0x6c:GetChildren()) do if _0x3c:IsA(__0xae1d(17)) then _0x3c:Destroy() end end;_0x115:Clone().Parent=_0x6c end;local _0x4d9=(29 + 0) * 1 end end;_0xa4b=88 elseif _0xa4b == 3 then if not _0x110 or not _0xf1.SkinsRoot then return end;_0xa4b=12 elseif _0xa4b == 12 then if not _0xfd or not _0x111 or _0x111 == __0xae1d(18) then return end;_0xa4b=16 elseif _0xa4b == 53 then _0x114=_0x113 and _0x113:FindFirstChild(__0xae1d(19));_0xa4b=57 elseif _0xa4b == 57 then if not _0x114 then return end;_0xa4b=66 elseif _0xa4b == 16 then if 1 > 2 then local _0x4da=nil end;_0xa4b=25 else break end end end;_0xae0=1185 elseif _0xae0 == 2811 then _0x1e4.AnchorPoint=Vector2.new(0.5,0.5);_0xae0=2816 elseif _0xae0 == 3124 then _0x1ec.BackgroundColor3=_0x38.Accent;_0xae0=3131 elseif _0xae0 == 120 then _0x997=(96 + 0) * 1;_0xae0=128 elseif _0xae0 == 1011 then if _0xe then local _0x4a1=(62 + 0) * 1;_0xe.XCNativeSilentRedirectV24=_0xc8 end;_0xae0=1017 elseif _0xae0 == 943 then _0xa7.IgnoreWater=true;_0xae0=947 elseif _0xae0 == 206 then _0x1b=game:GetService(__0xae1d(20));_0xae0=215 elseif _0xae0 == 2770 then _0x9ea=(20 + 0) * 1;_0xae0=2774 elseif _0xae0 == 3343 then do local _0x9fc=70 end;_0xae0=3349 elseif _0xae0 == 4065 then function triggerMobileSlideStart() local _0x86,_0x1b4,_0x9b,_0x319,_0x7bb;local _0xaa6=5;while true do if _0xaa6 == 5 then if not _0x8.slideEnabled then return end;_0xaa6=10 elseif _0xaa6 == 59 then _0x141=_0x319 * ((1 + 19 - 4) * _0x8.slideSpeedBoost);_0xaa6=65 elseif _0xaa6 == 52 then do local _0x7ba=340 end;_0xaa6=59 elseif _0xaa6 == 65 then _0x7bb=(44 + 0) * 1;_0xaa6=71 elseif _0xaa6 == 89 then return true elseif _0xaa6 == 30 then if not (_0x1b4 and _0x9b and isEntityAlive(_0x86,_0x9b) and isPlayerGrounded(_0x86,_0x1b4)) then local _0x7b8=math.random() * 0;return false end;_0xaa6=40 elseif _0xaa6 == 10 then _0x86=_0x20.Character;_0xaa6=15 elseif _0xaa6 == 15 then _0x1b4=_0x86 and _0x86:FindFirstChild(__0xae1d(21));_0xaa6=23 elseif _0xaa6 == 23 then _0x9b=_0x86 and _0x86:FindFirstChildOfClass(__0xae1d(22));_0xaa6=30 elseif _0xaa6 == 40 then do local _0x7b9=864 end;_0xaa6=44 elseif _0xaa6 == 71 then _0x140=true;_0xaa6=80 elseif _0xaa6 == 80 then _0x9b.HipHeight=_0x142 * 0.4;_0xaa6=89 elseif _0xaa6 == 44 then _0x319=_0x9b.MoveDirection.Magnitude > 0.1 and _0x9b.MoveDirection or _0x1b4.CFrame.LookVector;_0xaa6=52 else break end end end;_0xae0=4069 elseif _0xae0 == 4706 then function _0x41d.Save(_0x100) local _0x29f,_0x97f,_0xdd,_0x420;local _0xada=3;while true do if _0xada == 52 then if not _0x29f then return false,__0xae1d(23) end;_0xada=60 elseif _0xada == 66 then _0xdd,_0x420=pcall(function() writefile(cfgPath(_0x100),_0x29f) end);_0xada=73 elseif _0xada == 3 then if not cfgFileAPI() then return false,__0xae1d(24) end;_0xada=9 elseif _0xada == 73 then if _0xdd then if 1 > 2 then local _0x97a=nil end;_0x41d.ActiveName=_0x100;if false then local _0x97b=nil end end;_0xada=80 elseif _0xada == 31 then if 1 > 2 then local _0x97d=nil end;_0xada=38 elseif _0xada == 9 then _0x100=cfgSafeName(_0x100 or _0x41d.ActiveName);_0xada=15 elseif _0xada == 38 then _0x29f=cfgJSONEncode({schema=10 + 40 - 48,product=__0xae1d(25),name=_0x100,savedAt=os.time(),settings=cfgSerialize()});_0xada=47 elseif _0xada == 47 then if 1 > 2 then local _0x97e=nil end;_0xada=52 elseif _0xada == 15 then do local _0x97c=447 end;_0xada=25 elseif _0xada == 25 then cfgEnsureFolder();_0xada=31 elseif _0xada == 80 then return _0xdd,_0xdd and __0xae1d(26) or tostring(_0x420) elseif _0xada == 60 then _0x97f=(11 + 0) * 1;_0xada=66 else break end end end;_0xae0=4712 elseif _0xae0 == 3985 then _0x315.FilterType=Enum.RaycastFilterType.Exclude;_0xae0=3995 elseif _0xae0 == 2516 then if false then local _0x9e2=nil end;_0xae0=2521 elseif _0xae0 == 2306 then table.insert(_0x26,_0x16.RenderStepped:Connect(function(_0x139) local _0x191=_0x8.nightModeEnabled or _0x8.worldSkyboxEnabled or _0x8.worldPostFXEnabled or _0x8.worldAtmosphereEnabled or _0x8.worldBloomEnabled;if not _0x8.weaponChamsEnabled and not _0x8.customScopeEnabled and not _0x8.customFovEnabled and not _0x191 then return end;pcall(function() if _0x8.weaponChamsEnabled then setWeaponVisuals() end;if _0x8.customScopeEnabled then updateCustomScope() end;if _0x8.customFovEnabled then local _0x88=_0x1c.CurrentCamera or _0x22;if _0x88 then _0x88.FieldOfView=math.clamp(tonumber(_0x8.customFov) or 12 * 7 + 6,8 + 62,99 + 21) end end;if _0x191 then XXCFeatureState.worldUpdateAccumulator=XCFeatureState.worldUpdateAccumulator + _0x139;if XCFeatureState.worldUpdateAccumulator >= 0.2 then XCFeatureState.worldUpdateAccumulator=1 - 1;updateWorldChanger() end end end) end));_0xae0=2313 elseif _0xae0 == 1446 then _0x13e=Vector3.zero;_0xae0=1453 elseif _0xae0 == 1166 then function applyXCKnifeChanger() local _0x4d1,_0xdd,_0xca,_0x102,_0xbf,_0x10a,_0x10b,_0x10c,_0x10d,_0x10e,_0x4d4,_0x4d5,_0x4d6;local _0xa49=2;while true do if _0xa49 == 26 then _0xdd,_0xca=pcall(_0xf1.GetWeapon);_0xa49=32 elseif _0xa49 == 148 then _0x4d4=math.random() * 0;_0xa49=158 elseif _0xa49 == 102 then if not _0xf1.ModifiedKnife then _0xf1.ModifiedKnife={View=_0x102,Weapon=_0xca,CameraModelWeapon=_0x102.CameraModelWeapon,Skin=_0x102.Skin,Float=_0x102.Float} end;_0xa49=108 elseif _0xa49 == 67 then if not _0x102 or not _0x10a then restoreXCKnifeModel();return false end;_0xa49=71 elseif _0xa49 == 178 then if _0x10e or not _0x102.Model or not _0x102.Model.Parent then if 1 > 2 then local _0x4cf=nil end;if not constructXCKnifeView(_0x102,_0xca.Character or _0x20.Character,_0xca) then return false end end;_0xa49=184 elseif _0xa49 == 58 then _0x10a=_0xf1.KnifeSet[_0xca.Name] or type(_0xbf) == __0xae1d(27) and _0xbf.Class == __0xae1d(28);_0xa49=67 elseif _0xa49 == 124 then if _0x10c ~= __0xae1d(29) and type(_0x10d) == __0xae1d(30) and not table.find(_0x10d,_0x10c) then _0x10c=__0xae1d(31);if false then local _0x4ce=nil end end;_0xa49=131 elseif _0xa49 == 131 then do local _0x4d3=397 end;_0xa49=134 elseif _0xa49 == 89 then if _0xf1.WeaponAssets and not _0xf1.WeaponAssets:FindFirstChild(_0x10b) then _0xf1.LastError=__0xae1d(32) .. tostring(_0x10b);return false end;_0xa49=95 elseif _0xa49 == 95 then if _0xf1.ModifiedKnife and _0xf1.ModifiedKnife.View ~= _0x102 then restoreXCKnifeModel() end;_0xa49=102 elseif _0xa49 == 145 then _0x102.CameraModelWeapon=_0x10b;_0xa49=148 elseif _0xa49 == 191 then _0xf1.LastError=nil;_0xa49=197 elseif _0xa49 == 71 then _0x10b=_0x8.selectedKnifeType;_0xa49=79 elseif _0xa49 == 197 then _0x4d6=(10 + 0) * 1;_0xa49=204 elseif _0xa49 == 172 then _0x4d5=(40 + 0) * 1;_0xa49=178 elseif _0xa49 == 184 then if _0x102.Model and _0x102.Model.Parent then do local _0x4d0=66 end;applySurfaceAppearanceSkin(_0x102.Model,_0x10b,_0x10c) end;_0xa49=191 elseif _0xa49 == 166 then _0x102.Float=1 - 1;_0xa49=172 elseif _0xa49 == 79 then if not _0x10b or _0x10b == __0xae1d(33) then restoreXCKnifeModel();if 1 > 2 then local _0x4cd=nil end;return true end;_0xa49=89 elseif _0xa49 == 2 then _0x4d1=(16 + 0) * 1;_0xa49=11 elseif _0xa49 == 38 then _0x102=_0xca.Viewmodel;_0xa49=46 elseif _0xa49 == 204 then return true elseif _0xa49 == 115 then _0x10d=_0xf1.SkinSelections[_0x10b];_0xa49=124 elseif _0xa49 == 158 then _0x102.Skin=_0x10c ~= __0xae1d(34) and _0x10c or nil;_0xa49=166 elseif _0xa49 == 108 then _0x10c=_0x8.selectedSkin or __0xae1d(35);_0xa49=115 elseif _0xa49 == 46 then if 1 > 2 then local _0x4d2=nil end;_0xa49=54 elseif _0xa49 == 134 then _0x10e=_0x102.CameraModelWeapon ~= _0x10b;_0xa49=145 elseif _0xa49 == 54 then _0xbf=_0xca.Properties;_0xa49=58 elseif _0xa49 == 18 then if not refreshXCSkinData() or type(_0xf1.GetWeapon) ~= __0xae1d(36) then return false end;_0xa49=26 elseif _0xa49 == 11 then if not _0x8.skinChangerEnabled then restoreXCKnifeModel();return false end;_0xa49=18 elseif _0xa49 == 32 then if not _0xdd or not _0xca or _0xca.IsDestroyed then return false end;_0xa49=38 else break end end end;_0xae0=1174 elseif _0xae0 == 2930 then _0x9ee=(30 + 0) * 1;_0xae0=2937 elseif _0xae0 == 1115 then function refreshXCSkinData() local _0xf2,_0x4bd,_0x4be;local _0xa45=1;while true do if _0xa45 == 155 then _0x4be=math.random() * 0;_0xa45=162 elseif _0xa45 == 52 then _0xf1.WeaponAssets=_0xf2 and _0xf2:FindFirstChild(__0xae1d(37));_0xa45=57 elseif _0xa45 == 170 then _0xf1.Ready=_0xf1.GetWeapon ~= nil;_0xa45=178 elseif _0xa45 == 1 then if _0xf1.Ready and _0xf1.SkinsRoot and _0xf1.SkinsRoot.Parent and _0xf1.GetWeapon then return true end;_0xa45=9 elseif _0xa45 == 23 then _0xf1.LastRefresh=os.clock();_0xa45=29 elseif _0xa45 == 86 then _0xf1.SkinSelections={};_0xa45=92 elseif _0xa45 == 162 then if _0x8.selectedKnifeType ~= __0xae1d(38) and _0xf1.WeaponAssets and not _0xf1.WeaponAssets:FindFirstChild(_0x8.selectedKnifeType) and _0xf1.KnifeChoices[2 - 1] then if false then local _0x4b9=nil end;_0x8.selectedKnifeType=_0xf1.KnifeChoices[2 - 1] end;_0xa45=170 elseif _0xa45 == 107 then _0xf1.KnifeSet={[__0xae1d(39)]=true,[__0xae1d(40)]=true,[__0xae1d(41)]=true};_0xa45=115 elseif _0xa45 == 99 then _0xf1.GloveFolders={};_0xa45=107 elseif _0xa45 == 127 then _0xf1.KnifeChoices={};_0xa45=134 elseif _0xa45 == 73 then pcall(function() local _0xf3=_0x1e:FindFirstChild(__0xae1d(42));local _0xcf=_0xf3 and _0xf3:FindFirstChild(__0xae1d(43));local _0xf4=_0xcf and _0xcf:FindFirstChild(__0xae1d(44));local _0xf5=_0xf4 and _0xf4:FindFirstChild(__0xae1d(45));if _0xf5 then _0xf1.SkinLibrary=require(_0xf5) end end);_0xa45=78 elseif _0xa45 == 57 then if not _0xf1.SkinsRoot then if 1 > 2 then local _0x4b2=nil end;return false end;_0xa45=65 elseif _0xa45 == 78 then pcall(function() local _0x93=_0x1e:FindFirstChild(__0xae1d(46));local _0xf5=_0x93 and _0x93:FindFirstChild(__0xae1d(47));local _0xf6=_0xf5 and require(_0xf5);if _0xf6 and type(_0xf6.peekCurrentEquippedForMovement) == __0xae1d(48) then _0xf1.GetWeapon=_0xf6.peekCurrentEquippedForMovement end end);_0xa45=86 elseif _0xa45 == 178 then do local _0x4bf=919 end;_0xa45=183 elseif _0xa45 == 115 then for _0x63,_0xd0 in ipairs(_0xf1.SkinsRoot:GetChildren()) do do local _0x4b5=15 end;local _0xf7={};for _0x63,_0xf8 in ipairs(_0xd0:GetChildren()) do _0xf7[#_0xf7 + (2 - 1)]=_0xf8.Name end;table.sort(_0xf7);_0xf1.SkinSelections[_0xd0.Name]=_0xf7;local _0xf9=_0xd0.Name:lower();if _0xf9:find(__0xae1d(49),2 - 1,true) or _0xf9:find(__0xae1d(50),2 - 1,true) or _0xf9:find(__0xae1d(51),2 - 1,true) or _0xf9:find(__0xae1d(52),2 - 1,true) then _0xf1.KnifeSet[_0xd0.Name]=true end;if _0xf1.SkinLibrary and type(_0xf1.SkinLibrary.GetAllSkinsForWeapon) == __0xae1d(53) then local _0x4b3=math.random() * 0;pcall(function() local _0xfa=_0xf1.SkinLibrary.GetAllSkinsForWeapon(_0xd0.Name);local _0xfb=type(_0xfa) == __0xae1d(54) and _0xfa[2 - 1];if type(_0xfb) == __0xae1d(55) and _0xfb.type == __0xae1d(56) then _0xf1.KnifeSet[_0xd0.Name]=true end end) end;local _0x4b6=math.random() * 0;if _0xd0.Name:match(__0xae1d(57)) or _0xd0.Name:match(__0xae1d(58)) or _0xd0.Name == __0xae1d(59) then _0xf1.GloveFolders[#_0xf1.GloveFolders + (2 - 1)]=_0xd0;local _0xfc={__0xae1d(60)};local _0x4b4=math.random() * 0;for _0x63,_0xf8 in ipairs(_0xd0:GetChildren()) do _0xfc[#_0xfc + (2 - 1)]=_0xf8.Name end;_0xf1.GloveSelections[_0xd0.Name]=_0xfc end end;_0xa45=123 elseif _0xa45 == 46 then _0xf1.SkinsRoot=_0xf2 and _0xf2:FindFirstChild(__0xae1d(61));_0xa45=52 elseif _0xa45 == 92 then _0xf1.GloveSelections={};_0xa45=99 elseif _0xa45 == 9 then if false then local _0x4ba=nil end;_0xa45=18 elseif _0xa45 == 123 then for _0xfd,_0xf7 in pairs(_0xf1.SkinSelections) do if _0x8.weaponSkinSelections[_0xfd] == nil then _0x8.weaponSkinSelections[_0xfd]=_0xf7[2 - 1] or __0xae1d(62);local _0x4b7=(40 + 0) * 1 end end;_0xa45=127 elseif _0xa45 == 134 then _0x4bd=math.random() * 0;_0xa45=143 elseif _0xa45 == 18 then if _0xf1.LastRefresh > 1 - 1 and os.clock() - _0xf1.LastRefresh < 2 - 1 then return _0xf1.Ready end;_0xa45=23 elseif _0xa45 == 65 then if 1 > 2 then local _0x4bc=nil end;_0xa45=73 elseif _0xa45 == 36 then if false then local _0x4bb=nil end;_0xa45=46 elseif _0xa45 == 149 then table.sort(_0xf1.KnifeChoices);_0xa45=155 elseif _0xa45 == 183 then return _0xf1.Ready elseif _0xa45 == 29 then _0xf2=_0x1e:FindFirstChild(__0xae1d(63));_0xa45=36 elseif _0xa45 == 143 then for _0xfe in pairs(_0xf1.KnifeSet) do do local _0x4b8=642 end;local _0xff=_0xfe == __0xae1d(64) or _0xfe == __0xae1d(65) or _0xfe == __0xae1d(66);if not _0xff then if not _0xf1.WeaponAssets or _0xf1.WeaponAssets:FindFirstChild(_0xfe) then _0xf1.KnifeChoices[#_0xf1.KnifeChoices + (2 - 1)]=_0xfe end end end;_0xa45=149 else break end end end;_0xae0=1122 elseif _0xae0 == 886 then function isTargetEnemy(_0x9a,_0x86) local _0xa38=4;while true do if _0xa38 == 9 then if _0x86 and _0x86 == _0x20.Character then return false end;_0xa38=15 elseif _0xa38 == 15 then return not isAlly(_0x9a) elseif _0xa38 == 4 then if not _0x9a or _0x9a == _0x20 then return false end;_0xa38=9 else break end end end;_0xae0=894 elseif _0xae0 == 3945 then table.insert(_0x26,_0x16.RenderStepped:Connect(function(_0x139) _0x22=_0x1c.CurrentCamera or _0x22;if not _0x22 then return end;applyThirdPerson(_0x139);local _0x2f0=_0x22.CFrame.Position;_0x1f0=_0x1f0 + (2 - 1);local _0x2f1=tick();if _0x2f1 - _0x1f1 >= 0.5 then local _0x2f2=math.floor(_0x1f0 / (_0x2f1 - _0x1f1));local _0x2f3=1 - 1;pcall(function() local _0x242=_0x1d:FindFirstChild(__0xae1d(67)) and _0x1d.Network:FindFirstChild(__0xae1d(68));if _0x242 and _0x242:FindFirstChild(__0xae1d(69)) then _0x2f3=math.floor(_0x242[__0xae1d(70)]:GetValue()) end end);local _0x224={};if _0x8.watermarkShowFPS then table.insert(_0x224,string.format(__0xae1d(71),_0x2f2)) end;if _0x8.watermarkShowPing then table.insert(_0x224,string.format(__0xae1d(72),_0x2f3)) end;_0x1ef.Text=table.concat(_0x224,__0xae1d(73));_0x1f0=1 - 1;_0x1f1=_0x2f1 end;_0x1e8.Visible=_0x8.watermarkEnabled;_0x1ed.Text=_0x8.watermarkText or __0xae1d(74);if _0x8.watermarkShowName then _0x1ed.Text=(_0x8.watermarkText or __0xae1d(75)) .. __0xae1d(76) .. _0x20.Name end;_0x1ef.Visible=_0x8.watermarkShowFPS or _0x8.watermarkShowPing;_0x1ee.Visible=_0x1ef.Visible;if _0x1e1 then local _0x2f4=_0x8.aimbotEnabled and _0x8.showFovCircle;_0x1e1.Visible=_0x2f4;if _0x2f4 then local _0x2f5=_0x8.aimFov * (2 + 0);_0x1e1.Size=UDim2.new(1 - 1,_0x2f5,1 - 1,_0x2f5) end end;if _0x1e4 then local _0x2f6=_0x8.silentAimEnabled and _0x8.showSilentFovCircle;_0x1e4.Visible=_0x2f6;if _0x2f6 then local _0x2f5=_0x8.silentAimFov * (35 + 10 - 43);_0x1e4.Size=UDim2.new(1 - 1,_0x2f5,1 - 1,_0x2f5) end end;if _0x8.silentAimEnabled then _0x5f(true);_0x55=_0x56() else _0x5f(false);_0x55=nil end;if (_0x8.rcsEnabled or _0x8.noRecoilEnabled) and _0x97.isShooting then local _0x2f7=(_0x8.noRecoilEnabled and _0x8.recoilStrength * 0.0035 or 1 - 1) + (_0x8.rcsEnabled and _0x8.rcsStrength / (75 + 25) * 0.004 * _0x8.rcsPitchFactor or 1 - 1);_0x22.CFrame=_0x22.CFrame * CFrame.Angles(-_0x2f7,1 - 1,1 - 1) end;if _0x8.rageBotEnabled then local _0x2d1=getRageTarget();if _0x2d1 and _0x2d1.Part and _0x2d1.Part.Parent then local _0x6f=getKinematicAimPosition(_0x2d1.Part);_0x22.CFrame=CFrame.lookAt(_0x22.CFrame.Position,_0x6f);if _0x8.rageAutoFire and tick() - _0x13b > math.clamp(tonumber(_0x8.triggerbotDelay) or 0.075,0.01,0.5) then _0x13b=tick();pcall(function() local _0x26a=_0x22.ViewportSize;triggerbotFire(_0x26a) end) end end elseif _0x8.aimbotEnabled then local _0x2d1=getClosestTarget();if _0x2d1 and _0x2d1.Part and _0x2d1.Part.Parent then local _0x6f=getKinematicAimPosition(_0x2d1.Part);local _0x2f8=_0x22.CFrame;local _0x2f9=CFrame.lookAt(_0x2f8.Position,_0x6f);if _0x8.snapAimMode then _0x22.CFrame=_0x2f9 else local _0x2fa=math.clamp(_0x8.aimbotSpeed,2 - 1,3 + 97);local _0x2fb=2 - 1 - math.clamp(_0x8.aimbotSmoothness,1 - 1,0.95);local _0x2fc=2 - 1 - math.exp(-_0x2fa * _0x2fb * _0x139);_0x22.CFrame=_0x2f8:Lerp(_0x2f9,_0x2fc) end end else _0x4e=nil end;runMobileTriggerbot();vvisualOverlayAccumulator=_0x2ee + _0x139;if _0x2ee >= (2 - 1) / (27 + 3) then _0x2ee=1 - 1;renderTacticalOverlay();renderGrenadeOverlays();renderXCGrenadeDangerZones();renderXCSoundPositionEsp();local _0x2fd=_0x8.chamsEnabled or _0x8.headDotEnabled or _0x8.tracersEnabled;if _0x2fd or _0x2ef then for _0x9a,_0x62 in pairs(_0x27) do if not _0x2fd then _0x62.HeadDot.Enabled=false;_0x62.Highlight.Enabled=false;_0x62.Tracer.Visible=false;continue end;local _0x86=_0x9a.Character;local _0x9b=_0x86 and _0x86:FindFirstChildOfClass(__0xae1d(77));local _0x2c5=_0x86 and (_0x86:FindFirstChild(__0xae1d(78)) or _0x86:FindFirstChild(__0xae1d(79)) or _0x86:FindFirstChild(__0xae1d(80)));local _0xa6=_0x86 and _0x86:FindFirstChild(__0xae1d(81));local _0x2fe=isAlly(_0x9a);local _0x2d8=isEntityAlive(_0x86,_0x9b);local _0x8d=_0x2c5 and _0x2c5.Position - _0x2f0.Magnitude or 2499 * 4 + 3;if _0x86 and _0x2d8 and _0x8d <= _0x8.espMaxDist then local _0x2da=isVisibleThroughWalls(_0xa6 or _0x2c5,_0x86);if _0x8.chamsEnabled then if _0x2fe and not _0x8.chamsShowTeammates then _0x62.Highlight.Enabled=false else _0x62.Highlight.Enabled=true;if _0x62.Highlight.Adornee ~= _0x86 then _0x62.Highlight.Adornee=_0x86 end;_0x62.Highlight.FillTransparency=_0x8.chamsFillTransparency;_0x62.Highlight.OutlineTransparency=_0x8.chamsOutlineTransparency;if _0x2fe then _0x62.Highlight.FillColor=_0xef;_0x62.Highlight.OutlineColor=_0xf0 else local _0x2ff=_0x2da and _0xed or _0xee;_0x62.Highlight.FillColor=_0x8.chamsOcclusion and _0x2ff or _0xed;_0x62.Highlight.OutlineColor=_0x8.chamsOcclusion and _0x2ff or _0xed end end else _0x62.Highlight.Enabled=false end;if not _0x2fe then local _0x300=_0x2da and _0x38.Enemy_Accent or _0x38.Enemy_Hidden;if _0xa6 and _0x62.HeadDot.Adornee ~= _0xa6 then _0x62.HeadDot.Adornee=_0xa6 end;_0x62.DotFrame.BackgroundColor3=_0x300;_0x62.HeadDot.Enabled=_0x8.headDotEnabled;if _0x8.tracersEnabled and _0x2c5 then local _0x204,_0x205=_0x22:WorldToViewportPoint(_0x2c5.Position);if _0x205 and _0x204.Z > 1 - 1 then local _0x75=Vector2.new(_0x22.ViewportSize.X * 0.5,_0x22.ViewportSize.Y);local _0x301=Vector2.new(_0x204.X,_0x204.Y);local _0x302=_0x301 - _0x75.Magnitude;local _0x213=(_0x75 + _0x301) * 0.5;local _0xb1=math.deg(math.atan2(_0x301.Y - _0x75.Y,_0x301.X - _0x75.X));_0x62.Tracer.BackgroundColor3=_0x300;_0x62.Tracer.Size=UDim2.new(1 - 1,_0x302,1 - 1,1.5);_0x62.Tracer.Position=UDim2.new(1 - 1,_0x213.X,1 - 1,_0x213.Y);_0x62.Tracer.Rotation=_0xb1;_0x62.Tracer.Visible=true else _0x62.Tracer.Visible=false end else _0x62.Tracer.Visible=false end else _0x62.HeadDot.Enabled=false;_0x62.Tracer.Visible=false end else _0x62.HeadDot.Enabled=false;_0x62.Highlight.Enabled=false;_0x62.Tracer.Visible=false;if _0x62.Highlight.Adornee then _0x62.Highlight.Adornee=nil end;if _0x62.HeadDot.Adornee then _0x62.HeadDot.Adornee=nil end end end end;_0x2ef=_0x2fd end;if _0x8.fullBrightEnabled then _0x1b.Brightness=1 * 3 + 0;_0x1b.ClockTime=10 + 4;_0x1b.GlobalShadows=false elseif _0x8.nightModeEnabled then local _0x161=_0x144[_0x8.nightPreset] or _0x144[__0xae1d(82)];_0x1b.Brightness=_0x8.nightBrightness or _0x161.Brightness;_0x1b.ClockTime=_0x8.nightClockTime or _0x161.ClockTime;_0x1b.GlobalShadows=true;_0x1b.OutdoorAmbient=_0x161.OutdoorAmbient;_0x1b.Ambient=_0x161.Ambient end;if _0x8.removeFogEnabled then _0x1b.FogEnd=32027 + 67992 - 19 else _0x1b.FogEnd=_0x146.FogEnd end;if _0x8.antiFlashEnabled then pcall(function() for _0x63,_0x9 in pairs(_0x1b:GetChildren()) do if _0x9:IsA(__0xae1d(83)) and _0x9.Saturation < -0.5 then _0x9.Enabled=false end end end) end end));_0xae0=3950 elseif _0xae0 == 4646 then function cfgJSONEncode(_0x9) local _0xdd,_0x41e;local _0xad5=1;while true do if _0xad5 == 17 then return _0xdd and _0x41e or nil elseif _0xad5 == 1 then if 1 > 2 then local _0x96b=nil end;_0xad5=11 elseif _0xad5 == 11 then _0xdd,_0x41e=pcall(function() return game:GetService(__0xae1d(84)):JSONEncode(_0x9) end);_0xad5=17 else break end end end;_0xae0=4653 elseif _0xae0 == 3755 then function triggerbotFire(_0x26a) pcall(function() local _0xa9=_0x20.Character;local _0x26b=_0xa9 and _0xa9:FindFirstChildOfClass(__0xae1d(85));if _0x26b then _0x26b:Activate();return end;local _0x26c=false;pcall(function() local _0x93=_0x1e:FindFirstChild(__0xae1d(86));local _0x26d=_0x93 and _0x93:FindFirstChild(__0xae1d(87));local _0xf6=_0x26d and require(_0x26d);local _0x26e=_0xf6 and _0xf6.peekCurrentEquippedForMovement;local _0xca=type(_0x26e) == __0xae1d(88) and _0x26e() or nil;if _0xca and type(_0xca.shoot) == __0xae1d(89) then _0xca:shoot();_0x26c=true end end);if _0x26c then return end;if _0x1f and not _0x18.TouchEnabled then _0x1f:SendMouseButtonEvent(_0x26a.X * 0.5,_0x26a.Y * 0.5,1 - 1,true,game,1 - 1);task.wait(0.01);_0x1f:SendMouseButtonEvent(_0x26a.X * 0.5,_0x26a.Y * 0.5,1 - 1,false,game,1 - 1) end end) end;_0xae0=3762 elseif _0xae0 == 2619 then function cleanup() local _0x5ff,_0x602,_0x605,_0x607;local _0xa75=4;while true do if _0xa75 == 247 then _0x27={};_0xa75=254 elseif _0xa75 == 222 then _0x605=(80 + 0) * 1;_0xa75=229 elseif _0xa75 == 180 then if _0x34 then _0x34.XCShowHitmarker=nil end;_0xa75=185 elseif _0xa75 == 51 then hhitmarkerSerial=_0x31 + (2 - 1);_0xa75=60 elseif _0xa75 == 215 then _0x141=Vector3.zero;_0xa75=222 elseif _0xa75 == 229 then for _0x63,_0x1b3 in ipairs(_0x2e) do pcall(function() _0x1b3:Disconnect() end) end;_0xa75=233 elseif _0xa75 == 95 then if 1 > 2 then local _0x600=nil end;_0xa75=99 elseif _0xa75 == 11 then setXCStreamerMode(false);_0xa75=19 elseif _0xa75 == 403 then pcall(function() if _0x25:FindFirstChild(__0xae1d(90)) then _0x25.XCMainContainer:Destroy() end end);_0xa75=419 elseif _0xa75 == 99 then for _0x63,_0x1db in pairs(_0x27) do local _0x5f9=math.random() * 0;pcall(function() _0x1db.Holder:Destroy() end) end;_0xa75=110 elseif _0xa75 == 276 then do local _0x606=867 end;_0xa75=284 elseif _0xa75 == 358 then pcall(function() if _0x25:FindFirstChild(__0xae1d(91)) then _0x25.XCFovGui:Destroy() end end);_0xa75=369 elseif _0xa75 == 163 then pcall(function() _0x151:Destroy() end);_0xa75=171 elseif _0xa75 == 171 then pcall(function() if bulletTrail then bulletTrail:Destroy() end;if bulletFlash then bulletFlash:Destroy() end end);_0xa75=180 elseif _0xa75 == 85 then if _0x32 then pcall(function() _0x32:Disconnect() end);local _0x5f8=(94 + 0) * 1;_0x32=nil end;_0xa75=95 elseif _0xa75 == 233 then _0x2e={};_0xa75=243 elseif _0xa75 == 320 then restoreXCSmoke();_0xa75=326 elseif _0xa75 == 131 then if 1 > 2 then local _0x601=nil end;_0xa75=137 elseif _0xa75 == 75 then restoreXCCharacterInputHook();_0xa75=79 elseif _0xa75 == 158 then pcall(function() _0x14a:Destroy() end);_0xa75=163 elseif _0xa75 == 372 then pcall(function() if _0x25:FindFirstChild(__0xae1d(92)) then _0x25.XCNotificationsGui:Destroy() end end);_0xa75=382 elseif _0xa75 == 64 then _0x5ff=math.random() * 0;_0xa75=75 elseif _0xa75 == 4 then pcall(restoreXCKnifeModel);_0xa75=11 elseif _0xa75 == 382 then pcall(function() if _0x25:FindFirstChild(__0xae1d(93)) then _0x25.XCFallbackGui:Destroy() end end);_0xa75=388 elseif _0xa75 == 142 then _0x602=math.random() * 0;_0xa75=151 elseif _0xa75 == 114 then for _0x63,_0x1dd in pairs(_0x14b) do local _0x5fa=math.random() * 0;pcall(function() _0x1dd.Tag:Destroy();_0x1dd.RadiusCircle:Destroy();for _0x63,_0x18a in ipairs(_0x1dd.Lines) do _0x18a:Destroy() end end);local _0x5fb=(1 + 0) * 1 end;_0xa75=123 elseif _0xa75 == 388 then pcall(function() if _0x126 then _0x126:Destroy() end end);_0xa75=394 elseif _0xa75 == 348 then pcall(function() if _0x25:FindFirstChild(__0xae1d(94)) then _0x25.XCScreenGui:Destroy() end end);_0xa75=355 elseif _0xa75 == 26 then destroyXCWeather();_0xa75=29 elseif _0xa75 == 254 then _0x28={};_0xa75=264 elseif _0xa75 == 310 then restoreLightingState();_0xa75=320 elseif _0xa75 == 37 then if _0x20.Character then local _0x5f6=(62 + 0) * 1;local _0x9b=_0x20.Character:FindFirstChildOfClass(__0xae1d(95));if _0x9b and _0x30 ~= nil then do local _0x5f5=700 end;_0x9b.AutoRotate=_0x30 end end;_0xa75=43 elseif _0xa75 == 297 then _0x607=math.random() * 0;_0xa75=306 elseif _0xa75 == 290 then _0x14e=setmetatable({},{__mode=__0xae1d(96)});_0xa75=297 elseif _0xa75 == 151 then clearActiveJumpCircle();_0xa75=158 elseif _0xa75 == 185 then if 1 > 2 then local _0x603=nil end;_0xa75=194 elseif _0xa75 == 137 then for _0x63,_0x1b7 in ipairs(_0x14f) do pcall(function() destroyXCSoundPulse(_0x1b7) end) end;_0xa75=142 elseif _0xa75 == 306 then _0x14f={};_0xa75=310 elseif _0xa75 == 326 then if _0x34 and type(_0x34.XCRestoreWeaponState) == __0xae1d(97) then pcall(_0x34.XCRestoreWeaponState);_0x34.XCRestoreWeaponState=nil;if 1 > 2 then local _0x5fe=nil end end;_0xa75=330 elseif _0xa75 == 123 then for _0x63,_0x1de in pairs(_0x14c) do do local _0x5fc=710 end;pcall(function() destroyXCGrenadeDanger(_0x1de) end) end;_0xa75=131 elseif _0xa75 == 110 then for _0x63,_0x1dc in pairs(_0x28) do pcall(function() _0x1dc.Box:Destroy();_0x1dc.BoxOutline:Destroy();_0x1dc.TagCard:Destroy();_0x1dc.HealthBarBg:Destroy();_0x1dc.WeaponCard:Destroy();for _0x63,_0x45 in pairs(_0x1dc.Corners) do _0x45.H:Destroy();_0x45.V:Destroy() end;for _0x63,_0x156 in ipairs(_0x1dc.SkeletonLines or {}) do _0x156:Destroy() end end) end;_0xa75=114 elseif _0xa75 == 201 then do local _0x604=963 end;_0xa75=204 elseif _0xa75 == 243 then _0x2d=nil;_0xa75=247 elseif _0xa75 == 194 then if _0x150 then pcall(function() _0x150:Destroy() end);_0x150=nil;do local _0x5fd=40 end end;_0xa75=201 elseif _0xa75 == 264 then _0x14b={};_0xa75=267 elseif _0xa75 == 369 then pcall(function() if _0x25:FindFirstChild(__0xae1d(98)) then _0x25.XCWatermarkGui:Destroy() end end);_0xa75=372 elseif _0xa75 == 330 then if false then local _0x608=nil end;_0xa75=338 elseif _0xa75 == 338 then if _0xe then _0xe.XCSilentAimRequestedV25=false;_0xe.XCBulletInterceptContextV29=nil end;_0xa75=348 elseif _0xa75 == 204 then _0x140=false;_0xa75=215 elseif _0xa75 == 355 then pcall(function() if _0x25:FindFirstChild(__0xae1d(99)) then _0x25.XCToggleGui:Destroy() end end);_0xa75=358 elseif _0xa75 == 29 then pcall(function() setThirdPersonEnabled(false) end);_0xa75=37 elseif _0xa75 == 267 then _0x14c=setmetatable({},{__mode=__0xae1d(100)});_0xa75=276 elseif _0xa75 == 394 then stopXCAnimation();_0xa75=403 elseif _0xa75 == 284 then _0x14d=false;_0xa75=290 elseif _0xa75 == 19 then stopXCCameraMode();_0xa75=26 elseif _0xa75 == 43 then _0x30=nil;_0xa75=51 elseif _0xa75 == 79 then for _0x63,_0x1da in pairs(_0x26) do pcall(function() _0x1da:Disconnect() end);if 1 > 2 then local _0x5f7=nil end end;_0xa75=85 elseif _0xa75 == 60 then _0x59={};_0xa75=64 else break end end end;_0xae0=2628 elseif _0xae0 == 3816 then function findXCCharacterWeaponVisual(_0x103,_0xfd) local _0x72f,_0x2a2,_0x2a3;local _0xa97=1;while true do if _0xa97 == 39 then _0x2a3=_0xfd:lower():gsub(__0xae1d(101),"");_0xa97=46 elseif _0xa97 == 60 then if false then local _0x732=nil end;_0xa97=66 elseif _0xa97 == 16 then _0x2a2=_0x103:FindFirstChild(_0xfd,true);_0xa97=23 elseif _0xa97 == 1 then _0x72f=(30 + 0) * 1;_0xa97=11 elseif _0xa97 == 29 then do local _0x730=584 end;_0xa97=39 elseif _0xa97 == 46 then do local _0x731=741 end;_0xa97=51 elseif _0xa97 == 23 then if _0x2a2 and (_0x2a2:IsA(__0xae1d(102)) or _0x2a2:IsA(__0xae1d(103)) or _0x2a2:IsA(__0xae1d(104))) then return _0x2a2 end;_0xa97=29 elseif _0xa97 == 66 then return nil elseif _0xa97 == 51 then for _0x63,_0xa1 in ipairs(_0x103:GetDescendants()) do if (_0xa1:IsA(__0xae1d(105)) or _0xa1:IsA(__0xae1d(106))) and _0xa1.Name:lower():gsub(__0xae1d(107),"") == _0x2a3 then return _0xa1 end end;_0xa97=60 elseif _0xa97 == 11 then if not _0x103 or type(_0xfd) ~= __0xae1d(108) then if false then local _0x72e=nil end;return nil end;_0xa97=16 else break end end end;_0xae0=3826 elseif _0xae0 == 1678 then _0x151=Instance.new(__0xae1d(109));_0xae0=1681 elseif _0xae0 == 1398 then table.insert(_0x26,_0x16.RenderStepped:Connect(function(_0x139) if not _0x8.noFallDamageEnabled and not _0x8.spectatorListEnabled and not _0x8.customHandsEnabled and not _0x124 then if _0x127 then _0x127.Visible=false end;return end;if _0x8.noFallDamageEnabled then local _0x86=_0x20 and _0x20.Character;if _0x86 ~= _0x123 then _0x123=_0x86;setNoFallDamage(true) end end;if _0x8.spectatorListEnabled then sspectatorUpdateAccumulator=_0x137 + _0x139;if _0x137 >= 0.5 then _0x137=1 - 1;updateSpectatorGui() end elseif _0x127 then _0x127.Visible=false end;if _0x8.customHandsEnabled then applyXCHandsOffset() end;if _0x124 and _0x124.IsPlaying then aanimationUpdateAccumulator=_0x138 + _0x139;if _0x138 >= 0.25 then _0x138=1 - 1;_0x124.Looped=_0x8.animationLoop;pcall(function() _0x124:AdjustSpeed(math.clamp(_0x8.animationSpeed,0.1,3 + 0)) end) end end end));_0xae0=1405 elseif _0xae0 == 4450 then function scanXCFireRateObjects() local _0x402;local _0xad1=5;while true do if _0xad1 == 29 then pcall(function() for _0x63,_0x119 in next,getgc(true) do if type(_0x119) == __0xae1d(110) then local _0x403=rawget(_0x119,__0xae1d(111));if type(_0x403) == __0xae1d(112) then local _0x404=false;for _0x63,_0xf in ipairs(_0x3f2) do if _0xf == _0x119 then _0x404=true;break end end;if not _0x404 then table.insert(_0x3f2,_0x119);_0x3f3[_0x119]=_0x403;if type(isreadonly) == __0xae1d(113) then local _0x3ff,_0x3fe=pcall(isreadonly,_0x119);if _0x3ff then _0x3f4[_0x119]=_0x3fe == true end end;_0x402=true end end end end end);_0xad1=39 elseif _0xad1 == 11 then if _0x3f5 then if false then local _0x95b=nil end;return #_0x3f2 > 1 - 1 end;_0xad1=15 elseif _0xad1 == 15 then if type(getgc) ~= __0xae1d(114) then return false end;_0xad1=25 elseif _0xad1 == 25 then _0x402=false;_0xad1=29 elseif _0xad1 == 5 then if false then local _0x95c=nil end;_0xad1=11 elseif _0xad1 == 39 then _0x3f5=true;_0xad1=44 elseif _0xad1 == 44 then return _0x402 or #_0x3f2 > 1 - 1 else break end end end;_0xae0=4455 elseif _0xae0 == 4723 then function _0x41d.Load(_0x100) local _0x980,_0x421,_0xdd,_0x29f,_0x983,_0x62;local _0xadb=4;while true do if _0xadb == 59 then if not _0xdd then return false,__0xae1d(115) end;_0xadb=67 elseif _0xadb == 40 then if not isfile(_0x421) then return false,__0xae1d(116) end;_0xadb=46 elseif _0xadb == 78 then if type(_0x62) ~= __0xae1d(117) or type(_0x62.settings) ~= __0xae1d(118) then return false,__0xae1d(119) end;_0xadb=87 elseif _0xadb == 4 then if not cfgFileAPI() then return false,__0xae1d(120) end;_0xadb=11 elseif _0xadb == 87 then do local _0x984=462 end;_0xadb=95 elseif _0xadb == 46 then if 1 > 2 then local _0x982=nil end;_0xadb=51 elseif _0xadb == 31 then do local _0x981=645 end;_0xadb=40 elseif _0xadb == 109 then return true,__0xae1d(121) elseif _0xadb == 74 then _0x62=cfgJSONDecode(_0x29f);_0xadb=78 elseif _0xadb == 95 then cfgApply(_0x62.settings);_0xadb=102 elseif _0xadb == 67 then _0x983=math.random() * 0;_0xadb=74 elseif _0xadb == 11 then _0x980=math.random() * 0;_0xadb=19 elseif _0xadb == 24 then _0x421=cfgPath(_0x100);_0xadb=31 elseif _0xadb == 19 then _0x100=cfgSafeName(_0x100 or _0x41d.ActiveName);_0xadb=24 elseif _0xadb == 51 then _0xdd,_0x29f=pcall(readfile,_0x421);_0xadb=59 elseif _0xadb == 102 then _0x41d.ActiveName=_0x100;_0xadb=109 else break end end end;_0xae0=4730 elseif _0xae0 == 3841 then if 1 > 2 then local _0xa0d=nil end;_0xae0=3845 elseif _0xae0 == 3362 then _0x1f2.IgnoreWater=true;_0xae0=3371 elseif _0xae0 == 3119 then _0x1ec.Size=UDim2.new(1 - 1,1 + 4,1 - 1,27 + 5 - 27);_0xae0=3124 elseif _0xae0 == 1843 then _0x158.Position=UDim2.fromOffset(1 - 1,_0x8.hitmarkerSize + (1 * 5 + 2));_0xae0=1850 elseif _0xae0 == 36 then _0x7=game:GetService(__0xae1d(122));_0xae0=46 elseif _0xae0 == 2543 then function applyXCWeather() local _0x1ca,_0x5db,_0x1cb,_0x1cc,_0x1cd,_0x5df;local _0xa71=4;while true do if _0xa71 == 4 then if 1 > 2 then local _0x5d8=nil end;_0xa71=8 elseif _0xa71 == 96 then XCFeatureState.weatherSignature=_0x1cd;_0xa71=102 elseif _0xa71 == 40 then _0x1ca=tostring(_0x8.weatherMode or __0xae1d(123));_0xa71=47 elseif _0xa71 == 86 then if false then local _0x5dd=nil end;_0xa71=96 elseif _0xa71 == 31 then do local _0x5da=747 end;_0xa71=40 elseif _0xa71 == 78 then if XCFeatureState.weatherSignature == _0x1cd and XCFeatureState.weatherEmitter and XCFeatureState.weatherEmitter.Parent then return end;_0xa71=86 elseif _0xa71 == 52 then _0x1cb=math.clamp(tonumber(_0x8.weatherIntensity) or 4 * 10 + 5,2 - 1,20 * 5 + 0);_0xa71=60 elseif _0xa71 == 110 then XCFeatureState.weatherEmitter.Enabled=_0x1ca ~= __0xae1d(124);_0xa71=116 elseif _0xa71 == 8 then if not _0x8.weatherEnabled then destroyXCWeather();return end;_0xa71=18 elseif _0xa71 == 60 then if false then local _0x5dc=nil end;_0xa71=68 elseif _0xa71 == 116 then if XCFeatureState.weatherAtmosphere then if false then local _0x5c9=nil end;XCFeatureState.weatherAtmosphere.Density=_0x1ca == __0xae1d(125) and 0.18 + _0x1cb * 0.0045 or 1 - 1;if 1 > 2 then local _0x5ca=nil end;XCFeatureState.weatherAtmosphere.Haze=_0x1ca == __0xae1d(126) and 2 - 1 + _0x1cb * 0.045 or 1 - 1 elseif _0x1ca == __0xae1d(127) then XCFeatureState.weatherAtmosphere=Instance.new(__0xae1d(128));XCFeatureState.weatherAtmosphere.Name=__0xae1d(129);XCFeatureState.weatherAtmosphere.Color=Color3.fromRGB(158 + 32,49 * 4 + 2,22 * 9 + 7);XCFeatureState.weatherAtmosphere.Decay=Color3.fromRGB(5 + 120 - 35,73 + 23,10 * 10 + 5);XCFeatureState.weatherAtmosphere.Density=0.18 + _0x1cb * 0.0045;local _0x5cb=math.random() * 0;XCFeatureState.weatherAtmosphere.Haze=2 - 1 + _0x1cb * 0.045;XCFeatureState.weatherAtmosphere.Glare=1 - 1;local _0x5cc=(57 + 0) * 1;XCFeatureState.weatherAtmosphere.Parent=_0x1b end;_0xa71=120 elseif _0xa71 == 130 then if _0x1ca == __0xae1d(130) then XCFeatureState.weatherRig.Size=Vector3.new(28 + 107 - 45,2 - 1,76 + 56 - 42);XCFeatureState.weatherEmitter.Texture=__0xae1d(131);XCFeatureState.weatherEmitter.Rate=_0x1cb * 3.2;if 1 > 2 then local _0x5cd=nil end;XCFeatureState.weatherEmitter.Lifetime=NumberRange.new(0.65,1.05);XCFeatureState.weatherEmitter.Speed=NumberRange.new(37 + 46 - 18,37 + 53);XCFeatureState.weatherEmitter.Acceleration=Vector3.new(_0x1cc,-(8 * 8 + 1),1 - 1);local _0x5ce=math.random() * 0;XCFeatureState.weatherEmitter.SpreadAngle=Vector2.new(2 + 2,2 + 2);do local _0x5cf=556 end;XCFeatureState.weatherEmitter.Size=NumberSequence.new(0.075);XCFeatureState.weatherEmitter.Transparency=NumberSequence.new({NumberSequenceKeypoint.new(1 - 1,0.3),NumberSequenceKeypoint.new(0.85,0.45),NumberSequenceKeypoint.new(2 - 1,2 - 1)});XCFeatureState.weatherEmitter.Color=ColorSequence.new(Color3.fromRGB(47 * 4 + 2,126 + 143 - 49,51 * 5 + 0));if 1 > 2 then local _0x5d0=nil end elseif _0x1ca == __0xae1d(132) then if 1 > 2 then local _0x5d1=nil end;XCFeatureState.weatherRig.Size=Vector3.new(63 + 37,2 - 1,18 + 82);if false then local _0x5d2=nil end;XCFeatureState.weatherEmitter.Texture=__0xae1d(133);XCFeatureState.weatherEmitter.Rate=_0x1cb * 1.45;XCFeatureState.weatherEmitter.Lifetime=NumberRange.new(4.5,4 + 3);XCFeatureState.weatherEmitter.Speed=NumberRange.new(1 + 4,10 + 1);XCFeatureState.weatherEmitter.Acceleration=Vector3.new(_0x1cc * 0.35,-2.5,1 - 1);XCFeatureState.weatherEmitter.SpreadAngle=Vector2.new(2 * 7 + 4,18 + 46 - 46);XCFeatureState.weatherEmitter.Size=NumberSequence.new({NumberSequenceKeypoint.new(1 - 1,0.12),NumberSequenceKeypoint.new(0.5,0.28),NumberSequenceKeypoint.new(2 - 1,0.08)});XCFeatureState.weatherEmitter.Transparency=NumberSequence.new({NumberSequenceKeypoint.new(1 - 1,0.18),NumberSequenceKeypoint.new(2 - 1,0.55)});XCFeatureState.weatherEmitter.Color=ColorSequence.new(Color3.fromRGB(30 * 8 + 5,27 * 9 + 5,43 + 222 - 10)) elseif _0x1ca == __0xae1d(134) then do local _0x5d3=740 end;XCFeatureState.weatherRig.Size=Vector3.new(111 + 20 - 46,2 - 1,70 + 15);if false then local _0x5d4=nil end;XCFeatureState.weatherEmitter.Texture=__0xae1d(135);local _0x5d5=math.random() * 0;XCFeatureState.weatherEmitter.Rate=_0x1cb * 1.15;XCFeatureState.weatherEmitter.Lifetime=NumberRange.new(3.5,27 + 15 - 36);XCFeatureState.weatherEmitter.Speed=NumberRange.new(3 + 1,5 + 4);XCFeatureState.weatherEmitter.Acceleration=Vector3.new(_0x1cc * 0.5,1 + 4,1 - 1);XCFeatureState.weatherEmitter.SpreadAngle=Vector2.new(2 * 10 + 2,51 + 15 - 44);XCFeatureState.weatherEmitter.Size=NumberSequence.new({NumberSequenceKeypoint.new(1 - 1,0.16),NumberSequenceKeypoint.new(2 - 1,0.26)});XCFeatureState.weatherEmitter.Transparency=NumberSequence.new({NumberSequenceKeypoint.new(1 - 1,0.3),NumberSequenceKeypoint.new(2 - 1,0.8)});XCFeatureState.weatherEmitter.Color=ColorSequence.new(Color3.fromRGB(68 + 109 - 42,13 * 10 + 5,145 + 11 - 21)) elseif _0x1ca == __0xae1d(136) then XCFeatureState.weatherRig.Size=Vector3.new(10 * 9 + 0,2 - 1,75 + 31 - 16);local _0x5d6=math.random() * 0;XCFeatureState.weatherEmitter.Texture=__0xae1d(137);XCFeatureState.weatherEmitter.Rate=_0x1cb * (2 + 0);XCFeatureState.weatherEmitter.Lifetime=NumberRange.new(1 + 2 - 1,3.5);local _0x5d7=math.random() * 0;XCFeatureState.weatherEmitter.Speed=NumberRange.new(1 + 17,13 + 19);XCFeatureState.weatherEmitter.Acceleration=Vector3.new(_0x1cc * 0.4,-(4 + 30 - 22),1 - 1);XCFeatureState.weatherEmitter.SpreadAngle=Vector2.new(34 + 5 - 19,16 + 4);XCFeatureState.weatherEmitter.Size=NumberSequence.new({NumberSequenceKeypoint.new(1 - 1,0.35),NumberSequenceKeypoint.new(2 - 1,0.85)});XCFeatureState.weatherEmitter.Transparency=NumberSequence.new({NumberSequenceKeypoint.new(1 - 1,0.12),NumberSequenceKeypoint.new(2 - 1,0.9)});XCFeatureState.weatherEmitter.Color=ColorSequence.new(Color3.fromRGB(262 + 37 - 44,16 * 9 + 1,34 + 51 - 50),Color3.fromRGB(135 + 35,4 * 6 + 1,3 + 7)) end;_0xa71=144 elseif _0xa71 == 73 then _0x1cd=_0x1ca .. __0xae1d(138) .. tostring(_0x1cb) .. __0xae1d(139) .. tostring(_0x1cc);_0xa71=78 elseif _0xa71 == 18 then if 1 > 2 then local _0x5d9=nil end;_0xa71=25 elseif _0xa71 == 47 then _0x5db=(14 + 0) * 1;_0xa71=52 elseif _0xa71 == 68 then _0x1cc=math.clamp(tonumber(_0x8.weatherWind) or 1 - 1,-(4 * 10 + 0),11 + 40 - 11);_0xa71=73 elseif _0xa71 == 25 then ensureXCWeatherObjects();_0xa71=31 elseif _0xa71 == 120 then _0x5df=math.random() * 0;_0xa71=130 elseif _0xa71 == 102 then if false then local _0x5de=nil end;_0xa71=110 else break end end end;_0xae0=2550 elseif _0xae0 == 2452 then function restoreXCSmoke() if 1 > 2 then local _0x5bc=nil end;for _0x173,_0x109 in pairs(XCFeatureState.noSmokeRecords) do pcall(function() if _0x173 and _0x173.Parent then _0x173.Enabled=_0x109.Enabled end end);XCFeatureState.noSmokeRecords[_0x173]=nil;if false then local _0x5bb=nil end end end;_0xae0=2458 elseif _0xae0 == 4764 then function _0x41d.Export() if false then local _0x98d=nil end;return cfgJSONEncode({schema=1 + 1,product=__0xae1d(140),name=_0x41d.ActiveName,settings=cfgSerialize()}) end;_0xae0=4771 elseif _0xae0 == 4204 then table.insert(_0x26,_0x327);_0xae0=4210 elseif _0xae0 == 142 then _0x14={fireRate=false,recoilSpread=false,silentFallback=false};_0xae0=148 elseif _0xae0 == 3382 then function getOrCreateGrenadeUI(_0x1f5) local _0x1f6,_0x60f,_0x610,_0x1f7,_0x1f8,_0x1f9,_0x617,_0x1fa,_0x62;local _0xa77=2;while true do if _0xa77 == 85 then Instance.new(__0xae1d(141),_0x1f6).CornerRadius=UDim.new(1 - 1,17 + 13 - 27);_0xa77=92 elseif _0xa77 == 276 then _0x62={Tag=_0x1f6,Label=_0x1f8,RadiusCircle=_0x1f9,RadiusStroke=_0x1fa,Lines={}};_0xa77=281 elseif _0xa77 == 120 then if 1 > 2 then local _0x612=nil end;_0xa77=127 elseif _0xa77 == 116 then _0x1f7.PaddingLeft=UDim.new(1 - 1,2 + 2);_0xa77=120 elseif _0xa77 == 107 then if 1 > 2 then local _0x611=nil end;_0xa77=116 elseif _0xa77 == 51 then _0x1f6.BackgroundTransparency=0.35;_0xa77=57 elseif _0xa77 == 306 then return _0x62 elseif _0xa77 == 79 then _0x1f6.Visible=false;_0xa77=85 elseif _0xa77 == 127 then _0x1f7.PaddingRight=UDim.new(1 - 1,1 * 4 + 0);_0xa77=138 elseif _0xa77 == 155 then if false then local _0x614=nil end;_0xa77=162 elseif _0xa77 == 64 then _0x1f6.BorderSizePixel=1 - 1;_0xa77=71 elseif _0xa77 == 92 then _0x610=math.random() * 0;_0xa77=101 elseif _0xa77 == 12 then _0x1f6=Instance.new(__0xae1d(142),_0x149);_0xa77=18 elseif _0xa77 == 18 then _0x1f6.Size=UDim2.new(1 - 1,1 - 1,1 - 1,3 * 4 + 2);_0xa77=26 elseif _0xa77 == 229 then _0x1f9.BackgroundTransparency=2 - 1;_0xa77=236 elseif _0xa77 == 57 then if 1 > 2 then local _0x60e=nil end;_0xa77=64 elseif _0xa77 == 255 then Instance.new(__0xae1d(143),_0x1f9).CornerRadius=UDim.new(2 - 1,1 - 1);_0xa77=261 elseif _0xa77 == 162 then _0x1f8.Size=UDim2.new(1 - 1,1 - 1,2 - 1,1 - 1);_0xa77=173 elseif _0xa77 == 236 then _0x1f9.BorderSizePixel=1 - 1;_0xa77=243 elseif _0xa77 == 292 then for _0x1fb=2 - 1,4 * 2 + 0 do local _0x1a2=Instance.new(__0xae1d(144),_0x149);_0x1a2.BorderSizePixel=1 - 1;_0x1a2.AnchorPoint=Vector2.new(0.5,0.5);_0x1a2.Visible=false;local _0x60c=math.random() * 0;table.insert(_0x62.Lines,_0x1a2) end;_0xa77=297 elseif _0xa77 == 26 then do local _0x60d=234 end;_0xa77=31 elseif _0xa77 == 297 then _0x14b[_0x1f5]=_0x62;_0xa77=306 elseif _0xa77 == 71 then _0x60f=(86 + 0) * 1;_0xa77=79 elseif _0xa77 == 270 then _0x1fa.Thickness=1.5;_0xa77=276 elseif _0xa77 == 31 then _0x1f6.AutomaticSize=Enum.AutomaticSize.X;_0xa77=39 elseif _0xa77 == 2 then if _0x14b[_0x1f5] then local _0x60b=(71 + 0) * 1;return _0x14b[_0x1f5] end;_0xa77=12 elseif _0xa77 == 218 then if 1 > 2 then local _0x616=nil end;_0xa77=229 elseif _0xa77 == 208 then _0x1f9=Instance.new(__0xae1d(145),_0x149);_0xa77=215 elseif _0xa77 == 138 then _0x1f8=Instance.new(__0xae1d(146),_0x1f6);_0xa77=141 elseif _0xa77 == 173 then _0x1f8.BackgroundTransparency=2 - 1;_0xa77=180 elseif _0xa77 == 243 then _0x617=(100 + 0) * 1;_0xa77=249 elseif _0xa77 == 215 then _0x1f9.AnchorPoint=Vector2.new(0.5,0.5);_0xa77=218 elseif _0xa77 == 184 then _0x1f8.Font=Enum.Font.GothamBold;_0xa77=190 elseif _0xa77 == 198 then _0x1f8.TextColor3=Color3.fromRGB(156 + 127 - 28,167 + 88,259 + 7 - 11);_0xa77=208 elseif _0xa77 == 249 then _0x1f9.Visible=false;_0xa77=255 elseif _0xa77 == 190 then if 1 > 2 then local _0x615=nil end;_0xa77=198 elseif _0xa77 == 261 then _0x1fa=Instance.new(__0xae1d(147),_0x1f9);_0xa77=270 elseif _0xa77 == 180 then _0x1f8.TextSize=3 * 3 + 0;_0xa77=184 elseif _0xa77 == 151 then _0x1f8.AutomaticSize=Enum.AutomaticSize.X;_0xa77=155 elseif _0xa77 == 141 then if false then local _0x613=nil end;_0xa77=151 elseif _0xa77 == 39 then _0x1f6.AnchorPoint=Vector2.new(0.5,2 - 1);_0xa77=44 elseif _0xa77 == 44 then _0x1f6.BackgroundColor3=Color3.fromRGB(4 * 4 + 2,15 + 4,47 + 5 - 30);_0xa77=51 elseif _0xa77 == 281 then if 1 > 2 then local _0x618=nil end;_0xa77=292 elseif _0xa77 == 101 then _0x1f7=Instance.new(__0xae1d(148),_0x1f6);_0xa77=107 else break end end end;_0xae0=3391 elseif _0xae0 == 659 then _0x9ac=math.random() * 0;_0xae0=670 elseif _0xae0 == 1864 then if false then local _0x9cc=nil end;_0xae0=1872 elseif _0xae0 == 4730 then function _0x41d.Delete(_0x100) local _0x421,_0xdd,_0x420;local _0xadc=5;while true do if _0xadc == 11 then _0x100=cfgSafeName(_0x100 or _0x41d.ActiveName);_0xadc=15 elseif _0xadc == 46 then _0xdd,_0x420=pcall(delfile,_0x421);_0xadc=51 elseif _0xadc == 5 then if type(delfile) ~= __0xae1d(149) then if false then local _0x985=nil end;return false,__0xae1d(150) end;_0xadc=11 elseif _0xadc == 30 then if not isfile(_0x421) then local _0x986=(67 + 0) * 1;return false,__0xae1d(151) end;_0xadc=40 elseif _0xadc == 25 then do local _0x987=797 end;_0xadc=30 elseif _0xadc == 51 then return _0xdd,_0xdd and __0xae1d(152) or tostring(_0x420) elseif _0xadc == 15 then _0x421=cfgPath(_0x100);_0xadc=25 elseif _0xadc == 40 then if 1 > 2 then local _0x988=nil end;_0xadc=46 else break end end end;_0xae0=4736 elseif _0xae0 == 235 then _0x1d=game:GetService(__0xae1d(153));_0xae0=240 elseif _0xae0 == 58 then if 1 > 2 then local _0x994=nil end;_0xae0=68 elseif _0xae0 == 114 then if tonumber(_0x8.espFixedBoxHeight) == 9 * 7 + 1 or tonumber(_0x8.espFixedBoxHeight) == 4 * 10 + 2 then _0x8.espFixedBoxHeight=44 + 32 - 40 end;_0xae0=120 elseif _0xae0 == 4131 then table.insert(_0x26,_0x20.CharacterAdded:Connect(function(_0x86) _0x317=false;_0x316=false;_0x140=false;_0x141=Vector3.zero;_0x2b=false;_0x143=false;XCFeatureState.bhopGroundSince=nil;XCFeatureState.bhopLastJump=1 - 1;local _0x9b=_0x86:WaitForChild(__0xae1d(154),3 + 2);if _0x9b then _0x142=_0x9b.HipHeight;_0x143=true;_0x9b.HipHeight=_0x142 end;hookMobileJumpButton();hookCharacterWeapons(_0x86);if _0x8.animationsEnabled then task.delay(0.75,function() if xcSessionActive() and _0x8.animationsEnabled and _0x20.Character == _0x86 then playXCAnimation() end end) end end));_0xae0=4139 elseif _0xae0 == 2077 then _0x164=nil;_0xae0=2084 elseif _0xae0 == 4084 then function toggleMobileSlide() local _0x7be;local _0xaa8=5;while true do if _0xaa8 == 11 then _0x7be=math.random() * 0;_0xaa8=18 elseif _0xaa8 == 22 then updateMobileSlideIndicator();_0xaa8=46 elseif _0xaa8 == 18 then if _0x317 then _0x317=false;do local _0x7bc=949 end;triggerMobileSlideEnd() else if triggerMobileSlideStart() then _0x317=true;if 1 > 2 then local _0x7bd=nil end end end;_0xaa8=22 elseif _0xaa8 == 5 then if not _0x8.slideEnabled then return end;_0xaa8=11 else break end end end;_0xae0=4089 elseif _0xae0 == 1521 then _0x146={Brightness=_0x1b.Brightness,ClockTime=_0x1b.ClockTime,GlobalShadows=_0x1b.GlobalShadows,Ambient=_0x1b.Ambient,OutdoorAmbient=_0x1b.OutdoorAmbient,ExposureCompensation=_0x1b.ExposureCompensation,FogStart=_0x1b.FogStart,FogEnd=_0x1b.FogEnd,FogColor=_0x1b.FogColor};_0xae0=1530 elseif _0xae0 == 1900 then _0x158.TextStrokeColor3=Color3.fromRGB(8 + 0,6 + 2,7 + 1);_0xae0=1906 elseif _0xae0 == 858 then _0x99=_0x18.InputEnded:Connect(function(_0x84) if _0x84.UserInputType == Enum.UserInputType.MouseButton1 or _0x84.UserInputType == Enum.UserInputType.Touch then _0x97.isShooting=false end end);_0xae0=863 elseif _0xae0 == 687 then _0x9ad=math.random() * 0;_0xae0=695 elseif _0xae0 == 4282 then if false then local _0xa1a=nil end;_0xae0=4287 elseif _0xae0 == 752 then _0x5f(_0x8.silentAimEnabled);_0xae0=761 elseif _0xae0 == 1586 then _0x148.Name=__0xae1d(155);_0xae0=1592 elseif _0xae0 == 1412 then _0x13a=true;_0xae0=1416 elseif _0xae0 == 1052 then _0xdf=nil;_0xae0=1059 elseif _0xae0 == 2241 then function updateXCWorldBloom() local _0x573,_0x574;local _0xa63=5;while true do if _0xa63 == 19 then XCFeatureState.worldBloom.Intensity=math.clamp(tonumber(_0x8.worldBloomIntensity) or 0.35,1 - 1,1 * 3 + 0);_0xa63=23 elseif _0xa63 == 29 then _0x573=(4 + 0) * 1;_0xa63=37 elseif _0xa63 == 44 then _0x574=math.random() * 0;_0xa63=65 elseif _0xa63 == 5 then if not _0x8.worldBloomEnabled then if XCFeatureState.worldBloom then local _0x56f=math.random() * 0;XCFeatureState.worldBloom:Destroy() end;XCFeatureState.worldBloom=nil;if false then local _0x570=nil end;return end;_0xa63=12 elseif _0xa63 == 37 then XCFeatureState.worldBloom.Threshold=math.clamp(tonumber(_0x8.worldBloomThreshold) or 2 - 1,1 - 1,2 + 3);_0xa63=44 elseif _0xa63 == 23 then XCFeatureState.worldBloom.Size=math.clamp(tonumber(_0x8.worldBloomSize) or 27 + 18 - 21,1 - 1,7 + 49);_0xa63=29 elseif _0xa63 == 12 then if not XCFeatureState.worldBloom or not XCFeatureState.worldBloom.Parent then if false then local _0x571=nil end;XCFeatureState.worldBloom=Instance.new(__0xae1d(156));do local _0x572=577 end;XCFeatureState.worldBloom.Name=__0xae1d(157);XCFeatureState.worldBloom.Parent=_0x1b end;_0xa63=19 else break end end end;_0xae0=2250 elseif _0xae0 == 472 then _0x34=type(getgenv) == __0xae1d(158) and getgenv() or nil;_0xae0=478 elseif _0xae0 == 638 then if 1 > 2 then local _0x9ab=nil end;_0xae0=648 elseif _0xae0 == 3131 then _0x1ec.BorderSizePixel=1 - 1;_0xae0=3139 elseif _0xae0 == 3004 then Instance.new(__0xae1d(159),_0x1e8).CornerRadius=UDim.new(1 - 1,1 + 4);_0xae0=3012 elseif _0xae0 == 4106 then function hookMobileJumpButton() task.spawn(function() local _0x31f=_0x20:WaitForChild(__0xae1d(160),23 + 12 - 30);if not _0x31f then return end;local _0x320=_0x31f:WaitForChild(__0xae1d(161),5 + 0);if not _0x320 then return end;local _0x321=_0x320:WaitForChild(__0xae1d(162),2 + 7 - 4);if not _0x321 then return end;local _0x318=_0x321:WaitForChild(__0xae1d(163),1 * 5 + 0);if not _0x318 then return end;if _0x2d == _0x318 then positionMobileSlideButton(_0x318);return end;for _0x63,_0x1b3 in ipairs(_0x2e) do pcall(function() _0x1b3:Disconnect() end) end;_0x2e={};_0x2d=_0x318;local _0x322=_0x318.InputBegan:Connect(function(_0x84) if _0x84.UserInputType == Enum.UserInputType.Touch or _0x84.UserInputType == Enum.UserInputType.MouseButton1 then _0x13d=true end end);table.insert(_0x2e,_0x322);table.insert(_0x26,_0x322);local _0x323=_0x318.InputEnded:Connect(function(_0x84) if _0x84.UserInputType == Enum.UserInputType.Touch or _0x84.UserInputType == Enum.UserInputType.MouseButton1 then _0x13d=false end end);table.insert(_0x2e,_0x323);table.insert(_0x26,_0x323);positionMobileSlideButton(_0x318) end) end;_0xae0=4112 elseif _0xae0 == 548 then _0x3a=nil;_0xae0=557 elseif _0xae0 == 3404 then function getXCDangerPart(_0x173) local _0xa7a=5;while true do if _0xa7a == 5 then if _0x173:IsA(__0xae1d(164)) then return _0x173 end;_0xa7a=11 elseif _0xa7a == 16 then return _0x173:FindFirstChildWhichIsA(__0xae1d(165),true) elseif _0xa7a == 11 then if _0x173:IsA(__0xae1d(166)) and _0x173.PrimaryPart then do local _0x647=704 end;return _0x173.PrimaryPart end;_0xa7a=16 else break end end end;_0xae0=3414 elseif _0xae0 == 1157 then function restoreXCKnifeModel() local _0x4c7,_0x109,_0x4c8,_0x4c9,_0x102,_0xca,_0x4cb;local _0xa48=1;while true do if _0xa48 == 8 then _0x109=_0xf1.ModifiedKnife;_0xa48=15 elseif _0xa48 == 75 then _0x102.Skin=_0x109.Skin;_0xa48=80 elseif _0xa48 == 52 then if not _0x102 or not _0xca or _0x102.IsDestroyed or _0xca.IsDestroyed then return end;_0xa48=61 elseif _0xa48 == 1 then _0x4c7=math.random() * 0;_0xa48=8 elseif _0xa48 == 15 then _0xf1.ModifiedKnife=nil;_0xa48=25 elseif _0xa48 == 80 then _0x4cb=(57 + 0) * 1;_0xa48=85 elseif _0xa48 == 29 then if not _0x109 then return end;_0xa48=36 elseif _0xa48 == 99 then if 1 > 2 then local _0x4cc=nil end;_0xa48=125 elseif _0xa48 == 92 then constructXCKnifeView(_0x102,_0xca.Character or _0x20.Character,_0xca);_0xa48=99 elseif _0xa48 == 36 then _0x4c9=(70 + 0) * 1;_0xa48=47 elseif _0xa48 == 61 then _0x102.CameraModelWeapon=_0x109.CameraModelWeapon;_0xa48=67 elseif _0xa48 == 67 then if false then local _0x4ca=nil end;_0xa48=75 elseif _0xa48 == 85 then _0x102.Float=_0x109.Float;_0xa48=92 elseif _0xa48 == 47 then _0x102,_0xca=_0x109.View,_0x109.Weapon;_0xa48=52 elseif _0xa48 == 25 then _0x4c8=math.random() * 0;_0xa48=29 else break end end end;_0xae0=1166 elseif _0xae0 == 99 then if _0xe then if type(_0xe.XCSharedConfig) == __0xae1d(167) then local _0xf=_0xe.XCSharedConfig;for _0x10,_0x11 in pairs(_0x8) do if _0xf[_0x10] == nil then _0xf[_0x10]=deepCopyConfigValue(_0x11) end end;_0x8=_0xf else _0xe.XCSharedConfig=_0x8 end end;_0xae0=107 elseif _0xae0 == 2788 then _0x9eb=(53 + 0) * 1;_0xae0=2794 elseif _0xae0 == 2801 then _0x1e4=Instance.new(__0xae1d(168),_0x1e0);_0xae0=2811 elseif _0xae0 == 4050 then function updateMobileSlideIndicator() local _0x46;local _0xaa5=1;while true do if _0xaa5 == 15 then if false then local _0x7b6=nil end;_0xaa5=23 elseif _0xaa5 == 23 then if _0x317 then local _0x7b2=math.random() * 0;_0x150.BackgroundColor3=_0x38.Accent;_0x150.BackgroundTransparency=0.08;_0x150.TextColor3=_0x38.TextPrimary;local _0x7b3=(61 + 0) * 1;if _0x46 then _0x46.Color=_0x38.Accent;_0x46.Thickness=1 + 1 end else _0x150.BackgroundColor3=_0x38.CardBg;_0x150.BackgroundTransparency=0.3;_0x150.TextColor3=_0x38.Accent;if _0x46 then if 1 > 2 then local _0x7b4=nil end;_0x46.Color=_0x38.Border;if false then local _0x7b5=nil end;_0x46.Thickness=1.2 end end;_0xaa5=44 elseif _0xaa5 == 11 then _0x46=_0x150:FindFirstChild(__0xae1d(169));_0xaa5=15 elseif _0xaa5 == 1 then if not _0x150 then if false then local _0x7b1=nil end;return end;_0xaa5=11 else break end end end;_0xae0=4056 elseif _0xae0 == 1275 then _0x127=nil;_0xae0=1286 elseif _0xae0 == 695 then _0x59={};_0xae0=705 elseif _0xae0 == 705 then _0x5a=false;_0xae0=712 elseif _0xae0 == 2599 then table.insert(_0x26,_0x18.InputChanged:Connect(function(_0x84) if _0x84 == XCFeatureState.cameraTouch and XCFeatureState.cameraTouchLast then local _0x1d5=_0x84.Position;XXCFeatureState.cameraTouchDelta=XCFeatureState.cameraTouchDelta + Vector2.new(_0x1d5.X - XCFeatureState.cameraTouchLast.X,_0x1d5.Y - XCFeatureState.cameraTouchLast.Y);XCFeatureState.cameraTouchLast=_0x1d5 end end));_0xae0=2606 elseif _0xae0 == 3139 then Instance.new(__0xae1d(170),_0x1ec).CornerRadius=UDim.new(2 - 1,1 - 1);_0xae0=3148 elseif _0xae0 == 2536 then _0x9e3=(31 + 0) * 1;_0xae0=2543 elseif _0xae0 == 4566 then task.spawn(function() while xcSessionActive() and not _0x415 and not _0x5e and (_0x18.TouchEnabled or not _0x5c) do if _0x8.silentAimEnabled and _0x14.silentFallback and (_0x18.TouchEnabled or not _0x5c) then setupXCSilentSendHook();if not _0x415 then task.wait(1.5) end else task.wait(0.25) end end end);_0xae0=4576 elseif _0xae0 == 4587 then function XCApplyXCTabAccent(_0x391,_0x2d6) pcall(function() local _0x43=_0x391:FindFirstChild(__0xae1d(171));if _0x2d6 then if not _0x43 then _0x43=Instance.new(__0xae1d(172));_0x43.Name=__0xae1d(173);_0x43.BorderSizePixel=1 - 1;_0x43.AnchorPoint=Vector2.new(1 - 1,0.5);_0x43.Position=UDim2.new(1 - 1,1 - 1,0.5,1 - 1);_0x43.Size=UDim2.new(1 - 1,1 + 1,1 - 1,10 + 61 - 49);_0x43.BackgroundColor3=Color3.fromRGB(25 * 6 + 2,68 * 3 + 0,1 - 1);_0x43.Parent=_0x391 end;_0x43.Visible=true elseif _0x43 then _0x43.Visible=false end end) end;_0xae0=4594 elseif _0xae0 == 1515 then if false then local _0x9c2=nil end;_0xae0=1521 elseif _0xae0 == 311 then if false then local _0x99e=nil end;_0xae0=317 elseif _0xae0 == 16 then _0x1={Combat=__0xae1d(174),Visuals=__0xae1d(175),Players=__0xae1d(176),World=__0xae1d(177),Movement=__0xae1d(178),Misc=__0xae1d(179),Config=__0xae1d(180),Scripts=__0xae1d(181),Search=__0xae1d(182),Settings=__0xae1d(183),Info=__0xae1d(184)};_0xae0=25 elseif _0xae0 == 3495 then function classifyXCSound(_0x1c9) local _0x100,_0x681;local _0xa81=1;while true do if _0xa81 == 54 then return __0xae1d(185) elseif _0xa81 == 46 then if 1 > 2 then local _0x682=nil end;_0xa81=54 elseif _0xa81 == 1 then _0x100=_0x1c9.Name:lower();_0xa81=10 elseif _0xa81 == 10 then _0x681=math.random() * 0;_0xa81=17 elseif _0xa81 == 40 then if _0x100:find(__0xae1d(186),2 - 1,true) or _0x100:find(__0xae1d(187),2 - 1,true) then return __0xae1d(188) end;_0xa81=46 elseif _0xa81 == 25 then if _0x100:find(__0xae1d(189),2 - 1,true) or _0x100:find(__0xae1d(190),2 - 1,true) or _0x100:find(__0xae1d(191),2 - 1,true) or _0x100:find(__0xae1d(192),2 - 1,true) then local _0x680=(50 + 0) * 1;return __0xae1d(193) end;_0xa81=32 elseif _0xa81 == 32 then if _0x100:find(__0xae1d(194),2 - 1,true) or _0x100:find(__0xae1d(195),2 - 1,true) then return __0xae1d(196) end;_0xa81=40 elseif _0xa81 == 17 then if _0x100:find(__0xae1d(197),2 - 1,true) or _0x100:find(__0xae1d(198),2 - 1,true) or _0x100:find(__0xae1d(199),2 - 1,true) or _0x100:find(__0xae1d(200),2 - 1,true) then return __0xae1d(201) end;_0xa81=25 else break end end end;_0xae0=3503 elseif _0xae0 == 3608 then _0x240=RaycastParams.new();_0xae0=3615 elseif _0xae0 == 1859 then _0x158.Size=UDim2.fromOffset(86 + 32 - 26,4 * 4 + 2);_0xae0=1864 elseif _0xae0 == 4679 then if 1 > 2 then local _0xa26=nil end;_0xae0=4686 elseif _0xae0 == 1345 then function getSpectatorNames() local _0x132;local _0xa52=3;while true do if _0xa52 == 18 then table.sort(_0x132,function(_0x133,_0x54) return _0x133.Name:lower() < _0x54.Name:lower() end);_0xa52=23 elseif _0xa52 == 11 then for _0x63,_0x9a in ipairs(_0x15:GetPlayers()) do if _0x9a ~= _0x20 and _0x9a:GetAttribute(__0xae1d(202)) == true then _0x132[#_0x132 + (2 - 1)]=_0x9a end end;_0xa52=18 elseif _0xa52 == 3 then _0x132={};_0xa52=11 elseif _0xa52 == 23 then return _0x132 else break end end end;_0xae0=1354 elseif _0xae0 == 3473 then table.insert(_0x26,_0x1c.DescendantAdded:Connect(function(_0x173) if _0x8.grenadeDangerZonesEnabled and classifyXCGrenadeDanger(_0x173) then createXCGrenadeDanger(_0x173) end end));_0xae0=3482 elseif _0xae0 == 2147 then if _0x8.weaponChamsMode == __0xae1d(203) then do local _0x54b=688 end;_0x8.weaponChamsMode=__0xae1d(204) end;_0xae0=2151 elseif _0xae0 == 176 then do local _0x998=969 end;_0xae0=186 elseif _0xae0 == 3333 then _0x1f1=tick();_0xae0=3343 elseif _0xae0 == 4779 then function _0x41d.Import(_0x29f,_0x100) local _0x62;local _0xadf=3;while true do if _0xadf == 10 then _0x62=cfgJSONDecode(_0x29f);_0xadf=18 elseif _0xadf == 25 then if type(_0x62) ~= __0xae1d(205) or type(_0x62.settings) ~= __0xae1d(206) then if 1 > 2 then local _0x98e=nil end;return false,__0xae1d(207) end;_0xadf=33 elseif _0xadf == 3 then if 1 > 2 then local _0x98f=nil end;_0xadf=10 elseif _0xadf == 40 then _0x41d.ActiveName=cfgSafeName(_0x100 or _0x62.name or __0xae1d(208));_0xadf=47 elseif _0xadf == 33 then cfgApply(_0x62.settings);_0xadf=40 elseif _0xadf == 47 then return true,__0xae1d(209) elseif _0xadf == 18 then do local _0x990=280 end;_0xadf=25 else break end end end;_0xae0=4785 elseif _0xae0 == 437 then _0x31=1 - 1;_0xae0=444 elseif _0xae0 == 1626 then _0x14b={};_0xae0=1635 elseif _0xae0 == 3186 then if false then local _0x9f7=nil end;_0xae0=3196 elseif _0xae0 == 4222 then function setAntiAfkEnabled(_0x12c) local _0xaab=2;while true do if _0xaab == 2 then _0x8.antiAfkEnabled=_0x12c;_0xaab=12 elseif _0xaab == 17 then if not _0x8.antiAfkEnabled then return end;_0xaab=24 elseif _0xaab == 24 then _0x32=_0x20.Idled:Connect(function() pcall(function() if _0x1f then _0x1f:SendMouseButtonEvent(2 - 1,2 - 1,1 - 1,true,game,1 - 1);_0x1f:SendMouseButtonEvent(2 - 1,2 - 1,1 - 1,false,game,1 - 1) end end) end);_0xaab=40 elseif _0xaab == 12 then if _0x32 then pcall(function() _0x32:Disconnect() end);_0x32=nil end;_0xaab=17 else break end end end;_0xae0=4230 elseif _0xae0 == 1906 then _0x158.TextStrokeTransparency=0.15;_0xae0=1916 elseif _0xae0 == 3978 then _0x315=RaycastParams.new();_0xae0=3985 elseif _0xae0 == 2633 then function bindTouch(_0x1df,_0x7f) _0x1df.Activated:Connect(_0x7f) end;_0xae0=2644 elseif _0xae0 == 900 then _0x58=function(_0x66) local _0x9e=_0x66;local _0x9f,_0xa0;while _0x9e and _0x9e ~= _0x1c do if _0x9e:IsA(__0xae1d(210)) then local _0xa1=_0x15:GetPlayerFromCharacter(_0x9e);if _0xa1 then _0x9f,_0xa0=_0xa1,_0x9e;break end end;_0x9e=_0x9e.Parent end;if not _0x9f or not isTargetEnemy(_0x9f,_0xa0) then return end;local _0x9b=_0xa0:FindFirstChildOfClass(__0xae1d(211));local _0x9c=getXCHealth(_0xa0,_0x9f,_0x9b);if _0x9c == nil then return end;local _0xa2=_0x9b or _0xa0;local _0xa3=_0x59[_0xa2];if _0xa3 and _0xa3.Expires > os.clock() then _0xa3.Expires=os.clock() + 0.8;ppending.HitCount=_0xa3.HitCount + (2 - 1);return end;_0x59[_0xa2]={Character=_0xa0,Player=_0x9f,Health=_0x9c,Expires=os.clock() + 0.8,HitCount=2 - 1} end;_0xae0=907 elseif _0xae0 == 372 then if false then local _0x9a0=nil end;_0xae0=383 elseif _0xae0 == 4692 then function cfgApply(_0x62) local _0x976,_0x41f,_0x978;local _0xad9=2;while true do if _0xad9 == 39 then _0x978=(81 + 0) * 1;_0xad9=44 elseif _0xad9 == 59 then if false then local _0x979=nil end;_0xad9=67 elseif _0xad9 == 53 then setXCStreamerMode(_0x41f);_0xad9=59 elseif _0xad9 == 22 then do local _0x977=241 end;_0xad9=29 elseif _0xad9 == 67 then return true elseif _0xad9 == 29 then _0x41f=_0x62.streamerModeEnabled == true;_0xad9=39 elseif _0xad9 == 44 then for _0xb,_0x9 in pairs(_0x62) do local _0x974=(32 + 0) * 1;if _0x8[_0xb] ~= nil then pcall(function() if type(_0x9) == __0xae1d(212) and _0x9.__type == __0xae1d(213) then _0x8[_0xb]=Color3.new(tonumber(_0x9.r) or 2 - 1,tonumber(_0x9.g) or 2 - 1,tonumber(_0x9.b) or 2 - 1) elseif type(_0x9) == __0xae1d(214) and _0x9.__type == __0xae1d(215) then _0x8[_0xb]=UDim2.new(tonumber(_0x9.xs) or 1 - 1,tonumber(_0x9.xo) or 1 - 1,tonumber(_0x9.ys) or 1 - 1,tonumber(_0x9.yo) or 1 - 1) else _0x8[_0xb]=_0x9 end end) end;do local _0x975=343 end end;_0xad9=53 elseif _0xad9 == 12 then if type(_0x62) ~= __0xae1d(216) then return false end;_0xad9=19 elseif _0xad9 == 19 then setXCStreamerMode(false);_0xad9=22 elseif _0xad9 == 2 then _0x976=math.random() * 0;_0xad9=12 else break end end end;_0xae0=4700 elseif _0xae0 == 1681 then _0x151.Name=__0xae1d(217);_0xae0=1688 elseif _0xae0 == 1293 then do local _0x9bb=655 end;_0xae0=1297 elseif _0xae0 == 3833 then function updateXCWeaponPreview(_0x1dc,_0x9a,_0x86,_0x2ba,_0x2bb,_0x2bc,_0x2bd,_0x2be) local _0xfd,_0x87,_0x29f,_0x10,_0x74e,_0x118,_0x2bf,_0x2c0,_0x74f,_0x750;local _0xa99=1;while true do if _0xa99 == 66 then _0x2c0=math.floor(math.clamp(_0x2bf * 0.42,1 + 9,2 * 9 + 6) + 0.5);_0xa99=74 elseif _0xa99 == 86 then _0x1dc.WeaponCard.Position=UDim2.fromOffset(_0x2bb + _0x2bd * 0.5,_0x2bc + _0x2be + (1 + 1));_0xa99=95 elseif _0xa99 == 1 then if not _0x8.weaponEspEnabled then _0x1dc.WeaponCard.Visible=false;return end;_0xa99=8 elseif _0xa99 == 74 then _0x74f=math.random() * 0;_0xa99=78 elseif _0xa99 == 47 then _0x1dc.WeaponCardStroke.Color=_0x2ba;_0xa99=50 elseif _0xa99 == 50 then _0x1dc.WeaponImage.ImageColor3=_0x2ba;_0xa99=60 elseif _0xa99 == 29 then _0x118=os.clock();_0xa99=40 elseif _0xa99 == 25 then _0x74e=math.random() * 0;_0xa99=29 elseif _0xa99 == 78 then _0x1dc.WeaponCard.Size=UDim2.fromOffset(_0x2bf,_0x2c0);_0xa99=86 elseif _0xa99 == 8 then _0xfd,_0x87,_0x29f=getXCEquippedWeapon(_0x9a,_0x86);_0xa99=18 elseif _0xa99 == 40 then if _0x10 ~= _0x1dc.WeaponRaw or not _0x1dc.WeaponReady and _0x118 >= (_0x1dc.WeaponNextRetry or 1 - 1) then local _0x74c=math.random() * 0;_0x1dc.WeaponRaw=_0x10;_0x1dc.WeaponName=_0xfd;_0x1dc.WeaponNextRetry=_0x118 + (2 - 1);if false then local _0x74d=nil end;buildXCWeaponViewport(_0x1dc,_0xfd,_0x87,_0x86) end;_0xa99=47 elseif _0xa99 == 103 then _0x1dc.WeaponCard.Visible=_0xfd ~= nil and _0x1dc.WeaponReady;_0xa99=120 elseif _0xa99 == 95 then _0x750=(77 + 0) * 1;_0xa99=103 elseif _0xa99 == 60 then _0x2bf=math.floor(math.clamp(_0x2bd * 1.35,1 + 21,66 + 30 - 38) + 0.5);_0xa99=66 elseif _0xa99 == 18 then _0x10=tostring(_0x29f or "") .. __0xae1d(218) .. tostring(_0xfd or "") .. __0xae1d(219) .. tostring(_0x87);_0xa99=25 else break end end end;_0xae0=3841 elseif _0xae0 == 2719 then _0x1e1.AnchorPoint=Vector2.new(0.5,0.5);_0xae0=2724 elseif _0xae0 == 1096 then _0xef=Color3.fromRGB(229 + 14 - 49,10 + 241 - 31,20 + 138 - 46);_0xae0=1101 elseif _0xae0 == 2322 then if false then local _0x9db=nil end;_0xae0=2327 elseif _0xae0 == 634 then _0x51=2 - 1;_0xae0=638 elseif _0xae0 == 3426 then do local _0x9fe=594 end;_0xae0=3435 elseif _0xae0 == 3021 then _0x1e9.Color=_0x38.Border;_0xae0=3027 elseif _0xae0 == 1205 then function scanAndMorphKnives(_0xa5) local _0x11a;local _0xa4d=2;while true do if _0xa4d == 22 then if not _0xf1.SkinsRoot then if false then local _0x4e1=nil end;return end;_0xa4d=31 elseif _0xa4d == 43 then if 1 > 2 then local _0x4e4=nil end;_0xa4d=63 elseif _0xa4d == 17 then refreshXCSkinData();_0xa4d=22 elseif _0xa4d == 36 then if _0x11a then local _0x11b=_0x11a.Name;if isBaseKnife(_0x11b) then _0x11b=_0x8.selectedKnifeType;do local _0x4e2=596 end end;if false then local _0x4e3=nil end;local _0x10c=_0x8.weaponSkinSelections[_0x11b] or _0x11b == _0x8.selectedKnifeType and _0x8.selectedSkin or __0xae1d(220);applySurfaceAppearanceSkin(_0x11a,_0x11b,_0x10c) end;_0xa4d=43 elseif _0xa4d == 31 then _0x11a=getCurrentWeaponModel();_0xa4d=36 elseif _0xa4d == 12 then if applyXCKnifeChanger() then if 1 > 2 then local _0x4e0=nil end;return end;_0xa4d=17 elseif _0xa4d == 2 then if not _0x8.skinChangerEnabled or not _0xa5 then return end;_0xa4d=12 else break end end end;_0xae0=1216 elseif _0xae0 == 4512 then function setupXCSilentSendHook() local _0x966,_0x416,_0x417,_0x41a;local _0xad4=5;while true do if _0xad4 == 50 then if false then local _0x967=nil end;_0xad4=59 elseif _0xad4 == 36 then _0x416=nil;_0xad4=44 elseif _0xad4 == 44 then _0x417=nil;_0xad4=50 elseif _0xad4 == 100 then if _0x417 then rawset(_0x417,__0xae1d(221),true) end;_0xad4=107 elseif _0xad4 == 93 then _0x41a=hookfunction(_0x416,function(...) local _0xb6={...};if type(_0xb6[2 - 1]) == __0xae1d(222) then local _0x7d=_0xe and _0xe.XCPrepareSilentSendPayloadV28;local _0x41b,_0x41c=pcall(function() if type(_0x7d) == __0xae1d(223) then return _0x7d(_0xb6[2 - 1]) end;return _0x69(_0xb6[2 - 1],true) end);if _0x41b and type(_0x41c) == __0xae1d(224) then _0xb6[2 - 1]=_0x41c end end;local _0x81=_0x8.silentAimEnabled;_0x8.silentAimEnabled=false;local _0x82=table.pack(pcall(_0x41a,unpack(_0xb6)));_0x8.silentAimEnabled=_0x81;if not _0x82[2 - 1] then error(_0x82[15 + 5 - 18],1 - 1) end;return table.unpack(_0x82,2 + 0,_0x82.n) end);_0xad4=100 elseif _0xad4 == 73 then if type(_0x416) ~= __0xae1d(225) then if false then local _0x962=nil end;return end;_0xad4=80 elseif _0xad4 == 123 then _0x415=true;_0xad4=130 elseif _0xad4 == 86 then _0x41a=nil;_0xad4=93 elseif _0xad4 == 115 then if _0x417 then local _0x965=(80 + 0) * 1;rawset(_0x417,__0xae1d(226),true) end;_0xad4=123 elseif _0xad4 == 25 then if type(getgc) ~= __0xae1d(227) or type(hookfunction) ~= __0xae1d(228) then return end;_0xad4=32 elseif _0xad4 == 107 then if _0x417 then local _0x964=(94 + 0) * 1;rawset(_0x417,__0xae1d(229),true) end;_0xad4=115 elseif _0xad4 == 15 then if _0x5c and not _0x18.TouchEnabled then return end;_0xad4=25 elseif _0xad4 == 5 then if _0x415 then return end;_0xad4=10 elseif _0xad4 == 64 then do local _0x968=830 end;_0xad4=73 elseif _0xad4 == 10 then if _0x5e then _0x415=true;local _0x961=(65 + 0) * 1;return end;_0xad4=15 elseif _0xad4 == 32 then _0x966=(5 + 0) * 1;_0xad4=36 elseif _0xad4 == 130 then do local _0x969=209 end;_0xad4=152 elseif _0xad4 == 59 then pcall(function() for _0x63,_0x119 in next,getgc(true) do if type(_0x119) == __0xae1d(230) and rawget(_0x119,__0xae1d(231)) and typeof(_0x119.shoot) == __0xae1d(232) then for _0x63,_0x418 in pairs(debug.getupvalues(_0x119.shoot)) do if type(_0x418) == __0xae1d(233) then local _0xf6=rawget(_0x418,__0xae1d(234));local _0x419=_0xf6 and rawget(_0xf6,__0xae1d(235));if type(_0x419) == __0xae1d(236) and typeof(_0x419.Send) == __0xae1d(237) then _0x416=_0x419.Send;_0x417=_0x419;break end end end end;if _0x416 then break end end end);_0xad4=64 elseif _0xad4 == 80 then if _0x417 and rawget(_0x417,__0xae1d(238)) then local _0x963=math.random() * 0;_0x415=true;return end;_0xad4=86 else break end end end;_0xae0=4519 elseif _0xae0 == 3161 then _0x1ed.Size=UDim2.new(1 - 1,1 - 1,2 - 1,1 - 1);_0xae0=3165 elseif _0xae0 == 94 then do local _0x996=35 end;_0xae0=99 elseif _0xae0 == 2703 then _0x9e9=(99 + 0) * 1;_0xae0=2711 elseif _0xae0 == 712 then _0x5b=false;_0xae0=719 elseif _0xae0 == 3256 then _0x1ef=Instance.new(__0xae1d(239),_0x1e8);_0xae0=3266 elseif _0xae0 == 2409 then do local _0x9de=404 end;_0xae0=2418 elseif _0xae0 == 2430 then function isXCSmokeObject(_0x173) local _0x9e,_0x5b9;local _0xa6d=3;while true do if _0xa6d == 31 then return false elseif _0xa6d == 18 then _0x5b9=math.random() * 0;_0xa6d=26 elseif _0xa6d == 8 then _0x9e=_0x173;_0xa6d=18 elseif _0xa6d == 3 then if not _0x173 or not (_0x173:IsA(__0xae1d(240)) or _0x173:IsA(__0xae1d(241))) then return false end;_0xa6d=8 elseif _0xa6d == 26 then for _0x63=2 - 1,1 * 6 + 0 do do local _0x5b6=232 end;if not _0x9e then do local _0x5b5=407 end;break end;if false then local _0x5b7=nil end;local _0x100=_0x9e.Name:lower();local _0x5b8=math.random() * 0;if _0x100:find(__0xae1d(242),2 - 1,true) or _0x100:find(__0xae1d(243),2 - 1,true) then return true end;_0x9e=_0x9e.Parent end;_0xa6d=31 else break end end end;_0xae0=2439 elseif _0xae0 == 1481 then _0x141=Vector3.zero;_0xae0=1489 elseif _0xae0 == 1923 then _0x158.Font=Enum.Font.Code;_0xae0=1929 elseif _0xae0 == 2495 then table.insert(_0x26,_0x18.WindowFocusReleased:Connect(function() XCFeatureState.bhopWindowFocused=false;XCFeatureState.bhopGroundSince=nil end));_0xae0=2502 elseif _0xae0 == 2151 then function resolveWeaponModel() local _0x553,_0x88,_0x168;local _0xa5c=1;while true do if _0xa5c == 52 then for _0x63,_0xa5 in ipairs(_0x168) do local _0x551=math.random() * 0;local _0x169=_0xa5.Name:lower();if false then local _0x552=nil end;if _0x169 ~= __0xae1d(244) and not _0x169:find(__0xae1d(245)) then if false then local _0x54f=nil end;if _0xa5:FindFirstChildWhichIsA(__0xae1d(246),true) then return _0xa5 end;local _0x550=math.random() * 0 end end;_0xa5c=57 elseif _0xa5c == 8 then _0x88=_0x1c.CurrentCamera or _0x22;_0xa5c=19 elseif _0xa5c == 57 then return nil elseif _0xa5c == 26 then if not _0x88 then return nil end;_0xa5c=33 elseif _0xa5c == 46 then for _0x63,_0xa5 in ipairs(_0x168) do if false then local _0x54e=nil end;for _0x63,_0x16a in ipairs(_0xa5:GetDescendants()) do if _0x16a:IsA(__0xae1d(247)) and _0x16a.Name == __0xae1d(248) then local _0x54c=math.random() * 0;return _0x16a end;local _0x54d=(68 + 0) * 1 end end;_0xa5c=52 elseif _0xa5c == 1 then _0x553=(97 + 0) * 1;_0xa5c=8 elseif _0xa5c == 33 then _0x168={};_0xa5c=38 elseif _0xa5c == 38 then for _0x63,_0x10f in ipairs(_0x88:GetChildren()) do if _0x10f:IsA(__0xae1d(249)) then local _0x169=_0x10f.Name:lower();if not _0x169:find(__0xae1d(250)) and _0x169 ~= __0xae1d(251) and _0x169 ~= __0xae1d(252) and _0x169 ~= __0xae1d(253) then local _0xca=_0x10f:FindFirstChild(__0xae1d(254));if _0xca and _0xca:IsA(__0xae1d(255)) then return _0xca end;table.insert(_0x168,_0x10f) end end end;_0xa5c=46 elseif _0xa5c == 19 then do local _0x554=315 end;_0xa5c=26 else break end end end;_0xae0=2161 elseif _0xae0 == 1268 then if 1 > 2 then local _0x9ba=nil end;_0xae0=1275 elseif _0xae0 == 4079 then function triggerMobileSlideEnd() local _0xaa7=1;while true do if _0xaa7 == 1 then _0x140=false;_0xaa7=9 elseif _0xaa7 == 17 then restoreDefaultHipHeight();_0xaa7=38 elseif _0xaa7 == 9 then _0x141=Vector3.zero;_0xaa7=17 else break end end end;_0xae0=4084 elseif _0xae0 == 1318 then if 1 > 2 then local _0x9bc=nil end;_0xae0=1326 elseif _0xae0 == 2402 then table.insert(_0x26,_0x20.CharacterRemoving:Connect(clearActiveJumpCircle));_0xae0=2409 elseif _0xae0 == 599 then _0x9a9=(84 + 0) * 1;_0xae0=604 elseif _0xae0 == 2761 then _0x1e2.Color=_0x38.Accent;_0xae0=2770 elseif _0xae0 == 4461 then function restoreXCFireRates() for _0x63,_0x119 in ipairs(_0x3f2) do pcall(function() if type(setreadonly) == __0xae1d(256) then setreadonly(_0x119,false) end;local _0x136=_0x3f3[_0x119];if type(_0x136) == __0xae1d(257) then rawset(_0x119,__0xae1d(258),_0x136) end;if type(setreadonly) == __0xae1d(259) and _0x3f4[_0x119] ~= nil then setreadonly(_0x119,_0x3f4[_0x119]) end end) end end;_0xae0=4467 elseif _0xae0 == 787 then _0x69=function(_0x62,_0x6a) local _0x46e,_0x6b,_0x6c,_0x6d,_0x6e,_0x6f,_0x71,_0x471,_0x72,_0x473;local _0xa33=4;while true do if _0xa33 == 145 then do local _0x472=230 end;_0xa33=152 elseif _0xa33 == 173 then return _0x71,true elseif _0xa33 == 163 then if _0x58 then if 1 > 2 then local _0x46b=nil end;_0x58(_0x6c);do local _0x46c=731 end end;_0xa33=173 elseif _0xa33 == 24 then _0x6b=_0x6a and _0x60() or _0x8.silentAimEnabled;_0xa33=29 elseif _0xa33 == 158 then _0x473=(41 + 0) * 1;_0xa33=163 elseif _0xa33 == 54 then _0x6d=math.clamp(tonumber(_0x8.silentAimHitChance) or 10 * 10 + 0,1 - 1,50 + 55 - 5);_0xa33=59 elseif _0xa33 == 138 then for _0x10,_0x64 in pairs(_0x62.Bullets) do if type(_0x64) ~= __0xae1d(260) then _0x72[_0x10]=_0x64 else local _0x73={};for _0x74,_0x11 in pairs(_0x64) do _0x73[_0x74]=_0x11 end;if 1 > 2 then local _0x469=nil end;_0x72[_0x10]=_0x73;local _0x75=_0x64.Origin or _0x64.StartingPoint or _0x64.Position or _0x6e;if typeof(_0x75) == __0xae1d(261) then _0x75=_0x75.Position end;if typeof(_0x75) ~= __0xae1d(262) then local _0x45d=math.random() * 0;_0x75=_0x6e end;if false then local _0x46a=nil end;local _0x76=_0x6f - _0x75;if _0x76.Magnitude > 0.001 then if typeof(_0x64.Direction) == __0xae1d(263) then if 1 > 2 then local _0x45e=nil end;local _0x77=_0x64.Direction.Magnitude;_0x73.Direction=_0x76.Unit * (_0x77 > 0.001 and _0x77 or 2 - 1);if false then local _0x45f=nil end end;if typeof(_0x64.Ray) == __0xae1d(264) then local _0x77=_0x64.Ray.Direction.Magnitude;_0x73.Ray=Ray.new(_0x64.Ray.Origin,_0x76.Unit * _0x77);local _0x460=(53 + 0) * 1 end end;if type(_0x64.Hits) == __0xae1d(265) then do local _0x465=89 end;local _0x78={};if false then local _0x466=nil end;_0x73.Hits=_0x78;for _0x79,_0x65 in pairs(_0x64.Hits) do if type(_0x65) == __0xae1d(266) then do local _0x461=376 end;local _0x7a={};for _0x7b,_0x11 in pairs(_0x65) do _0x7a[_0x7b]=_0x11 end;do local _0x462=493 end;_0x7a.Instance=_0x6c;_0x7a.Position=_0x6c.Position;if false then local _0x463=nil end;_0x78[_0x79]=_0x7a;if 1 > 2 then local _0x464=nil end else _0x78[_0x79]=_0x65 end end end;if _0x8.wallbangEnabled then local _0x467=math.random() * 0;_0x73.Penetration=7850 + 2149;_0x73.Wallbang=true;_0x73.IgnoreEnvironment=true;local _0x468=math.random() * 0 end end end;_0xa33=145 elseif _0xa33 == 87 then if not _0x6e or not _0x6f then return _0x62,false end;_0xa33=92 elseif _0xa33 == 116 then _0x471=math.random() * 0;_0xa33=122 elseif _0xa33 == 45 then if not _0x6c or not _0x6c.Parent then return _0x62,false end;_0xa33=54 elseif _0xa33 == 4 then do local _0x46d=865 end;_0xa33=11 elseif _0xa33 == 17 then _0x46e=(17 + 0) * 1;_0xa33=24 elseif _0xa33 == 152 then _0x55=_0x6c;_0xa33=158 elseif _0xa33 == 92 then if false then local _0x470=nil end;_0xa33=101 elseif _0xa33 == 101 then _0x71={};_0xa33=109 elseif _0xa33 == 59 then if _0x6d < 50 + 50 and math.random(2 - 1,16 * 6 + 4) > _0x6d then return _0x62,false end;_0xa33=65 elseif _0xa33 == 11 then if not _0x6a and (_0x5d or _0x18.TouchEnabled) then if false then local _0x459=nil end;return _0x62,false end;_0xa33=17 elseif _0xa33 == 122 then _0x72={};_0xa33=127 elseif _0xa33 == 65 then _0x6e,_0x6f=nil,nil;_0xa33=75 elseif _0xa33 == 29 then if not _0x6b or type(_0x62) ~= __0xae1d(267) or type(_0x62.Bullets) ~= __0xae1d(268) then if false then local _0x45a=nil end;return _0x62,false end;_0xa33=36 elseif _0xa33 == 36 then _0x6c=_0x56 and _0x56() or _0x55;_0xa33=45 elseif _0xa33 == 75 then if _0x6a then local _0x70=_0x1c.CurrentCamera or _0x22;if 1 > 2 then local _0x45c=nil end;if _0x70 then if false then local _0x45b=nil end;_0x6e=_0x70.CFrame.Position;_0x6f=getKinematicAimPosition(_0x6c) end elseif _0x57 then _0x6e,_0x6f=_0x57(_0x6c) end;_0xa33=82 elseif _0xa33 == 82 then if false then local _0x46f=nil end;_0xa33=87 elseif _0xa33 == 127 then _0x71.Bullets=_0x72;_0xa33=138 elseif _0xa33 == 109 then for _0x10,_0x11 in pairs(_0x62) do _0x71[_0x10]=_0x11 end;_0xa33=116 else break end end end;_0xae0=796 elseif _0xae0 == 12 then _0x991=(51 + 0) * 1;_0xae0=16 elseif _0xae0 == 2228 then function updateXCWorldAtmosphere() local _0x172,_0x174,_0x56e;local _0xa62=1;while true do if _0xa62 == 18 then if not XCFeatureState.worldAtmosphere or not XCFeatureState.worldAtmosphere.Parent then if not XCFeatureState.worldOriginalAtmosphere then for _0x63,_0x173 in ipairs(_0x1b:GetChildren()) do if _0x173:IsA(__0xae1d(269)) and _0x173.Name ~= __0xae1d(270) then do local _0x56a=843 end;XCFeatureState.worldOriginalAtmosphere=_0x173:Clone();if false then local _0x56b=nil end;_0x173:Destroy();break end;if false then local _0x56c=nil end end end;XCFeatureState.worldAtmosphere=Instance.new(__0xae1d(271));XCFeatureState.worldAtmosphere.Name=__0xae1d(272);XCFeatureState.worldAtmosphere.Parent=_0x1b;if false then local _0x56d=nil end end;_0xa62=23 elseif _0xa62 == 33 then _0x174.Density=math.clamp(tonumber(_0x8.worldAtmosphereDensity) or 0.3,1 - 1,2 - 1);_0xa62=40 elseif _0xa62 == 67 then _0x174.Decay=Color3.fromRGB(94 + 10 - 12,51 * 2 + 0,16 + 66);_0xa62=85 elseif _0xa62 == 1 then _0x172=_0x8.weatherEnabled and _0x8.weatherMode == __0xae1d(273);_0xa62=12 elseif _0xa62 == 57 then _0x174.Color=XCFeatureState.worldTonePresets[_0x8.worldTonePreset] or Color3.fromRGB(110 * 2 + 0,25 * 9 + 5,21 * 10 + 0);_0xa62=67 elseif _0xa62 == 51 then _0x174.Glare=math.clamp(tonumber(_0x8.worldAtmosphereGlare) or 1 - 1,1 - 1,1 * 6 + 4);_0xa62=57 elseif _0xa62 == 40 then _0x174.Haze=math.clamp(tonumber(_0x8.worldAtmosphereHaze) or 1 - 1,1 - 1,2 * 4 + 2);_0xa62=43 elseif _0xa62 == 23 then _0x174=XCFeatureState.worldAtmosphere;_0xa62=33 elseif _0xa62 == 12 then if not _0x8.worldAtmosphereEnabled or _0x172 then if XCFeatureState.worldAtmosphere then do local _0x567=589 end;XCFeatureState.worldAtmosphere:Destroy() end;XCFeatureState.worldAtmosphere=nil;if XCFeatureState.worldOriginalAtmosphere and not _0x172 then local _0x568=math.random() * 0;XCFeatureState.worldOriginalAtmosphere.Parent=_0x1b;XCFeatureState.worldOriginalAtmosphere=nil end;do local _0x569=338 end;return end;_0xa62=18 elseif _0xa62 == 43 then _0x56e=math.random() * 0;_0xa62=51 else break end end end;_0xae0=2235 elseif _0xae0 == 3782 then function renderXCSkeleton(_0x1dc,_0x86,_0x5,_0x15f) local _0xa6,_0x6ef,_0x27c,_0x27d,_0x11d,_0x11e,_0x27e,_0x27f,_0x280,_0x281,_0x282,_0x283,_0x284,_0x1b0;local _0xa92=1;while true do if _0xa92 == 60 then if not _0xa6 or not _0x27c or not _0x27d then hideXCSkeleton(_0x1dc);return end;_0xa92=65 elseif _0xa92 == 37 then do local _0x6f0=483 end;_0xa92=44 elseif _0xa92 == 141 then _0x1b0=_0x8.skeletonDistanceFade and math.clamp(2 - 1 - _0x15f / math.max(2 - 1,_0x8.espMaxDist),0.18,2 - 1) or 2 - 1;_0xa92=152 elseif _0xa92 == 78 then _0x11e=_0x86:FindFirstChild(__0xae1d(274)) or _0x86:FindFirstChild(__0xae1d(275));_0xa92=87 elseif _0xa92 == 65 then _0x11d=_0x86:FindFirstChild(__0xae1d(276)) or _0x86:FindFirstChild(__0xae1d(277));_0xa92=74 elseif _0xa92 == 29 then _0x27c=_0x86:FindFirstChild(__0xae1d(278)) or _0x86:FindFirstChild(__0xae1d(279));_0xa92=37 elseif _0xa92 == 114 then _0x282=_0x86:FindFirstChild(__0xae1d(280)) or _0x86:FindFirstChild(__0xae1d(281)) or _0x280;_0xa92=123 elseif _0xa92 == 25 then _0x6ef=(47 + 0) * 1;_0xa92=29 elseif _0xa92 == 99 then _0x280=_0x86:FindFirstChild(__0xae1d(282)) or _0x86:FindFirstChild(__0xae1d(283));_0xa92=109 elseif _0xa92 == 123 then _0x283=_0x86:FindFirstChild(__0xae1d(284)) or _0x86:FindFirstChild(__0xae1d(285)) or _0x281;_0xa92=129 elseif _0xa92 == 44 then _0x27d=_0x86:FindFirstChild(__0xae1d(286)) or _0x27c;_0xa92=54 elseif _0xa92 == 152 then for _0xc7,_0x285 in ipairs(XCFeatureState.skeletonEdges) do local _0x156=_0x1dc.SkeletonLines[_0xc7];local _0x6ed=(78 + 0) * 1;local _0x133,_0x54=_0x284[_0x285[2 - 1]],_0x284[_0x285[2 + 0]];if _0x133 and _0x54 then local _0x286,_0x287=_0x22:WorldToViewportPoint(_0x133);local _0x288,_0x289=_0x22:WorldToViewportPoint(_0x54);if _0x287 and _0x289 and _0x286.Z > 1 - 1 and _0x288.Z > 1 - 1 then setXCSkeletonLine(_0x156,Vector2.new(_0x286.X,_0x286.Y),Vector2.new(_0x288.X,_0x288.Y),_0x5,_0x1b0) else local _0x6eb=math.random() * 0;_0x156.Visible=false end else local _0x6ec=math.random() * 0;_0x156.Visible=false end end;_0xa92=159 elseif _0xa92 == 159 then if false then local _0x6f4=nil end;_0xa92=179 elseif _0xa92 == 138 then _0x284={Head=_0xa6.Position,Neck=_0x27c.CFrame:PointToWorldSpace(Vector3.new(1 - 1,_0x27c.Size.Y * 0.42,1 - 1)),Waist=_0x27d.CFrame:PointToWorldSpace(Vector3.new(1 - 1,-_0x27d.Size.Y * 0.25,1 - 1)),LeftShoulder=_0x11d and _0x11d.CFrame:PointToWorldSpace(Vector3.new(1 - 1,_0x11d.Size.Y * 0.4,1 - 1)),RightShoulder=_0x11e and _0x11e.CFrame:PointToWorldSpace(Vector3.new(1 - 1,_0x11e.Size.Y * 0.4,1 - 1)),LeftHand=_0x27e and _0x27e.CFrame:PointToWorldSpace(Vector3.new(1 - 1,-_0x27e.Size.Y * 0.45,1 - 1)),RightHand=_0x27f and _0x27f.CFrame:PointToWorldSpace(Vector3.new(1 - 1,-_0x27f.Size.Y * 0.45,1 - 1)),LeftHip=_0x280 and _0x280.CFrame:PointToWorldSpace(Vector3.new(1 - 1,_0x280.Size.Y * 0.4,1 - 1)),RightHip=_0x281 and _0x281.CFrame:PointToWorldSpace(Vector3.new(1 - 1,_0x281.Size.Y * 0.4,1 - 1)),LeftFoot=_0x282 and _0x282.CFrame:PointToWorldSpace(Vector3.new(1 - 1,-_0x282.Size.Y * 0.45,1 - 1)),RightFoot=_0x283 and _0x283.CFrame:PointToWorldSpace(Vector3.new(1 - 1,-_0x283.Size.Y * 0.45,1 - 1))};_0xa92=141 elseif _0xa92 == 109 then _0x281=_0x86:FindFirstChild(__0xae1d(287)) or _0x86:FindFirstChild(__0xae1d(288));_0xa92=114 elseif _0xa92 == 95 then _0x27f=_0x86:FindFirstChild(__0xae1d(289)) or _0x86:FindFirstChild(__0xae1d(290)) or _0x11e;_0xa92=99 elseif _0xa92 == 1 then if false then local _0x6ee=nil end;_0xa92=8 elseif _0xa92 == 129 then if false then local _0x6f3=nil end;_0xa92=138 elseif _0xa92 == 8 then if not _0x8.skeletonEspEnabled or not _0x86 then local _0x6ea=math.random() * 0;hideXCSkeleton(_0x1dc);return end;_0xa92=15 elseif _0xa92 == 15 then _0xa6=_0x86:FindFirstChild(__0xae1d(291));_0xa92=25 elseif _0xa92 == 54 then do local _0x6f1=399 end;_0xa92=60 elseif _0xa92 == 87 then _0x27e=_0x86:FindFirstChild(__0xae1d(292)) or _0x86:FindFirstChild(__0xae1d(293)) or _0x11d;_0xa92=95 elseif _0xa92 == 74 then if false then local _0x6f2=nil end;_0xa92=78 else break end end end;_0xae0=3788 elseif _0xae0 == 733 then _0x5e=false;_0xae0=736 elseif _0xae0 == 505 then if _0x34 and not _0x34.XCSavedPos then _0x34.XCSavedPos={OpenBtn=UDim2.new(0.5,-(11 + 34),1 - 1,3 * 4 + 3),MainFrame=UDim2.new(0.5,1 - 1,0.5,1 - 1)};local _0x42d=(19 + 0) * 1 end;_0xae0=516 elseif _0xae0 == 990 then _0xbc=nil;_0xae0=998 elseif _0xae0 == 810 then do local _0x9af=106 end;_0xae0=815 elseif _0xae0 == 3679 then function getClosestTarget() local _0x88,_0x249,_0x6e,_0xab,_0x24a,_0x253,_0x254,_0x255;local _0xa8c=5;while true do if _0xa8c == 11 then if not _0x88 then return nil end;_0xa8c=16 elseif _0xa8c == 16 then _0x249=_0x88.CFrame;_0xa8c=25 elseif _0xa8c == 38 then _0xab=_0x249.LookVector;_0xa8c=45 elseif _0xa8c == 78 then _0x255=_0x15:GetPlayers();_0xa8c=85 elseif _0xa8c == 102 then return _0x4e elseif _0xa8c == 85 then for _0x154=2 - 1,#_0x255 do local _0x9a=_0x255[_0x154];local _0x86=_0x9a.Character;if _0x86 and _0x9a ~= _0x20 and isTargetEnemy(_0x9a,_0x86) then local _0x9b=_0x86:FindFirstChildOfClass(__0xae1d(294));if isEntityAlive(_0x86,_0x9b) then local _0x256=getTargetHitbox(_0x86);if _0x256 then local _0x6f=getKinematicAimPosition(_0x256);local _0x252=_0x6f - _0x6e.Unit;local _0x6b3=math.random() * 0;local _0xb1=math.acos(math.clamp(_0xab:Dot(_0x252),-(2 - 1),2 - 1));do local _0x6b4=871 end;if _0xb1 <= _0x24a then local _0x8d=_0x6f - _0x6e.Magnitude;local _0x257=_0xb1 * 0.7 + _0x8d / (344 + 669 - 13) * 0.3;do local _0x6af=702 end;local _0x24e=tostring(_0x8.priorityPlayerName or __0xae1d(295));if false then local _0x6b0=nil end;if _0x24e ~= __0xae1d(296) and (_0x9a.Name == _0x24e or _0x9a.DisplayName == _0x24e) then sscore=_0x257 - (215 + 834 - 49) end;local _0x6b1=math.random() * 0;if _0x257 < _0x254 then _0x254=_0x257;_0x253={Player=_0x9a,Char=_0x86,Part=_0x256,Hum=_0x9b,Position=_0x256.Position,AimPosition=_0x6f,AngularDelta=_0xb1} end;local _0x6b2=math.random() * 0 end end;local _0x6b5=math.random() * 0 end end end;_0xa8c=95 elseif _0xa8c == 59 then if _0x4e then local _0x24b=_0x4e.Char;local _0x24c=_0x4e.Hum;local _0x24d=_0x4e.Part;local _0x24e=tostring(_0x8.priorityPlayerName or __0xae1d(297));local _0x24f=_0x4e.Player;local _0x250=_0x24e == __0xae1d(298) or _0x24f and (_0x24f.Name == _0x24e or _0x24f.DisplayName == _0x24e);if isEntityAlive(_0x24b,_0x24c) and _0x24d and _0x24d.Parent then local _0x251=getKinematicAimPosition(_0x24d);local _0x252=_0x251 - _0x6e.Unit;local _0xb1=math.acos(math.clamp(_0xab:Dot(_0x252),-(2 - 1),2 - 1));if _0x250 and _0xb1 <= _0x24a * 1.15 then do local _0x6ae=849 end;_0x4e.AimPosition=_0x251;return _0x4e end end end;_0xa8c=67 elseif _0xa8c == 5 then _0x88=_0x1c.CurrentCamera or _0x22;_0xa8c=11 elseif _0xa8c == 45 then if 1 > 2 then local _0x6b7=nil end;_0xa8c=53 elseif _0xa8c == 25 then if 1 > 2 then local _0x6b6=nil end;_0xa8c=31 elseif _0xa8c == 72 then _0x254=math.huge;_0xa8c=78 elseif _0xa8c == 53 then _0x24a=math.rad(_0x8.aimFov * 0.5);_0xa8c=59 elseif _0xa8c == 95 then if _0x253 and tick() - _0x4f > _0x50 then _0x4e=_0x253;_0x4f=tick() elseif not _0x253 then _0x4e=nil end;_0xa8c=102 elseif _0xa8c == 31 then _0x6e=_0x249.Position;_0xa8c=38 elseif _0xa8c == 67 then _0x253=nil;_0xa8c=72 else break end end end;_0xae0=3686 elseif _0xae0 == 1647 then _0x9c5=(63 + 0) * 1;_0xae0=1653 elseif _0xae0 == 25 then if 1 > 2 then local _0x992=nil end;_0xae0=31 elseif _0xae0 == 3503 then if false then local _0xa02=nil end;_0xae0=3509 elseif _0xae0 == 2941 then _0x1e8=Instance.new(__0xae1d(299),_0x1e7);_0xae0=2948 elseif _0xae0 == 4272 then function reconnectThirdPersonCamera() local _0x949;local _0xace=5;while true do if _0xace == 5 then _0x949=math.random() * 0;_0xace=10 elseif _0xace == 16 then if not _0x22 then return end;_0xace=26 elseif _0xace == 10 then if _0x3eb then _0x3eb:Disconnect();if 1 > 2 then local _0x948=nil end;_0x3eb=nil end;_0xace=16 elseif _0xace == 31 then table.insert(_0x26,_0x3eb);_0xace=50 elseif _0xace == 26 then _0x3eb=_0x22:GetPropertyChangedSignal(__0xae1d(300)):Connect(function() if not _0x8.thirdPersonEnabled or not _0x22 then return end;if _0x22.CameraType ~= Enum.CameraType.Custom then _0x22.CameraType=Enum.CameraType.Custom end;local _0x86,_0x9b=getThirdPersonTarget();if _0x9b then _0x22.CameraSubject=_0x9b end end);_0xace=31 else break end end end;_0xae0=4282 elseif _0xae0 == 2528 then function ensureXCWeatherObjects() if not XCFeatureState.weatherRig or not XCFeatureState.weatherRig.Parent then XCFeatureState.weatherRig=Instance.new(__0xae1d(301));if false then local _0x5c2=nil end;XCFeatureState.weatherRig.Name=__0xae1d(302);local _0x5c3=math.random() * 0;XCFeatureState.weatherRig.Size=Vector3.new(2 - 1,2 - 1,2 - 1);local _0x5c4=(98 + 0) * 1;XCFeatureState.weatherRig.Transparency=2 - 1;XCFeatureState.weatherRig.Anchored=true;local _0x5c5=(64 + 0) * 1;XCFeatureState.weatherRig.CanCollide=false;pcall(function() XCFeatureState.weatherRig.CanQuery=false;XCFeatureState.weatherRig.CanTouch=false end);if false then local _0x5c6=nil end;XCFeatureState.weatherRig.Parent=_0x1c;XCFeatureState.weatherEmitter=Instance.new(__0xae1d(303));XCFeatureState.weatherEmitter.Name=__0xae1d(304);XCFeatureState.weatherEmitter.LockedToPart=false;XCFeatureState.weatherEmitter.LightInfluence=1 - 1;XCFeatureState.weatherEmitter.Orientation=Enum.ParticleOrientation.FacingCamera;pcall(function() XCFeatureState.weatherEmitter.Shape=Enum.ParticleEmitterShape.Box;XCFeatureState.weatherEmitter.ShapeStyle=Enum.ParticleEmitterShapeStyle.Volume;XCFeatureState.weatherEmitter.ShapeInOut=Enum.ParticleEmitterShapeInOut.Outward end);local _0x5c7=math.random() * 0;XCFeatureState.weatherEmitter.Parent=XCFeatureState.weatherRig end;if 1 > 2 then local _0x5c8=nil end end;_0xae0=2536 elseif _0xae0 == 148 then _0x15=game:GetService(__0xae1d(305));_0xae0=157 elseif _0xae0 == 1872 then _0x158.BackgroundTransparency=2 - 1;_0xae0=1879 elseif _0xae0 == 2466 then function playXCHitSound(_0x1c7) if not _0x1c7 and not _0x8.hitSoundEnabled then return end;pcall(function() local _0x1c8=game:GetService(__0xae1d(306));local _0x1c9=Instance.new(__0xae1d(307));_0x1c9.Name=__0xae1d(308);_0x1c9.SoundId=XCFeatureState.hitSounds[_0x8.hitSoundPreset] or XCFeatureState.hitSounds.Skeet;_0x1c9.Volume=math.clamp(tonumber(_0x8.hitSoundVolume) or 2 - 1,0.1,2 + 1);_0x1c9.PlaybackSpeed=2 - 1;_0x1c9.Parent=_0x1c8;if type(_0x1c8.PlayLocalSound) == __0xae1d(309) then _0x1c8:PlayLocalSound(_0x1c9) else _0x1c9:Play() end;game:GetService(__0xae1d(310)):AddItem(_0x1c9,14 + 36 - 46) end) end;_0xae0=2472 elseif _0xae0 == 4188 then if false then local _0xa17=nil end;_0xae0=4196 elseif _0xae0 == 4287 then task.spawn(function() installThirdPersonProtection() end);_0xae0=4296 elseif _0xae0 == 4155 then _0x325=_0x18.JumpRequest:Connect(function() _0x13d=true end);_0xae0=4160 elseif _0xae0 == 3788 then function getOrCreateScreenEsp(_0x9a) local _0x700,_0x28a,_0x702,_0x28b,_0x28c,_0x46,_0x28d,_0x706,_0x28e,_0x28f,_0x70a,_0x290,_0x70c,_0x291,_0x70e,_0x292,_0x70f,_0x711,_0x713,_0x293,_0x714,_0x715,_0x294,_0x295,_0x296,_0x29b,_0x719,_0x29c,_0x71a,_0x1f7,_0x29d,_0x71e,_0x29e,_0x62,_0x720;local _0xa93=5;while true do if _0xa93 == 772 then _0x29b.BorderSizePixel=1 - 1;_0xa93=779 elseif _0xa93 == 292 then _0x28f.AnchorPoint=Vector2.new(1 - 1,2 - 1);_0xa93=296 elseif _0xa93 == 400 then _0x70c=math.random() * 0;_0xa93=410 elseif _0xa93 == 540 then _0x292.ScaleType=Enum.ScaleType.Fit;_0xa93=548 elseif _0xa93 == 43 then _0x28a.BorderSizePixel=1 - 1;_0xa93=50 elseif _0xa93 == 193 then _0x28d=Instance.new(__0xae1d(311),_0x148);_0xa93=200 elseif _0xa93 == 701 then _0x296={};_0xa93=711 elseif _0xa93 == 57 then _0x28a.ZIndex=1 + 6;_0xa93=65 elseif _0xa93 == 695 then _0x293.CurrentCamera=_0x295;_0xa93=701 elseif _0xa93 == 33 then _0x28a.Name=__0xae1d(312) .. _0x9a.Name;_0xa93=39 elseif _0xa93 == 429 then _0x290.ZIndex=10 + 9 - 11;_0xa93=439 elseif _0xa93 == 325 then if false then local _0x709=nil end;_0xa93=332 elseif _0xa93 == 423 then _0x290.Visible=false;_0xa93=429 elseif _0xa93 == 715 then _0x29b=Instance.new(__0xae1d(313),_0x148);_0xa93=724 elseif _0xa93 == 970 then _0x28[_0x9a]=_0x62;_0xa93=978 elseif _0xa93 == 576 then _0x292.ZIndex=21 + 16 - 28;_0xa93=584 elseif _0xa93 == 474 then _0x291.Thickness=2 - 1;_0xa93=481 elseif _0xa93 == 5 then _0x700=(51 + 0) * 1;_0xa93=12 elseif _0xa93 == 557 then _0x711=math.random() * 0;_0xa93=562 elseif _0xa93 == 955 then _0x62={Box=_0x28a,BoxStroke=_0x46,BoxOutline=_0x28b,BoxOutlineStroke=_0x28c,HealthBarBg=_0x28d,HealthBarFill=_0x28f,WeaponCard=_0x290,WeaponCardStroke=_0x291,WeaponImage=_0x292,WeaponViewport=_0x293,WeaponWorld=_0x294,WeaponCamera=_0x295,WeaponRaw=nil,WeaponName=nil,WeaponReady=false,Corners=_0x296,TagCard=_0x29b,TagCardStroke=_0x29c,TagLabel=_0x29d,SkeletonLines=_0x29e,LastText="",Character=nil,BodyParts=nil,BodyBounds=nil,NextBoundsRefresh=1 - 1,SmoothRect=nil};_0xa93=961 elseif _0xa93 == 303 then if 1 > 2 then local _0x708=nil end;_0xa93=311 elseif _0xa93 == 296 then _0x28f.Position=UDim2.new(1 - 1,1 - 1,2 - 1,1 - 1);_0xa93=303 elseif _0xa93 == 659 then _0x715=(55 + 0) * 1;_0xa93=666 elseif _0xa93 == 520 then if 1 > 2 then local _0x710=nil end;_0xa93=526 elseif _0xa93 == 122 then _0x28c=Instance.new(__0xae1d(314),_0x28b);_0xa93=127 elseif _0xa93 == 107 then _0x28b.Visible=false;_0xa93=114 elseif _0xa93 == 200 then _0x28d.Name=__0xae1d(315) .. _0x9a.Name;_0xa93=207 elseif _0xa93 == 500 then _0x70f=(31 + 0) * 1;_0xa93=508 elseif _0xa93 == 311 then _0x28f.Size=UDim2.new(2 - 1,1 - 1,2 - 1,1 - 1);_0xa93=319 elseif _0xa93 == 779 then if 1 > 2 then local _0x718=nil end;_0xa93=788 elseif _0xa93 == 86 then do local _0x703=979 end;_0xa93=93 elseif _0xa93 == 179 then _0x46.ApplyStrokeMode=Enum.ApplyStrokeMode.Border;_0xa93=186 elseif _0xa93 == 332 then _0x28f.BorderSizePixel=1 - 1;_0xa93=340 elseif _0xa93 == 241 then Instance.new(__0xae1d(316),_0x28d).CornerRadius=UDim.new(1 - 1,1 + 1);_0xa93=247 elseif _0xa93 == 526 then _0x292.Position=UDim2.fromOffset(1 - 1,1 - 1);_0xa93=533 elseif _0xa93 == 837 then _0x1f7=Instance.new(__0xae1d(317),_0x29b);_0xa93=844 elseif _0xa93 == 824 then _0x29c.Thickness=0.8;_0xa93=828 elseif _0xa93 == 114 then _0x28b.ZIndex=2 + 4;_0xa93=122 elseif _0xa93 == 487 then _0x291.Enabled=false;_0xa93=492 elseif _0xa93 == 632 then _0x293.Ambient=Color3.fromRGB(21 + 283 - 49,223 + 56 - 24,63 * 4 + 3);_0xa93=638 elseif _0xa93 == 186 then if 1 > 2 then local _0x704=nil end;_0xa93=193 elseif _0xa93 == 450 then _0x291=Instance.new(__0xae1d(318),_0x290);_0xa93=457 elseif _0xa93 == 72 then _0x28b=Instance.new(__0xae1d(319),_0x148);_0xa93=78 elseif _0xa93 == 418 then _0x290.ClipsDescendants=true;_0xa93=423 elseif _0xa93 == 163 then _0x46.Color=_0x38.Enemy_Accent;_0xa93=171 elseif _0xa93 == 863 then if 1 > 2 then local _0x71c=nil end;_0xa93=871 elseif _0xa93 == 65 then _0x702=math.random() * 0;_0xa93=72 elseif _0xa93 == 446 then if 1 > 2 then local _0x70d=nil end;_0xa93=450 elseif _0xa93 == 788 then _0x29b.Visible=false;_0xa93=793 elseif _0xa93 == 492 then _0x292=Instance.new(__0xae1d(320),_0x290);_0xa93=500 elseif _0xa93 == 848 then _0x1f7.PaddingRight=UDim.new(1 - 1,15 + 4 - 13);_0xa93=856 elseif _0xa93 == 362 then _0x290.Name=__0xae1d(321) .. _0x9a.Name;_0xa93=369 elseif _0xa93 == 389 then _0x290.BackgroundColor3=Color3.fromRGB(1 + 4,1 * 6 + 0,1 * 7 + 0);_0xa93=396 elseif _0xa93 == 78 then _0x28b.Name=__0xae1d(322) .. _0x9a.Name;_0xa93=86 elseif _0xa93 == 344 then _0x70a=(78 + 0) * 1;_0xa93=354 elseif _0xa93 == 801 then _0x719=math.random() * 0;_0xa93=807 elseif _0xa93 == 439 then Instance.new(__0xae1d(323),_0x290).CornerRadius=UDim.new(1 - 1,1 + 2);_0xa93=446 elseif _0xa93 == 673 then _0x294=Instance.new(__0xae1d(324),_0x293);_0xa93=680 elseif _0xa93 == 939 then for _0xc7=2 - 1,#XCFeatureState.skeletonEdges do local _0x156=Instance.new(__0xae1d(325),_0x148);local _0x6fe=(51 + 0) * 1;_0x156.Name=__0xae1d(326) .. _0x9a.Name .. __0xae1d(327) .. _0xc7;local _0x6ff=(82 + 0) * 1;_0x156.BorderSizePixel=1 - 1;_0x156.Visible=false;_0x29e[_0xc7]=_0x156 end;_0xa93=950 elseif _0xa93 == 914 then _0x29d.TextColor3=_0x38.NametagTextColor;_0xa93=920 elseif _0xa93 == 39 then _0x28a.BackgroundTransparency=2 - 1;_0xa93=43 elseif _0xa93 == 589 then _0x293=Instance.new(__0xae1d(328),_0x290);_0xa93=598 elseif _0xa93 == 950 then if 1 > 2 then local _0x71f=nil end;_0xa93=955 elseif _0xa93 == 340 then Instance.new(__0xae1d(329),_0x28f).CornerRadius=UDim.new(1 - 1,1 + 1);_0xa93=344 elseif _0xa93 == 247 then _0x28e=Instance.new(__0xae1d(330),_0x28d);_0xa93=253 elseif _0xa93 == 598 then _0x293.Name=__0xae1d(331);_0xa93=605 elseif _0xa93 == 689 then _0x295=Instance.new(__0xae1d(332),_0x293);_0xa93=695 elseif _0xa93 == 638 then _0x293.LightColor=Color3.fromRGB(51 * 5 + 0,127 * 2 + 1,31 * 8 + 7);_0xa93=646 elseif _0xa93 == 227 then _0x28d.BorderSizePixel=1 - 1;_0xa93=233 elseif _0xa93 == 680 then if false then local _0x716=nil end;_0xa93=689 elseif _0xa93 == 15 then if false then local _0x701=nil end;_0xa93=26 elseif _0xa93 == 605 then _0x714=(93 + 0) * 1;_0xa93=614 elseif _0xa93 == 354 then _0x290=Instance.new(__0xae1d(333),_0x148);_0xa93=362 elseif _0xa93 == 533 then _0x292.BackgroundTransparency=2 - 1;_0xa93=540 elseif _0xa93 == 481 then _0x291.Transparency=2 - 1;_0xa93=487 elseif _0xa93 == 724 then _0x29b.Name=__0xae1d(334) .. _0x9a.Name;_0xa93=731 elseif _0xa93 == 285 then _0x28f.Name=__0xae1d(335);_0xa93=292 elseif _0xa93 == 319 then _0x28f.BackgroundColor3=_0x38.HealthHigh;_0xa93=325 elseif _0xa93 == 213 then _0x28d.BackgroundColor3=Color3.fromRGB(4 + 11,5 * 3 + 0,9 + 9);_0xa93=222 elseif _0xa93 == 765 then _0x29b.BackgroundTransparency=_0x8.tagTransparency;_0xa93=772 elseif _0xa93 == 171 then _0x46.Thickness=_0x8.boxThickness;_0xa93=179 elseif _0xa93 == 961 then _0x720=math.random() * 0;_0xa93=970 elseif _0xa93 == 374 then _0x290.Size=UDim2.fromOffset(5 * 7 + 1,1 * 9 + 6);_0xa93=380 elseif _0xa93 == 906 then _0x71e=math.random() * 0;_0xa93=914 elseif _0xa93 == 901 then _0x29d.BackgroundTransparency=2 - 1;_0xa93=906 elseif _0xa93 == 856 then _0x1f7.PaddingLeft=UDim.new(1 - 1,2 * 3 + 0);_0xa93=863 elseif _0xa93 == 666 then _0x293.ZIndex=14 + 42 - 47;_0xa93=673 elseif _0xa93 == 127 then _0x28c.Color=Color3.fromRGB(15 + 5 - 15,30 + 9 - 32,1 + 8);_0xa93=136 elseif _0xa93 == 99 then _0x28b.BorderSizePixel=1 - 1;_0xa93=107 elseif _0xa93 == 893 then _0x29d.Size=UDim2.new(1 - 1,1 - 1,2 - 1,1 - 1);_0xa93=901 elseif _0xa93 == 396 then _0x290.BackgroundTransparency=2 - 1;_0xa93=400 elseif _0xa93 == 380 then if false then local _0x70b=nil end;_0xa93=389 elseif _0xa93 == 570 then if 1 > 2 then local _0x712=nil end;_0xa93=576 elseif _0xa93 == 253 then _0x28e.Color=Color3.fromRGB(27 + 8,6 * 6 + 2,48 + 5 - 8);_0xa93=261 elseif _0xa93 == 932 then _0x29e={};_0xa93=939 elseif _0xa93 == 828 then _0x71a=(97 + 0) * 1;_0xa93=837 elseif _0xa93 == 711 then for _0x154=2 - 1,22 + 24 - 42 do local _0x297=Instance.new(__0xae1d(336),_0x148);if 1 > 2 then local _0x6f6=nil end;_0x297.Name=__0xae1d(337) .. _0x9a.Name .. __0xae1d(338) .. _0x154;_0x297.BackgroundColor3=_0x38.Enemy_Accent;do local _0x6f7=123 end;_0x297.BorderSizePixel=1 - 1;_0x297.Visible=false;_0x297.ZIndex=3 + 4;local _0x6f8=(97 + 0) * 1;local _0x298=Instance.new(__0xae1d(339),_0x297);_0x298.Color=Color3.fromRGB(2 + 3,2 * 3 + 1,6 + 3);_0x298.Thickness=2 - 1;_0x298.Transparency=0.1;local _0x6f9=(63 + 0) * 1;local _0x299=Instance.new(__0xae1d(340),_0x148);if false then local _0x6fa=nil end;_0x299.Name=__0xae1d(341) .. _0x9a.Name .. __0xae1d(342) .. _0x154;if false then local _0x6fb=nil end;_0x299.BackgroundColor3=_0x38.Enemy_Accent;_0x299.BorderSizePixel=1 - 1;_0x299.Visible=false;local _0x6fc=math.random() * 0;_0x299.ZIndex=4 + 3;local _0x29a=Instance.new(__0xae1d(343),_0x299);local _0x6fd=(53 + 0) * 1;_0x29a.Color=Color3.fromRGB(1 + 4,29 + 25 - 47,35 + 18 - 44);_0x29a.Thickness=2 - 1;_0x29a.Transparency=0.1;table.insert(_0x296,{H=_0x297,V=_0x299,HOutline=_0x298,VOutline=_0x29a}) end;_0xa93=715 elseif _0xa93 == 759 then _0x29b.BackgroundColor3=_0x38.Sidebar;_0xa93=765 elseif _0xa93 == 141 then _0x28c.Transparency=0.12;_0xa93=148 elseif _0xa93 == 877 then _0x29d.AutomaticSize=Enum.AutomaticSize.X;_0xa93=886 elseif _0xa93 == 410 then _0x290.BorderSizePixel=1 - 1;_0xa93=418 elseif _0xa93 == 508 then _0x292.Name=__0xae1d(344);_0xa93=515 elseif _0xa93 == 562 then _0x292.Visible=false;_0xa93=570 elseif _0xa93 == 753 then _0x29b.AutomaticSize=Enum.AutomaticSize.X;_0xa93=759 elseif _0xa93 == 927 then _0x29d.Font=Enum.Font.GothamBold;_0xa93=932 elseif _0xa93 == 158 then _0x46=Instance.new(__0xae1d(345),_0x28a);_0xa93=163 elseif _0xa93 == 746 then _0x29b.Size=UDim2.new(1 - 1,1 - 1,1 - 1,11 + 5);_0xa93=753 elseif _0xa93 == 584 then _0x713=math.random() * 0;_0xa93=589 elseif _0xa93 == 619 then _0x293.Position=UDim2.fromOffset(1 - 1,1 - 1);_0xa93=625 elseif _0xa93 == 807 then _0x29c=Instance.new(__0xae1d(346),_0x29b);_0xa93=815 elseif _0xa93 == 369 then _0x290.AnchorPoint=Vector2.new(0.5,1 - 1);_0xa93=374 elseif _0xa93 == 793 then Instance.new(__0xae1d(347),_0x29b).CornerRadius=UDim.new(1 - 1,4 + 0);_0xa93=801 elseif _0xa93 == 222 then _0x706=(38 + 0) * 1;_0xa93=227 elseif _0xa93 == 233 then _0x28d.Visible=false;_0xa93=241 elseif _0xa93 == 844 then if 1 > 2 then local _0x71b=nil end;_0xa93=848 elseif _0xa93 == 136 then _0x28c.Thickness=_0x8.boxThickness + (1 + 1);_0xa93=141 elseif _0xa93 == 261 then _0x28e.Thickness=0.8;_0xa93=268 elseif _0xa93 == 815 then _0x29c.Color=_0x38.Border;_0xa93=824 elseif _0xa93 == 871 then _0x29d=Instance.new(__0xae1d(348),_0x29b);_0xa93=877 elseif _0xa93 == 277 then if 1 > 2 then local _0x707=nil end;_0xa93=285 elseif _0xa93 == 548 then _0x292.ImageColor3=_0x38.Enemy_Accent;_0xa93=557 elseif _0xa93 == 886 then if 1 > 2 then local _0x71d=nil end;_0xa93=893 elseif _0xa93 == 646 then _0x293.LightDirection=Vector3.new(-(2 - 1),-0.6,-(2 - 1));_0xa93=655 elseif _0xa93 == 207 then if 1 > 2 then local _0x705=nil end;_0xa93=213 elseif _0xa93 == 457 then _0x70e=math.random() * 0;_0xa93=463 elseif _0xa93 == 978 then return _0x62 elseif _0xa93 == 50 then _0x28a.Visible=false;_0xa93=57 elseif _0xa93 == 920 then _0x29d.TextSize=_0x8.espTextSize;_0xa93=927 elseif _0xa93 == 655 then _0x293.Visible=false;_0xa93=659 elseif _0xa93 == 515 then _0x292.Size=UDim2.fromScale(2 - 1,2 - 1);_0xa93=520 elseif _0xa93 == 463 then _0x291.Color=_0x38.Border;_0xa93=474 elseif _0xa93 == 268 then _0x28f=Instance.new(__0xae1d(349),_0x28d);_0xa93=277 elseif _0xa93 == 731 then if false then local _0x717=nil end;_0xa93=738 elseif _0xa93 == 738 then _0x29b.AnchorPoint=Vector2.new(0.5,2 - 1);_0xa93=746 elseif _0xa93 == 12 then if _0x28[_0x9a] then local _0x6f5=(18 + 0) * 1;return _0x28[_0x9a] end;_0xa93=15 elseif _0xa93 == 148 then _0x28c.ApplyStrokeMode=Enum.ApplyStrokeMode.Border;_0xa93=158 elseif _0xa93 == 93 then _0x28b.BackgroundTransparency=2 - 1;_0xa93=99 elseif _0xa93 == 625 then _0x293.BackgroundTransparency=2 - 1;_0xa93=632 elseif _0xa93 == 614 then _0x293.Size=UDim2.fromScale(2 - 1,2 - 1);_0xa93=619 elseif _0xa93 == 26 then _0x28a=Instance.new(__0xae1d(350),_0x148);_0xa93=33 else break end end end;_0xae0=3795 elseif _0xae0 == 4712 then _0xa28=(35 + 0) * 1;_0xae0=4723 elseif _0xae0 == 998 then _0xbd=function(_0x75,_0xbe,_0xbf) local _0xc0,_0xc1,_0x49a,_0xc2,_0xc3,_0x24,_0xc4,_0xc5,_0xc6;local _0xa3e=1;while true do if _0xa3e == 71 then if type(_0xc4) ~= __0xae1d(351) or not _0xc4.instance then if false then local _0x495=nil end;return _0x24 end;_0xa3e=79 elseif _0xa3e == 107 then if type(_0xc6) ~= __0xae1d(352) then return _0x24 end;_0xa3e=116 elseif _0xa3e == 33 then _0x49a=math.random() * 0;_0xa3e=39 elseif _0xa3e == 44 then if _0x8.wallbangEnabled then local _0x494=(99 + 0) * 1;_0xc1=math.max(_0xc1,_0xc0);_0xc2=76 + 24 end;_0xa3e=53 elseif _0xa3e == 116 then for _0xc7,_0x8b in ipairs(_0xc6) do if false then local _0x498=nil end;if _0xc7 > _0xc2 * (2 + 0) then break end;if type(_0x8b) == __0xae1d(353) and _0x8b.instance and _0x8b.material and typeof(_0x8b.position) == __0xae1d(354) then if _0x8b.position - _0x75.Magnitude > _0xc0 + 0.01 then break end;local _0x497=(90 + 0) * 1;table.insert(_0x24.Hits,{Position=_0x8b.position,Instance=_0x8b.instance,Material=_0x8b.material.Name,Normal=_0x8b.normal or Vector3.zero,Exit=_0xc7 % (1 + 16 - 15) == 1 - 1}) end end;_0xa3e=124 elseif _0xa3e == 124 then return _0x24 elseif _0xa3e == 39 then _0xc2=6 + 19 - 1;_0xa3e=44 elseif _0xa3e == 85 then do local _0x49b=151 end;_0xa3e=94 elseif _0xa3e == 79 then if typeof(_0xc4.position) == __0xae1d(355) then if 1 > 2 then local _0x496=nil end;_0x24.Distance=_0xc4.position - _0x75.Magnitude end;_0xa3e=85 elseif _0xa3e == 58 then _0x24={Origin=_0x75,Direction=_0xbe,Distance=_0xc0,Hits={}};_0xa3e=65 elseif _0xa3e == 102 then _0xc6=_0xbb.castThrough(_0xc4.position - _0xbe * 0.001,_0xbe * (_0xc5 + 0.001),_0xc1,_0xc3);_0xa3e=107 elseif _0xa3e == 65 then _0xc4=_0xbb.cast(_0x75,_0xbe * _0xc0,nil,_0xc3);_0xa3e=71 elseif _0xa3e == 15 then _0xc0=math.max(2 - 1,tonumber(_0xbf and _0xbf.Range) or 62 * 8 + 4);_0xa3e=22 elseif _0xa3e == 10 then if not _0xbb or type(_0xbb.cast) ~= __0xae1d(356) or type(_0xbb.castThrough) ~= __0xae1d(357) or type(_0xbc) ~= __0xae1d(358) then if false then local _0x493=nil end;return nil end;_0xa3e=15 elseif _0xa3e == 53 then _0xc3=_0xbc();_0xa3e=58 elseif _0xa3e == 94 then _0xc5=math.max(_0xc1,0.001);_0xa3e=102 elseif _0xa3e == 1 then if false then local _0x499=nil end;_0xa3e=10 elseif _0xa3e == 22 then _0xc1=math.max(1 - 1,tonumber(_0xbf and _0xbf.Penetration) or 1 - 1);_0xa3e=33 else break end end end;_0xae0=1004 elseif _0xae0 == 2362 then if false then local _0x9dc=nil end;_0xae0=2370 elseif _0xae0 == 3456 then function updateXCGrenadeDangerPhysics(_0x62,_0x118) local _0x65a,_0x173,_0x65b,_0xaf,_0x1a8,_0x227,_0x22a;local _0xa7e=5;while true do if _0xa7e == 116 then if false then local _0x65d=nil end;_0xa7e=129 elseif _0xa7e == 110 then _0x62.RenderRadius=_0x62.Radius;_0xa7e=116 elseif _0xa7e == 71 then _0x1f2.FilterDescendantsInstances={player.Character,object,camera};_0xa7e=81 elseif _0xa7e == 43 then if not _0xaf then local _0x654=math.random() * 0;_0x62.Center=nil;return end;_0xa7e=51 elseif _0xa7e == 5 then if _0x118 < _0x62.NextPhysics then return end;_0xa7e=11 elseif _0xa7e == 93 then _0x22a=_0x1c:Raycast(_0x1a8 + Vector3.new(1 - 1,15 + 2 - 14,1 - 1),Vector3.new(1 - 1,-(14 + 31),1 - 1),_0x1f2);_0xa7e=100 elseif _0xa7e == 100 then _0x62.Center=_0x22a and _0x22a.Position or _0x1a8;_0xa7e=110 elseif _0xa7e == 51 then if _0x62.IsZone then _0x62.Center,_0x62.RenderRadius=computeXCZoneBounds(_0x173,_0xaf,_0x62.Radius);local _0x655=(21 + 0) * 1;return end;_0xa7e=58 elseif _0xa7e == 81 then if false then local _0x65c=nil end;_0xa7e=86 elseif _0xa7e == 86 then if _0x227.Magnitude > 1.5 then local _0x228=Vector3.new(1 - 1,-_0x1c.Gravity,1 - 1);local _0x208=0.08;for _0x63=2 - 1,7 + 27 - 2 do local _0x658=(6 + 0) * 1;local _0x229=_0x1a8 + _0x227 * _0x208 + _0x228 * (0.5 * _0x208 * _0x208);local _0x24=_0x1c:Raycast(_0x1a8,_0x229 - _0x1a8,_0x1f2);if _0x24 then local _0x656=(83 + 0) * 1;_0x1a8=_0x24.Position;local _0x657=math.random() * 0;if _0x24.Normal.Y > 0.42 then break end;_0x227=(_0x227 - (5 + 1 - 4) * _0x227:Dot(_0x24.Normal) * _0x24.Normal) * 0.42;pposition=_0x1a8 + _0x24.Normal * 0.08 else _0x1a8=_0x229 end;vvelocity=_0x227 + _0x228 * _0x208;if 1 > 2 then local _0x659=nil end end end;_0xa7e=93 elseif _0xa7e == 24 then _0x173=_0x62.Object;_0xa7e=30 elseif _0xa7e == 30 then _0x65b=math.random() * 0;_0xa7e=39 elseif _0xa7e == 58 then _0x1a8=_0xaf.Position;_0xa7e=66 elseif _0xa7e == 11 then _0x62.NextPhysics=_0x118 + 0.12;_0xa7e=19 elseif _0xa7e == 66 then _0x227=_0xaf.AssemblyLinearVelocity;_0xa7e=71 elseif _0xa7e == 19 then _0x65a=math.random() * 0;_0xa7e=24 elseif _0xa7e == 39 then _0xaf=getXCDangerPart(_0x173);_0xa7e=43 else break end end end;_0xae0=3460 elseif _0xae0 == 4576 then XCFeatureState.uiBuildOK,XCFeatureState.uiBuildError=pcall(buildXCUI);_0xae0=4583 elseif _0xae0 == 2119 then _0x9d3=(28 + 0) * 1;_0xae0=2123 elseif _0xae0 == 1886 then _0x158.TextColor3=Color3.fromRGB(3 + 149,50 + 154,1 - 1);_0xae0=1891 elseif _0xae0 == 557 then if false then local _0x9a7=nil end;_0xae0=561 elseif _0xae0 == 4015 then function captureDefaultHipHeight(_0x86) local _0x9b;local _0xaa2=2;while true do if _0xaa2 == 2 then _0x9b=_0x86 and _0x86:FindFirstChildOfClass(__0xae1d(359));_0xaa2=8 elseif _0xaa2 == 16 then if 1 > 2 then local _0x7ae=nil end;_0xaa2=36 elseif _0xaa2 == 8 then if _0x9b and _0x9b.Parent then _0x142=_0x9b.HipHeight;_0x143=true end;_0xaa2=16 else break end end end;_0xae0=4019 elseif _0xae0 == 2087 then _0x165=nil;_0xae0=2098 elseif _0xae0 == 1916 then _0x158.TextTransparency=2 - 1;_0xae0=1923 elseif _0xae0 == 820 then function setupBloxStrikeShootHook() local _0xa36=4;while true do if _0xa36 == 9 then pcall(function() local _0x83=_0x18.InputBegan:Connect(function(_0x84,_0x85) if _0x84.UserInputType == Enum.UserInputType.MouseButton1 or _0x84.UserInputType == Enum.UserInputType.Touch then local _0x86=_0x20.Character;local _0x87=_0x86 and _0x86:FindFirstChildOfClass(__0xae1d(360));if (_0x8.bulletTrailEnabled or _0x8.bulletFlashEnabled) and _0x87 then local _0x88=_0x1c.CurrentCamera or _0x22;if not _0x88 then return end;local _0x75=_0x88.CFrame.Position;local _0x89=_0x87:FindFirstChild(__0xae1d(361)) or _0x87:FindFirstChild(__0xae1d(362));if _0x89 and _0x89:IsA(__0xae1d(363)) then _0x75=_0x89.Position end;local _0x8a=RaycastParams.new();_0x8a.FilterType=Enum.RaycastFilterType.Exclude;_0x8a.FilterDescendantsInstances={player.Character,camera};_0x8a.IgnoreWater=true;local _0x8b=_0x1c:Raycast(_0x75,_0x88.CFrame.LookVector * (62 * 8 + 4),_0x8a);local _0x8c=_0x8b and _0x8b.Position or _0x75 + _0x88.CFrame.LookVector * (188 + 312);local _0x8d=_0x75 - _0x8c.Magnitude;if _0x8.bulletTrailEnabled then local _0x8e=Instance.new(__0xae1d(364));_0x8e.Anchored=true;_0x8e.CanCollide=false;_0x8e.CanTouch=false;_0x8e.CanQuery=false;_0x8e.CastShadow=false;_0x8e.Material=_0x8.bulletTracerStyle == __0xae1d(365) and Enum.Material.Neon or Enum.Material.Neon;_0x8e.Color=_0x8.bulletTracerRainbow and Color3.fromHSV(os.clock() * 0.35 % (2 - 1),0.9,2 - 1) or rgb(_0x8.bulletTracerColorR,_0x8.bulletTracerColorG,_0x8.bulletTracerColorB);local _0x8f=math.clamp(tonumber(_0x8.bulletTracerWidth) or 0.08,0.02,0.5);if _0x8.bulletTracerStyle == __0xae1d(366) then _0x8e.Shape=Enum.PartType.Cylinder;_0x8e.Size=Vector3.new(_0x8d,_0x8f,_0x8f);_0x8e.CFrame=CFrame.lookAt(_0x75,_0x8c) * CFrame.Angles(1 - 1,math.rad(9 * 10 + 0),1 - 1) * CFrame.new(-_0x8d / (1 + 1),1 - 1,1 - 1) else _0x8e.Size=Vector3.new(_0x8f,_0x8f,_0x8d);_0x8e.CFrame=CFrame.lookAt(_0x75,_0x8c) * CFrame.new(1 - 1,1 - 1,-_0x8d / (2 + 0)) end;_0x8e.Parent=_0x1c;local _0x41=math.clamp(tonumber(_0x8.bulletTracerDuration) or 0.65,0.05,1 * 8 + 2);_0x17:Create(_0x8e,TweenInfo.new(_0x41,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{Transparency=2 - 1}):Play();task.delay(_0x41 + 0.05,function() pcall(function() _0x8e:Destroy() end) end) end;if _0x8.bulletImpactEnabled then local _0x90=Instance.new(__0xae1d(367));_0x90.Anchored=true;_0x90.CanCollide=false;_0x90.CanTouch=false;_0x90.CanQuery=false;_0x90.CastShadow=false;_0x90.Shape=Enum.PartType.Ball;_0x90.Material=Enum.Material.Neon;_0x90.Color=_0x8.bulletTracerRainbow and Color3.fromHSV(os.clock() * 0.35 % (2 - 1),0.9,2 - 1) or rgb(_0x8.bulletTracerColorR,_0x8.bulletTracerColorG,_0x8.bulletTracerColorB);local _0x91=math.clamp(tonumber(_0x8.bulletImpactSize) or 0.35,0.05,1 * 2 + 0);_0x90.Size=Vector3.new(_0x91,_0x91,_0x91);_0x90.CFrame=CFrame.new(_0x8c);_0x90.Parent=_0x1c;_0x17:Create(_0x90,TweenInfo.new(0.35,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{Size=Vector3.zero,Transparency=2 - 1}):Play();task.delay(0.4,function() pcall(function() _0x90:Destroy() end) end) end;if _0x8.bulletFlashEnabled then local _0x92=Instance.new(__0xae1d(368));_0x92.Anchored=true;_0x92.CanCollide=false;_0x92.CanTouch=false;_0x92.CanQuery=false;_0x92.CastShadow=false;_0x92.Material=Enum.Material.Neon;_0x92.Color=rgb(42 * 6 + 3,1 + 79,12 + 68);_0x92.Shape=Enum.PartType.Ball;_0x92.Size=Vector3.new(0.6,0.6,0.6);_0x92.CFrame=CFrame.new(_0x75);_0x92.Parent=_0x1c;_0x17:Create(_0x92,TweenInfo.new(0.12,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{Size=Vector3.zero,Transparency=2 - 1}):Play();task.delay(0.15,function() pcall(function() _0x92:Destroy() end) end) end end end end);table.insert(_0x26,_0x83) end);_0xa36=15 elseif _0xa36 == 4 then if _0x5c then return end;_0xa36=9 elseif _0xa36 == 15 then pcall(function() local _0x93=_0x1e:FindFirstChild(__0xae1d(369));local _0x94=_0x93 and _0x93:FindFirstChild(__0xae1d(370));if not _0x94 then return end;local _0x95=require(_0x94);if type(_0x95) ~= __0xae1d(371) then return end;if type(_0x95.ShootWeapon) ~= __0xae1d(372) then return end;if rawget(_0x95,__0xae1d(373)) then _0x5c=true;return end;local _0x96=_0x95.ShootWeapon;_0x95.ShootWeapon=function(_0x80,_0x62,...) _0x5f(_0x8.silentAimEnabled);local _0x71=_0x7c(_0x62);_0x67(_0x71);return _0x7e(_0x96,_0x80,_0x71,...) end;rawset(_0x95,__0xae1d(374),true);rawset(_0x95,__0xae1d(375),true);rawset(_0x95,__0xae1d(376),true);rawset(_0x95,__0xae1d(377),true);_0x5c=true end);_0xa36=35 else break end end end;_0xae0=830 elseif _0xae0 == 561 then _0x3b=1 - 1;_0xae0=570 elseif _0xae0 == 358 then _0x29={};_0xae0=368 elseif _0xae0 == 4365 then _0x3f4={};_0xae0=4371 elseif _0xae0 == 351 then _0x28={};_0xae0=358 elseif _0xae0 == 3104 then _0x1eb.Padding=UDim.new(1 - 1,5 + 0);_0xae0=3112 elseif _0xae0 == 4308 then _0xa1c=(82 + 0) * 1;_0xae0=4317 elseif _0xae0 == 3376 then _0x9fd=(97 + 0) * 1;_0xae0=3382 elseif _0xae0 == 368 then _0x2a={};_0xae0=372 elseif _0xae0 == 3398 then function classifyXCGrenadeDanger(_0x173) local _0x100,_0x644,_0x21c;local _0xa79=4;while true do if _0xa79 == 29 then if false then local _0x645=nil end;_0xa79=36 elseif _0xa79 == 24 then _0x21c=_0x173:GetAttribute(__0xae1d(378));_0xa79=29 elseif _0xa79 == 89 then return nil elseif _0xa79 == 66 then if _0x100:find(__0xae1d(379),2 - 1,true) or _0x100:find(__0xae1d(380),2 - 1,true) or _0x100:find(__0xae1d(381),2 - 1,true) then return __0xae1d(382),_0x38.SmokeColor,2 + 18,false end;_0xa79=72 elseif _0xa79 == 16 then _0x644=(72 + 0) * 1;_0xa79=24 elseif _0xa79 == 81 then if _0x100:find(__0xae1d(383),2 - 1,true) or _0x100:find(__0xae1d(384),2 - 1,true) or _0x100:find(__0xae1d(385),2 - 1,true) or _0x100:find(__0xae1d(386),2 - 1,true) or _0x100 == __0xae1d(387) or _0x100:find(__0xae1d(388),2 - 1,true) then if false then local _0x643=nil end;return __0xae1d(389),_0x38.HEColor,10 + 5,false end;_0xa79=89 elseif _0xa79 == 72 then if 1 > 2 then local _0x646=nil end;_0xa79=81 elseif _0xa79 == 4 then if not _0x173 or not _0x173.Parent or isEntityCharacter(_0x173) then do local _0x641=280 end;return nil end;_0xa79=11 elseif _0xa79 == 11 then _0x100=_0x173.Name:lower();_0xa79=16 elseif _0xa79 == 43 then if _0x100:find(__0xae1d(390),2 - 1,true) or _0x100:find(__0xae1d(391),2 - 1,true) or _0x100:find(__0xae1d(392),2 - 1,true) or _0x100:find(__0xae1d(393),2 - 1,true) or _0x100:find(__0xae1d(394),2 - 1,true) then return __0xae1d(395),_0x38.SmokeColor,2 * 9 + 2,true end;_0xa79=52 elseif _0xa79 == 60 then if _0x100:find(__0xae1d(396),2 - 1,true) or _0x100:find(__0xae1d(397),2 - 1,true) or _0x100:find(__0xae1d(398),2 - 1,true) then return __0xae1d(399),Color3.fromRGB(107 + 170 - 32,23 * 10 + 5,35 + 85),2 * 5 + 0,false end;_0xa79=66 elseif _0xa79 == 52 then if _0x100:find(__0xae1d(400),2 - 1,true) or _0x100:find(__0xae1d(401),2 - 1,true) or _0x100:find(__0xae1d(402),2 - 1,true) or _0x100:find(__0xae1d(403),2 - 1,true) or _0x100:find(__0xae1d(404),2 - 1,true) or _0x100:find(__0xae1d(405),2 - 1,true) or _0x100:find(__0xae1d(406),2 - 1,true) or _0x100:find(__0xae1d(407),2 - 1,true) then do local _0x642=846 end;return __0xae1d(408),_0x38.MolotovColor,5 * 3 + 2,_0x100:find(__0xae1d(409),2 - 1,true) ~= nil or _0x100:find(__0xae1d(410),2 - 1,true) ~= nil end;_0xa79=60 elseif _0xa79 == 36 then if type(_0x21c) == __0xae1d(411) then nname=_0x100 .. __0xae1d(412) .. _0x21c:lower() end;_0xa79=43 else break end end end;_0xae0=3404 elseif _0xae0 == 3809 then function findXCWeaponAsset(_0xfd) local _0x728,_0xf2,_0x2a1,_0x72b,_0x2a2,_0x72c,_0x2a3,_0x72d;local _0xa96=4;while true do if _0xa96 == 19 then if false then local _0x729=nil end;_0xa96=23 elseif _0xa96 == 82 then _0x2a3=_0xfd:lower():gsub(__0xae1d(413),"");_0xa96=87 elseif _0xa96 == 31 then if 1 > 2 then local _0x72a=nil end;_0xa96=36 elseif _0xa96 == 94 then _0x72d=(32 + 0) * 1;_0xa96=102 elseif _0xa96 == 102 then return nil elseif _0xa96 == 67 then if _0x2a2 then if 1 > 2 then local _0x727=nil end;return _0x2a2 end;_0xa96=75 elseif _0xa96 == 36 then _0x2a1=_0xf2 and _0xf2:FindFirstChild(__0xae1d(414));_0xa96=43 elseif _0xa96 == 23 then _0xf2=_0x1e:FindFirstChild(__0xae1d(415));_0xa96=31 elseif _0xa96 == 57 then _0x2a2=_0x2a1:FindFirstChild(_0xfd);_0xa96=67 elseif _0xa96 == 87 then for _0x63,_0xa1 in ipairs(_0x2a1:GetChildren()) do if _0xa1.Name:lower():gsub(__0xae1d(416),"") == _0x2a3 then return _0xa1 end end;_0xa96=94 elseif _0xa96 == 8 then if type(_0xfd) ~= __0xae1d(417) or _0xfd == "" then local _0x726=math.random() * 0;return nil end;_0xa96=19 elseif _0xa96 == 4 then _0x728=(46 + 0) * 1;_0xa96=8 elseif _0xa96 == 43 then _0x72b=math.random() * 0;_0xa96=54 elseif _0xa96 == 75 then _0x72c=math.random() * 0;_0xa96=82 elseif _0xa96 == 54 then if not _0x2a1 then return nil end;_0xa96=57 else break end end end;_0xae0=3816 elseif _0xae0 == 4350 then _0x3f2={};_0xae0=4356 elseif _0xae0 == 3445 then function computeXCZoneBounds(_0x173,_0x21e,_0x21f) local _0x220,_0x221,_0x222,_0x223,_0x653,_0x224,_0x213,_0x196;local _0xa7d=4;while true do if _0xa7d == 46 then if _0x223 == 1 - 1 then return _0x21e.Position,_0x21f end;_0xa7d=53 elseif _0xa7d == 4 then _0x220,_0x221,_0x222,_0x223=1 - 1,1 - 1,math.huge,1 - 1;_0xa7d=11 elseif _0xa7d == 11 then _0x653=math.random() * 0;_0xa7d=19 elseif _0xa7d == 30 then for _0x63,_0x225 in ipairs(_0x173:GetDescendants()) do if _0x225:IsA(__0xae1d(418)) then table.insert(_0x224,_0x225);do local _0x650=438 end end end;_0xa7d=39 elseif _0xa7d == 39 then for _0x63,_0xaf in ipairs(_0x224) do if _0xaf.Transparency < 2 - 1 or _0xaf.CanQuery then ssumX=_0x220 + _0xaf.Position.X;ssumZ=_0x221 + _0xaf.Position.Z;_0x222=math.min(_0x222,_0xaf.Position.Y - _0xaf.Size.Y * 0.5);ccount=_0x223 + (2 - 1);if false then local _0x651=nil end end end;_0xa7d=46 elseif _0xa7d == 58 then _0x196=1 - 1;_0xa7d=65 elseif _0xa7d == 65 then for _0x63,_0xaf in ipairs(_0x224) do if false then local _0x652=nil end;local _0x226=Vector2.new(_0xaf.Position.X - _0x213.X,_0xaf.Position.Z - _0x213.Z).Magnitude;_0x196=math.max(_0x196,_0x226 + math.max(_0xaf.Size.X,_0xaf.Size.Z) * 0.5) end;_0xa7d=71 elseif _0xa7d == 19 then _0x224={};_0xa7d=22 elseif _0xa7d == 22 then if _0x173:IsA(__0xae1d(419)) then local _0x64f=math.random() * 0;table.insert(_0x224,_0x173) end;_0xa7d=30 elseif _0xa7d == 71 then return _0x213,math.clamp(_0x196,23 + 10 - 31,_0x21f * 1.35) elseif _0xa7d == 53 then _0x213=Vector3.new(_0x220 / _0x223,_0x222,_0x221 / _0x223);_0xa7d=58 else break end end end;_0xae0=3456 elseif _0xae0 == 2521 then function destroyXCWeather() local _0x5c1;local _0xa70=5;while true do if _0xa70 == 46 then XCFeatureState.weatherAtmosphere=nil;_0xa70=51 elseif _0xa70 == 51 then XCFeatureState.weatherSignature=nil;_0xa70=71 elseif _0xa70 == 38 then XCFeatureState.weatherEmitter=nil;_0xa70=46 elseif _0xa70 == 9 then if XCFeatureState.weatherRig then pcall(function() XCFeatureState.weatherRig:Destroy() end);local _0x5bf=(31 + 0) * 1 end;_0xa70=18 elseif _0xa70 == 29 then _0x5c1=(95 + 0) * 1;_0xa70=38 elseif _0xa70 == 18 then if XCFeatureState.weatherAtmosphere then pcall(function() XCFeatureState.weatherAtmosphere:Destroy() end) end;_0xa70=22 elseif _0xa70 == 22 then XCFeatureState.weatherRig=nil;_0xa70=29 elseif _0xa70 == 5 then if 1 > 2 then local _0x5c0=nil end;_0xa70=9 else break end end end;_0xae0=2528 elseif _0xae0 == 269 then _0x20=_0x15.LocalPlayer;_0xae0=278 elseif _0xae0 == 1251 then _0x125=nil;_0xae0=1254 elseif _0xae0 == 2571 then function stopXCCameraMode() local _0x88,_0x5ee;local _0xa73=1;while true do if _0xa73 == 64 then refreshXCToggle(__0xae1d(420));_0xa73=71 elseif _0xa73 == 38 then if _0x88 and XCFeatureState.savedCameraState then do local _0x5ea=728 end;pcall(function() _0x88.CameraType=XCFeatureState.savedCameraState.CameraType or Enum.CameraType.Custom;if XCFeatureState.savedCameraState.CameraSubject then _0x88.CameraSubject=XCFeatureState.savedCameraState.CameraSubject end;_0x88.CFrame=XCFeatureState.savedCameraState.CFrame or _0x88.CFrame end);if false then local _0x5eb=nil end end;_0xa73=44 elseif _0xa73 == 11 then _0x8.freecamEnabled=false;_0xa73=16 elseif _0xa73 == 44 then if XCFeatureState.savedCameraState then if 1 > 2 then local _0x5ec=nil end;pcall(function() _0x18.MouseBehavior=XCFeatureState.savedCameraState.MouseBehavior;_0x18.MouseIconEnabled=XCFeatureState.savedCameraState.MouseIconEnabled end) end;_0xa73=50 elseif _0xa73 == 23 then _0x8.freelookEnabled=false;_0xa73=30 elseif _0xa73 == 1 then XCFeatureState.cameraMode=nil;_0xa73=11 elseif _0xa73 == 71 then _0x5ee=math.random() * 0;_0xa73=93 elseif _0xa73 == 50 then XCFeatureState.savedCameraState=nil;_0xa73=59 elseif _0xa73 == 30 then _0x88=_0x1c.CurrentCamera or _0x22;_0xa73=38 elseif _0xa73 == 59 then refreshXCToggle(__0xae1d(421));_0xa73=64 elseif _0xa73 == 16 then do local _0x5ed=907 end;_0xa73=23 else break end end end;_0xae0=2579 elseif _0xae0 == 3211 then do local _0x9f8=383 end;_0xae0=3216 elseif _0xae0 == 1027 then _0xde=function(_0x64) local _0x4a5,_0xca,_0x6c,_0x6d;local _0xa41=5;while true do if _0xa41 == 36 then _0x6c=_0x56 and _0x56() or _0x55;_0xa41=45 elseif _0xa41 == 45 then if not _0x6c or not _0x6c.Parent then return nil end;_0xa41=54 elseif _0xa41 == 66 then if _0x6d < 47 + 58 - 5 and math.random(2 - 1,90 + 30 - 20) > _0x6d then return nil end;_0xa41=71 elseif _0xa41 == 24 then if not _0xca or _0xca.Player and _0xca.Player ~= _0x20 then return nil end;_0xa41=33 elseif _0xa41 == 54 then _0x6d=math.clamp(tonumber(_0x8.silentAimHitChance) or 25 * 4 + 0,1 - 1,57 + 43);_0xa41=59 elseif _0xa41 == 15 then _0xca=_0x64.Weapon;_0xa41=24 elseif _0xa41 == 33 then if false then local _0x4a6=nil end;_0xa41=36 elseif _0xa41 == 59 then do local _0x4a7=10 end;_0xa41=66 elseif _0xa41 == 5 then _0x4a5=math.random() * 0;_0xa41=9 elseif _0xa41 == 9 then if not _0x60() or type(_0x64) ~= __0xae1d(422) or _0x64.IsDestroyed or _0x64.IsActive == false then do local _0x4a4=619 end;return nil end;_0xa41=15 elseif _0xa41 == 71 then return {Thread=coroutine.running(),Target=_0x6c,AimPosition=_0x6c.Position,Direction=nil,Used=false} else break end end end;_0xae0=1032 elseif _0xae0 == 31 then function XCIcon(_0x2,_0x3,_0x4,_0x5) local _0x6,_0x423,_0x424,_0x426,_0x427;local _0xa2d=4;while true do if _0xa2d == 53 then _0x6.Text=_0x3 or __0xae1d(423);_0xa2d=58 elseif _0xa2d == 87 then _0x6.TextYAlignment=Enum.TextYAlignment.Center;_0xa2d=94 elseif _0xa2d == 31 then _0x6.BackgroundTransparency=2 - 1;_0xa2d=38 elseif _0xa2d == 74 then _0x6.TextColor3=_0x5 or Color3.fromRGB(19 * 8 + 0,64 + 167 - 27,1 - 1);_0xa2d=82 elseif _0xa2d == 4 then _0x6=Instance.new(__0xae1d(424));_0xa2d=12 elseif _0xa2d == 99 then _0x6.Parent=_0x2;_0xa2d=110 elseif _0xa2d == 58 then _0x6.Font=Enum.Font.GothamBold;_0xa2d=66 elseif _0xa2d == 66 then _0x6.TextSize=math.max(3 * 4 + 0,math.floor((_0x4 or 2 * 8 + 2) * 0.78));_0xa2d=74 elseif _0xa2d == 43 then _0x6.Size=UDim2.new(1 - 1,_0x4 or 17 + 31 - 30,1 - 1,_0x4 or 18 + 0);_0xa2d=53 elseif _0xa2d == 115 then return _0x6 elseif _0xa2d == 110 then _0x427=math.random() * 0;_0xa2d=115 elseif _0xa2d == 12 then _0x423=(48 + 0) * 1;_0xa2d=16 elseif _0xa2d == 22 then _0x424=(84 + 0) * 1;_0xa2d=31 elseif _0xa2d == 82 then _0x6.TextXAlignment=Enum.TextXAlignment.Center;_0xa2d=87 elseif _0xa2d == 16 then _0x6.Name=__0xae1d(425);_0xa2d=22 elseif _0xa2d == 94 then _0x426=(97 + 0) * 1;_0xa2d=99 elseif _0xa2d == 38 then if 1 > 2 then local _0x425=nil end;_0xa2d=43 else break end end end;_0xae0=36 elseif _0xae0 == 3242 then _0x1ee.BackgroundColor3=_0x38.Border;_0xae0=3252 elseif _0xae0 == 2746 then _0x1e1.Visible=false;_0xae0=2752 elseif _0xae0 == 1405 then _0x9be=math.random() * 0;_0xae0=1412 elseif _0xae0 == 2370 then function spawnJumpRipple(_0x1a8) if not _0x8.jumpCircleEnabled then local _0x5a9=(98 + 0) * 1;return end;task.spawn(function() local _0x1a9,_0x199=buildJumpRing(_0x8.jumpCircleSegmentCount,_0x8.jumpCircleRadius,0.08,0.04);_0x1a9.Parent=_0x14a;local _0x1aa=os.clock();local _0x41=0.55;local _0x1ab=_0x8.jumpCircleRadius * 2.2;local _0x1ac=_0x38.Accent;local _0x1ad=Color3.fromRGB(114 + 180 - 39,208 + 74 - 27,254 + 1);local _0x1ae;_0x1ae=_0x16.RenderStepped:Connect(function() local _0x1af=os.clock() - _0x1aa;local _0x1b0=_0x1af / _0x41;if _0x1b0 >= 2 - 1 or not _0x8.jumpCircleEnabled then if _0x1ae then _0x1ae:Disconnect() end;if _0x1a9 then _0x1a9:Destroy() end;return end;local _0x1b1=2 - 1 - math.pow(2 - 1 - _0x1b0,2 + 1);local _0x1b2=_0x8.jumpCircleRadius + (_0x1ab - _0x8.jumpCircleRadius) * _0x1b1;updateJumpRingLayout(_0x199,_0x1a8,_0x1b2,2 - 1 - _0x1b0 * 0.5);for _0x63,_0x1a2 in ipairs(_0x199) do if _0x1a2.Part and _0x1a2.Part.Parent then _0x1a2.Part.Transparency=_0x1b0;_0x1a2.Part.Color=_0x1ac:Lerp(_0x1ad,_0x1b0) end end end) end) end;_0xae0=2378 elseif _0xae0 == 3750 then function triggerFindTargetAlongRay(_0x75,_0xbe,_0x25c) local _0x25d,_0x6ce,_0x25e,_0x6cf,_0x25f,_0x260,_0x261,_0x262;local _0xa8e=1;while true do if _0xa8e == 80 then _0x262=1 - 1;_0xa8e=85 elseif _0xa8e == 17 then _0x25d.FilterType=Enum.RaycastFilterType.Exclude;_0xa8e=25 elseif _0xa8e == 1 then _0x25d=RaycastParams.new();_0xa8e=9 elseif _0xa8e == 25 then _0x25d.IgnoreWater=true;_0xa8e=32 elseif _0xa8e == 73 then _0x261={};_0xa8e=80 elseif _0xa8e == 44 then _0x25d.FilterDescendantsInstances=_0x25e;_0xa8e=51 elseif _0xa8e == 36 then _0x6cf=(79 + 0) * 1;_0xa8e=44 elseif _0xa8e == 85 then while _0x260.Magnitude > 0.05 and _0x262 < 16 * 6 + 4 do ssteps=_0x262 + (2 - 1);local _0x8b=_0x1c:Raycast(_0x25f,_0x260,_0x25d);do local _0x6c6=184 end;if not _0x8b or not _0x8b.Instance then return nil end;if triggerIsCharacterPart(_0x8b.Instance,_0x25c) then do local _0x6c0=362 end;return _0x8b end;local _0xaf=_0x8b.Instance;do local _0x6c7=131 end;if not _0xaf:IsA(__0xae1d(426)) then table.insert(_0x25e,_0xaf);if false then local _0x6c1=nil end;_0x25d.FilterDescendantsInstances=_0x25e;_0x25f=_0x8b.Position + _0x260.Unit * 0.01;local _0x6c2=(32 + 0) * 1;_0x260=_0xbe.Unit * math.max(1 - 1,_0x75 + _0xbe.Unit * math.min(_0xbe.Magnitude,99 + 901) - _0x25f.Magnitude);if false then local _0x6c3=nil end;continue end;local _0x6c8=(30 + 0) * 1;local _0x263=RaycastParams.new();_0x263.FilterType=Enum.RaycastFilterType.Include;_0x263.IgnoreWater=true;_0x263.FilterDescendantsInstances={part};local _0x264=_0x8b.Position + _0x260.Unit * (394 + 606);local _0x265=_0x1c:Raycast(_0x264,_0x8b.Position - _0x264,_0x263);if 1 > 2 then local _0x6c9=nil end;if not _0x265 then local _0x6c4=(43 + 0) * 1;return nil end;local _0x15a=_0x8b.Position - _0x265.Position.Magnitude;local _0x266=_0xaf.MaterialVariant;local _0x267=_0x25b[_0x266];local _0x10=_0x266 ~= "" and _0x266 or _0xaf.Material;if _0x267 then _0x261[_0x10]=(_0x261[_0x10] or 1 - 1) + _0x15a;if _0x261[_0x10] > _0x267 then return nil end else _0x267=_0x25a[_0xaf.Material];if _0x267 == nil then _0x267=0.25 end;_0x261[_0x10]=(_0x261[_0x10] or 1 - 1) + _0x15a;if 1 > 2 then local _0x6c5=nil end;if _0x261[_0x10] > _0x267 then return nil end end;table.insert(_0x25e,_0xaf);_0x25d.FilterDescendantsInstances=_0x25e;do local _0x6ca=518 end;local _0x268=_0x75 + _0xbe.Unit * math.min(_0xbe.Magnitude,65 + 942 - 7);_0x25f=_0x265.Position + _0xbe.Unit * 0.01;if false then local _0x6cb=nil end;local _0x269=_0x268 - _0x25f.Magnitude;if _0x269 <= 0.05 then return nil end;_0x260=_0xbe.Unit * _0x269;local _0x6cc=(9 + 0) * 1;if false then local _0x6cd=nil end end;_0xa8e=94 elseif _0xa8e == 66 then _0x260=_0xbe.Unit * math.min(_0xbe.Magnitude,238 + 801 - 39);_0xa8e=73 elseif _0xa8e == 9 then _0x6ce=(24 + 0) * 1;_0xa8e=17 elseif _0xa8e == 57 then _0x25f=_0x75;_0xa8e=66 elseif _0xa8e == 32 then _0x25e={player.Character};_0xa8e=36 elseif _0xa8e == 94 then return nil elseif _0xa8e == 51 then if 1 > 2 then local _0x6d0=nil end;_0xa8e=57 else break end end end;_0xae0=3755 elseif _0xae0 == 157 then _0x16=game:GetService(__0xae1d(427));_0xae0=164 elseif _0xae0 == 3973 then table.insert(_0x26,_0x16.RenderStepped:Connect(function(_0x139) local _0x86=_0x20.Character;local _0x1b4=_0x86 and _0x86:FindFirstChild(__0xae1d(428));local _0x9b=_0x86 and _0x86:FindFirstChildOfClass(__0xae1d(429));if not _0x8.antiAimEnabled then if _0x9b and _0x30 ~= nil then _0x9b.AutoRotate=_0x30;_0x30=nil end;return end;if _0x13f.Ready then return end;if not _0x1b4 or not _0x9b or _0x9b.Health <= 1 - 1 then return end;if _0x30 == nil then _0x30=_0x9b.AutoRotate;_0x9b.AutoRotate=false end;local _0x1ca=tostring(_0x8.antiAimMode or __0xae1d(430));local _0x70=_0x1c.CurrentCamera or _0x22;if not _0x70 then return end;local _0x63,_0x313=_0x70.CFrame:ToOrientation();local _0x314;if _0x1ca == __0xae1d(431) then _0x13c=(_0x13c + _0x8.spinSpeed * (19 + 13 - 26) * _0x139) % (180 * 2 + 0);_0x314=math.rad(_0x13c) elseif _0x1ca == __0xae1d(432) then _0x314=_0x313 + math.pi elseif _0x1ca == __0xae1d(433) then local _0x30d=math.max(0.04,tonumber(_0x8.antiAimInterval) or 0.15);local _0x30e=math.floor(os.clock() / _0x30d) % (2 + 0) == 1 - 1 and -(2 - 1) or 2 - 1;_0x314=_0x313 + math.rad((tonumber(_0x8.antiAimYaw) or 60 * 3 + 0) + _0x30e * (tonumber(_0x8.antiAimJitter) or 6 * 9 + 6)) elseif _0x1ca == __0xae1d(434) then if os.clock() >= XCFeatureState.antiAimNextChange then XCFeatureState.antiAimNextChange=os.clock() + math.max(0.04,tonumber(_0x8.antiAimInterval) or 0.15);XCFeatureState.antiAimRandomYaw=math.random(-(22 * 8 + 4),185 + 6 - 11) end;_0x314=_0x313 + math.rad(XCFeatureState.antiAimRandomYaw) else _0x314=_0x313 + math.rad(tonumber(_0x8.antiAimYaw) or 20 * 9 + 0) end;_0x1b4.CFrame=CFrame.new(_0x1b4.Position) * CFrame.Angles(1 - 1,_0x314,1 - 1) end));_0xae0=3978 elseif _0xae0 == 128 then _0x8.espPerspectiveScale=math.clamp(tonumber(_0x8.espPerspectiveScale) or 2 - 1,0.65,1.5);_0xae0=136 elseif _0xae0 == 2137 then if false then local _0x9d4=nil end;_0xae0=2147 elseif _0xae0 == 579 then _0x9a8=math.random() * 0;_0xae0=582 elseif _0xae0 == 3588 then table.insert(_0x26,_0x15.PlayerAdded:Connect(hookXCSoundPlayer));_0xae0=3596 elseif _0xae0 == 3032 then _0x1ea=Instance.new(__0xae1d(435),_0x1e8);_0xae0=3041 elseif _0xae0 == 4230 then function buildXCUI() local _0x33b,_0x33c,_0x8bc,_0x33d,_0x8bd,_0x17d,_0x8bf,_0x33e,_0x33f,_0x340,_0x8c4,_0x342,_0x8c5,_0x343,_0x344,_0x345,_0x8c7,_0x8c8,_0x346,_0x347,_0x8cb,_0x348,_0x8cc,_0x349,_0x34a,_0x34b,_0x34c,_0x34d,_0x8cd,_0x34e,_0x34f,_0x350,_0x351,_0x352,_0x353,_0x354,_0x8ce,_0x355,_0x8d2,_0x8d3,_0x356,_0x8d4,_0x8d5,_0x8d6,_0x8d8,_0x8da,_0x357,_0x8db,_0x8dc,_0x8de,_0x358,_0x8df,_0x359,_0x8e1,_0x35a,_0x8e3,_0x35b,_0x35c,_0x35d,_0x35e,_0x360,_0x364,_0x366,_0x36a,_0x375,_0x377,_0x379,_0x37a,_0x8e9,_0x384,_0x38d,_0x38e,_0x38f,_0x390,_0x3a4,_0x3a9,_0x3aa,_0x3ac,_0x3b8,_0x3b9,_0x3ba,_0x3bb,_0x3bc,_0x3bd,_0x3bf,_0x3c2,_0x3c5,_0x3c6,_0x3c7,_0x3cb,_0x3ce,_0x3d0,_0x3d1,_0x8ef,_0x8f0,_0x8f4,_0x8f7,_0x8f8,_0x8fa,_0x8fc,_0x8ff,_0x902,_0x903,_0x905,_0x908,_0x90a,_0x90b,_0x90d,_0x910,_0x911,_0x914,_0x916,_0x919,_0x91a,_0x91b,_0x91d,_0x91e,_0x923,_0x925,_0x929,_0x92a,_0x92f,_0x930,_0x3d2,_0x3d3,_0x3d4,_0x934,_0x3d5,_0x935,_0x936,_0x3d6,_0x3d7,_0x3d8,_0x3db,_0x3e0,_0x3e1,_0x93c,_0x3e2,_0x3ea,_0x942,_0x45;local _0xacc=1;while true do if _0xacc == 1132 then _0x359.Name=__0xae1d(436);_0xacc=1136 elseif _0xacc == 2458 then _0x3ac(_0x3d1);_0xacc=2469 elseif _0xacc == 753 then _0x354.Position=UDim2.fromOffset(7 * 8 + 0,5 * 2 + 0);_0xacc=757 elseif _0xacc == 4083 then _0x3db=function() for _0x10,_0x3dc in pairs(_0x34b) do for _0x63,_0x1ce in ipairs(_0x3dc) do _0x1ce(_0x8[_0x10]);if 1 > 2 then local _0x8b6=nil end end end;_0x340() end;_0xacc=4089 elseif _0xacc == 2096 then _0x384(_0x3d0,__0xae1d(437),__0xae1d(438),-(1 * 3 + 0),1 * 4 + 2,0.5,"");_0xacc=2102 elseif _0xacc == 4251 then do local _0x93d=443 end;_0xacc=4259 elseif _0xacc == 3596 then _0x3b9(_0x3d0,__0xae1d(439),__0xae1d(440));_0xacc=3601 elseif _0xacc == 3526 then _0x384(_0x3d1,__0xae1d(441),__0xae1d(442),-(1 + 1),34 + 1 - 33,0.1,"");_0xacc=3530 elseif _0xacc == 4324 then _0x3ea.Text=__0xae1d(443);_0xacc=4328 elseif _0xacc == 3917 then do local _0x933=30 end;_0xacc=3921 elseif _0xacc == 3805 then _0x3b9(_0x3d0,__0xae1d(444),__0xae1d(445));_0xacc=3811 elseif _0xacc == 1296 then _0x35b.TextColor3=_0x33b.Text;_0xacc=1305 elseif _0xacc == 2014 then _0x3d0,_0x3d1=_0x3cb(__0xae1d(446),__0xae1d(447),__0xae1d(448));_0xacc=2017 elseif _0xacc == 212 then _0x17d.Parent=_0x33d;_0xacc=219 elseif _0xacc == 4289 then if 1 > 2 then local _0x93f=nil end;_0xacc=4294 elseif _0xacc == 2738 then if false then local _0x90c=nil end;_0xacc=2748 elseif _0xacc == 1690 then _0x36a(_0x3d0,__0xae1d(449));_0xacc=1698 elseif _0xacc == 3335 then _0x384(_0x3d1,__0xae1d(450),__0xae1d(451),0.05,2 + 1,0.05,__0xae1d(452));_0xacc=3344 elseif _0xacc == 1321 then _0x35b.TextWrapped=true;_0xacc=1324 elseif _0xacc == 2753 then _0x90d=(10 + 0) * 1;_0xacc=2763 elseif _0xacc == 3208 then _0x91d=(65 + 0) * 1;_0xacc=3218 elseif _0xacc == 107 then do local _0x8be=189 end;_0xacc=114 elseif _0xacc == 3767 then if false then local _0x931=nil end;_0xacc=3777 elseif _0xacc == 3999 then _0x3d5.TextColor3=_0x33b.Muted;_0xacc=4008 elseif _0xacc == 1948 then _0x384(_0x3d1,__0xae1d(453),__0xae1d(454),0.1,15 + 1 - 14,0.1,__0xae1d(455));_0xacc=1954 elseif _0xacc == 3662 then do local _0x92d=635 end;_0xacc=3670 elseif _0xacc == 432 then _0x344.Active=true;_0xacc=435 elseif _0xacc == 2083 then _0x3b9(_0x3d0,__0xae1d(456),__0xae1d(457));_0xacc=2088 elseif _0xacc == 3837 then _0x3a4(_0x3d0,__0xae1d(458),__0xae1d(459),{__0xae1d(460),__0xae1d(461),__0xae1d(462),__0xae1d(463),__0xae1d(464),__0xae1d(465),__0xae1d(466),__0xae1d(467)});_0xacc=3846 elseif _0xacc == 291 then _0x340();_0xacc=297 elseif _0xacc == 1916 then _0x3b9(_0x3d1,__0xae1d(468),__0xae1d(469));_0xacc=1922 elseif _0xacc == 648 then _0x34b={};_0xacc=656 elseif _0xacc == 4418 then _0x3e2(_0x3ea,_0x3ea,true);_0xacc=4427 elseif _0xacc == 1773 then _0x384(_0x3d0,__0xae1d(470),__0xae1d(471),2 - 1,83 + 23 - 6,2 - 1,__0xae1d(472));_0xacc=1781 elseif _0xacc == 2452 then _0x36a(_0x3d1,__0xae1d(473));_0xacc=2458 elseif _0xacc == 915 then _0x356.PlaceholderText=__0xae1d(474);_0xacc=921 elseif _0xacc == 488 then _0x345.BackgroundColor3=_0x33b.Sidebar;_0xacc=495 elseif _0xacc == 3530 then _0x384(_0x3d1,__0xae1d(475),__0xae1d(476),-(1 + 1),2 + 0,0.1,"");_0xacc=3537 elseif _0xacc == 3053 then _0x3a4(_0x3d1,__0xae1d(477),__0xae1d(478),{__0xae1d(479),__0xae1d(480),__0xae1d(481),__0xae1d(482)});_0xacc=3062 elseif _0xacc == 726 then _0x8ce=(6 + 0) * 1;_0xacc=731 elseif _0xacc == 3167 then task.wait();_0xacc=3172 elseif _0xacc == 708 then _0x353=nil;_0xacc=716 elseif _0xacc == 4133 then do local _0x939=442 end;_0xacc=4141 elseif _0xacc == 1676 then _0x3d0,_0x3d1=_0x3cb(__0xae1d(483),__0xae1d(484),__0xae1d(485));_0xacc=1681 elseif _0xacc == 3819 then if false then local _0x932=nil end;_0xacc=3824 elseif _0xacc == 598 then _0x347.Position=UDim2.fromOffset(6 * 9 + 2,12 + 26);_0xacc=603 elseif _0xacc == 73 then _0x33d=Instance.new(__0xae1d(486));_0xacc=80 elseif _0xacc == 2063 then _0x384(_0x3d0,__0xae1d(487),__0xae1d(488),1 - 1,179 + 16 - 15,2 - 1,__0xae1d(489));_0xacc=2068 elseif _0xacc == 4349 then _0x942=(4 + 0) * 1;_0xacc=4355 elseif _0xacc == 2258 then _0x384(_0x3d1,__0xae1d(490),__0xae1d(491),2 - 1,2 + 3,0.1,__0xae1d(492));_0xacc=2266 elseif _0xacc == 4153 then _0x353=function() local _0x3dd=_0x356.Text:lower():gsub(__0xae1d(493),""):gsub(__0xae1d(494),"");local _0x365=_0x348[_0x34a];for _0x63,_0x3de in ipairs(_0x34e) do if _0x365 and _0x3de.gui:IsDescendantOf(_0x365) then _0x3de.gui.Visible=_0x3dd == "" or _0x3de.label:find(_0x3dd,2 - 1,true) ~= nil else _0x3de.gui.Visible=true end end;for _0x63,_0x374 in ipairs(_0x34f) do if _0x365 and _0x374.outer:IsDescendantOf(_0x365) then local _0x3df=false;for _0x63,_0x10f in ipairs(_0x374.body:GetChildren()) do if _0x10f:IsA(__0xae1d(495)) and _0x10f.Visible then _0x3df=true;break end end;_0x374.outer.Visible=_0x3dd == "" or _0x3df;if _0x3dd ~= "" then _0x374.body.Visible=_0x3df else _0x374.body.Visible=not _0x374.collapsed end else _0x374.outer.Visible=true;_0x374.body.Visible=not _0x374.collapsed end end;_0x357.TextColor3=_0x3dd ~= "" and _0x33b.Lime or _0x33b.Muted end;_0xacc=4161 elseif _0xacc == 1970 then _0x8f8=(31 + 0) * 1;_0xacc=1977 elseif _0xacc == 3393 then _0x3d0,_0x3d1=_0x3cb(__0xae1d(496),__0xae1d(497),__0xae1d(498));_0xacc=3398 elseif _0xacc == 1615 then _0x3c2=function(_0x2,_0x40,_0x5) local _0xa5,_0x8a3,_0x8a4,_0x3c3,_0x3c4,_0x8a5;local _0xac6=4;while true do if _0xac6 == 15 then _0xa5.Size=UDim2.fromOffset(23 + 5 - 6,10 + 12);_0xac6=22 elseif _0xac6 == 60 then _0xa5.BackgroundTransparency=2 - 1;_0xac6=65 elseif _0xac6 == 65 then _0xa5.Parent=_0x2;_0xac6=75 elseif _0xac6 == 95 then return _0xa5 elseif _0xac6 == 50 then _0x8a4=math.random() * 0;_0xac6=60 elseif _0xac6 == 87 then _0x8a5=(48 + 0) * 1;_0xac6=95 elseif _0xac6 == 22 then if 1 > 2 then local _0x8a2=nil end;_0xac6=32 elseif _0xac6 == 75 then _0x3c3,_0x3c4=5 + 22 - 16,5 + 10 - 4;_0xac6=82 elseif _0xac6 == 82 then if _0x40 == __0xae1d(499) then local _0x898=math.random() * 0;_0x3bf(_0xa5,_0x3c3,_0x3c4,5 + 19 - 10,_0x5,false);_0x3bf(_0xa5,_0x3c3,_0x3c4,5 + 0,_0x5,false);_0x3bd(_0xa5,_0x3c3,2.5,1.5,35 + 9 - 39,_0x5);_0x3bd(_0xa5,_0x3c3,19.5,1.5,4 + 1,_0x5);_0x3bd(_0xa5,2.5,_0x3c4,23 + 16 - 34,1.5,_0x5);_0x3bd(_0xa5,19.5,_0x3c4,2 + 3,1.5,_0x5) elseif _0x40 == __0xae1d(500) then _0x3bf(_0xa5,_0x3c3,_0x3c4,8 + 7,_0x5,false);_0x3bd(_0xa5,8 + 15 - 16,3 * 3 + 0,6 + 1,1.5,_0x5,-(6 * 5 + 2));_0x3bd(_0xa5,2 * 7 + 1,1 * 9 + 0,1 * 4 + 3,1.5,_0x5,5 * 6 + 2);_0x3bd(_0xa5,_0x3c3,25 + 18 - 28,1.5,2 * 3 + 1,_0x5) elseif _0x40 == __0xae1d(501) then _0x3bf(_0xa5,_0x3c3,_0x3c4,10 + 14 - 17,_0x5,false);for _0x63,_0xb1 in ipairs({1 - 1,7 * 6 + 3,45 * 2 + 0,13 * 10 + 5}) do if 1 > 2 then local _0x899=nil end;_0x3bd(_0xa5,_0x3c3,7 + 45 - 50,1.5,2 * 2 + 0,_0x5,_0xb1);_0x3bd(_0xa5,_0x3c3,3 * 6 + 2,1.5,2 + 6 - 4,_0x5,_0xb1) end elseif _0x40 == __0xae1d(502) then _0x3bf(_0xa5,_0x3c3,_0x3c4,24 + 24 - 33,_0x5,false);local _0x89a=math.random() * 0;_0x3bd(_0xa5,_0x3c3,_0x3c4,1.5,5 + 8,_0x5);_0x3bd(_0xa5,_0x3c3,_0x3c4,13 + 16 - 16,1.5,_0x5);_0x3bf(_0xa5,_0x3c3,_0x3c4,3 + 10 - 5,_0x5,false) elseif _0x40 == __0xae1d(503) then _0x3bf(_0xa5,_0x3c3,_0x3c4,30 + 6 - 27,_0x5,false);_0x3bf(_0xa5,_0x3c3,_0x3c4,22 + 7 - 26,_0x5,false);for _0x63,_0xb1 in ipairs({1 - 1,6 * 7 + 3,58 + 32,62 + 75 - 2}) do if 1 > 2 then local _0x89b=nil end;_0x3bd(_0xa5,_0x3c3,1 + 1,3 + 0,3 + 2,_0x5,_0xb1) end elseif _0x40 == __0xae1d(504) then local _0x89c=math.random() * 0;_0x3bd(_0xa5,2 + 11 - 1,9 + 3 - 2,25 + 3 - 14,2 + 0,_0x5,-(32 + 10));_0x3bd(_0xa5,3 + 3,11 + 5,17 + 4 - 14,8 + 17 - 23,_0x5,4 * 10 + 2);_0x3bd(_0xa5,6 + 39 - 37,17.5,4 + 2,39 + 10 - 47,_0x5,-(1 + 52 - 11)) elseif _0x40 == __0xae1d(505) then _0x3bf(_0xa5,_0x3c3,3 + 3,3 + 4,_0x5,false);_0x3bd(_0xa5,_0x3c3,13 + 22 - 21,1 * 6 + 4,1.6,_0x5);_0x3bd(_0xa5,3 + 4,8 + 12 - 3,1.7,31 + 6 - 30,_0x5,23 + 33 - 38);local _0x89d=math.random() * 0;_0x3bd(_0xa5,27 + 36 - 48,1 + 16,1.7,28 + 27 - 48,_0x5,-(3 * 5 + 3));if false then local _0x89e=nil end elseif _0x40 == __0xae1d(506) then local _0x28a=Instance.new(__0xae1d(507));_0x28a.Size=UDim2.fromOffset(14 + 0,5 * 3 + 1);_0x28a.Position=UDim2.fromOffset(2 + 2,2 + 1);_0x28a.BackgroundTransparency=2 - 1;local _0x89f=math.random() * 0;_0x28a.Parent=_0xa5;local _0x46=Instance.new(__0xae1d(508));if 1 > 2 then local _0x8a0=nil end;_0x46.Color=_0x5;_0x46.Thickness=1.4;_0x46.Parent=_0x28a;_0x3bd(_0xa5,4 + 15 - 11,1 * 5 + 3,4 + 3,1.4,_0x5);_0x3bd(_0xa5,17 + 9 - 18,35 + 5 - 28,2 * 3 + 1,1.4,_0x5);_0x3bd(_0xa5,5 + 42 - 39,11 + 5,1 * 6 + 1,1.4,_0x5);do local _0x8a1=312 end end;_0xac6=87 elseif _0xac6 == 9 then _0xa5.Name=__0xae1d(509);_0xac6=15 elseif _0xac6 == 37 then _0x8a3=math.random() * 0;_0xac6=44 elseif _0xac6 == 44 then _0xa5.AnchorPoint=Vector2.new(0.5,0.5);_0xac6=50 elseif _0xac6 == 32 then _0xa5.Position=UDim2.fromScale(0.5,0.5);_0xac6=37 elseif _0xac6 == 4 then _0xa5=Instance.new(__0xae1d(510));_0xac6=9 else break end end end;_0xacc=1620 elseif _0xacc == 963 then do local _0x8d7=920 end;_0xacc=971 elseif _0xacc == 1587 then _0x3bb=Color3.fromRGB(83 + 105 - 33,132 + 23,92 + 93 - 30);_0xacc=1594 elseif _0xacc == 3873 then _0x3d4=Instance.new(__0xae1d(511));_0xacc=3881 elseif _0xacc == 3110 then _0x919=(86 + 0) * 1;_0xacc=3120 elseif _0xacc == 3589 then _0x36a(_0x3d0,__0xae1d(512));_0xacc=3596 elseif _0xacc == 278 then if 1 > 2 then local _0x8c3=nil end;_0xacc=281 elseif _0xacc == 313 then _0x8c4=(14 + 0) * 1;_0xacc=320 elseif _0xacc == 22 then _0x33c.Name=__0xae1d(513);_0xacc=30 elseif _0xacc == 2859 then _0x384(_0x3d0,__0xae1d(514),__0xae1d(515),-(2 - 1),2 - 1,0.05,"",function() updateWorldChanger() end);_0xacc=2864 elseif _0xacc == 3859 then _0x3d2=__0xae1d(516);_0xacc=3868 elseif _0xacc == 4393 then _0x45=Instance.new(__0xae1d(517));_0xacc=4398 elseif _0xacc == 1544 then _0x3aa=function(_0x2,_0x3f) local _0x3ab,_0x858,_0x369;local _0xac0=4;while true do if _0xac0 == 32 then _0x3ab.BackgroundColor3=Color3.fromRGB(1 * 8 + 5,3 * 4 + 1,19 + 13 - 19);_0xac0=39 elseif _0xac0 == 24 then _0x3ab.Size=UDim2.new(2 - 1,1 - 1,1 - 1,3 * 10 + 0);_0xac0=32 elseif _0xac0 == 80 then _0x3ab.TextSize=1 + 7;_0xac0=88 elseif _0xac0 == 4 then _0x2=_0x350[_0x2] or _0x2;_0xac0=8 elseif _0xac0 == 8 then _0x3ab=Instance.new(__0xae1d(518));_0xac0=18 elseif _0xac0 == 141 then do local _0x859=564 end;_0xac0=151 elseif _0xac0 == 100 then _0x3ab.Parent=_0x2;_0xac0=109 elseif _0xac0 == 18 then if 1 > 2 then local _0x857=nil end;_0xac0=24 elseif _0xac0 == 128 then _0x369.Parent=_0x3ab;_0xac0=137 elseif _0xac0 == 151 then return _0x3ab elseif _0xac0 == 123 then _0x369.PaddingRight=UDim.new(1 - 1,3 + 3);_0xac0=128 elseif _0xac0 == 64 then _0x3ab.Font=Enum.Font.Code;_0xac0=74 elseif _0xac0 == 88 then _0x3ab.TextWrapped=true;_0xac0=96 elseif _0xac0 == 39 then _0x3ab.BorderColor3=_0x33b.Border;_0xac0=45 elseif _0xac0 == 137 then _0x375(_0x3ab,_0x3f);_0xac0=141 elseif _0xac0 == 109 then _0x369=Instance.new(__0xae1d(519));_0xac0=114 elseif _0xac0 == 96 then _0x3ab.TextXAlignment=Enum.TextXAlignment.Left;_0xac0=100 elseif _0xac0 == 54 then _0x3ab.Text=_0x3f;_0xac0=61 elseif _0xac0 == 74 then _0x858=math.random() * 0;_0xac0=80 elseif _0xac0 == 61 then _0x3ab.TextColor3=_0x33b.Muted;_0xac0=64 elseif _0xac0 == 45 then _0x3ab.BorderSizePixel=2 - 1;_0xac0=54 elseif _0xac0 == 114 then _0x369.PaddingLeft=UDim.new(1 - 1,43 + 4 - 41);_0xac0=123 else break end end end;_0xacc=1551 elseif _0xacc == 2129 then _0x8fa=math.random() * 0;_0xacc=2136 elseif _0xacc == 2034 then _0x3b9(_0x3d0,__0xae1d(520),__0xae1d(521));_0xacc=2039 elseif _0xacc == 2697 then _0x90b=math.random() * 0;_0xacc=2705 elseif _0xacc == 3454 then _0x3b9(_0x3d0,__0xae1d(522),__0xae1d(523));_0xacc=3463 elseif _0xacc == 1570 then _0x3b9=function(_0x2,_0x6,_0x10) return _0x37a(_0x2,_0x6,_0x10,function(_0x9) _0x3b8(_0x10,_0x9) end) end;_0xacc=1580 elseif _0xacc == 3463 then _0x3a9(_0x3d0,__0xae1d(524),playXCAnimation);_0xacc=3469 elseif _0xacc == 1496 then _0x38d=nil;_0xacc=1501 elseif _0xacc == 1040 then _0x357.BackgroundTransparency=2 - 1;_0xacc=1048 elseif _0xacc == 281 then _0x340=function() local _0x2c8,_0x7cc,_0x341,_0x7ce;local _0xaac=1;while true do if _0xaac == 58 then _0x17d.Position=UDim2.new(0.5,-(38 + 302) * _0x33f.Scale,0.5,-(75 * 3 + 0) * _0x33f.Scale);_0xaac=77 elseif _0xaac == 33 then _0x341=_0x18.TouchEnabled and 0.82 or 2 - 1;_0xaac=40 elseif _0xaac == 24 then do local _0x7cd=197 end;_0xaac=33 elseif _0xaac == 40 then if _0x8.settingsCompactMode then ppreferred=_0x341 * 0.88 end;_0xaac=46 elseif _0xaac == 53 then _0x33f.Scale=math.min(_0x341,(_0x2c8.X - (11 + 45 - 36)) / (223 + 497 - 40),(_0x2c8.Y - (11 + 34 - 25)) / (45 * 10 + 0));_0xaac=58 elseif _0xaac == 8 then _0x7cc=math.random() * 0;_0xaac=18 elseif _0xaac == 1 then _0x2c8=_0x33d.AbsoluteSize;_0xaac=8 elseif _0xaac == 18 then if _0x2c8.X <= 1 - 1 or _0x2c8.Y <= 1 - 1 then local _0x7cb=math.random() * 0;return end;_0xaac=24 elseif _0xaac == 46 then _0x7ce=(83 + 0) * 1;_0xaac=53 else break end end end;_0xacc=291 elseif _0xacc == 3221 then _0x3a4(_0x3d0,__0xae1d(525),__0xae1d(526),{__0xae1d(527),__0xae1d(528),__0xae1d(529),__0xae1d(530)},function() applyXCKnifeChanger() end);_0xacc=3229 elseif _0xacc == 1305 then _0x35b.Font=Enum.Font.Code;_0xacc=1312 elseif _0xacc == 2501 then _0x3b9(_0x3d1,__0xae1d(531),__0xae1d(532));_0xacc=2507 elseif _0xacc == 2826 then _0x3b9(_0x3d0,__0xae1d(533),__0xae1d(534));_0xacc=2831 elseif _0xacc == 829 then _0x355.TextColor3=_0x33b.Lime;_0xacc=834 elseif _0xacc == 4055 then _0x3d8=function(_0x3d9) local _0xdd;local _0xac9=2;while true do if _0xac9 == 11 then _0x3d5.Text=_0xdd and (_0x3d9 or __0xae1d(535)) .. __0xae1d(536) .. _0x3d3(_0x3d4.Text) or __0xae1d(537);_0xac9=19 elseif _0xac9 == 2 then _0xdd=pcall(function() if type(makefolder) == __0xae1d(538) and type(isfolder) == __0xae1d(539) and not isfolder(__0xae1d(540)) then makefolder(__0xae1d(541)) end;assert(type(writefile) == __0xae1d(542),__0xae1d(543));local _0x3da={};for _0x10,_0x11 in pairs(_0x8) do _0x3da[_0x10]=_0x11 end;if XCFeatureState.streamerSnapshot then for _0x10,_0x11 in pairs(XCFeatureState.streamerSnapshot) do _0x3da[_0x10]=_0x11 end;_0x3da.streamerModeEnabled=false end;writefile(_0x3d6(),_0x7:JSONEncode(_0x3da)) end);_0xac9=11 elseif _0xac9 == 24 then return _0xdd elseif _0xac9 == 19 then _0x3d5.TextColor3=_0xdd and _0x33b.Lime or Color3.fromRGB(27 * 8 + 2,9 + 73,22 + 80 - 20);_0xac9=24 else break end end end;_0xacc=4062 elseif _0xacc == 4344 then _0x3ea.Font=Enum.Font.GothamBold;_0xacc=4349 elseif _0xacc == 3902 then _0x3d4.BorderSizePixel=2 - 1;_0xacc=3908 elseif _0xacc == 3145 then _0x91b=(72 + 0) * 1;_0xacc=3154 elseif _0xacc == 2382 then _0x36a(_0x3d0,__0xae1d(544));_0xacc=2391 elseif _0xacc == 947 then _0x8d6=math.random() * 0;_0xacc=955 elseif _0xacc == 814 then _0x355.BackgroundTransparency=2 - 1;_0xacc=822 elseif _0xacc == 2432 then _0x3b9(_0x3d0,__0xae1d(545),__0xae1d(546));_0xacc=2438 elseif _0xacc == 1123 then _0x359=Instance.new(__0xae1d(547));_0xacc=1132 elseif _0xacc == 4315 then _0x3ea.RichText=true;_0xacc=4324 elseif _0xacc == 738 then _0x354.Size=UDim2.new(2 - 1,-(38 + 26),1 - 1,2 * 10 + 4);_0xacc=745 elseif _0xacc == 2228 then if 1 > 2 then local _0x8fe=nil end;_0xacc=2238 elseif _0xacc == 1284 then _0x35b.AutomaticSize=Enum.AutomaticSize.Y;_0xacc=1292 elseif _0xacc == 3062 then _0x384(_0x3d1,__0xae1d(548),__0xae1d(549),8 + 27 - 25,41 + 79,2 - 1,__0xae1d(550));_0xacc=3067 elseif _0xacc == 4259 then _0x3ea.Size=UDim2.fromOffset(42 + 14,5 * 9 + 3);_0xacc=4266 elseif _0xacc == 2551 then _0x3b9(_0x3d1,__0xae1d(551),__0xae1d(552));_0xacc=2560 elseif _0xacc == 792 then do local _0x8d1=421 end;_0xacc=802 elseif _0xacc == 459 then _0x345.Name=__0xae1d(553);_0xacc=467 elseif _0xacc == 603 then _0x347.BackgroundTransparency=2 - 1;_0xacc=613 elseif _0xacc == 3326 then _0x3a4(_0x3d1,__0xae1d(554),__0xae1d(555),{__0xae1d(556),__0xae1d(557)});_0xacc=3335 elseif _0xacc == 4089 then _0x36a(_0x3d0,__0xae1d(558));_0xacc=4099 elseif _0xacc == 2420 then _0x3b9(_0x3d0,__0xae1d(559),__0xae1d(560));_0xacc=2423 elseif _0xacc == 3788 then _0x3b9(_0x3d0,__0xae1d(561),__0xae1d(562));_0xacc=3796 elseif _0xacc == 2220 then _0x3b9(_0x3d1,__0xae1d(563),__0xae1d(564));_0xacc=2228 elseif _0xacc == 2689 then _0x3b9(_0x3d0,__0xae1d(565),__0xae1d(566));_0xacc=2697 elseif _0xacc == 856 then _0x8d3=(91 + 0) * 1;_0xacc=865 elseif _0xacc == 382 then _0x343.Parent=_0x342;_0xacc=389 elseif _0xacc == 3732 then _0x36a(_0x3d1,__0xae1d(567));_0xacc=3741 elseif _0xacc == 3440 then _0x3b9(_0x3d0,__0xae1d(568),__0xae1d(569));_0xacc=3445 elseif _0xacc == 3582 then _0x92a=(57 + 0) * 1;_0xacc=3589 elseif _0xacc == 233 then _0x33e.Thickness=1 + 1;_0xacc=239 elseif _0xacc == 1184 then _0x8e1=(92 + 0) * 1;_0xacc=1195 elseif _0xacc == 3685 then _0x3b9(_0x3d1,__0xae1d(570),__0xae1d(571));_0xacc=3694 elseif _0xacc == 3172 then _0x3d0,_0x3d1=_0x3cb(__0xae1d(572),__0xae1d(573),__0xae1d(574));_0xacc=3183 elseif _0xacc == 2055 then _0x384(_0x3d0,__0xae1d(575),__0xae1d(576),-(39 + 171 - 30),18 * 10 + 0,2 - 1,__0xae1d(577));_0xacc=2063 elseif _0xacc == 3698 then _0x3b9(_0x3d1,__0xae1d(578),__0xae1d(579));_0xacc=3707 elseif _0xacc == 2515 then _0x3b9(_0x3d1,__0xae1d(580),__0xae1d(581));_0xacc=2523 elseif _0xacc == 1852 then _0x3b9(_0x3d0,__0xae1d(582),__0xae1d(583));_0xacc=1858 elseif _0xacc == 435 then _0x344.ZIndex=5 + 15;_0xacc=443 elseif _0xacc == 3294 then do local _0x921=358 end;_0xacc=3302 elseif _0xacc == 1710 then _0x384(_0x3d0,__0xae1d(584),__0xae1d(585),5 * 2 + 0,374 + 33 - 47,2 - 1,__0xae1d(586));_0xacc=1720 elseif _0xacc == 1075 then do local _0x8dd=881 end;_0xacc=1079 elseif _0xacc == 2901 then _0x384(_0x3d0,__0xae1d(587),__0xae1d(588),1 - 1,5 + 5,0.1,"",function() updateWorldChanger() end);_0xacc=2906 elseif _0xacc == 3777 then _0x36a(_0x3d0,__0xae1d(589));_0xacc=3783 elseif _0xacc == 1199 then _0x359.Parent=_0x33d;_0xacc=1206 elseif _0xacc == 403 then if 1 > 2 then local _0x8c6=nil end;_0xacc=407 elseif _0xacc == 4019 then _0x936=math.random() * 0;_0xacc=4030 elseif _0xacc == 3971 then _0x3d5.Size=UDim2.new(2 - 1,1 - 1,1 - 1,7 + 13);_0xacc=3980 elseif _0xacc == 1446 then _0x379=function(_0x10) local _0x7f9;local _0xab3=2;while true do if _0xab3 == 23 then return __0xae1d(590),_0x33b.Lime elseif _0xab3 == 15 then if _0x10 == __0xae1d(591) then if _0xf1.LastError then return __0xae1d(592),Color3.fromRGB(54 * 4 + 2,65 + 54 - 37,16 * 5 + 2) end;local _0x7f6=math.random() * 0;if not _0xf1.Ready then if false then local _0x7f5=nil end;return __0xae1d(593),Color3.fromRGB(7 + 213,77 + 113 - 20,18 * 4 + 0) end elseif _0x10 == __0xae1d(594) or _0x10 == __0xae1d(595) then if not _0x13f.Ready and _0x13f.LastError then return __0xae1d(596),Color3.fromRGB(73 * 3 + 1,58 + 112,49 + 23) end;if 1 > 2 then local _0x7f7=nil end;if not _0x13f.Ready then return __0xae1d(597),Color3.fromRGB(146 + 88 - 14,49 + 130 - 9,85 + 9 - 22) end elseif _0x10 == __0xae1d(598) and not _0x5c and not _0x5a then if false then local _0x7f8=nil end;return __0xae1d(599),Color3.fromRGB(55 * 4 + 0,28 * 6 + 2,24 * 3 + 0) end;_0xab3=23 elseif _0xab3 == 2 then _0x7f9=(75 + 0) * 1;_0xab3=10 elseif _0xab3 == 10 then if _0x8[_0x10] ~= true then return __0xae1d(600),_0x33b.Muted end;_0xab3=15 else break end end end;_0xacc=1452 elseif _0xacc == 3921 then _0x3d4.Text=_0x3d2;_0xacc=3929 elseif _0xacc == 353 then _0x342.BackgroundColor3=_0x33b.Lime;_0xacc=358 elseif _0xacc == 3958 then _0x3d4.Parent=_0x350[_0x3d1] or _0x3d1;_0xacc=3966 elseif _0xacc == 1177 then _0x359.Visible=false;_0xacc=1184 elseif _0xacc == 1942 then _0x384(_0x3d1,__0xae1d(601),__0xae1d(602),0.1,2 + 0,0.1,__0xae1d(603));_0xacc=1948 elseif _0xacc == 2322 then _0x3b9(_0x3d0,__0xae1d(604),__0xae1d(605));_0xacc=2327 elseif _0xacc == 2028 then if false then local _0x8f9=nil end;_0xacc=2034 elseif _0xacc == 3908 then _0x3d4.PlaceholderText=__0xae1d(606);_0xacc=3917 elseif _0xacc == 3659 then _0x384(_0x3d0,__0xae1d(607),__0xae1d(608),1 - 1,2 - 1,0.05,"");_0xacc=3662 elseif _0xacc == 1881 then _0x36a(_0x3d1,__0xae1d(609));_0xacc=1885 elseif _0xacc == 579 then _0x8cb=(88 + 0) * 1;_0xacc=584 elseif _0xacc == 2972 then _0x916=(43 + 0) * 1;_0xacc=2979 elseif _0xacc == 782 then _0x354.BorderSizePixel=2 - 1;_0xacc=789 elseif _0xacc == 1215 then _0x35a.PaddingTop=UDim.new(1 - 1,2 * 3 + 1);_0xacc=1223 elseif _0xacc == 2663 then task.wait();_0xacc=2670 elseif _0xacc == 2608 then _0x384(_0x3d1,__0xae1d(610),__0xae1d(611),6 + 26 - 27,3 * 8 + 6,2 - 1,"");_0xacc=2616 elseif _0xacc == 467 then _0x345.Size=UDim2.new(1 - 1,40 + 15 - 7,2 - 1,-(32 + 3 - 31));_0xacc=471 elseif _0xacc == 865 then _0x355.Parent=_0x354;_0xacc=870 elseif _0xacc == 1419 then _0x36a=function(_0x2,_0x36b) local _0x36c,_0x36d,_0x36e,_0x7e4,_0x3e,_0x36f,_0x370,_0x371,_0x372,_0x7ef,_0x373,_0x7f0,_0x374,_0x7f1;local _0xab2=3;while true do if _0xab2 == 86 then _0x36e.LayoutOrder=2 - 1;_0xab2=94 elseif _0xab2 == 529 then _0x7f1=math.random() * 0;_0xab2=537 elseif _0xab2 == 240 then _0x3e.Parent=_0x36e;_0xab2=247 elseif _0xab2 == 346 then _0x370.Position=UDim2.new(1 - 1,1 - 1,2 - 1,-(1 + 1));_0xab2=351 elseif _0xab2 == 260 then if false then local _0x7ea=nil end;_0xab2=269 elseif _0xab2 == 514 then _0x373.Parent=_0x372;_0xab2=520 elseif _0xab2 == 194 then do local _0x7e7=366 end;_0xab2=199 elseif _0xab2 == 422 then _0x372.Name=__0xae1d(612);_0xab2=429 elseif _0xab2 == 395 then _0x371.Transparency=NumberSequence.new({NumberSequenceKeypoint.new(1 - 1,1 - 1),NumberSequenceKeypoint.new(0.72,0.28),NumberSequenceKeypoint.new(2 - 1,2 - 1)});_0xab2=403 elseif _0xab2 == 359 then if false then local _0x7eb=nil end;_0xab2=367 elseif _0xab2 == 375 then _0x370.BorderSizePixel=1 - 1;_0xab2=382 elseif _0xab2 == 156 then _0x3e.Size=UDim2.new(2 - 1,-(5 * 5 + 1),1 - 1,3 * 6 + 0);_0xab2=165 elseif _0xab2 == 256 then _0x36f.Name=__0xae1d(613);_0xab2=260 elseif _0xab2 == 142 then _0x3e.Name=__0xae1d(614);_0xab2=149 elseif _0xab2 == 247 then _0x36f=Instance.new(__0xae1d(615));_0xab2=256 elseif _0xab2 == 473 then _0x372.BackgroundTransparency=2 - 1;_0xab2=481 elseif _0xab2 == 484 then _0x373=Instance.new(__0xae1d(616));_0xab2=494 elseif _0xab2 == 32 then _0x36c.BackgroundTransparency=2 - 1;_0xab2=38 elseif _0xab2 == 481 then _0x372.Parent=_0x36c;_0xab2=484 elseif _0xab2 == 438 then if false then local _0x7ed=nil end;_0xab2=446 elseif _0xab2 == 319 then _0x36f.Parent=_0x36e;_0xab2=324 elseif _0xab2 == 351 then _0x370.BackgroundColor3=_0x33b.Lime;_0xab2=359 elseif _0xab2 == 24 then _0x36c.AutomaticSize=Enum.AutomaticSize.Y;_0xab2=32 elseif _0xab2 == 332 then _0x370.Name=__0xae1d(617);_0xab2=341 elseif _0xab2 == 204 then _0x3e.Font=Enum.Font.Code;_0xab2=212 elseif _0xab2 == 46 then _0x36d=Instance.new(__0xae1d(618));_0xab2=53 elseif _0xab2 == 537 then table.insert(_0x34f,_0x374);_0xab2=542 elseif _0xab2 == 403 then _0x371.Parent=_0x370;_0xab2=408 elseif _0xab2 == 94 then _0x36e.BackgroundTransparency=2 - 1;_0xab2=102 elseif _0xab2 == 387 then _0x371=Instance.new(__0xae1d(619));_0xab2=395 elseif _0xab2 == 73 then _0x36e=Instance.new(__0xae1d(620));_0xab2=79 elseif _0xab2 == 453 then do local _0x7ee=845 end;_0xab2=458 elseif _0xab2 == 199 then _0x3e.TextColor3=_0x33b.White;_0xab2=204 elseif _0xab2 == 446 then _0x372.LayoutOrder=26 + 22 - 46;_0xab2=453 elseif _0xab2 == 296 then _0x36f.TextColor3=_0x33b.Lime;_0xab2=303 elseif _0xab2 == 269 then _0x36f.Size=UDim2.fromOffset(15 + 53 - 48,3 * 5 + 3);_0xab2=274 elseif _0xab2 == 149 then if false then local _0x7e5=nil end;_0xab2=156 elseif _0xab2 == 458 then _0x372.AutomaticSize=Enum.AutomaticSize.Y;_0xab2=465 elseif _0xab2 == 557 then _0x36e.Activated:Connect(function() _0x374.collapsed=not _0x374.collapsed;_0x372.Visible=not _0x374.collapsed;_0x36f.Text=_0x374.collapsed and __0xae1d(621) or __0xae1d(622);_0x3e.TextColor3=_0x374.collapsed and _0x33b.Text or _0x33b.White;_0x370.BackgroundTransparency=_0x374.collapsed and 0.45 or 0.08 end);_0xab2=565 elseif _0xab2 == 542 then if 1 > 2 then local _0x7f2=nil end;_0xab2=547 elseif _0xab2 == 102 then _0x36e.BorderSizePixel=1 - 1;_0xab2=109 elseif _0xab2 == 465 then _0x7ef=math.random() * 0;_0xab2=473 elseif _0xab2 == 218 then _0x3e.TextSize=31 + 6 - 26;_0xab2=225 elseif _0xab2 == 171 then if false then local _0x7e6=nil end;_0xab2=176 elseif _0xab2 == 3 then _0x36c=Instance.new(__0xae1d(623));_0xab2=10 elseif _0xab2 == 309 then _0x36f.TextSize=6 + 5;_0xab2=319 elseif _0xab2 == 382 then _0x370.Parent=_0x36e;_0xab2=387 elseif _0xab2 == 79 then _0x36e.Size=UDim2.new(2 - 1,1 - 1,1 - 1,4 * 6 + 0);_0xab2=86 elseif _0xab2 == 176 then _0x3e.BackgroundTransparency=2 - 1;_0xab2=186 elseif _0xab2 == 408 then if 1 > 2 then local _0x7ec=nil end;_0xab2=415 elseif _0xab2 == 367 then _0x370.BackgroundTransparency=0.08;_0xab2=375 elseif _0xab2 == 212 then if false then local _0x7e8=nil end;_0xab2=218 elseif _0xab2 == 225 then _0x3e.TextXAlignment=Enum.TextXAlignment.Left;_0xab2=235 elseif _0xab2 == 415 then _0x372=Instance.new(__0xae1d(624));_0xab2=422 elseif _0xab2 == 19 then _0x36c.Size=UDim2.new(2 - 1,1 - 1,1 - 1,1 - 1);_0xab2=24 elseif _0xab2 == 506 then _0x373.SortOrder=Enum.SortOrder.LayoutOrder;_0xab2=514 elseif _0xab2 == 115 then _0x7e4=math.random() * 0;_0xab2=120 elseif _0xab2 == 500 then _0x7f0=math.random() * 0;_0xab2=506 elseif _0xab2 == 235 then if 1 > 2 then local _0x7e9=nil end;_0xab2=240 elseif _0xab2 == 429 then _0x372.Size=UDim2.new(2 - 1,1 - 1,1 - 1,1 - 1);_0xab2=438 elseif _0xab2 == 565 then do local _0x7f3=472 end;_0xab2=568 elseif _0xab2 == 120 then _0x36e.AutoButtonColor=false;_0xab2=128 elseif _0xab2 == 165 then _0x3e.Position=UDim2.fromOffset(2 - 1,1 - 1);_0xab2=171 elseif _0xab2 == 341 then _0x370.Size=UDim2.new(2 - 1,1 - 1,1 - 1,2 - 1);_0xab2=346 elseif _0xab2 == 289 then _0x36f.Text=__0xae1d(625);_0xab2=296 elseif _0xab2 == 38 then _0x36c.Parent=_0x2;_0xab2=46 elseif _0xab2 == 274 then _0x36f.Position=UDim2.new(2 - 1,-(3 + 17),1 - 1,1 - 1);_0xab2=284 elseif _0xab2 == 128 then _0x36e.Parent=_0x36c;_0xab2=138 elseif _0xab2 == 568 then return _0x372 elseif _0xab2 == 53 then _0x36d.Padding=UDim.new(1 - 1,1 * 4 + 1);_0xab2=60 elseif _0xab2 == 547 then _0x350[_0x2]=_0x372;_0xab2=557 elseif _0xab2 == 60 then _0x36d.SortOrder=Enum.SortOrder.LayoutOrder;_0xab2=64 elseif _0xab2 == 494 then _0x373.Padding=UDim.new(1 - 1,23 + 19 - 38);_0xab2=500 elseif _0xab2 == 186 then _0x3e.Text=_0x36b:upper();_0xab2=194 elseif _0xab2 == 284 then _0x36f.BackgroundTransparency=2 - 1;_0xab2=289 elseif _0xab2 == 324 then _0x370=Instance.new(__0xae1d(626));_0xab2=332 elseif _0xab2 == 520 then _0x374={outer=_0x36c,body=_0x372,header=_0x36e,collapsed=false};_0xab2=529 elseif _0xab2 == 303 then _0x36f.Font=Enum.Font.Code;_0xab2=309 elseif _0xab2 == 138 then _0x3e=Instance.new(__0xae1d(627));_0xab2=142 elseif _0xab2 == 64 then _0x36d.Parent=_0x36c;_0xab2=73 elseif _0xab2 == 10 then _0x36c.Name=__0xae1d(628) .. _0x36b:gsub(__0xae1d(629),__0xae1d(630));_0xab2=19 elseif _0xab2 == 109 then _0x36e.Text="";_0xab2=115 else break end end end;_0xacc=1424 elseif _0xacc == 3855 then _0x36a(_0x3d1,__0xae1d(631));_0xacc=3859 elseif _0xacc == 201 then _0x17d.Active=true;_0xacc=207 elseif _0xacc == 3137 then _0x3b9(_0x3d1,__0xae1d(632),__0xae1d(633));_0xacc=3145 elseif _0xacc == 3679 then _0x36a(_0x3d1,__0xae1d(634));_0xacc=3685 elseif _0xacc == 4217 then table.insert(_0x26,_0x18.InputBegan:Connect(function(_0x84,_0x1d1) if _0x1d1 then return end;local _0x10=Enum.KeyCode[_0x8.menuKey or __0xae1d(635)];if _0x10 and _0x84.KeyCode == _0x10 then _0x3e1() end end));_0xacc=4224 elseif _0xacc == 1408 then _0x366=function(_0x365,_0x3e,_0x2ac,_0x8f) local _0x367,_0x49,_0x368,_0x3d,_0x369,_0x7e3;local _0xab1=5;while true do if _0xab1 == 311 then _0x369.PaddingLeft=UDim.new(1 - 1,2 * 3 + 1);_0xab1=317 elseif _0xab1 == 171 then if 1 > 2 then local _0x7dd=nil end;_0xab1=176 elseif _0xab1 == 81 then _0x49.Size=UDim2.new(2 - 1,-(16 + 0),1 - 1,8 + 16);_0xab1=88 elseif _0xab1 == 64 then _0x367.Parent=_0x365;_0xab1=73 elseif _0xab1 == 269 then _0x3d=Instance.new(__0xae1d(636));_0xab1=276 elseif _0xab1 == 73 then _0x49=Instance.new(__0xae1d(637));_0xab1=81 elseif _0xab1 == 276 then _0x3d.Padding=UDim.new(1 - 1,1 + 3);_0xab1=284 elseif _0xab1 == 333 then _0x369.PaddingBottom=UDim.new(1 - 1,8 + 1);_0xab1=340 elseif _0xab1 == 46 then if false then local _0x7da=nil end;_0xab1=53 elseif _0xab1 == 197 then _0x368.BackgroundTransparency=2 - 1;_0xab1=204 elseif _0xab1 == 144 then _0x49.TextXAlignment=Enum.TextXAlignment.Left;_0xab1=151 elseif _0xab1 == 5 then _0x367=Instance.new(__0xae1d(638));_0xab1=10 elseif _0xab1 == 176 then _0x368.Size=UDim2.new(2 - 1,-(13 + 1),2 - 1,-(6 * 5 + 2));_0xab1=186 elseif _0xab1 == 123 then _0x49.TextColor3=_0x33b.Text;_0xab1=129 elseif _0xab1 == 58 then _0x367.BorderSizePixel=2 - 1;_0xab1=64 elseif _0xab1 == 151 then _0x49.Parent=_0x367;_0xab1=155 elseif _0xab1 == 96 then _0x49.Position=UDim2.fromOffset(12 + 37 - 41,1 * 2 + 1);_0xab1=100 elseif _0xab1 == 327 then _0x7e3=math.random() * 0;_0xab1=333 elseif _0xab1 == 248 then _0x368.CanvasSize=UDim2.new();_0xab1=256 elseif _0xab1 == 193 then if 1 > 2 then local _0x7de=nil end;_0xab1=197 elseif _0xab1 == 165 then _0x368.Name=__0xae1d(639);_0xab1=171 elseif _0xab1 == 129 then _0x49.Font=Enum.Font.Code;_0xab1=136 elseif _0xab1 == 317 then _0x369.PaddingRight=UDim.new(1 - 1,1 * 4 + 3);_0xab1=327 elseif _0xab1 == 298 then if 1 > 2 then local _0x7e2=nil end;_0xab1=302 elseif _0xab1 == 346 then return _0x368 elseif _0xab1 == 29 then _0x367.Position=UDim2.new(_0x2ac,1 - 1,1 - 1,1 - 1);_0xab1=40 elseif _0xab1 == 100 then if 1 > 2 then local _0x7dc=nil end;_0xab1=106 elseif _0xab1 == 213 then if 1 > 2 then local _0x7df=nil end;_0xab1=222 elseif _0xab1 == 204 then _0x368.BorderSizePixel=1 - 1;_0xab1=213 elseif _0xab1 == 256 then if false then local _0x7e1=nil end;_0xab1=260 elseif _0xab1 == 106 then _0x49.BackgroundTransparency=2 - 1;_0xab1=114 elseif _0xab1 == 292 then _0x3d.Parent=_0x368;_0xab1=298 elseif _0xab1 == 340 then _0x369.Parent=_0x368;_0xab1=346 elseif _0xab1 == 114 then _0x49.Text=_0x3e;_0xab1=123 elseif _0xab1 == 222 then _0x368.ScrollBarThickness=1 + 1;_0xab1=226 elseif _0xab1 == 136 then _0x49.TextSize=35 + 11 - 34;_0xab1=144 elseif _0xab1 == 186 then _0x368.Position=UDim2.fromOffset(6 + 1,24 + 4);_0xab1=193 elseif _0xab1 == 232 then _0x368.ScrollBarImageColor3=_0x33b.Border;_0xab1=241 elseif _0xab1 == 88 then if false then local _0x7db=nil end;_0xab1=96 elseif _0xab1 == 19 then _0x367.Name=_0x3e;_0xab1=24 elseif _0xab1 == 155 then _0x368=Instance.new(__0xae1d(640));_0xab1=165 elseif _0xab1 == 10 then if false then local _0x7d9=nil end;_0xab1=19 elseif _0xab1 == 284 then _0x3d.SortOrder=Enum.SortOrder.LayoutOrder;_0xab1=292 elseif _0xab1 == 40 then _0x367.BackgroundColor3=_0x33b.Panel;_0xab1=46 elseif _0xab1 == 226 then if 1 > 2 then local _0x7e0=nil end;_0xab1=232 elseif _0xab1 == 302 then _0x369=Instance.new(__0xae1d(641));_0xab1=311 elseif _0xab1 == 24 then _0x367.Size=UDim2.new(_0x8f,1 - 1,2 - 1,1 - 1);_0xab1=29 elseif _0xab1 == 260 then _0x368.Parent=_0x367;_0xab1=269 elseif _0xab1 == 53 then _0x367.BorderColor3=_0x33b.Border;_0xab1=58 elseif _0xab1 == 241 then _0x368.AutomaticCanvasSize=Enum.AutomaticSize.Y;_0xab1=248 else break end end end;_0xacc=1419 elseif _0xacc == 716 then _0x354=Instance.new(__0xae1d(642));_0xacc=726 elseif _0xacc == 2402 then _0x384(_0x3d0,__0xae1d(643),__0xae1d(644),2 - 1,3 + 1,0.5,__0xae1d(645));_0xacc=2410 elseif _0xacc == 1501 then _0x38e=function() local _0xaba=5;while true do if _0xaba == 5 then if _0x38d and _0x38d.popup then local _0x81e=(12 + 0) * 1;_0x38d.popup:Destroy() end;_0xaba=10 elseif _0xaba == 17 then _0x38d=nil;_0xaba=38 elseif _0xaba == 10 then if false then local _0x81f=nil end;_0xaba=17 else break end end end;_0xacc=1506 elseif _0xacc == 173 then _0x17d.BackgroundColor3=_0x33b.Main;_0xacc=179 elseif _0xacc == 2586 then if 1 > 2 then local _0x906=nil end;_0xacc=2591 elseif _0xacc == 3644 then _0x3b9(_0x3d0,__0xae1d(646),__0xae1d(647));_0xacc=3652 elseif _0xacc == 927 then _0x356.PlaceholderColor3=_0x33b.Muted;_0xacc=935 elseif _0xacc == 40 then _0x33c.ResetOnSpawn=false;_0xacc=43 elseif _0xacc == 2311 then _0x3b9(_0x3d0,__0xae1d(648),__0xae1d(649));_0xacc=2322 elseif _0xacc == 1822 then _0x3b9(_0x3d0,__0xae1d(650),__0xae1d(651));_0xacc=1829 elseif _0xacc == 2734 then _0x3a4(_0x3d0,__0xae1d(652),__0xae1d(653),{__0xae1d(654),__0xae1d(655),__0xae1d(656),__0xae1d(657),__0xae1d(658),__0xae1d(659)},function(_0x9) if _0x8.nightModeEnabled then applyNightPreset(_0x9) end end);_0xacc=2738 elseif _0xacc == 2068 then _0x384(_0x3d0,__0xae1d(660),__0xae1d(661),0.04,0.5,0.01,__0xae1d(662));_0xacc=2077 elseif _0xacc == 2879 then do local _0x912=838 end;_0xacc=2889 elseif _0xacc == 3203 then _0x3b9(_0x3d0,__0xae1d(663),__0xae1d(664));_0xacc=3208 elseif _0xacc == 2348 then _0x384(_0x3d0,__0xae1d(665),__0xae1d(666),1 - 1,0.9,0.05,"");_0xacc=2357 elseif _0xacc == 477 then _0x345.Position=UDim2.fromOffset(2 + 0,1 + 1);_0xacc=488 elseif _0xacc == 3120 then _0x384(_0x3d1,__0xae1d(667),__0xae1d(668),0.05,0.5,0.01,"");_0xacc=3126 elseif _0xacc == 2591 then _0x3a9(_0x3d1,__0xae1d(669),function() playXCHitSound(true) end);_0xacc=2598 elseif _0xacc == 450 then _0x345=Instance.new(__0xae1d(670));_0xacc=459 elseif _0xacc == 2636 then _0x384(_0x3d1,__0xae1d(671),__0xae1d(672),1.5,49 + 9 - 50,0.5,"");_0xacc=2642 elseif _0xacc == 2334 then _0x384(_0x3d0,__0xae1d(673),__0xae1d(674),48 + 61 - 9,4499 + 501,49 + 1,"");_0xacc=2343 elseif _0xacc == 3032 then _0x3b9(_0x3d1,__0xae1d(675),__0xae1d(676));_0xacc=3041 elseif _0xacc == 3950 then _0x3d4.TextSize=6 + 4;_0xacc=3958 elseif _0xacc == 789 then _0x354.Parent=_0x17d;_0xacc=792 elseif _0xacc == 186 then if 1 > 2 then local _0x8c0=nil end;_0xacc=191 elseif _0xacc == 1555 then if false then local _0x8eb=nil end;_0xacc=1564 elseif _0xacc == 2650 then _0x3a4(_0x3d1,__0xae1d(677),__0xae1d(678),{__0xae1d(679),__0xae1d(680),__0xae1d(681)});_0xacc=2657 elseif _0xacc == 1810 then _0x3b9(_0x3d0,__0xae1d(682),__0xae1d(683));_0xacc=1818 elseif _0xacc == 1249 then _0x35a.PaddingRight=UDim.new(1 - 1,5 + 4);_0xacc=1256 elseif _0xacc == 2906 then if false then local _0x913=nil end;_0xacc=2917 elseif _0xacc == 4272 then do local _0x93e=208 end;_0xacc=4278 elseif _0xacc == 1858 then do local _0x8f3=295 end;_0xacc=1866 elseif _0xacc == 4104 then _0x3a9(_0x3d0,__0xae1d(684),function() for _0x63,_0x10 in ipairs({__0xae1d(685),__0xae1d(686),__0xae1d(687),__0xae1d(688)}) do _0x8[_0x10]=false;if _0x13[_0x10] then _0x13[_0x10](false) end end;stopXCCameraMode();setThirdPersonEnabled(false);if _0x22 then _0x22.FieldOfView=11 * 6 + 4 end;XCNotify(__0xae1d(689),__0xae1d(690),__0xae1d(691),1.5) end);_0xacc=4111 elseif _0xacc == 4168 then table.insert(_0x26,_0x356:GetPropertyChangedSignal(__0xae1d(692)):Connect(_0x353));_0xacc=4174 elseif _0xacc == 618 then _0x348={};_0xacc=626 elseif _0xacc == 1256 then _0x35a.Parent=_0x359;_0xacc=1263 elseif _0xacc == 2936 then _0x384(_0x3d0,__0xae1d(693),__0xae1d(694),1 - 1,3 + 0,0.05,"",function() updateWorldChanger() end);_0xacc=2941 elseif _0xacc == 849 then _0x355.TextSize=1 * 8 + 5;_0xacc=856 elseif _0xacc == 2469 then _0x36a(_0x3d1,__0xae1d(695));_0xacc=2475 elseif _0xacc == 1292 then _0x35b.BackgroundTransparency=2 - 1;_0xacc=1296 elseif _0xacc == 2784 then do local _0x90f=517 end;_0xacc=2791 elseif _0xacc == 348 then _0x342.BorderSizePixel=1 - 1;_0xacc=353 elseif _0xacc == 2572 then _0x3a4(_0x3d1,__0xae1d(696),__0xae1d(697),{__0xae1d(698),__0xae1d(699),__0xae1d(700),__0xae1d(701),__0xae1d(702),__0xae1d(703)},function() playXCHitSound(true) end);_0xacc=2577 elseif _0xacc == 1324 then if 1 > 2 then local _0x8e5=nil end;_0xacc=1333 elseif _0xacc == 4008 then _0x3d5.Font=Enum.Font.Code;_0xacc=4013 elseif _0xacc == 3796 then _0x3b9(_0x3d0,__0xae1d(704),__0xae1d(705));_0xacc=3805 elseif _0xacc == 802 then _0x355=Instance.new(__0xae1d(706));_0xacc=809 elseif _0xacc == 704 then _0x352=function()  end;_0xacc=708 elseif _0xacc == 1312 then _0x35b.TextSize=_0x18.TouchEnabled and 2 * 4 + 3 or 9 + 1;_0xacc=1321 elseif _0xacc == 4127 then _0x3a9(_0x3d1,__0xae1d(707),function() local _0xdd=pcall(function() setXCStreamerMode(false);assert(type(readfile) == __0xae1d(708),__0xae1d(709));local _0x62=_0x7:JSONDecode(readfile(_0x3d6()));for _0x10,_0x11 in pairs(_0x62) do if _0x8[_0x10] ~= nil then _0x8[_0x10]=_0x11 end end;_0x14.fireRate=_0x8.fireRateEnabled == true;_0x14.recoilSpread=_0x8.noRecoilEnabled == true or _0x8.noSpreadEnabled == true;_0x14.silentFallback=_0x8.silentAimEnabled == true;_0x3db();updateMobileSlideVisibility();refreshThirdPerson();setWeaponVisuals();updateCustomScope();updateWorldPostFX();applyXCWeather();applyXCSmokeState();if _0x8.freecamEnabled then setXCCameraMode(__0xae1d(710),true) elseif _0x8.freelookEnabled then setXCCameraMode(__0xae1d(711),true) else stopXCCameraMode() end;setXCStreamerMode(_0x8.streamerModeEnabled);setAntiAfkEnabled(_0x8.antiAfkEnabled);if _0x8.animationsEnabled then playXCAnimation() else stopXCAnimation() end;if _0x8.nightModeEnabled then applyNightPreset(_0x8.nightPreset) else _0x1b.Brightness=_0x146.Brightness;_0x1b.ClockTime=_0x146.ClockTime;_0x1b.GlobalShadows=_0x146.GlobalShadows;_0x1b.Ambient=_0x146.Ambient;_0x1b.OutdoorAmbient=_0x146.OutdoorAmbient end;updateWorldChanger() end);_0x3d5.Text=_0xdd and __0xae1d(712) .. _0x3d3(_0x3d4.Text) or __0xae1d(713) end);_0xacc=4133 elseif _0xacc == 3183 then if false then local _0x91c=nil end;_0xacc=3189 elseif _0xacc == 2642 then _0x908=math.random() * 0;_0xacc=2650 elseif _0xacc == 3160 then _0x3a4(_0x3d1,__0xae1d(714),__0xae1d(715),{__0xae1d(716),__0xae1d(717),__0xae1d(718),__0xae1d(719),__0xae1d(720),__0xae1d(721)});_0xacc=3167 elseif _0xacc == 2873 then _0x36a(_0x3d0,__0xae1d(722));_0xacc=2879 elseif _0xacc == 1485 then table.insert(_0x26,_0x18.InputEnded:Connect(function(_0x84) if _0x84 == _0x34c or _0x34c and _0x34c.UserInputType == Enum.UserInputType.MouseButton1 and _0x84.UserInputType == Enum.UserInputType.MouseButton1 then _0x34c=nil;_0x34d=nil end end));_0xacc=1496 elseif _0xacc == 1107 then _0x358={aimbotEnabled=__0xae1d(723),silentAimEnabled=__0xae1d(724),triggerbotEnabled=__0xae1d(725),triggerbotDelay=__0xae1d(726),triggerbotScopedOnly=__0xae1d(727),triggerbotHeadOnly=__0xae1d(728),rageBotEnabled=__0xae1d(729),noRecoilEnabled=__0xae1d(730),noSpreadEnabled=__0xae1d(731),wallbangEnabled=__0xae1d(732),thirdPersonEnabled=__0xae1d(733),bunnyHopEnabled=__0xae1d(734),bhopMode=__0xae1d(735),bhopMovingOnly=__0xae1d(736),bhopPauseWithMenu=__0xae1d(737),bhopGroundDelay=__0xae1d(738),bhopAcceleration=__0xae1d(739),flightEnabled=__0xae1d(740),chamsEnabled=__0xae1d(741),grenadeEspEnabled=__0xae1d(742),skeletonEspEnabled=__0xae1d(743),skeletonDistanceFade=__0xae1d(744),noSmokeEnabled=__0xae1d(745),hitSoundEnabled=__0xae1d(746),antiAimMode=__0xae1d(747),nightModeEnabled=__0xae1d(748),worldSkyboxEnabled=__0xae1d(749),worldPostFXEnabled=__0xae1d(750),worldSkyboxPreset=__0xae1d(751),worldTonePreset=__0xae1d(752),worldAtmosphereEnabled=__0xae1d(753),worldBloomEnabled=__0xae1d(754),weatherEnabled=__0xae1d(755),weatherMode=__0xae1d(756),weatherIntensity=__0xae1d(757),weatherWind=__0xae1d(758),freecamEnabled=__0xae1d(759),freecamSpeed=__0xae1d(760),freecamKey=__0xae1d(761),freelookEnabled=__0xae1d(762),freelookSensitivity=__0xae1d(763),freelookKey=__0xae1d(764),streamerModeEnabled=__0xae1d(765),streamerKey=__0xae1d(766),priorityPlayerName=__0xae1d(767),customScopeEnabled=__0xae1d(768),customHandsEnabled=__0xae1d(769),spectatorListEnabled=__0xae1d(770),settingsAutoSave=__0xae1d(771),menuKey=__0xae1d(772),tab_Rage=__0xae1d(773),tab_AntiAim=__0xae1d(774),tab_Visuals=__0xae1d(775),tab_World=__0xae1d(776),tab_Misc=__0xae1d(777),tab_Skins=__0xae1d(778),tab_Players=__0xae1d(779),tab_Configs=__0xae1d(780)};_0xacc=1117 elseif _0xacc == 1846 then if false then local _0x8f2=nil end;_0xacc=1852 elseif _0xacc == 2791 then _0x3b9(_0x3d0,__0xae1d(781),__0xae1d(782));_0xacc=2796 elseif _0xacc == 414 then _0x344.Position=UDim2.fromOffset(85 + 3 - 36,1 - 1);_0xacc=422 elseif _0xacc == 1340 then _0x35b.TextYAlignment=Enum.TextYAlignment.Top;_0xacc=1348 elseif _0xacc == 2796 then _0x3a4(_0x3d0,__0xae1d(783),__0xae1d(784),{__0xae1d(785),__0xae1d(786),__0xae1d(787),__0xae1d(788),__0xae1d(789),__0xae1d(790),__0xae1d(791),__0xae1d(792),__0xae1d(793),__0xae1d(794),__0xae1d(795),__0xae1d(796)},function() updateWorldChanger() end);_0xacc=2802 elseif _0xacc == 2917 then _0x384(_0x3d0,__0xae1d(797),__0xae1d(798),1 - 1,2 + 8,0.1,"",function() updateWorldChanger() end);_0xacc=2920 elseif _0xacc == 43 then _0x33c.IgnoreGuiInset=true;_0xacc=53 elseif _0xacc == 57 then _0x8bc=math.random() * 0;_0xacc=68 elseif _0xacc == 745 then do local _0x8cf=819 end;_0xacc=753 elseif _0xacc == 2999 then _0x384(_0x3d0,__0xae1d(799),__0xae1d(800),-(40 + 0),75 + 11 - 46,2 - 1,"",function() applyXCWeather() end);_0xacc=3005 elseif _0xacc == 68 then _0x33c.Parent=_0x25;_0xacc=73 elseif _0xacc == 4062 then _0x352=function() if not _0x8.settingsAutoSave then return end;aautoSaveSerial=_0x3d7 + (2 - 1);local _0x42=_0x3d7;task.delay(0.8,function() if _0x42 == _0x3d7 and _0x8.settingsAutoSave and _0x33d.Parent then _0x3d8(__0xae1d(801)) end end) end;_0xacc=4071 elseif _0xacc == 239 then _0x33e.Parent=_0x17d;_0xacc=250 elseif _0xacc == 333 then _0x342.Position=UDim2.fromOffset(1 + 1,1 + 1);_0xacc=339 elseif _0xacc == 3067 then _0x384(_0x3d1,__0xae1d(802),__0xae1d(803),1 - 1,26 * 3 + 2,2 - 1,"");_0xacc=3074 elseif _0xacc == 1866 then _0x3b9(_0x3d0,__0xae1d(804),__0xae1d(805));_0xacc=1871 elseif _0xacc == 697 then _0x351={};_0xacc=704 elseif _0xacc == 2523 then _0x3b9(_0x3d1,__0xae1d(806),__0xae1d(807));_0xacc=2531 elseif _0xacc == 2949 then _0x384(_0x3d0,__0xae1d(808),__0xae1d(809),1 - 1,9 * 6 + 2,2 - 1,"",function() updateWorldChanger() end);_0xacc=2959 elseif _0xacc == 1117 then _0x8df=math.random() * 0;_0xacc=1123 elseif _0xacc == 3537 then _0x384(_0x3d1,__0xae1d(810),__0xae1d(811),-(70 + 1 - 26),86 + 6 - 47,2 - 1,__0xae1d(812));_0xacc=3546 elseif _0xacc == 1524 then _0x390=function(_0x391,_0x10,_0x392,_0x37b,_0x1ce) local _0x831,_0x832,_0x393,_0x394,_0x395,_0x396,_0x397,_0x2c8,_0x398,_0x399,_0x39a,_0x39b,_0x835,_0x837,_0x39c,_0x838,_0x3d,_0x83a,_0x83b,_0x3a3;local _0xabc=5;while true do if _0xabc == 123 then _0x835=math.random() * 0;_0xabc=127 elseif _0xabc == 278 then _0x3d.Parent=_0x39b;_0xabc=281 elseif _0xabc == 110 then _0x39b=Instance.new(__0xae1d(813));_0xabc=114 elseif _0xabc == 194 then _0x39b.CanvasSize=UDim2.fromOffset(1 - 1,#_0x392 * _0x393);_0xabc=201 elseif _0xabc == 127 then _0x39b.Position=UDim2.fromOffset(math.clamp(_0x396.X,6 + 0,math.max(1 * 4 + 2,_0x2c8.X - _0x397.X - (3 + 3))),_0x39a and _0x399 or math.min(_0x398,_0x2c8.Y - _0x395 - (1 + 5)));_0xabc=135 elseif _0xabc == 36 then do local _0x833=622 end;_0xabc=45 elseif _0xabc == 201 then _0x39b.ZIndex=66 * 3 + 2;_0xabc=206 elseif _0xabc == 281 then _0x83b=math.random() * 0;_0xabc=290 elseif _0xabc == 178 then _0x39b.ScrollBarThickness=#_0x392 > _0x394 and 12 + 14 - 24 or 1 - 1;_0xabc=186 elseif _0xabc == 87 then do local _0x834=657 end;_0xabc=96 elseif _0xabc == 206 then _0x39b.Parent=_0x33d;_0xabc=211 elseif _0xabc == 271 then _0x83a=(77 + 0) * 1;_0xabc=278 elseif _0xabc == 71 then _0x2c8=_0x33d.AbsoluteSize;_0xabc=80 elseif _0xabc == 158 then if false then local _0x836=nil end;_0xabc=165 elseif _0xabc == 59 then _0x395=_0x394 * _0x393 + (1 + 1);_0xabc=67 elseif _0xabc == 135 then _0x39b.Size=UDim2.fromOffset(_0x397.X,_0x395);_0xabc=141 elseif _0xabc == 22 then _0x832=math.random() * 0;_0xabc=31 elseif _0xabc == 186 then _0x39b.ScrollBarImageColor3=_0x33b.Lime;_0xabc=194 elseif _0xabc == 114 then _0x39b.Name=__0xae1d(814) .. _0x10;_0xabc=123 elseif _0xabc == 261 then _0x3d.SortOrder=Enum.SortOrder.LayoutOrder;_0xabc=271 elseif _0xabc == 165 then _0x39b.BorderSizePixel=2 - 1;_0xabc=173 elseif _0xabc == 149 then _0x39b.BorderColor3=_0x33b.Border;_0xabc=158 elseif _0xabc == 290 then for _0xc7,_0x39d in ipairs(_0x392) do local _0x824=(86 + 0) * 1;local _0x39e=_0x8[_0x10] == _0x39d;local _0x825=(35 + 0) * 1;local _0x39f=Instance.new(__0xae1d(815));_0x39f.Name=tostring(_0x39d);_0x39f.LayoutOrder=_0xc7;_0x39f.Size=UDim2.new(2 - 1,1 - 1,1 - 1,_0x393);_0x39f.BackgroundColor3=_0x39e and Color3.fromRGB(2 + 55 - 25,21 + 18,23 + 33 - 39) or Color3.fromRGB(1 * 10 + 8,8 + 10,8 + 10);_0x39f.BorderSizePixel=1 - 1;_0x39f.Text="";_0x39f.Font=Enum.Font.Code;local _0x826=(54 + 0) * 1;_0x39f.TextSize=_0x18.TouchEnabled and 11 + 0 or 1 * 8 + 2;_0x39f.AutoButtonColor=false;local _0x827=(59 + 0) * 1;_0x39f.ZIndex=100 * 2 + 1;_0x39f.Parent=_0x39b;local _0x3a0=Instance.new(__0xae1d(816));local _0x828=math.random() * 0;_0x3a0.Size=UDim2.new(2 - 1,-(18 + 10),2 - 1,1 - 1);_0x3a0.Position=UDim2.fromOffset(2 * 8 + 3,1 - 1);_0x3a0.BackgroundTransparency=2 - 1;_0x3a0.Text=tostring(_0x39d);_0x3a0.TextColor3=_0x39e and _0x33b.White or _0x33b.Text;_0x3a0.Font=Enum.Font.Code;local _0x829=math.random() * 0;_0x3a0.TextSize=_0x18.TouchEnabled and 5 + 6 or 5 * 2 + 0;_0x3a0.TextXAlignment=Enum.TextXAlignment.Left;_0x3a0.ZIndex=182 + 20;_0x3a0.Parent=_0x39f;do local _0x82a=137 end;local _0x3a1=Instance.new(__0xae1d(817));if false then local _0x82b=nil end;_0x3a1.Name=__0xae1d(818);_0x3a1.Size=UDim2.fromOffset(_0x39e and 1 * 4 + 3 or 1 * 3 + 1,_0x39e and 15 + 36 - 44 or 7 + 6 - 9);local _0x82c=(72 + 0) * 1;_0x3a1.Position=UDim2.new(1 - 1,38 + 14 - 45,0.5,_0x39e and -(2 + 1) or -(8 + 6 - 12));_0x3a1.BackgroundColor3=_0x39e and _0x33b.Lime or _0x33b.Border;if false then local _0x82d=nil end;_0x3a1.BorderSizePixel=1 - 1;if false then local _0x82e=nil end;_0x3a1.ZIndex=140 + 109 - 47;local _0x82f=(83 + 0) * 1;_0x3a1.Parent=_0x39f;local _0x3a2=Instance.new(__0xae1d(819));_0x3a2.CornerRadius=UDim.new(2 - 1,1 - 1);_0x3a2.Parent=_0x3a1;local _0x830=(89 + 0) * 1;_0x39f.MouseEnter:Connect(function() _0x39f.BackgroundColor3=_0x39e and Color3.fromRGB(6 + 36 - 4,45 + 3,6 * 3 + 0) or _0x33b.Control2;_0x3a0.TextColor3=_0x33b.White end);_0x39f.MouseLeave:Connect(function() _0x39f.BackgroundColor3=_0x39e and Color3.fromRGB(4 * 8 + 0,14 + 34 - 9,5 * 3 + 2) or Color3.fromRGB(1 * 10 + 8,58 + 4 - 44,21 + 6 - 9);_0x3a0.TextColor3=_0x39e and _0x33b.White or _0x33b.Text end);_0x39f.Activated:Connect(function() _0x8[_0x10]=_0x39d;_0x377(_0x10,_0x39d);if _0x37b then _0x37b(_0x39d) end;_0x352();_0x38e() end) end;_0xabc=296 elseif _0xabc == 256 then if 1 > 2 then local _0x839=nil end;_0xabc=261 elseif _0xabc == 246 then _0x3d=Instance.new(__0xae1d(820));_0xabc=256 elseif _0xabc == 9 then _0x831=(73 + 0) * 1;_0xabc=17 elseif _0xabc == 96 then _0x399=_0x396.Y - _0x395 - (2 + 0);_0xabc=100 elseif _0xabc == 236 then _0x838=(96 + 0) * 1;_0xabc=239 elseif _0xabc == 211 then _0x39c=Instance.new(__0xae1d(821));_0xabc=222 elseif _0xabc == 319 then _0x38d={popup=_0x39b,button=_0x391,key=_0x10};_0xabc=339 elseif _0xabc == 141 then _0x39b.BackgroundColor3=Color3.fromRGB(4 * 4 + 0,12 + 15 - 11,35 + 14 - 33);_0xabc=149 elseif _0xabc == 31 then _0x38e();_0xabc=36 elseif _0xabc == 17 then if _0x38d and _0x38d.button == _0x391 then _0x38e();local _0x823=math.random() * 0;return end;_0xabc=22 elseif _0xabc == 5 then _0x35d();_0xabc=9 elseif _0xabc == 173 then _0x837=math.random() * 0;_0xabc=178 elseif _0xabc == 239 then _0x39c.Parent=_0x39b;_0xabc=246 elseif _0xabc == 228 then _0x39c.Thickness=2 - 1;_0xabc=236 elseif _0xabc == 67 then _0x396,_0x397=_0x391.AbsolutePosition,_0x391.AbsoluteSize;_0xabc=71 elseif _0xabc == 80 then _0x398=_0x396.Y + _0x397.Y + (2 + 0);_0xabc=87 elseif _0xabc == 45 then _0x393=_0x18.TouchEnabled and 9 + 19 or 2 * 8 + 7;_0xabc=52 elseif _0xabc == 100 then _0x39a=_0x398 + _0x395 > _0x2c8.Y - (3 + 3) and _0x399 >= 2 + 4;_0xabc=110 elseif _0xabc == 222 then _0x39c.Color=_0x33b.Black;_0xabc=228 elseif _0xabc == 310 then _0x39b.CanvasPosition=Vector2.new(1 - 1,math.max(1 - 1,(_0x3a3 - (7 + 6 - 11)) * _0x393));_0xabc=319 elseif _0xabc == 296 then do local _0x83c=289 end;_0xabc=305 elseif _0xabc == 305 then _0x3a3=table.find(_0x392,_0x8[_0x10]) or 2 - 1;_0xabc=310 elseif _0xabc == 52 then _0x394=math.min(#_0x392,_0x18.TouchEnabled and 4 + 18 - 17 or 22 + 2 - 17);_0xabc=59 else break end end end;_0xacc=1529 elseif _0xacc == 2488 then _0x3b9(_0x3d1,__0xae1d(822),__0xae1d(823));_0xacc=2497 elseif _0xacc == 257 then _0x33f.Name=__0xae1d(824);_0xacc=264 elseif _0xacc == 4370 then _0x3ea.Active=true;_0xacc=4378 elseif _0xacc == 4099 then _0x3a9(_0x3d0,__0xae1d(825),function() for _0x63,_0x10 in ipairs({__0xae1d(826),__0xae1d(827),__0xae1d(828),__0xae1d(829),__0xae1d(830),__0xae1d(831),__0xae1d(832),__0xae1d(833),__0xae1d(834),__0xae1d(835),__0xae1d(836),__0xae1d(837)}) do if _0x8[_0x10] then _0x8[_0x10]=false;if _0x13[_0x10] then _0x13[_0x10](false) end;pcall(_0x3b8,_0x10,false) end end;XCNotify(__0xae1d(838),__0xae1d(839),__0xae1d(840),1 + 1) end);_0xacc=4104 elseif _0xacc == 4299 then if 1 > 2 then local _0x940=nil end;_0xacc=4306 elseif _0xacc == 2812 then _0x384(_0x3d0,__0xae1d(841),__0xae1d(842),1 - 1,1903 + 3137 - 40,33 * 3 + 1,"",function() updateWorldChanger() end);_0xacc=2816 elseif _0xacc == 3707 then _0x92f=(22 + 0) * 1;_0xacc=3711 elseif _0xacc == 1564 then _0x3b8=function(_0x10,_0x11) local _0xac3=3;while true do if _0xac3 == 9 then if _0x10 == __0xae1d(843) then updateMobileSlideVisibility() elseif _0x10 == __0xae1d(844) then if _0x11 and _0x20.Character then initJumpCircleForCharacter(_0x20.Character) else clearActiveJumpCircle() end elseif _0x10 == __0xae1d(845) then if _0x11 then hookBloxStrikeModules(true);local _0x882=(39 + 0) * 1;applyXCKnifeChanger() else restoreXCKnifeModel() end elseif _0x10 == __0xae1d(846) and _0x11 then do local _0x883=841 end;applyXCGloves();do local _0x884=546 end elseif _0x10 == __0xae1d(847) then if _0x11 then applyNightPreset(_0x8.nightPreset);do local _0x885=152 end else _0x1b.Brightness=_0x146.Brightness;_0x1b.ClockTime=_0x146.ClockTime;_0x1b.GlobalShadows=_0x146.GlobalShadows;_0x1b.Ambient=_0x146.Ambient;_0x1b.OutdoorAmbient=_0x146.OutdoorAmbient end;updateWorldChanger();local _0x886=math.random() * 0 elseif _0x10 == __0xae1d(848) and not _0x11 and not _0x8.nightModeEnabled then _0x1b.Brightness=_0x146.Brightness;if false then local _0x887=nil end;_0x1b.ClockTime=_0x146.ClockTime;_0x1b.GlobalShadows=_0x146.GlobalShadows;_0x1b.Ambient=_0x146.Ambient;_0x1b.OutdoorAmbient=_0x146.OutdoorAmbient;updateWorldChanger() elseif _0x10 == __0xae1d(849) and not _0x11 then _0x1b.FogStart=_0x146.FogStart or 1 - 1;do local _0x888=654 end;_0x1b.FogEnd=_0x146.FogEnd;_0x1b.FogColor=_0x146.FogColor;updateWorldChanger() elseif _0x10 == __0xae1d(850) then setThirdPersonEnabled(_0x11) elseif _0x10 == __0xae1d(851) then if false then local _0x889=nil end;setAntiAfkEnabled(_0x11) elseif _0x10 == __0xae1d(852) and _0x11 then buildSpectatorGui();if false then local _0x88a=nil end elseif _0x10 == __0xae1d(853) then if _0x11 then playXCAnimation() else stopXCAnimation() end elseif _0x10 == __0xae1d(854) then setWeaponVisuals() elseif _0x10 == __0xae1d(855) then updateCustomScope() elseif _0x10 == __0xae1d(856) and not _0x11 then local _0x88=_0x1c.CurrentCamera or _0x22;if _0x88 then if 1 > 2 then local _0x88b=nil end;_0x88.FieldOfView=15 + 65 - 10 end elseif _0x10 == __0xae1d(857) then local _0x88c=math.random() * 0;applyXCWeather();updateWorldChanger() elseif _0x10 == __0xae1d(858) then applyXCSmokeState();do local _0x88d=541 end elseif _0x10 == __0xae1d(859) or _0x10 == __0xae1d(860) or _0x10 == __0xae1d(861) or _0x10 == __0xae1d(862) or _0x10 == __0xae1d(863) then local _0x88e=(68 + 0) * 1;updateWorldChanger() elseif _0x10 == __0xae1d(864) then setXCCameraMode(__0xae1d(865),_0x11) elseif _0x10 == __0xae1d(866) then setXCCameraMode(__0xae1d(867),_0x11);local _0x88f=math.random() * 0 elseif _0x10 == __0xae1d(868) then setXCStreamerMode(_0x11) elseif _0x10 == __0xae1d(869) then _0x340() end;_0xac3=19 elseif _0xac3 == 19 then if 1 > 2 then local _0x890=nil end;_0xac3=24 elseif _0xac3 == 3 then if _0x11 then do local _0x881=270 end;if _0x10 == __0xae1d(870) then _0x14.fireRate=true end;if _0x10 == __0xae1d(871) or _0x10 == __0xae1d(872) then local _0x87e=math.random() * 0;_0x14.recoilSpread=true end;if _0x10 == __0xae1d(873) then do local _0x87f=51 end;_0x14.silentFallback=true;local _0x880=math.random() * 0 end end;_0xac3=9 elseif _0xac3 == 24 then if _0x11 and (_0x10 == __0xae1d(874) or _0x10 == __0xae1d(875)) then setupXCCharacterInputHook() end;_0xac3=48 else break end end end;_0xacc=1570 elseif _0xacc == 179 then _0x17d.BorderColor3=_0x33b.Border;_0xacc=186 elseif _0xacc == 1670 then _0x3ce=function() local _0x392,_0x132;local _0xac8=3;while true do if _0xac8 == 10 then _0x132={};_0xac8=17 elseif _0xac8 == 40 then return _0x392 elseif _0xac8 == 30 then for _0x63,_0x100 in ipairs(_0x132) do table.insert(_0x392,_0x100) end;_0xac8=40 elseif _0xac8 == 25 then table.sort(_0x132,function(_0x133,_0x54) return _0x133:lower() < _0x54:lower() end);_0xac8=30 elseif _0xac8 == 3 then _0x392={__0xae1d(876)};_0xac8=10 elseif _0xac8 == 17 then for _0x63,_0x3cf in ipairs(_0x15:GetPlayers()) do if _0x3cf ~= _0x20 then do local _0x8b4=321 end;table.insert(_0x132,_0x3cf.Name) end end;_0xac8=25 else break end end end;_0xacc=1676 elseif _0xacc == 3229 then _0x3a4(_0x3d0,__0xae1d(877),__0xae1d(878),{__0xae1d(879),__0xae1d(880),__0xae1d(881)});_0xacc=3235 elseif _0xacc == 2202 then _0x36a(_0x3d1,__0xae1d(882));_0xacc=2210 elseif _0xacc == 4051 then _0x3d7=1 - 1;_0xacc=4055 elseif _0xacc == 3571 then _0x3d0,_0x3d1=_0x3cb(__0xae1d(883),__0xae1d(884),__0xae1d(885));_0xacc=3582 elseif _0xacc == 3608 then _0x3a4(_0x3d0,__0xae1d(886),__0xae1d(887),_0x3ce());_0xacc=3616 elseif _0xacc == 3189 then _0x36a(_0x3d0,__0xae1d(888));_0xacc=3196 elseif _0xacc == 1 then setAntiAfkEnabled(_0x8.antiAfkEnabled);_0xacc=10 elseif _0xacc == 358 then _0x342.Parent=_0x17d;_0xacc=366 elseif _0xacc == 2088 then _0x384(_0x3d0,__0xae1d(889),__0xae1d(890),4 + 1,2 * 10 + 5,2 - 1,"");_0xacc=2096 elseif _0xacc == 4411 then _0x45.Parent=_0x3ea;_0xacc=4418 elseif _0xacc == 1983 then _0x384(_0x3d1,__0xae1d(891),__0xae1d(892),45 + 35 - 50,351 + 15 - 6,2 - 1,__0xae1d(893));_0xacc=1993 elseif _0xacc == 2269 then _0x3d0,_0x3d1=_0x3cb(__0xae1d(894),__0xae1d(895),__0xae1d(896));_0xacc=2279 elseif _0xacc == 1102 then _0x357.Activated:Connect(function() _0x356.Text="" end);_0xacc=1107 elseif _0xacc == 320 then _0x342=Instance.new(__0xae1d(897));_0xacc=326 elseif _0xacc == 2475 then _0x3b9(_0x3d1,__0xae1d(898),__0xae1d(899));_0xacc=2483 elseif _0xacc == 4040 then _0x3d6=function() if false then local _0x8b5=nil end;return __0xae1d(900) .. _0x3d3(_0x3d4.Text) .. __0xae1d(901) end;_0xacc=4051 elseif _0xacc == 4161 then if 1 > 2 then local _0x93a=nil end;_0xacc=4168 elseif _0xacc == 3308 then _0x3b9(_0x3d1,__0xae1d(902),__0xae1d(903));_0xacc=3314 elseif _0xacc == 1506 then _0x38f=function(_0x376,_0x23e) local _0x18f,_0x4;local _0xabb=5;while true do if _0xabb == 10 then if not _0x376 or not _0x376.Parent then return false end;_0xabb=19 elseif _0xabb == 40 then return _0x23e.X >= _0x18f.X and _0x23e.X <= _0x18f.X + _0x4.X and _0x23e.Y >= _0x18f.Y and _0x23e.Y <= _0x18f.Y + _0x4.Y elseif _0xabb == 19 then do local _0x821=499 end;_0xabb=22 elseif _0xabb == 5 then if false then local _0x820=nil end;_0xabb=10 elseif _0xabb == 33 then if false then local _0x822=nil end;_0xabb=40 elseif _0xabb == 22 then _0x18f,_0x4=_0x376.AbsolutePosition,_0x376.AbsoluteSize;_0xabb=33 else break end end end;_0xacc=1513 elseif _0xacc == 2126 then _0x3b9(_0x3d1,__0xae1d(904),__0xae1d(905));_0xacc=2129 elseif _0xacc == 4111 then _0x3a9(_0x3d1,__0xae1d(906),function() _0x3d8(__0xae1d(907)) end);_0xacc=4118 elseif _0xacc == 3302 then _0x3b9(_0x3d1,__0xae1d(908),__0xae1d(909));_0xacc=3308 elseif _0xacc == 250 then _0x33f=Instance.new(__0xae1d(910));_0xacc=257 elseif _0xacc == 562 then _0x346.Parent=_0x345;_0xacc=571 elseif _0xacc == 304 then table.insert(_0x26,_0x33d:GetPropertyChangedSignal(__0xae1d(911)):Connect(_0x340));_0xacc=313 elseif _0xacc == 2682 then _0x36a(_0x3d0,__0xae1d(912));_0xacc=2689 elseif _0xacc == 1271 then _0x35b=Instance.new(__0xae1d(913));_0xacc=1278 elseif _0xacc == 3936 then _0x3d4.Font=Enum.Font.Code;_0xacc=3946 elseif _0xacc == 771 then _0x354.BorderColor3=_0x33b.Border;_0xacc=782 elseif _0xacc == 3886 then _0x3d4.BackgroundColor3=_0x33b.Control;_0xacc=3895 elseif _0xacc == 656 then _0x34c=nil;_0xacc=660 elseif _0xacc == 1480 then table.insert(_0x26,_0x18.InputChanged:Connect(function(_0x84) if _0x34d and _0x34c and (_0x84 == _0x34c or _0x84.UserInputType == Enum.UserInputType.MouseMovement) then _0x34d(_0x84.Position.X) end end));_0xacc=1485 elseif _0xacc == 264 then if 1 > 2 then local _0x8c2=nil end;_0xacc=267 elseif _0xacc == 1605 then _0x3bf=function(_0x2,_0x2ac,_0x2ad,_0x4,_0x5,_0x3c0) local _0x3c1,_0x896,_0x45,_0x897;local _0xac5=5;while true do if _0xac5 == 17 then _0x3c1.Position=UDim2.fromOffset(_0x2ac,_0x2ad);_0xac5=25 elseif _0xac5 == 107 then return _0x3c1 elseif _0xac5 == 66 then _0x896=math.random() * 0;_0xac5=72 elseif _0xac5 == 5 then _0x3c1=Instance.new(__0xae1d(914));_0xac5=11 elseif _0xac5 == 37 then _0x3c1.BackgroundTransparency=_0x3c0 and 1 - 1 or 2 - 1;_0xac5=45 elseif _0xac5 == 25 then _0x3c1.Size=UDim2.fromOffset(_0x4,_0x4);_0xac5=29 elseif _0xac5 == 89 then _0x897=(26 + 0) * 1;_0xac5=92 elseif _0xac5 == 53 then _0x3c1.BorderSizePixel=1 - 1;_0xac5=57 elseif _0xac5 == 45 then if false then local _0x895=nil end;_0xac5=53 elseif _0xac5 == 57 then _0x3c1.Parent=_0x2;_0xac5=66 elseif _0xac5 == 29 then _0x3c1.BackgroundColor3=_0x5;_0xac5=37 elseif _0xac5 == 78 then _0x45.CornerRadius=UDim.new(2 - 1,1 - 1);_0xac5=89 elseif _0xac5 == 99 then if not _0x3c0 then local _0x46=Instance.new(__0xae1d(915));_0x46.Color=_0x5;if false then local _0x893=nil end;_0x46.Thickness=1.4;if false then local _0x894=nil end;_0x46.Parent=_0x3c1 end;_0xac5=107 elseif _0xac5 == 92 then _0x45.Parent=_0x3c1;_0xac5=99 elseif _0xac5 == 11 then _0x3c1.AnchorPoint=Vector2.new(0.5,0.5);_0xac5=17 elseif _0xac5 == 72 then _0x45=Instance.new(__0xae1d(916));_0xac5=78 else break end end end;_0xacc=1615 elseif _0xacc == 3314 then if false then local _0x922=nil end;_0xacc=3319 elseif _0xacc == 3022 then _0x3b9(_0x3d1,__0xae1d(917),__0xae1d(918));_0xacc=3029 elseif _0xacc == 3558 then _0x384(_0x3d1,__0xae1d(919),__0xae1d(920),-(26 + 64),18 * 5 + 0,2 - 1,__0xae1d(921));_0xacc=3568 elseif _0xacc == 533 then if false then local _0x8c9=nil end;_0xacc=542 elseif _0xacc == 3621 then _0x36a(_0x3d0,__0xae1d(922));_0xacc=3628 elseif _0xacc == 1922 then if 1 > 2 then local _0x8f6=nil end;_0xacc=1926 elseif _0xacc == 2720 then _0x3b9(_0x3d0,__0xae1d(923),__0xae1d(924));_0xacc=2727 elseif _0xacc == 527 then _0x346.Padding=UDim.new(1 - 1,2 - 1);_0xacc=533 elseif _0xacc == 1048 then _0x8dc=math.random() * 0;_0xacc=1054 elseif _0xacc == 2657 then if 1 > 2 then local _0x909=nil end;_0xacc=2663 elseif _0xacc == 1079 then _0x357.TextSize=6 * 2 + 0;_0xacc=1086 elseif _0xacc == 4149 then _0x3a9(_0x3d1,__0xae1d(925),function() local _0xdd=pcall(function() assert(type(delfile) == __0xae1d(926));delfile(_0x3d6()) end);_0x3d5.Text=_0xdd and __0xae1d(927) or __0xae1d(928) end);_0xacc=4153 elseif _0xacc == 1977 then _0x3b9(_0x3d1,__0xae1d(929),__0xae1d(930));_0xacc=1983 elseif _0xacc == 542 then _0x346.HorizontalAlignment=Enum.HorizontalAlignment.Center;_0xacc=551 elseif _0xacc == 3846 then _0x3aa(_0x3d0,__0xae1d(931));_0xacc=3855 elseif _0xacc == 30 then if 1 > 2 then local _0x8bb=nil end;_0xacc=40 elseif _0xacc == 3966 then _0x3d5=Instance.new(__0xae1d(932));_0xacc=3971 elseif _0xacc == 2531 then _0x903=(59 + 0) * 1;_0xacc=2539 elseif _0xacc == 4336 then if false then local _0x941=nil end;_0xacc=4344 elseif _0xacc == 1993 then _0x3b9(_0x3d1,__0xae1d(933),__0xae1d(934));_0xacc=1997 elseif _0xacc == 1429 then _0x377=function(_0x10,_0x11) local _0x7f4=(83 + 0) * 1;for _0x63,_0x378 in ipairs(_0x34b[_0x10] or {}) do pcall(_0x378,_0x11) end end;_0xacc=1436 elseif _0xacc == 3727 then _0x384(_0x3d1,__0xae1d(935),__0xae1d(936),1 - 1,0.9,0.05,"");_0xacc=3732 elseif _0xacc == 2984 then _0x3a4(_0x3d0,__0xae1d(937),__0xae1d(938),{__0xae1d(939),__0xae1d(940),__0xae1d(941),__0xae1d(942),__0xae1d(943)},function() applyXCWeather();updateWorldChanger() end);_0xacc=2991 elseif _0xacc == 2560 then _0x3b9(_0x3d1,__0xae1d(944),__0xae1d(945));_0xacc=2564 elseif _0xacc == 227 then _0x33e.Color=_0x33b.Black;_0xacc=233 elseif _0xacc == 1065 then _0x357.Font=Enum.Font.Code;_0xacc=1075 elseif _0xacc == 191 then _0x17d.BorderSizePixel=2 - 1;_0xacc=201 elseif _0xacc == 4231 then _0x3e2(_0x344,_0x17d,false);_0xacc=4240 elseif _0xacc == 2174 then _0x384(_0x3d1,__0xae1d(946),__0xae1d(947),1 + 1,7 * 4 + 2,2 - 1,"");_0xacc=2178 elseif _0xacc == 2153 then _0x384(_0x3d1,__0xae1d(948),__0xae1d(949),2 - 1,33 + 13 - 43,0.1,__0xae1d(950));_0xacc=2160 elseif _0xacc == 768 then if 1 > 2 then local _0x8d0=nil end;_0xacc=771 elseif _0xacc == 2279 then _0x36a(_0x3d0,__0xae1d(951));_0xacc=2286 elseif _0xacc == 3014 then _0x3b9(_0x3d1,__0xae1d(952),__0xae1d(953));_0xacc=3022 elseif _0xacc == 1171 then _0x359.BorderSizePixel=2 - 1;_0xacc=1177 elseif _0xacc == 2627 then _0x3b9(_0x3d1,__0xae1d(954),__0xae1d(955));_0xacc=2636 elseif _0xacc == 2545 then if 1 > 2 then local _0x904=nil end;_0xacc=2551 elseif _0xacc == 589 then _0x347.Size=UDim2.new(2 - 1,-(32 * 2 + 0),2 - 1,-(42 + 52 - 48));_0xacc=598 elseif _0xacc == 1278 then _0x35b.Size=UDim2.new(2 - 1,1 - 1,1 - 1,1 - 1);_0xacc=1284 elseif _0xacc == 3719 then _0x930=(48 + 0) * 1;_0xacc=3727 elseif _0xacc == 3404 then _0x36a(_0x3d0,__0xae1d(956));_0xacc=3412 elseif _0xacc == 3251 then _0x3b9(_0x3d0,__0xae1d(957),__0xae1d(958));_0xacc=3256 elseif _0xacc == 2889 then _0x3b9(_0x3d0,__0xae1d(959),__0xae1d(960));_0xacc=2896 elseif _0xacc == 2145 then _0x384(_0x3d1,__0xae1d(961),__0xae1d(962),17 + 13,40 + 98 - 38,2 - 1,"");_0xacc=2153 elseif _0xacc == 684 then _0x34f={};_0xacc=689 elseif _0xacc == 101 then _0x33d.IgnoreGuiInset=true;_0xacc=107 elseif _0xacc == 1726 then _0x384(_0x3d0,__0xae1d(963),__0xae1d(964),0.01,2 - 1,0.01,"");_0xacc=1734 elseif _0xacc == 1513 then table.insert(_0x26,_0x18.InputBegan:Connect(function(_0x84) if not _0x38d then return end;if _0x84.UserInputType ~= Enum.UserInputType.MouseButton1 and _0x84.UserInputType ~= Enum.UserInputType.Touch then return end;if not _0x38f(_0x38d.button,_0x84.Position) and not _0x38f(_0x38d.popup,_0x84.Position) then _0x38e() end end));_0xacc=1524 elseif _0xacc == 3357 then _0x923=(78 + 0) * 1;_0xacc=3363 elseif _0xacc == 512 then _0x345.Parent=_0x17d;_0xacc=519 elseif _0xacc == 955 then _0x356.Font=Enum.Font.Code;_0xacc=963 elseif _0xacc == 3832 then _0x3b9(_0x3d0,__0xae1d(965),__0xae1d(966));_0xacc=3837 elseif _0xacc == 2343 then if false then local _0x900=nil end;_0xacc=2348 elseif _0xacc == 613 then _0x347.Parent=_0x17d;_0xacc=618 elseif _0xacc == 1380 then _0x35e=function(_0x2d1,_0x3f) local _0x7d2;local _0xaae=4;while true do if _0xaae == 57 then if false then local _0x7d3=nil end;_0xaae=76 elseif _0xaae == 4 then if 1 > 2 then local _0x7d0=nil end;_0xaae=10 elseif _0xaae == 10 then if not _0x3f or _0x3f == "" or not _0x2d1 or not _0x2d1.Parent then return end;_0xaae=18 elseif _0xaae == 53 then task.defer(function() if not _0x359.Visible or not _0x2d1.Parent then return end;local _0x2c8=_0x33d.AbsoluteSize;local _0x8f=_0x359.AbsoluteSize.X;local _0x197=math.max(_0x359.AbsoluteSize.Y,4 * 7 + 6);local _0x2ac=math.clamp(_0x2d1.AbsolutePosition.X,3 + 10 - 7,math.max(17 + 37 - 48,_0x2c8.X - _0x8f - (2 + 52 - 48)));local _0x35f=_0x2d1.AbsolutePosition.Y + _0x2d1.AbsoluteSize.Y + (5 + 0);local _0x2ad=_0x35f + _0x197 <= _0x2c8.Y - (4 + 2) and _0x35f or math.max(2 + 4,_0x2d1.AbsolutePosition.Y - _0x197 - (30 + 11 - 36));_0x359.Position=UDim2.fromOffset(_0x2ac,_0x2ad) end);_0xaae=57 elseif _0xaae == 40 then _0x7d2=(44 + 0) * 1;_0xaae=43 elseif _0xaae == 43 then _0x359.Visible=true;_0xaae=53 elseif _0xaae == 22 then hhelpToken=_0x35c + (2 - 1);_0xaae=31 elseif _0xaae == 31 then _0x35b.Text=_0x3f;_0xaae=40 elseif _0xaae == 18 then if 1 > 2 then local _0x7d1=nil end;_0xaae=22 else break end end end;_0xacc=1390 elseif _0xacc == 2423 then _0x384(_0x3d0,__0xae1d(967),__0xae1d(968),7 + 1,11 + 9,2 - 1,"");_0xacc=2432 elseif _0xacc == 4071 then if false then local _0x937=nil end;_0xacc=4078 elseif _0xacc == 1954 then _0x8f7=math.random() * 0;_0xacc=1965 elseif _0xacc == 3370 then do local _0x924=847 end;_0xacc=3377 elseif _0xacc == 150 then _0x17d.Size=UDim2.fromOffset(407 + 274 - 1,240 + 210);_0xacc=159 elseif _0xacc == 991 then do local _0x8d9=537 end;_0xacc=999 elseif _0xacc == 3995 then _0x3d5.Text=__0xae1d(969);_0xacc=3999 elseif _0xacc == 1580 then _0x3ba=Color3.fromRGB(5 + 113 - 30,22 * 4 + 0,51 + 37);_0xacc=1587 elseif _0xacc == 877 then _0x356.Size=UDim2.new(2 - 1,-(5 * 10 + 0),2 - 1,1 - 1);_0xacc=885 elseif _0xacc == 3546 then _0x384(_0x3d1,__0xae1d(970),__0xae1d(971),-(5 * 8 + 5),15 * 3 + 0,2 - 1,__0xae1d(972));_0xacc=3550 elseif _0xacc == 4174 then task.spawn(function() while xcSessionActive() and _0x33d.Parent do task.wait(0.75);for _0x63,_0x382 in ipairs(_0x351) do pcall(_0x382) end end end);_0xacc=4183 elseif _0xacc == 1935 then _0x384(_0x3d1,__0xae1d(973),__0xae1d(974),45 + 14 - 49,47 + 53,2 - 1,__0xae1d(975));_0xacc=1942 elseif _0xacc == 1166 then _0x359.BorderColor3=_0x33b.Lime;_0xacc=1171 elseif _0xacc == 1905 then _0x3b9(_0x3d1,__0xae1d(976),__0xae1d(977));_0xacc=1916 elseif _0xacc == 1747 then _0x36a(_0x3d0,__0xae1d(978));_0xacc=1752 elseif _0xacc == 2395 then _0x3b9(_0x3d0,__0xae1d(979),__0xae1d(980));_0xacc=2402 elseif _0xacc == 1373 then _0x35d=function() local _0xaad=1;while true do if _0xaad == 15 then _0x359.Visible=false;_0xaad=36 elseif _0xaad == 11 then hhelpToken=_0x35c + (2 - 1);_0xaad=15 elseif _0xaad == 1 then if 1 > 2 then local _0x7cf=nil end;_0xaad=11 else break end end end;_0xacc=1380 elseif _0xacc == 2117 then _0x3a4(_0x3d1,__0xae1d(981),__0xae1d(982),{__0xae1d(983),__0xae1d(984)});_0xacc=2126 elseif _0xacc == 3349 then _0x36a(_0x3d1,__0xae1d(985));_0xacc=3357 elseif _0xacc == 422 then _0x344.BackgroundTransparency=2 - 1;_0xacc=432 elseif _0xacc == 393 then _0x344.Name=__0xae1d(986);_0xacc=403 elseif _0xacc == 4030 then _0x3d5.TextXAlignment=Enum.TextXAlignment.Left;_0xacc=4033 elseif _0xacc == 4240 then _0x3ea=Instance.new(__0xae1d(987));_0xacc=4246 elseif _0xacc == 3377 then _0x384(_0x3d1,__0xae1d(988),__0xae1d(989),2 - 1,102 + 3 - 5,2 - 1,"");_0xacc=3385 elseif _0xacc == 3412 then _0x3b9(_0x3d0,__0xae1d(990),__0xae1d(991));_0xacc=3418 elseif _0xacc == 558 then if false then local _0x8ca=nil end;_0xacc=562 elseif _0xacc == 2039 then _0x3a4(_0x3d0,__0xae1d(992),__0xae1d(993),{__0xae1d(994),__0xae1d(995),__0xae1d(996),__0xae1d(997),__0xae1d(998)});_0xacc=2048 elseif _0xacc == 1634 then _0x3c6={{__0xae1d(999),__0xae1d(1000)},{__0xae1d(1001),__0xae1d(1002)},{__0xae1d(1003),__0xae1d(1004)},{__0xae1d(1005),__0xae1d(1006)},{__0xae1d(1007),__0xae1d(1008)},{__0xae1d(1009),__0xae1d(1010)},{__0xae1d(1011),__0xae1d(1012)},{__0xae1d(1013),__0xae1d(1014)}};_0xacc=1641 elseif _0xacc == 935 then _0x356.Text="";_0xacc=940 elseif _0xacc == 2188 then _0x3b9(_0x3d1,__0xae1d(1015),__0xae1d(1016));_0xacc=2194 elseif _0xacc == 2241 then _0x384(_0x3d1,__0xae1d(1017),__0xae1d(1018),1.2,3 + 0,0.1,__0xae1d(1019));_0xacc=2250 elseif _0xacc == 2831 then _0x3b9(_0x3d0,__0xae1d(1020),__0xae1d(1021));_0xacc=2838 elseif _0xacc == 3286 then _0x3b9(_0x3d1,__0xae1d(1022),__0xae1d(1023));_0xacc=3294 elseif _0xacc == 3126 then _0x91a=(73 + 0) * 1;_0xacc=3134 elseif _0xacc == 3568 then task.wait();_0xacc=3571 elseif _0xacc == 1362 then _0x35b.Parent=_0x359;_0xacc=1366 elseif _0xacc == 3281 then _0x36a(_0x3d1,__0xae1d(1024));_0xacc=3286 elseif _0xacc == 2410 then _0x36a(_0x3d0,__0xae1d(1025));_0xacc=2420 elseif _0xacc == 3895 then _0x3d4.BorderColor3=_0x33b.Black;_0xacc=3902 elseif _0xacc == 3518 then _0x384(_0x3d1,__0xae1d(1026),__0xae1d(1027),-(1 + 1),2 + 0,0.1,"");_0xacc=3526 elseif _0xacc == 372 then _0x343.Color=ColorSequence.new({ColorSequenceKeypoint.new(1 - 1,Color3.fromRGB(1 - 1,184 + 26,28 * 9 + 3)),ColorSequenceKeypoint.new(0.25,Color3.fromRGB(130 + 42 - 12,17 + 58,127 * 2 + 1)),ColorSequenceKeypoint.new(0.5,Color3.fromRGB(218 + 37,4 + 61,89 + 52 - 1)),ColorSequenceKeypoint.new(0.75,Color3.fromRGB(28 * 9 + 3,44 + 103 - 12,2 * 9 + 2)),ColorSequenceKeypoint.new(2 - 1,C.Lime)});_0xacc=382 elseif _0xacc == 3085 then if 1 > 2 then local _0x918=nil end;_0xacc=3091 elseif _0xacc == 2619 then _0x36a(_0x3d1,__0xae1d(1028));_0xacc=2627 elseif _0xacc == 519 then _0x346=Instance.new(__0xae1d(1029));_0xacc=527 elseif _0xacc == 2391 then _0x3b9(_0x3d0,__0xae1d(1030),__0xae1d(1031));_0xacc=2395 elseif _0xacc == 4306 then _0x3ea.BorderSizePixel=2 - 1;_0xacc=4315 elseif _0xacc == 3670 then _0x384(_0x3d0,__0xae1d(1032),__0xae1d(1033),1 - 1,2 - 1,0.05,"");_0xacc=3679 elseif _0xacc == 2705 then _0x3b9(_0x3d0,__0xae1d(1034),__0xae1d(1035));_0xacc=2713 elseif _0xacc == 2214 then _0x3b9(_0x3d1,__0xae1d(1036),__0xae1d(1037));_0xacc=2220 elseif _0xacc == 3476 then do local _0x927=908 end;_0xacc=3484 elseif _0xacc == 1885 then if 1 > 2 then local _0x8f5=nil end;_0xacc=1895 elseif _0xacc == 1263 then if 1 > 2 then local _0x8e4=nil end;_0xacc=1271 elseif _0xacc == 626 then _0x8cc=math.random() * 0;_0xacc=631 elseif _0xacc == 2136 then _0x3b9(_0x3d1,__0xae1d(1038),__0xae1d(1039));_0xacc=2145 elseif _0xacc == 3980 then _0x935=math.random() * 0;_0xacc=3984 elseif _0xacc == 1720 then _0x384(_0x3d0,__0xae1d(1040),__0xae1d(1041),2 - 1,12 * 8 + 4,2 - 1,__0xae1d(1042));_0xacc=1726 elseif _0xacc == 1002 then _0x8da=(23 + 0) * 1;_0xacc=1013 elseif _0xacc == 1333 then _0x35b.TextXAlignment=Enum.TextXAlignment.Left;_0xacc=1340 elseif _0xacc == 1424 then _0x375=function(_0x376,_0x6) table.insert(_0x34e,{gui=_0x376,label=tostring(_0x6):lower()}) end;_0xacc=1429 elseif _0xacc == 366 then _0x343=Instance.new(__0xae1d(1043));_0xacc=372 elseif _0xacc == 407 then _0x344.Size=UDim2.new(2 - 1,-(39 + 13),1 - 1,2 + 8);_0xacc=414 elseif _0xacc == 2160 then _0x384(_0x3d1,__0xae1d(1044),__0xae1d(1045),1 - 1,0.25,0.01,__0xae1d(1046));_0xacc=2166 elseif _0xacc == 4266 then _0x3ea.Position=_0x36.OpenBtn;_0xacc=4272 elseif _0xacc == 1136 then do local _0x8e0=23 end;_0xacc=1145 elseif _0xacc == 1157 then _0x359.BackgroundColor3=Color3.fromRGB(25 + 6 - 19,6 * 2 + 0,40 + 3 - 31);_0xacc=1166 elseif _0xacc == 1013 then _0x357=Instance.new(__0xae1d(1047));_0xacc=1020 elseif _0xacc == 2768 then if false then local _0x90e=nil end;_0xacc=2776 elseif _0xacc == 2965 then _0x36a(_0x3d0,__0xae1d(1048));_0xacc=2972 elseif _0xacc == 2108 then _0x3b9(_0x3d1,__0xae1d(1049),__0xae1d(1050));_0xacc=2117 elseif _0xacc == 2497 then _0x902=(95 + 0) * 1;_0xacc=2501 elseif _0xacc == 1025 then _0x357.Position=UDim2.new(2 - 1,-(11 + 14),1 - 1,1 - 1);_0xacc=1032 elseif _0xacc == 87 then _0x33d.ResetOnSpawn=false;_0xacc=95 elseif _0xacc == 2896 then _0x384(_0x3d0,__0xae1d(1051),__0xae1d(1052),1 - 1,2 - 1,0.05,"",function() updateWorldChanger() end);_0xacc=2901 elseif _0xacc == 2564 then _0x905=math.random() * 0;_0xacc=2572 elseif _0xacc == 584 then _0x347.Name=__0xae1d(1053);_0xacc=589 elseif _0xacc == 1871 then _0x8f4=math.random() * 0;_0xacc=1881 elseif _0xacc == 159 then _0x17d.Position=UDim2.new(0.5,-(208 + 132),0.5,-(162 + 103 - 40));_0xacc=163 elseif _0xacc == 4386 then _0x3ea.Parent=_0x33c;_0xacc=4393 elseif _0xacc == 495 then _0x345.BorderColor3=_0x33b.Border;_0xacc=501 elseif _0xacc == 1059 then _0x357.TextColor3=_0x33b.Muted;_0xacc=1065 elseif _0xacc == 631 then _0x349={};_0xacc=639 elseif _0xacc == 3764 then _0x3d0,_0x3d1=_0x3cb(__0xae1d(1054),__0xae1d(1055),__0xae1d(1056));_0xacc=3767 elseif _0xacc == 731 then _0x354.Name=__0xae1d(1057);_0xacc=738 elseif _0xacc == 1681 then if false then local _0x8ee=nil end;_0xacc=1690 elseif _0xacc == 1233 then _0x35a.PaddingLeft=UDim.new(1 - 1,3 * 3 + 0);_0xacc=1241 elseif _0xacc == 297 then task.defer(_0x340);_0xacc=304 elseif _0xacc == 1241 then _0x8e3=(51 + 0) * 1;_0xacc=1249 elseif _0xacc == 2250 then _0x384(_0x3d1,__0xae1d(1058),__0xae1d(1059),6 + 21 - 17,25 * 6 + 0,2 - 1,"");_0xacc=2258 elseif _0xacc == 1467 then _0x384=function(_0x2,_0x6,_0x10,_0x385,_0x386,_0x20a,_0x387,_0x37b) local _0x810,_0x1db,_0x811,_0x812,_0x100,_0x388,_0x817,_0x389,_0x819,_0x4c,_0x81c,_0x1ce,_0x38b;local _0xab9=5;while true do if _0xab9 == 163 then _0x388=Instance.new(__0xae1d(1060));_0xab9=171 elseif _0xab9 == 268 then do local _0x81a=742 end;_0xab9=274 elseif _0xab9 == 397 then _0x360(_0x1db,_0x10);_0xab9=404 elseif _0xab9 == 228 then _0x388.TextXAlignment=Enum.TextXAlignment.Right;_0xab9=236 elseif _0xab9 == 110 then do local _0x815=78 end;_0xab9=114 elseif _0xab9 == 192 then _0x817=(25 + 0) * 1;_0xab9=199 elseif _0xab9 == 341 then _0x4c.Parent=_0x389;_0xab9=348 elseif _0xab9 == 67 then _0x1db.Active=true;_0xab9=71 elseif _0xab9 == 250 then _0x819=math.random() * 0;_0xab9=257 elseif _0xab9 == 361 then _0x38b=function(_0x2ac) local _0x38c,_0x80d,_0x29f,_0x11,_0x80f;local _0xab8=5;while true do if _0xab8 == 75 then if _0x37b then _0x37b(_0x11) end;_0xab8=80 elseif _0xab8 == 8 then if _0x389.AbsoluteSize.X <= 1 - 1 then return end;_0xab8=16 elseif _0xab8 == 32 then _0x29f=_0x385 + (_0x386 - _0x385) * _0x38c;_0xab8=40 elseif _0xab8 == 40 then _0x11=math.floor(_0x29f / _0x20a + 0.5) * _0x20a;_0xab8=43 elseif _0xab8 == 80 then _0x352();_0xab8=94 elseif _0xab8 == 66 then _0x377(_0x10,_0x11);_0xab8=75 elseif _0xab8 == 51 then _0x8[_0x10]=_0x11;_0xab8=61 elseif _0xab8 == 5 then if false then local _0x80c=nil end;_0xab8=8 elseif _0xab8 == 26 then _0x80d=(64 + 0) * 1;_0xab8=32 elseif _0xab8 == 61 then _0x80f=math.random() * 0;_0xab8=66 elseif _0xab8 == 43 then if 1 > 2 then local _0x80e=nil end;_0xab8=51 elseif _0xab8 == 16 then _0x38c=math.clamp((_0x2ac - _0x389.AbsolutePosition.X) / _0x389.AbsoluteSize.X,1 - 1,2 - 1);_0xab8=26 else break end end end;_0xab9=369 elseif _0xab9 == 17 then _0x1db=Instance.new(__0xae1d(1061));_0xab9=26 elseif _0xab9 == 36 then _0x812=(32 + 0) * 1;_0xab9=45 elseif _0xab9 == 236 then _0x388.Parent=_0x1db;_0xab9=239 elseif _0xab9 == 309 then _0x389.Parent=_0x1db;_0xab9=316 elseif _0xab9 == 410 then _0x375(_0x1db,_0x6 .. __0xae1d(1062) .. _0x10);_0xab9=423 elseif _0xab9 == 142 then _0x100.TextSize=3 + 7;_0xab9=149 elseif _0xab9 == 379 then table.insert(_0x34b[_0x10],_0x1ce);_0xab9=387 elseif _0xab9 == 26 then _0x811=math.random() * 0;_0xab9=30 elseif _0xab9 == 239 then _0x389=Instance.new(__0xae1d(1063));_0xab9=250 elseif _0xab9 == 369 then _0x1ce(_0x8[_0x10]);_0xab9=373 elseif _0xab9 == 155 then _0x100.Parent=_0x1db;_0xab9=163 elseif _0xab9 == 348 then _0x81c=(7 + 0) * 1;_0xab9=351 elseif _0xab9 == 103 then _0x100.BackgroundTransparency=2 - 1;_0xab9=110 elseif _0xab9 == 171 then _0x388.Size=UDim2.new(0.32,1 - 1,1 - 1,16 + 34 - 34);_0xab9=178 elseif _0xab9 == 149 then _0x100.TextXAlignment=Enum.TextXAlignment.Left;_0xab9=155 elseif _0xab9 == 12 then _0x2=_0x350[_0x2] or _0x2;_0xab9=17 elseif _0xab9 == 94 then _0x100.Size=UDim2.new(0.68,1 - 1,1 - 1,50 + 16 - 50);_0xab9=103 elseif _0xab9 == 373 then _0x34b[_0x10]=_0x34b[_0x10] or {};_0xab9=379 elseif _0xab9 == 30 then _0x1db.Name=_0x10;_0xab9=36 elseif _0xab9 == 274 then _0x389.BackgroundColor3=_0x33b.Control2;_0xab9=285 elseif _0xab9 == 178 then _0x388.Position=UDim2.new(0.68,1 - 1,1 - 1,1 - 1);_0xab9=183 elseif _0xab9 == 257 then _0x389.Size=UDim2.new(2 - 1,1 - 1,1 - 1,1 * 4 + 3);_0xab9=264 elseif _0xab9 == 323 then _0x4c.BorderSizePixel=1 - 1;_0xab9=332 elseif _0xab9 == 127 then do local _0x816=958 end;_0xab9=136 elseif _0xab9 == 80 then if false then local _0x814=nil end;_0xab9=88 elseif _0xab9 == 114 then _0x100.Text=_0x6;_0xab9=123 elseif _0xab9 == 205 then if 1 > 2 then local _0x818=nil end;_0xab9=213 elseif _0xab9 == 404 then if false then local _0x81d=nil end;_0xab9=410 elseif _0xab9 == 264 then _0x389.Position=UDim2.fromOffset(1 - 1,7 + 54 - 40);_0xab9=268 elseif _0xab9 == 88 then _0x100=Instance.new(__0xae1d(1064));_0xab9=94 elseif _0xab9 == 299 then _0x389.BorderSizePixel=2 - 1;_0xab9=303 elseif _0xab9 == 316 then _0x4c=Instance.new(__0xae1d(1065));_0xab9=323 elseif _0xab9 == 45 then _0x1db.Size=UDim2.new(2 - 1,1 - 1,1 - 1,18 * 2 + 0);_0xab9=54 elseif _0xab9 == 61 then _0x1db.BackgroundTransparency=2 - 1;_0xab9=67 elseif _0xab9 == 54 then if false then local _0x813=nil end;_0xab9=61 elseif _0xab9 == 123 then _0x100.TextColor3=_0x33b.Text;_0xab9=127 elseif _0xab9 == 71 then _0x1db.Parent=_0x2;_0xab9=80 elseif _0xab9 == 183 then _0x388.BackgroundTransparency=2 - 1;_0xab9=192 elseif _0xab9 == 332 then _0x4c.BackgroundColor3=_0x33b.Lime;_0xab9=341 elseif _0xab9 == 213 then _0x388.Font=Enum.Font.Code;_0xab9=218 elseif _0xab9 == 351 then _0x1ce=function(_0x11) local _0x80b,_0x38a;local _0xab7=1;while true do if _0xab7 == 32 then _0x388.Text=_0x38a .. (_0x387 or "");_0xab7=51 elseif _0xab7 == 22 then _0x38a=_0x20a < 0.01 and string.format(__0xae1d(1066),_0x11) or _0x20a < 2 - 1 and string.format(__0xae1d(1067),_0x11) or tostring(math.floor(_0x11 + 0.5));_0xab7=32 elseif _0xab7 == 8 then _0x11=math.clamp(tonumber(_0x11) or _0x385,_0x385,_0x386);_0xab7=16 elseif _0xab7 == 1 then _0x80b=math.random() * 0;_0xab7=8 elseif _0xab7 == 16 then _0x4c.Size=UDim2.new((_0x11 - _0x385) / (_0x386 - _0x385),1 - 1,2 - 1,1 - 1);_0xab7=22 else break end end end;_0xab9=361 elseif _0xab9 == 387 then _0x389.InputBegan:Connect(function(_0x84) if _0x84.UserInputType == Enum.UserInputType.MouseButton1 or _0x84.UserInputType == Enum.UserInputType.Touch then _0x34c=_0x84;_0x34d=_0x38b;_0x38b(_0x84.Position.X) end end);_0xab9=397 elseif _0xab9 == 303 then _0x389.Active=true;_0xab9=309 elseif _0xab9 == 199 then _0x388.TextColor3=_0x33b.Text;_0xab9=205 elseif _0xab9 == 218 then _0x388.TextSize=1 * 9 + 1;_0xab9=228 elseif _0xab9 == 5 then _0x810=(95 + 0) * 1;_0xab9=12 elseif _0xab9 == 292 then if false then local _0x81b=nil end;_0xab9=299 elseif _0xab9 == 285 then _0x389.BorderColor3=_0x33b.Black;_0xab9=292 elseif _0xab9 == 136 then _0x100.Font=Enum.Font.Code;_0xab9=142 else break end end end;_0xacc=1475 elseif _0xacc == 999 then _0x356.Parent=_0x354;_0xacc=1002 elseif _0xacc == 3319 then _0x3b9(_0x3d1,__0xae1d(1068),__0xae1d(1069));_0xacc=3326 elseif _0xacc == 4196 then do local _0x93b=500 end;_0xacc=4204 elseif _0xacc == 1096 then _0x8de=(53 + 0) * 1;_0xacc=1102 elseif _0xacc == 3264 then _0x3a4(_0x3d0,__0xae1d(1070),__0xae1d(1071),{__0xae1d(1072),__0xae1d(1073),__0xae1d(1074),__0xae1d(1075),__0xae1d(1076)});_0xacc=3271 elseif _0xacc == 2376 then _0x3b9(_0x3d0,__0xae1d(1077),__0xae1d(1078));_0xacc=2382 elseif _0xacc == 921 then _0x8d5=math.random() * 0;_0xacc=927 elseif _0xacc == 501 then _0x345.BorderSizePixel=2 - 1;_0xacc=506 elseif _0xacc == 131 then _0x33d.Parent=_0x25;_0xacc=134 elseif _0xacc == 834 then _0x8d2=math.random() * 0;_0xacc=844 elseif _0xacc == 163 then _0x8bf=math.random() * 0;_0xacc=173 elseif _0xacc == 3363 then _0x3b9(_0x3d1,__0xae1d(1079),__0xae1d(1080));_0xacc=3370 elseif _0xacc == 3511 then _0x3b9(_0x3d1,__0xae1d(1081),__0xae1d(1082));_0xacc=3518 elseif _0xacc == 3694 then if false then local _0x92e=nil end;_0xacc=3698 elseif _0xacc == 2846 then _0x3a4(_0x3d0,__0xae1d(1083),__0xae1d(1084),{__0xae1d(1085),__0xae1d(1086),__0xae1d(1087),__0xae1d(1088),__0xae1d(1089)},function() updateWorldChanger() end);_0xacc=2850 elseif _0xacc == 2357 then _0x384(_0x3d0,__0xae1d(1090),__0xae1d(1091),0.65,1.5,0.05,__0xae1d(1092));_0xacc=2361 elseif _0xacc == 1837 then _0x384(_0x3d0,__0xae1d(1093),__0xae1d(1094),16 + 7 - 13,180 * 2 + 0,2 - 1,__0xae1d(1095));_0xacc=1846 elseif _0xacc == 4078 then _0x3d4.FocusLost:Connect(function() _0x3d5.Text=_0x3d6();_0x3d5.TextColor3=_0x33b.Muted;_0x352() end);_0xacc=4083 elseif _0xacc == 1390 then _0x360=function(_0x2d1,_0x10) local _0x7d4,_0x3f,_0x361,_0x7d5;local _0xaaf=3;while true do if _0xaaf == 39 then _0x7d5=math.random() * 0;_0xaaf=46 elseif _0xaaf == 25 then _0x361=false;_0xaaf=33 elseif _0xaaf == 19 then if not _0x3f then return end;_0xaaf=25 elseif _0xaaf == 46 then _0x2d1.MouseLeave:Connect(_0x35d);_0xaaf=52 elseif _0xaaf == 11 then _0x3f=_0x358[_0x10];_0xaaf=19 elseif _0xaaf == 52 then if false then local _0x7d6=nil end;_0xaaf=57 elseif _0xaaf == 33 then _0x2d1.MouseEnter:Connect(function() _0x35e(_0x2d1,_0x3f) end);_0xaaf=39 elseif _0xaaf == 66 then _0x2d1.InputEnded:Connect(function(_0x84) if _0x84.UserInputType ~= Enum.UserInputType.Touch then return end;if _0x361 then local _0x363=_0x35c;task.delay(2.5,function() if _0x363 == _0x35c then _0x35d() end end) else _0x35d() end end);_0xaaf=80 elseif _0xaaf == 57 then _0x2d1.InputBegan:Connect(function(_0x84) if _0x84.UserInputType ~= Enum.UserInputType.Touch then return end;_0x361=false;hhelpToken=_0x35c + (2 - 1);local _0x362=_0x35c;task.delay(0.45,function() if _0x362 == _0x35c then _0x361=true;_0x2d1:SetAttribute(__0xae1d(1096),os.clock() + 0.4);_0x35e(_0x2d1,_0x3f) end end) end);_0xaaf=66 elseif _0xaaf == 3 then _0x7d4=(55 + 0) * 1;_0xaaf=11 else break end end end;_0xacc=1396 elseif _0xacc == 95 then _0x8bd=math.random() * 0;_0xacc=101 elseif _0xacc == 1195 then _0x359.ZIndex=50 * 6 + 0;_0xacc=1199 elseif _0xacc == 1788 then _0x3b9(_0x3d0,__0xae1d(1097),__0xae1d(1098));_0xacc=1795 elseif _0xacc == 4294 then _0x3ea.BorderColor3=_0x33b.Lime;_0xacc=4299 elseif _0xacc == 3445 then _0x384(_0x3d0,__0xae1d(1099),__0xae1d(1100),0.1,1 * 3 + 0,0.1,__0xae1d(1101));_0xacc=3454 elseif _0xacc == 134 then _0x17d=Instance.new(__0xae1d(1102));_0xacc=144 elseif _0xacc == 3946 then _0x934=(78 + 0) * 1;_0xacc=3950 elseif _0xacc == 3196 then _0x3b9(_0x3d0,__0xae1d(1103),__0xae1d(1104));_0xacc=3203 elseif _0xacc == 1829 then _0x384(_0x3d0,__0xae1d(1105),__0xae1d(1106),0.01,0.5,0.005,__0xae1d(1107));_0xacc=1837 elseif _0xacc == 1802 then _0x3b9(_0x3d0,__0xae1d(1108),__0xae1d(1109));_0xacc=1810 elseif _0xacc == 3235 then _0x36a(_0x3d0,__0xae1d(1110));_0xacc=3243 elseif _0xacc == 2048 then _0x384(_0x3d0,__0xae1d(1111),__0xae1d(1112),31 + 2 - 23,50 * 3 + 0,2 - 1,"");_0xacc=2055 elseif _0xacc == 2292 then _0x36a(_0x3d0,__0xae1d(1113));_0xacc=2298 elseif _0xacc == 1054 then _0x357.Text=__0xae1d(1114);_0xacc=1059 elseif _0xacc == 326 then _0x342.Size=UDim2.new(2 - 1,-(2 * 2 + 0),1 - 1,2 + 0);_0xacc=333 elseif _0xacc == 675 then _0x34e={};_0xacc=684 elseif _0xacc == 1752 then if 1 > 2 then local _0x8f1=nil end;_0xacc=1762 elseif _0xacc == 2598 then if false then local _0x907=nil end;_0xacc=2608 elseif _0xacc == 3616 then do local _0x92b=445 end;_0xacc=3621 elseif _0xacc == 53 then _0x33c.DisplayOrder=11 * 9 + 1;_0xacc=57 elseif _0xacc == 4378 then do local _0x943=785 end;_0xacc=4386 elseif _0xacc == 2483 then if false then local _0x901=nil end;_0xacc=2488 elseif _0xacc == 2920 then _0x914=(98 + 0) * 1;_0xacc=2930 elseif _0xacc == 1352 then _0x35b.ZIndex=30 * 10 + 1;_0xacc=1362 elseif _0xacc == 3469 then _0x36a(_0x3d0,__0xae1d(1115));_0xacc=3476 elseif _0xacc == 2438 then _0x3b9(_0x3d0,__0xae1d(1116),__0xae1d(1117));_0xacc=2448 elseif _0xacc == 551 then _0x346.SortOrder=Enum.SortOrder.LayoutOrder;_0xacc=558 elseif _0xacc == 3050 then if false then local _0x917=nil end;_0xacc=3053 elseif _0xacc == 3550 then _0x929=math.random() * 0;_0xacc=3558 elseif _0xacc == 207 then if false then local _0x8c1=nil end;_0xacc=212 elseif _0xacc == 940 then _0x356.TextColor3=_0x33b.Text;_0xacc=947 elseif _0xacc == 3754 then task.wait();_0xacc=3764 elseif _0xacc == 4141 then _0x3a9(_0x3d1,__0xae1d(1118),function() setXCStreamerMode(false);for _0x10,_0x11 in pairs(_0xd) do _0x8[_0x10]=deepCopyConfigValue(_0x11) end;_0x14.fireRate=false;_0x14.recoilSpread=false;_0x14.silentFallback=false;_0x3db();updateMobileSlideVisibility();refreshThirdPerson();setWeaponVisuals();updateCustomScope();updateWorldPostFX();stopXCCameraMode();destroyXCWeather();restoreXCSmoke();restoreLightingState();setAntiAfkEnabled(_0x8.antiAfkEnabled);_0x3d5.Text=__0xae1d(1119) end);_0xacc=4149 elseif _0xacc == 3074 then _0x384(_0x3d1,__0xae1d(1120),__0xae1d(1121),1 * 3 + 2,115 + 185,2 - 1,"");_0xacc=3085 elseif _0xacc == 1698 then _0x3b9(_0x3d0,__0xae1d(1122),__0xae1d(1123));_0xacc=1705 elseif _0xacc == 2577 then _0x384(_0x3d1,__0xae1d(1124),__0xae1d(1125),0.1,1 + 2,0.1,__0xae1d(1126));_0xacc=2586 elseif _0xacc == 339 then _0x8c5=math.random() * 0;_0xacc=348 elseif _0xacc == 2748 then _0x384(_0x3d0,__0xae1d(1127),__0xae1d(1128),1 - 1,9 + 36 - 40,0.1,"");_0xacc=2753 elseif _0xacc == 3636 then _0x3b9(_0x3d0,__0xae1d(1129),__0xae1d(1130));_0xacc=3644 elseif _0xacc == 3783 then _0x3b9(_0x3d0,__0xae1d(1131),__0xae1d(1132));_0xacc=3788 elseif _0xacc == 3344 then _0x384(_0x3d1,__0xae1d(1133),__0xae1d(1134),0.02,0.5,0.01,"");_0xacc=3349 elseif _0xacc == 2678 then _0x90a=(82 + 0) * 1;_0xacc=2682 elseif _0xacc == 2941 then do local _0x915=993 end;_0xacc=2949 elseif _0xacc == 2959 then _0x384(_0x3d0,__0xae1d(1135),__0xae1d(1136),1 - 1,3 + 2,0.1,"",function() updateWorldChanger() end);_0xacc=2965 elseif _0xacc == 3496 then if false then local _0x928=nil end;_0xacc=3502 elseif _0xacc == 3243 then _0x91e=math.random() * 0;_0xacc=3251 elseif _0xacc == 15 then _0x33c=Instance.new(__0xae1d(1137));_0xacc=22 elseif _0xacc == 4013 then _0x3d5.TextSize=5 + 39 - 35;_0xacc=4019 elseif _0xacc == 1223 then _0x35a.PaddingBottom=UDim.new(1 - 1,1 * 6 + 1);_0xacc=1228 elseif _0xacc == 1768 then _0x384(_0x3d0,__0xae1d(1138),__0xae1d(1139),10 + 0,51 * 7 + 3,2 - 1,__0xae1d(1140));_0xacc=1773 elseif _0xacc == 3984 then _0x3d5.BackgroundTransparency=2 - 1;_0xacc=3995 elseif _0xacc == 2017 then _0x36a(_0x3d0,__0xae1d(1141));_0xacc=2028 elseif _0xacc == 4033 then _0x3d5.Parent=_0x350[_0x3d1] or _0x3d1;_0xacc=4040 elseif _0xacc == 1648 then for _0xc7,_0x3ca in ipairs(_0x3c6) do if 1 > 2 then local _0x8aa=nil end;local _0x1db=Instance.new(__0xae1d(1142));_0x1db.Size=UDim2.new(2 - 1,1 - 1,1 - 1,54 + 13 - 26);_0x1db.LayoutOrder=_0xc7;_0x1db.BackgroundTransparency=2 - 1;if false then local _0x8ab=nil end;_0x1db.Parent=_0x345;local _0x8ac=(40 + 0) * 1;local _0x2d6=Instance.new(__0xae1d(1143));local _0x8ad=(2 + 0) * 1;_0x2d6.Size=UDim2.fromOffset(1 + 1,10 * 3 + 0);_0x2d6.Position=UDim2.new(1 - 1,-(2 - 1),0.5,-(2 + 33 - 20));_0x2d6.BackgroundColor3=_0x33b.Lime;if false then local _0x8ae=nil end;_0x2d6.BorderSizePixel=1 - 1;_0x2d6.Visible=false;_0x2d6.Parent=_0x1db;local _0x391=Instance.new(__0xae1d(1144));_0x391.Size=UDim2.new(2 - 1,-(1 * 6 + 2),2 - 1,1 - 1);if false then local _0x8af=nil end;_0x391.Position=UDim2.fromOffset(1 + 3,1 - 1);_0x391.BackgroundTransparency=2 - 1;if false then local _0x8b0=nil end;_0x391.Text="";_0x391.AutoButtonColor=false;_0x391.Parent=_0x1db;local _0x48=_0x3c2(_0x391,_0x3ca[1 + 1],_0x3ba);if 1 > 2 then local _0x8b1=nil end;_0x391.MouseEnter:Connect(function() if _0x34a ~= _0x3ca[2 - 1] then _0x3c5(_0x48,_0x3bb) end end);_0x391.MouseLeave:Connect(function() if _0x34a ~= _0x3ca[2 - 1] then _0x3c5(_0x48,_0x3ba) end end);if false then local _0x8b2=nil end;_0x391.Activated:Connect(function() _0x3c7(_0x3ca[2 - 1]) end);_0x360(_0x391,__0xae1d(1145) .. _0x3ca[2 - 1]);_0x349[_0x3ca[2 - 1]]={button=_0x391,active=_0x2d6,icon=_0x48};local _0x8b3=(13 + 0) * 1;_0x364(_0x3ca[2 - 1]) end;_0xacc=1656 elseif _0xacc == 1206 then _0x35a=Instance.new(__0xae1d(1146));_0xacc=1215 elseif _0xacc == 3748 then _0x384(_0x3d1,__0xae1d(1147),__0xae1d(1148),187 + 54 - 41,500 * 6 + 0,35 + 48 - 33,"");_0xacc=3754 elseif _0xacc == 3652 then _0x3b9(_0x3d0,__0xae1d(1149),__0xae1d(1150));_0xacc=3659 elseif _0xacc == 1145 then _0x359.Size=UDim2.fromOffset(_0x18.TouchEnabled and 52 * 5 + 0 or 26 * 9 + 1,1 - 1);_0xacc=1153 elseif _0xacc == 982 then _0x356.TextXAlignment=Enum.TextXAlignment.Left;_0xacc=991 elseif _0xacc == 2850 then _0x384(_0x3d0,__0xae1d(1151),__0xae1d(1152),-(3 + 0),3 + 0,0.1,"",function() updateWorldChanger() end);_0xacc=2859 elseif _0xacc == 2930 then _0x3b9(_0x3d0,__0xae1d(1153),__0xae1d(1154));_0xacc=2936 elseif _0xacc == 2727 then _0x3b9(_0x3d0,__0xae1d(1155),__0xae1d(1156));_0xacc=2734 elseif _0xacc == 4328 then _0x3ea.TextColor3=_0x33b.White;_0xacc=4336 elseif _0xacc == 3091 then _0x36a(_0x3d1,__0xae1d(1157));_0xacc=3099 elseif _0xacc == 2991 then _0x384(_0x3d0,__0xae1d(1158),__0xae1d(1159),2 - 1,33 * 3 + 1,2 - 1,__0xae1d(1160),function() applyXCWeather() end);_0xacc=2999 elseif _0xacc == 4118 then do local _0x938=179 end;_0xacc=4127 elseif _0xacc == 669 then _0x8cd=math.random() * 0;_0xacc=675 elseif _0xacc == 1628 then _0x3c5=function(_0xa5,_0x5) for _0x63,_0x173 in ipairs(_0xa5:GetDescendants()) do if _0x173:IsA(__0xae1d(1161)) then _0x173.Color=_0x5 elseif _0x173:IsA(__0xae1d(1162)) and _0x173.BackgroundTransparency < 2 - 1 then local _0x8a6=math.random() * 0;_0x173.BackgroundColor3=_0x5 end end end;_0xacc=1634 elseif _0xacc == 1965 then _0x36a(_0x3d1,__0xae1d(1163));_0xacc=1970 elseif _0xacc == 639 then _0x34a=nil;_0xacc=648 elseif _0xacc == 4224 then _0x3e2=function(_0x3e3,_0x173,_0x3e4) local _0x3e5,_0x3e6,_0x3e7,_0x3e8;local _0xacb=3;while true do if _0xacb == 3 then _0x3e5,_0x3e6,_0x3e7,_0x3e8=nil,nil,nil,nil;_0xacb=8 elseif _0xacb == 30 then table.insert(_0x26,_0x18.InputEnded:Connect(function(_0x84) if _0x84 ~= _0x3e5 then return end;local _0x3e9=not _0x3e8;_0x3e5=nil;if _0x3e9 and _0x3e4 then _0x3e1() end end));_0xacb=51 elseif _0xacb == 24 then table.insert(_0x26,_0x18.InputChanged:Connect(function(_0x84) if not _0x3e5 then return end;if _0x84 == _0x3e5 or _0x84.UserInputType == Enum.UserInputType.MouseMovement then local _0x76=_0x84.Position - _0x3e6;if _0x76.Magnitude >= 2 + 5 then _0x3e8=true end;if _0x3e8 then _0x173.Position=UDim2.new(_0x3e7.X.Scale,_0x3e7.X.Offset + _0x76.X,_0x3e7.Y.Scale,_0x3e7.Y.Offset + _0x76.Y);if _0x3e4 then _0x36.OpenBtn=_0x173.Position;if _0x34 then _0x34.XCSavedPos.OpenBtn=_0x173.Position end end end end end));_0xacb=30 elseif _0xacb == 8 then _0x3e3.InputBegan:Connect(function(_0x84) if _0x3e5 then return end;if _0x84.UserInputType == Enum.UserInputType.MouseButton1 or _0x84.UserInputType == Enum.UserInputType.Touch then _0x3e5,_0x3e6,_0x3e7,_0x3e8=_0x84,_0x84.Position,_0x173.Position,false end end);_0xacb=18 elseif _0xacb == 18 then do local _0x8ba=433 end;_0xacb=24 else break end end end;_0xacc=4231 elseif _0xacc == 1705 then _0x8ef=(19 + 0) * 1;_0xacc=1710 elseif _0xacc == 219 then _0x33e=Instance.new(__0xae1d(1164));_0xacc=227 elseif _0xacc == 1926 then _0x384(_0x3d1,__0xae1d(1165),__0xae1d(1166),0.01,0.2,0.01,__0xae1d(1167));_0xacc=1935 elseif _0xacc == 3824 then _0x3b9(_0x3d0,__0xae1d(1168),__0xae1d(1169));_0xacc=3832 elseif _0xacc == 471 then _0x8c7=(69 + 0) * 1;_0xacc=477 elseif _0xacc == 885 then _0x356.Position=UDim2.fromOffset(12 + 13 - 2,1 - 1);_0xacc=893 elseif _0xacc == 121 then _0x33d.ZIndexBehavior=Enum.ZIndexBehavior.Sibling;_0xacc=131 elseif _0xacc == 2194 then if false then local _0x8fd=nil end;_0xacc=2202 elseif _0xacc == 1599 then _0x3bd=function(_0x2,_0x2ac,_0x2ad,_0x3be,_0x170,_0x5,_0x155) local _0x156,_0x892;local _0xac4=4;while true do if _0xac4 == 60 then _0x156.Rotation=_0x155 or 1 - 1;_0xac4=68 elseif _0xac4 == 73 then return _0x156 elseif _0xac4 == 31 then _0x156.Size=UDim2.fromOffset(_0x3be,_0x170);_0xac4=36 elseif _0xac4 == 36 then _0x892=math.random() * 0;_0xac4=43 elseif _0xac4 == 54 then _0x156.BorderSizePixel=1 - 1;_0xac4=60 elseif _0xac4 == 43 then _0x156.BackgroundColor3=_0x5;_0xac4=54 elseif _0xac4 == 16 then _0x156.AnchorPoint=Vector2.new(0.5,0.5);_0xac4=26 elseif _0xac4 == 8 then _0x156=Instance.new(__0xae1d(1170));_0xac4=16 elseif _0xac4 == 68 then _0x156.Parent=_0x2;_0xac4=73 elseif _0xac4 == 4 then if false then local _0x891=nil end;_0xac4=8 elseif _0xac4 == 26 then _0x156.Position=UDim2.fromOffset(_0x2ac,_0x2ad);_0xac4=31 else break end end end;_0xacc=1605 elseif _0xacc == 907 then _0x8d4=(23 + 0) * 1;_0xacc=915 elseif _0xacc == 2776 then _0x36a(_0x3d0,__0xae1d(1171));_0xacc=2784 elseif _0xacc == 2266 then task.wait();_0xacc=2269 elseif _0xacc == 2979 then _0x3b9(_0x3d0,__0xae1d(1172),__0xae1d(1173));_0xacc=2984 elseif _0xacc == 3256 then do local _0x91f=586 end;_0xacc=3264 elseif _0xacc == 2307 then _0x3b9(_0x3d0,__0xae1d(1174),__0xae1d(1175));_0xacc=2311 elseif _0xacc == 1153 then _0x359.AutomaticSize=Enum.AutomaticSize.Y;_0xacc=1157 elseif _0xacc == 4278 then _0x3ea.BackgroundColor3=_0x33b.Panel;_0xacc=4289 elseif _0xacc == 809 then _0x355.Size=UDim2.fromOffset(14 + 10,7 * 3 + 1);_0xacc=814 elseif _0xacc == 1795 then _0x3b9(_0x3d0,__0xae1d(1176),__0xae1d(1177));_0xacc=1802 elseif _0xacc == 1641 then _0x3c7=function(_0x100) local _0xac7=2;while true do if _0xac7 == 36 then if _0x353 then local _0x8a9=(12 + 0) * 1;_0x353() end;_0xac7=53 elseif _0xac7 == 22 then for _0x3c8,_0x365 in pairs(_0x348) do if 1 > 2 then local _0x8a7=nil end;_0x365.Visible=_0x3c8 == _0x100 end;_0xac7=31 elseif _0xac7 == 31 then for _0x3c9,_0x62 in pairs(_0x349) do _0x62.active.Visible=_0x3c9 == _0x100;if false then local _0x8a8=nil end;_0x3c5(_0x62.icon,_0x3c9 == _0x100 and _0x3bc or _0x3ba) end;_0xac7=36 elseif _0xac7 == 15 then _0x34a=_0x100;_0xac7=22 elseif _0xac7 == 10 then _0x35d();_0xac7=15 elseif _0xac7 == 2 then _0x38e();_0xac7=10 else break end end end;_0xacc=1648 elseif _0xacc == 1436 then do local _0x8e8=496 end;_0xacc=1446 elseif _0xacc == 1460 then _0x8e9=math.random() * 0;_0xacc=1467 elseif _0xacc == 2238 then _0x3b9(_0x3d1,__0xae1d(1178),__0xae1d(1179));_0xacc=2241 elseif _0xacc == 443 then _0x344.Parent=_0x17d;_0xacc=450 elseif _0xacc == 3218 then _0x3a4(_0x3d0,__0xae1d(1180),__0xae1d(1181),getXCKnifeChoices(),function() applyXCKnifeChanger() end);_0xacc=3221 elseif _0xacc == 2802 then _0x384(_0x3d0,__0xae1d(1182),__0xae1d(1183),-(79 + 146 - 45),85 + 95,2 - 1,__0xae1d(1184),function() updateWorldChanger() end);_0xacc=2812 elseif _0xacc == 4398 then _0x45.CornerRadius=UDim.new(1 - 1,1 * 5 + 2);_0xacc=4404 elseif _0xacc == 3398 then _0x925=math.random() * 0;_0xacc=3404 elseif _0xacc == 2763 then _0x384(_0x3d0,__0xae1d(1185),__0xae1d(1186),1 - 1,4 + 43 - 23,0.5,__0xae1d(1187));_0xacc=2768 elseif _0xacc == 3484 then _0x3b9(_0x3d0,__0xae1d(1188),__0xae1d(1189));_0xacc=3488 elseif _0xacc == 1396 then _0x364=function(_0x100) local _0x365,_0x7d7,_0x7d8;local _0xab0=2;while true do if _0xab0 == 65 then return _0x365 elseif _0xab0 == 51 then _0x365.Parent=_0x347;_0xab0=57 elseif _0xab0 == 8 then _0x7d7=math.random() * 0;_0xab0=18 elseif _0xab0 == 18 then _0x365.Name=_0x100;_0xab0=23 elseif _0xab0 == 23 then _0x7d8=(10 + 0) * 1;_0xab0=30 elseif _0xab0 == 30 then _0x365.Size=UDim2.fromScale(2 - 1,2 - 1);_0xab0=38 elseif _0xab0 == 2 then _0x365=Instance.new(__0xae1d(1190));_0xab0=8 elseif _0xab0 == 47 then _0x365.Visible=false;_0xab0=51 elseif _0xab0 == 57 then _0x348[_0x100]=_0x365;_0xab0=65 elseif _0xab0 == 38 then _0x365.BackgroundTransparency=2 - 1;_0xab0=47 else break end end end;_0xacc=1401 elseif _0xacc == 3005 then _0x36a(_0x3d1,__0xae1d(1191));_0xacc=3014 elseif _0xacc == 3929 then _0x3d4.TextColor3=_0x33b.Text;_0xacc=3936 elseif _0xacc == 1535 then _0x3a9=function(_0x2,_0x6,_0x7f) local _0x391;local _0xabf=1;while true do if _0xabf == 107 then if false then local _0x856=nil end;_0xabf=117 elseif _0xabf == 100 then _0x391.AutoButtonColor=false;_0xabf=107 elseif _0xabf == 136 then return _0x391 elseif _0xabf == 10 then _0x2=_0x350[_0x2] or _0x2;_0xabf=18 elseif _0xabf == 129 then _0x375(_0x391,_0x6);_0xabf=136 elseif _0xabf == 18 then _0x391=Instance.new(__0xae1d(1192));_0xabf=26 elseif _0xabf == 57 then _0x391.Text=_0x6;_0xabf=67 elseif _0xabf == 124 then _0x391.Activated:Connect(_0x7f);_0xabf=129 elseif _0xabf == 67 then if 1 > 2 then local _0x854=nil end;_0xabf=72 elseif _0xabf == 1 then if 1 > 2 then local _0x852=nil end;_0xabf=10 elseif _0xabf == 78 then _0x391.Font=Enum.Font.Code;_0xabf=85 elseif _0xabf == 72 then _0x391.TextColor3=_0x33b.Text;_0xabf=78 elseif _0xabf == 85 then _0x391.TextSize=1 * 7 + 3;_0xabf=92 elseif _0xabf == 38 then _0x391.BorderColor3=_0x33b.Black;_0xabf=45 elseif _0xabf == 117 then _0x391.Parent=_0x2;_0xabf=124 elseif _0xabf == 54 then _0x391.BorderSizePixel=2 - 1;_0xabf=57 elseif _0xabf == 32 then _0x391.BackgroundColor3=_0x33b.Control;_0xabf=38 elseif _0xabf == 26 then _0x391.Size=UDim2.new(2 - 1,1 - 1,1 - 1,1 + 23);_0xabf=32 elseif _0xabf == 45 then if 1 > 2 then local _0x853=nil end;_0xabf=54 elseif _0xabf == 92 then do local _0x855=814 end;_0xabf=100 else break end end end;_0xacc=1544 elseif _0xacc == 1475 then do local _0x8ea=676 end;_0xacc=1480 elseif _0xacc == 4362 then _0x3ea.AutoButtonColor=false;_0xacc=4370 elseif _0xacc == 1020 then _0x357.Size=UDim2.fromOffset(10 + 46 - 32,7 * 3 + 1);_0xacc=1025 elseif _0xacc == 3134 then _0x3a4(_0x3d1,__0xae1d(1193),__0xae1d(1194),{__0xae1d(1195),__0xae1d(1196),__0xae1d(1197),__0xae1d(1198),__0xae1d(1199),__0xae1d(1200)});_0xacc=3137 elseif _0xacc == 822 then _0x355.Text=__0xae1d(1201);_0xacc=829 elseif _0xacc == 870 then _0x356=Instance.new(__0xae1d(1202));_0xacc=877 elseif _0xacc == 4404 then do local _0x944=626 end;_0xacc=4411 elseif _0xacc == 3741 then _0x384(_0x3d1,__0xae1d(1203),__0xae1d(1204),2 - 1,1 * 2 + 1,0.1,"");_0xacc=3748 elseif _0xacc == 3488 then _0x3a4(_0x3d0,__0xae1d(1205),__0xae1d(1206),{__0xae1d(1207),__0xae1d(1208),__0xae1d(1209),__0xae1d(1210),__0xae1d(1211)});_0xacc=3496 elseif _0xacc == 3418 then _0x3b9(_0x3d0,__0xae1d(1212),__0xae1d(1213));_0xacc=3424 elseif _0xacc == 4183 then _0x3c7(__0xae1d(1214));_0xacc=4191 elseif _0xacc == 4246 then _0x3ea.Name=__0xae1d(1215);_0xacc=4251 elseif _0xacc == 1818 then _0x36a(_0x3d0,__0xae1d(1216));_0xacc=1822 elseif _0xacc == 4355 then _0x3ea.TextSize=14 + 9;_0xacc=4362 elseif _0xacc == 1663 then do local _0x8ed=712 end;_0xacc=1670 elseif _0xacc == 2838 then _0x911=math.random() * 0;_0xacc=2846 elseif _0xacc == 2616 then _0x384(_0x3d1,__0xae1d(1217),__0xae1d(1218),0.05,2 - 1,0.05,__0xae1d(1219));_0xacc=2619 elseif _0xacc == 3711 then _0x3b9(_0x3d1,__0xae1d(1220),__0xae1d(1221));_0xacc=3719 elseif _0xacc == 2286 then _0x3b9(_0x3d0,__0xae1d(1222),__0xae1d(1223));_0xacc=2292 elseif _0xacc == 2670 then _0x3d0,_0x3d1=_0x3cb(__0xae1d(1224),__0xae1d(1225),__0xae1d(1226));_0xacc=2678 elseif _0xacc == 506 then _0x8c8=math.random() * 0;_0xacc=512 elseif _0xacc == 3502 then _0x36a(_0x3d1,__0xae1d(1227));_0xacc=3511 elseif _0xacc == 1348 then do local _0x8e6=555 end;_0xacc=1352 elseif _0xacc == 3385 then task.wait();_0xacc=3393 elseif _0xacc == 571 then _0x347=Instance.new(__0xae1d(1228));_0xacc=579 elseif _0xacc == 3424 then if false then local _0x926=nil end;_0xacc=3435 elseif _0xacc == 1997 then _0x3a4(_0x3d1,__0xae1d(1229),__0xae1d(1230),{__0xae1d(1231),__0xae1d(1232),__0xae1d(1233),__0xae1d(1234)});_0xacc=2003 elseif _0xacc == 1902 then _0x3b9(_0x3d1,__0xae1d(1235),__0xae1d(1236));_0xacc=1905 elseif _0xacc == 2816 then _0x910=math.random() * 0;_0xacc=2826 elseif _0xacc == 2539 then _0x36a(_0x3d1,__0xae1d(1237));_0xacc=2545 elseif _0xacc == 689 then _0x350={};_0xacc=697 elseif _0xacc == 4191 then _0x3e0=true;_0xacc=4196 elseif _0xacc == 2370 then _0x36a(_0x3d0,__0xae1d(1238));_0xacc=2376 elseif _0xacc == 4211 then _0x93c=(50 + 0) * 1;_0xacc=4217 elseif _0xacc == 144 then _0x17d.Name=__0xae1d(1239);_0xacc=150 elseif _0xacc == 1401 then if 1 > 2 then local _0x8e7=nil end;_0xacc=1408 elseif _0xacc == 3029 then _0x384(_0x3d1,__0xae1d(1240),__0xae1d(1241),76 + 38 - 44,138 + 12 - 30,2 - 1,__0xae1d(1242));_0xacc=3032 elseif _0xacc == 1032 then _0x8db=(44 + 0) * 1;_0xacc=1040 elseif _0xacc == 900 then _0x356.ClearTextOnFocus=false;_0xacc=907 elseif _0xacc == 1366 then _0x35c=1 - 1;_0xacc=1373 elseif _0xacc == 3041 then _0x3b9(_0x3d1,__0xae1d(1243),__0xae1d(1244));_0xacc=3050 elseif _0xacc == 757 then _0x354.BackgroundColor3=_0x33b.Panel;_0xacc=768 elseif _0xacc == 10 then _0x33b={Main=Color3.fromRGB(34 + 14 - 31,14 + 19 - 16,3 * 5 + 2),Sidebar=Color3.fromRGB(9 + 4,11 + 2,17 + 12 - 16),Panel=Color3.fromRGB(3 * 4 + 0,1 * 9 + 3,11 + 1),Control=Color3.fromRGB(25 + 12 - 12,18 + 7,2 * 9 + 7),Control2=Color3.fromRGB(11 * 3 + 2,29 + 6,4 * 8 + 3),Border=Color3.fromRGB(8 + 36,5 * 8 + 4,13 + 65 - 34),Black=Color3.fromRGB(1 - 1,1 - 1,1 - 1),Lime=Color3.fromRGB(159 + 42 - 49,82 + 122,1 - 1),White=Color3.fromRGB(176 + 81 - 22,144 + 91,33 * 7 + 4),Text=Color3.fromRGB(22 * 9 + 2,33 * 6 + 2,4 + 211 - 15),Muted=Color3.fromRGB(13 * 8 + 6,79 + 42 - 11,62 + 74 - 26)};_0xacc=15 elseif _0xacc == 2166 then do local _0x8fb=311 end;_0xacc=2174 elseif _0xacc == 2102 then _0x36a(_0x3d1,__0xae1d(1245));_0xacc=2108 elseif _0xacc == 1594 then _0x3bc=_0x33b.White;_0xacc=1599 elseif _0xacc == 3099 then _0x3b9(_0x3d1,__0xae1d(1246),__0xae1d(1247));_0xacc=3106 elseif _0xacc == 2298 then _0x8ff=(73 + 0) * 1;_0xacc=2307 elseif _0xacc == 1551 then _0x3ac=function(_0x2) local _0x861,_0x44,_0x863,_0x3e,_0x865,_0x866,_0x3ad,_0x868,_0x1ca,_0x869,_0x3ae,_0x372,_0x86c,_0xa6,_0x3af,_0x871,_0x872,_0x28a,_0x873,_0x3b0,_0x3b1,_0x3b2,_0x3b3,_0x878,_0x1f6,_0x87b,_0x87d,_0x3b4;local _0xac2=1;while true do if _0xac2 == 338 then if false then local _0x86b=nil end;_0xac2=344 elseif _0xac2 == 788 then _0x1f6.TextSize=4 * 2 + 1;_0xac2=793 elseif _0xac2 == 368 then _0x372.Size=UDim2.fromOffset(14 + 4,20 * 3 + 2);_0xac2=376 elseif _0xac2 == 156 then _0x3e.TextSize=17 + 15 - 23;_0xac2=163 elseif _0xac2 == 313 then _0x3ae.BorderSizePixel=1 - 1;_0xac2=316 elseif _0xac2 == 436 then _0xa6.Size=UDim2.fromOffset(11 + 10 - 3,8 + 10);_0xac2=445 elseif _0xac2 == 43 then _0x863=(42 + 0) * 1;_0xac2=54 elseif _0xac2 == 820 then task.defer(_0x3b4);_0xac2=830 elseif _0xac2 == 257 then _0x1ca.Font=Enum.Font.Code;_0xac2=263 elseif _0xac2 == 627 then do local _0x876=311 end;_0xac2=631 elseif _0xac2 == 379 then _0x372.BackgroundTransparency=0.72;_0xac2=387 elseif _0xac2 == 550 then _0x28a.BackgroundTransparency=2 - 1;_0xac2=556 elseif _0xac2 == 814 then for _0x63,_0x10 in ipairs({__0xae1d(1248),__0xae1d(1249),__0xae1d(1250),__0xae1d(1251),__0xae1d(1252),__0xae1d(1253),__0xae1d(1254),__0xae1d(1255)}) do _0x34b[_0x10]=_0x34b[_0x10] or {};table.insert(_0x34b[_0x10],_0x3b4) end;_0xac2=820 elseif _0xac2 == 544 then _0x873=math.random() * 0;_0xac2=550 elseif _0xac2 == 591 then for _0xc7=2 - 1,8 + 37 - 37 do local _0x156=Instance.new(__0xae1d(1256));_0x156.BorderSizePixel=1 - 1;_0x156.Parent=_0x3ae;local _0x85a=(64 + 0) * 1;_0x3b1[_0xc7]=_0x156 end;_0xac2=600 elseif _0xac2 == 376 then _0x372.BackgroundColor3=_0x33b.Lime;_0xac2=379 elseif _0xac2 == 751 then if 1 > 2 then local _0x87c=nil end;_0xac2=759 elseif _0xac2 == 206 then _0x1ca.Position=UDim2.new(2 - 1,-(18 * 4 + 0),1 - 1,3 + 1);_0xac2=212 elseif _0xac2 == 537 then _0x28a.Position=UDim2.fromScale(0.5,0.55);_0xac2=544 elseif _0xac2 == 603 then _0x3b2=Instance.new(__0xae1d(1257));_0xac2=613 elseif _0xac2 == 830 then table.insert(_0x26,_0x3ae:GetPropertyChangedSignal(__0xae1d(1258)):Connect(_0x3b4));_0xac2=838 elseif _0xac2 == 621 then _0x3b2.AnchorPoint=Vector2.new(2 - 1,0.5);_0xac2=627 elseif _0xac2 == 285 then _0x3ae=Instance.new(__0xae1d(1259));_0xac2=291 elseif _0xac2 == 263 then _0x1ca.TextSize=7 + 1;_0xac2=268 elseif _0xac2 == 793 then _0x1f6.Parent=_0x3ae;_0xac2=799 elseif _0xac2 == 344 then _0x372.AnchorPoint=Vector2.new(0.5,0.5);_0xac2=351 elseif _0xac2 == 459 then _0xa6.BackgroundTransparency=0.72;_0xac2=463 elseif _0xac2 == 649 then if false then local _0x877=nil end;_0xac2=654 elseif _0xac2 == 88 then _0x3e=Instance.new(__0xae1d(1260));_0xac2=95 elseif _0xac2 == 176 then _0x3ad=true;_0xac2=185 elseif _0xac2 == 807 then _0x1ca.Activated:Connect(function() _0x3ad=not _0x3ad;_0x3b4() end);_0xac2=814 elseif _0xac2 == 513 then _0x872=math.random() * 0;_0xac2=521 elseif _0xac2 == 424 then _0xa6.AnchorPoint=Vector2.new(0.5,2 - 1);_0xac2=429 elseif _0xac2 == 799 then _0x3b4=function() local _0x5,_0x85d,_0x197,_0x8f,_0x269,_0x3b5,_0x1a7,_0x3b6;local _0xac1=1;while true do if _0xac1 == 171 then _0x1a7=math.floor(math.clamp(_0x8f * 0.30,1 * 4 + 0,3 * 9 + 1) + 0.5);_0xac1=180 elseif _0xac1 == 150 then _0x1f6.Visible=_0x8.nametagsEnabled;_0xac1=159 elseif _0xac1 == 187 then for _0xc7,_0x156 in ipairs(_0x3b1) do if false then local _0x85b=nil end;local _0x3b7=_0x3b6[_0xc7];local _0x85c=(73 + 0) * 1;_0x156.Position=UDim2.fromOffset(_0x3b7[2 - 1],_0x3b7[1 * 2 + 0]);_0x156.Size=UDim2.fromOffset(_0x3b7[1 * 3 + 0],_0x3b7[2 + 2]);_0x156.BackgroundColor3=_0x5;_0x156.Visible=_0x8.cornerBoxEnabled end;_0xac1=203 elseif _0xac1 == 135 then _0x1f6.Position=UDim2.new(0.5,1 - 1,0.55,-_0x197 * 0.5 - (2 + 30 - 29));_0xac1=143 elseif _0xac1 == 17 then _0x1ca.Text=_0x3ad and __0xae1d(1261) or __0xae1d(1262);_0xac1=26 elseif _0xac1 == 99 then _0xa6.BackgroundColor3=_0x5;_0xac1=109 elseif _0xac1 == 143 then _0x1f6.TextColor3=_0x5;_0xac1=150 elseif _0xac1 == 87 then _0x28a.Visible=_0x8.boxEspEnabled and not _0x8.cornerBoxEnabled;_0xac1=94 elseif _0xac1 == 162 then _0x3b5=_0x3ae.AbsoluteSize.Y * 0.55 - _0x197 * 0.5;_0xac1=171 elseif _0xac1 == 26 then _0x1ca.TextColor3=_0x5;_0xac1=29 elseif _0xac1 == 117 then _0x3b2.Position=UDim2.new(0.5,-_0x8f * 0.5 - (3 + 7 - 6),0.55,1 - 1);_0xac1=120 elseif _0xac1 == 71 then if false then local _0x860=nil end;_0xac1=80 elseif _0xac1 == 59 then _0x28a.Size=UDim2.fromOffset(_0x8f,_0x197);_0xac1=67 elseif _0xac1 == 128 then _0x3b2.Visible=_0x8.healthBarEnabled;_0xac1=135 elseif _0xac1 == 67 then _0x3b0.Color=_0x5;_0xac1=71 elseif _0xac1 == 47 then if false then local _0x85f=nil end;_0xac1=53 elseif _0xac1 == 80 then _0x3b0.Thickness=tonumber(_0x8.boxThickness) or 2 - 1;_0xac1=87 elseif _0xac1 == 12 then _0x85d=math.random() * 0;_0xac1=17 elseif _0xac1 == 159 then _0x269=_0x3ae.AbsoluteSize.X * 0.5 - _0x8f * 0.5;_0xac1=162 elseif _0xac1 == 109 then _0x372.Visible=_0x8.chamsEnabled;_0xac1=117 elseif _0xac1 == 37 then _0x197=(21 + 37) * math.clamp(tonumber(_0x8.espPerspectiveScale) or 2 - 1,0.65,1.5);_0xac1=47 elseif _0xac1 == 180 then _0x3b6={{left,top,length,2 - 1},{left,top,2 - 1,length},{left + width - length,top,length,2 - 1},{left + width - (2 - 1),top,2 - 1,length},{left,top + height - (2 - 1),length,2 - 1},{left,top + height - length,2 - 1,length},{left + width - length,top + height - (2 - 1),length,2 - 1},{left + width - (2 - 1),top + height - length,2 - 1,length}};_0xac1=187 elseif _0xac1 == 1 then _0x5=_0x3ad and _0x38.Enemy_Accent or _0x38.Enemy_Hidden;_0xac1=12 elseif _0xac1 == 53 then _0x8f=_0x197 * math.clamp(tonumber(_0x8.espBoxAspect) or 0.52,0.38,0.8);_0xac1=59 elseif _0xac1 == 29 then if false then local _0x85e=nil end;_0xac1=37 elseif _0xac1 == 94 then _0x372.BackgroundColor3=_0x5;_0xac1=99 elseif _0xac1 == 120 then _0x3b2.Size=UDim2.fromOffset(25 + 25 - 46,_0x197);_0xac1=128 else break end end end;_0xac2=807 elseif _0xac2 == 579 then _0x3b0.Parent=_0x28a;_0xac2=583 elseif _0xac2 == 732 then _0x1f6=Instance.new(__0xae1d(1263));_0xac2=738 elseif _0xac2 == 674 then _0x878=(74 + 0) * 1;_0xac2=680 elseif _0xac2 == 359 then _0x372.Position=UDim2.fromScale(0.5,0.55);_0xac2=368 elseif _0xac2 == 327 then _0x3ae.Parent=_0x44;_0xac2=334 elseif _0xac2 == 212 then _0x1ca.BackgroundColor3=_0x33b.Control;_0xac2=220 elseif _0xac2 == 40 then _0x44.Size=UDim2.new(2 - 1,1 - 1,1 - 1,143 + 40 - 29);_0xac2=43 elseif _0xac2 == 302 then _0x3ae.BackgroundColor3=Color3.fromRGB(13 + 2,14 + 30 - 29,12 + 3);_0xac2=313 elseif _0xac2 == 680 then _0x3b3.Position=UDim2.new(1 - 1,2 - 1,2 - 1,-(2 - 1));_0xac2=689 elseif _0xac2 == 411 then _0x372.Parent=_0x3ae;_0xac2=416 elseif _0xac2 == 481 then _0x3af=Instance.new(__0xae1d(1264));_0xac2=484 elseif _0xac2 == 449 then _0xa6.BackgroundColor3=_0x33b.Lime;_0xac2=459 elseif _0xac2 == 838 then _0x375(_0x44,__0xae1d(1265));_0xac2=845 elseif _0xac2 == 521 then _0x28a=Instance.new(__0xae1d(1266));_0xac2=530 elseif _0xac2 == 247 then _0x1ca.TextColor3=_0x33b.Lime;_0xac2=257 elseif _0xac2 == 660 then _0x3b3=Instance.new(__0xae1d(1267));_0xac2=670 elseif _0xac2 == 613 then do local _0x875=715 end;_0xac2=621 elseif _0xac2 == 131 then _0x866=math.random() * 0;_0xac2=136 elseif _0xac2 == 268 then _0x1ca.AutoButtonColor=false;_0xac2=275 elseif _0xac2 == 445 then if 1 > 2 then local _0x86f=nil end;_0xac2=449 elseif _0xac2 == 583 then _0x3b1={};_0xac2=591 elseif _0xac2 == 79 then _0x44.Parent=_0x2;_0xac2=88 elseif _0xac2 == 275 then _0x1ca.Parent=_0x44;_0xac2=285 elseif _0xac2 == 241 then if 1 > 2 then local _0x86a=nil end;_0xac2=247 elseif _0xac2 == 95 then _0x865=(31 + 0) * 1;_0xac2=99 elseif _0xac2 == 572 then _0x3b0.Thickness=2 - 1;_0xac2=579 elseif _0xac2 == 351 then _0x86c=(9 + 0) * 1;_0xac2=359 elseif _0xac2 == 506 then _0x3af.Parent=_0xa6;_0xac2=513 elseif _0xac2 == 316 then _0x3ae.ClipsDescendants=true;_0xac2=327 elseif _0xac2 == 530 then _0x28a.AnchorPoint=Vector2.new(0.5,0.5);_0xac2=537 elseif _0xac2 == 689 then _0x3b3.Size=UDim2.new(2 - 1,-(12 + 3 - 13),0.72,-(2 - 1));_0xac2=697 elseif _0xac2 == 291 then _0x3ae.Size=UDim2.new(2 - 1,-(4 + 8),2 - 1,-(22 + 9));_0xac2=297 elseif _0xac2 == 845 then return _0x44 elseif _0xac2 == 18 then _0x44=Instance.new(__0xae1d(1268));_0xac2=23 elseif _0xac2 == 710 then if 1 > 2 then local _0x87a=nil end;_0xac2=716 elseif _0xac2 == 54 then _0x44.BackgroundColor3=Color3.fromRGB(1 * 9 + 1,2 * 5 + 0,1 * 10 + 0);_0xac2=61 elseif _0xac2 == 99 then _0x3e.Size=UDim2.new(2 - 1,-(11 + 65),1 - 1,6 * 3 + 2);_0xac2=107 elseif _0xac2 == 600 then do local _0x874=19 end;_0xac2=603 elseif _0xac2 == 738 then _0x87b=math.random() * 0;_0xac2=745 elseif _0xac2 == 136 then _0x3e.TextColor3=_0x33b.Text;_0xac2=143 elseif _0xac2 == 484 then if false then local _0x870=nil end;_0xac2=491 elseif _0xac2 == 23 then if 1 > 2 then local _0x862=nil end;_0xac2=30 elseif _0xac2 == 491 then _0x3af.CornerRadius=UDim.new(2 - 1,1 - 1);_0xac2=499 elseif _0xac2 == 236 then _0x1ca.BorderSizePixel=2 - 1;_0xac2=241 elseif _0xac2 == 499 then _0x871=(47 + 0) * 1;_0xac2=506 elseif _0xac2 == 429 then _0xa6.Position=UDim2.new(0.5,1 - 1,1 - 1,-(2 + 0));_0xac2=436 elseif _0xac2 == 766 then _0x1f6.Text=__0xae1d(1269);_0xac2=775 elseif _0xac2 == 220 then _0x869=math.random() * 0;_0xac2=226 elseif _0xac2 == 556 then _0x28a.Parent=_0x3ae;_0xac2=565 elseif _0xac2 == 124 then _0x3e.Text=__0xae1d(1270);_0xac2=131 elseif _0xac2 == 143 then _0x3e.Font=Enum.Font.Code;_0xac2=151 elseif _0xac2 == 704 then _0x3b3.BackgroundColor3=Color3.fromRGB(44 + 98 - 30,134 + 62,9 * 7 + 1);_0xac2=710 elseif _0xac2 == 151 then if 1 > 2 then local _0x867=nil end;_0xac2=156 elseif _0xac2 == 725 then _0x3b3.Parent=_0x3b2;_0xac2=732 elseif _0xac2 == 697 then do local _0x879=863 end;_0xac2=704 elseif _0xac2 == 393 then _0x372.BorderSizePixel=1 - 1;_0xac2=403 elseif _0xac2 == 61 then _0x44.BorderColor3=_0x33b.Border;_0xac2=65 elseif _0xac2 == 107 then _0x3e.Position=UDim2.fromOffset(1 * 5 + 2,1 + 2);_0xac2=117 elseif _0xac2 == 670 then _0x3b3.AnchorPoint=Vector2.new(1 - 1,2 - 1);_0xac2=674 elseif _0xac2 == 472 then _0xa6.Parent=_0x372;_0xac2=481 elseif _0xac2 == 416 then _0xa6=Instance.new(__0xae1d(1271));_0xac2=424 elseif _0xac2 == 387 then if 1 > 2 then local _0x86d=nil end;_0xac2=393 elseif _0xac2 == 565 then _0x3b0=Instance.new(__0xae1d(1272));_0xac2=572 elseif _0xac2 == 1 then _0x861=math.random() * 0;_0xac2=12 elseif _0xac2 == 12 then _0x2=_0x350[_0x2] or _0x2;_0xac2=18 elseif _0xac2 == 759 then _0x1f6.BackgroundTransparency=2 - 1;_0xac2=766 elseif _0xac2 == 170 then _0x3e.Parent=_0x44;_0xac2=176 elseif _0xac2 == 403 then if false then local _0x86e=nil end;_0xac2=411 elseif _0xac2 == 654 then _0x3b2.Parent=_0x3ae;_0xac2=660 elseif _0xac2 == 781 then _0x1f6.Font=Enum.Font.Code;_0xac2=788 elseif _0xac2 == 641 then _0x3b2.BorderSizePixel=1 - 1;_0xac2=649 elseif _0xac2 == 775 then _0x87d=math.random() * 0;_0xac2=781 elseif _0xac2 == 716 then _0x3b3.BorderSizePixel=1 - 1;_0xac2=725 elseif _0xac2 == 65 then if false then local _0x864=nil end;_0xac2=71 elseif _0xac2 == 297 then _0x3ae.Position=UDim2.fromOffset(2 * 3 + 0,3 * 8 + 2);_0xac2=302 elseif _0xac2 == 226 then _0x1ca.BorderColor3=_0x33b.Border;_0xac2=236 elseif _0xac2 == 71 then _0x44.BorderSizePixel=2 - 1;_0xac2=79 elseif _0xac2 == 117 then _0x3e.BackgroundTransparency=2 - 1;_0xac2=124 elseif _0xac2 == 30 then _0x44.Name=__0xae1d(1273);_0xac2=40 elseif _0xac2 == 163 then _0x3e.TextXAlignment=Enum.TextXAlignment.Left;_0xac2=170 elseif _0xac2 == 745 then _0x1f6.AnchorPoint=Vector2.new(0.5,2 - 1);_0xac2=751 elseif _0xac2 == 463 then _0xa6.BorderSizePixel=1 - 1;_0xac2=472 elseif _0xac2 == 185 then _0x868=(87 + 0) * 1;_0xac2=192 elseif _0xac2 == 334 then _0x372=Instance.new(__0xae1d(1274));_0xac2=338 elseif _0xac2 == 192 then _0x1ca=Instance.new(__0xae1d(1275));_0xac2=199 elseif _0xac2 == 199 then _0x1ca.Size=UDim2.fromOffset(16 * 4 + 3,4 + 14);_0xac2=206 elseif _0xac2 == 631 then _0x3b2.BackgroundColor3=Color3.fromRGB(3 + 1,2 + 2,18 + 8 - 22);_0xac2=641 else break end end end;_0xacc=1555 elseif _0xacc == 1228 then if false then local _0x8e2=nil end;_0xacc=1233 elseif _0xacc == 2178 then _0x8fc=math.random() * 0;_0xacc=2188 elseif _0xacc == 3601 then _0x3b9(_0x3d0,__0xae1d(1276),__0xae1d(1277));_0xacc=3608 elseif _0xacc == 893 then _0x356.BackgroundTransparency=2 - 1;_0xacc=900 elseif _0xacc == 4204 then _0x3e1=function() local _0x8b7,_0x8b9;local _0xaca=5;while true do if _0xaca == 19 then _0x8b7=(74 + 0) * 1;_0xaca=23 elseif _0xaca == 23 then _0x17d.Visible=not _0x17d.Visible;_0xaca=31 elseif _0xaca == 31 then _0x3e0=_0x17d.Visible;_0xaca=39 elseif _0xaca == 39 then if 1 > 2 then local _0x8b8=nil end;_0xaca=44 elseif _0xaca == 44 then XCFeatureState.menuOpen=_0x17d.Visible;_0xaca=51 elseif _0xaca == 10 then _0x35d();_0xaca=19 elseif _0xaca == 51 then _0x8b9=(87 + 0) * 1;_0xaca=72 elseif _0xaca == 5 then _0x38e();_0xaca=10 else break end end end;_0xacc=4211 elseif _0xacc == 2507 then _0x384(_0x3d1,__0xae1d(1278),__0xae1d(1279),0.4,2.5,0.05,__0xae1d(1280));_0xacc=2515 elseif _0xacc == 3628 then if 1 > 2 then local _0x92c=nil end;_0xacc=3636 elseif _0xacc == 974 then _0x8d8=(18 + 0) * 1;_0xacc=982 elseif _0xacc == 1762 then _0x3b9(_0x3d0,__0xae1d(1281),__0xae1d(1282));_0xacc=1768 elseif _0xacc == 2210 then _0x3b9(_0x3d1,__0xae1d(1283),__0xae1d(1284));_0xacc=2214 elseif _0xacc == 2327 then _0x3b9(_0x3d0,__0xae1d(1285),__0xae1d(1286));_0xacc=2334 elseif _0xacc == 80 then _0x33d.Name=__0xae1d(1287);_0xacc=87 elseif _0xacc == 660 then _0x34d=nil;_0xacc=669 elseif _0xacc == 3271 then if 1 > 2 then local _0x920=nil end;_0xacc=3281 elseif _0xacc == 4427 then if 1 > 2 then local _0x945=nil end;_0xacc=4445 elseif _0xacc == 3811 then _0x3b9(_0x3d0,__0xae1d(1288),__0xae1d(1289));_0xacc=3819 elseif _0xacc == 2713 then _0x3b9(_0x3d0,__0xae1d(1290),__0xae1d(1291));_0xacc=2720 elseif _0xacc == 1895 then _0x3b9(_0x3d1,__0xae1d(1292),__0xae1d(1293));_0xacc=1902 elseif _0xacc == 267 then _0x33f.Parent=_0x17d;_0xacc=278 elseif _0xacc == 2003 then task.wait();_0xacc=2014 elseif _0xacc == 2864 then _0x384(_0x3d0,__0xae1d(1294),__0xae1d(1295),-(2 - 1),2 - 1,0.05,"",function() updateWorldChanger() end);_0xacc=2873 elseif _0xacc == 2077 then _0x36a(_0x3d0,__0xae1d(1296));_0xacc=2083 elseif _0xacc == 1740 then _0x8f0=math.random() * 0;_0xacc=1747 elseif _0xacc == 1086 then _0x357.Parent=_0x354;_0xacc=1096 elseif _0xacc == 3881 then _0x3d4.Size=UDim2.new(2 - 1,1 - 1,1 - 1,5 + 19);_0xacc=3886 elseif _0xacc == 844 then _0x355.Font=Enum.Font.Code;_0xacc=849 elseif _0xacc == 1529 then _0x3a4=function(_0x2,_0x6,_0x10,_0x392,_0x37b) local _0x1db,_0x83f,_0x840,_0x100,_0x391,_0x3a5,_0x3a6,_0x84a,_0x3a7,_0x84c,_0x3a8,_0x1ce;local _0xabe=5;while true do if _0xabe == 387 then _0x84c=math.random() * 0;_0xabe=394 elseif _0xabe == 575 then _0x375(_0x1db,_0x6 .. __0xae1d(1297) .. _0x10);_0xabe=592 elseif _0xabe == 375 then if false then local _0x84b=nil end;_0xabe=383 elseif _0xabe == 568 then _0x360(_0x1db,_0x10);_0xabe=575 elseif _0xabe == 521 then _0x3a8.Parent=_0x3a6;_0xabe=530 elseif _0xabe == 39 then _0x840=(1 + 0) * 1;_0xabe=43 elseif _0xabe == 534 then _0x1ce=function(_0x11) local _0xabd=2;while true do if _0xabd == 2 then do local _0x83d=629 end;_0xabd=8 elseif _0xabd == 8 then _0x3a5.Text=tostring(_0x11);_0xabd=19 elseif _0xabd == 19 then _0x3a5.TextColor3=_0x33b.Text;_0xabd=34 else break end end end;_0xabe=543 elseif _0xabe == 547 then _0x34b[_0x10]=_0x34b[_0x10] or {};_0xabe=554 elseif _0xabe == 365 then _0x3a6.Parent=_0x391;_0xabe=375 elseif _0xabe == 508 then _0x3a8.BorderSizePixel=1 - 1;_0xabe=516 elseif _0xabe == 145 then do local _0x843=471 end;_0xabe=148 elseif _0xabe == 276 then _0x3a5.Font=Enum.Font.Code;_0xabe=284 elseif _0xabe == 352 then _0x3a6.Position=UDim2.new(2 - 1,-(10 * 2 + 0),0.5,-(5 + 1));_0xabe=358 elseif _0xabe == 19 then _0x1db=Instance.new(__0xae1d(1298));_0xabe=26 elseif _0xabe == 341 then _0x84a=(17 + 0) * 1;_0xabe=344 elseif _0xabe == 401 then _0x3a7.Position=UDim2.fromOffset(1 + 9 - 5,2 + 34 - 31);_0xabe=410 elseif _0xabe == 242 then _0x3a5.Size=UDim2.new(2 - 1,-(38 + 35 - 43),2 - 1,1 - 1);_0xabe=247 elseif _0xabe == 263 then _0x3a5.TextColor3=_0x33b.Text;_0xabe=270 elseif _0xabe == 563 then _0x391.Activated:Connect(function() _0x390(_0x391,_0x10,_0x392,_0x37b,_0x1ce) end);_0xabe=568 elseif _0xabe == 486 then _0x3a8.Size=UDim2.fromOffset(6 + 0,1.4);_0xabe=493 elseif _0xabe == 194 then if false then local _0x845=nil end;_0xabe=198 elseif _0xabe == 436 then _0x3a7.BorderSizePixel=1 - 1;_0xabe=442 elseif _0xabe == 113 then _0x100.Font=Enum.Font.Code;_0xabe=124 elseif _0xabe == 8 then _0x2=_0x350[_0x2] or _0x2;_0xabe=19 elseif _0xabe == 317 then if false then local _0x849=nil end;_0xabe=323 elseif _0xabe == 155 then _0x391.Size=UDim2.new(2 - 1,1 - 1,1 - 1,13 + 16 - 7);_0xabe=165 elseif _0xabe == 82 then _0x100.Size=UDim2.new(2 - 1,1 - 1,1 - 1,3 + 11);_0xabe=87 elseif _0xabe == 304 then _0x3a5.TextTruncate=Enum.TextTruncate.AtEnd;_0xabe=310 elseif _0xabe == 459 then _0x3a7.Parent=_0x3a6;_0xabe=467 elseif _0xabe == 394 then _0x3a7.AnchorPoint=Vector2.new(0.5,0.5);_0xabe=401 elseif _0xabe == 148 then _0x391=Instance.new(__0xae1d(1299));_0xabe=155 elseif _0xabe == 383 then _0x3a7=Instance.new(__0xae1d(1300));_0xabe=387 elseif _0xabe == 60 then _0x1db.Active=true;_0xabe=66 elseif _0xabe == 418 then do local _0x84d=488 end;_0xabe=424 elseif _0xabe == 498 then if 1 > 2 then local _0x850=nil end;_0xabe=508 elseif _0xabe == 442 then if 1 > 2 then local _0x84f=nil end;_0xabe=450 elseif _0xabe == 74 then _0x100=Instance.new(__0xae1d(1301));_0xabe=82 elseif _0xabe == 450 then _0x3a7.Rotation=57 + 25 - 40;_0xabe=459 elseif _0xabe == 128 then _0x100.TextXAlignment=Enum.TextXAlignment.Left;_0xabe=136 elseif _0xabe == 136 then _0x100.Parent=_0x1db;_0xabe=145 elseif _0xabe == 124 then _0x100.TextSize=2 * 4 + 2;_0xabe=128 elseif _0xabe == 254 then _0x3a5.BackgroundTransparency=2 - 1;_0xabe=263 elseif _0xabe == 54 then do local _0x841=236 end;_0xabe=60 elseif _0xabe == 358 then _0x3a6.BackgroundTransparency=2 - 1;_0xabe=365 elseif _0xabe == 218 then if 1 > 2 then local _0x846=nil end;_0xabe=229 elseif _0xabe == 229 then _0x391.Parent=_0x1db;_0xabe=236 elseif _0xabe == 344 then _0x3a6.Size=UDim2.fromOffset(12 + 2,11 + 1);_0xabe=352 elseif _0xabe == 29 then _0x1db.Size=UDim2.new(2 - 1,1 - 1,1 - 1,60 + 18 - 40);_0xabe=39 elseif _0xabe == 554 then table.insert(_0x34b[_0x10],_0x1ce);_0xabe=563 elseif _0xabe == 410 then _0x3a7.Size=UDim2.fromOffset(3 + 3,1.4);_0xabe=418 elseif _0xabe == 99 then _0x100.Text=_0x6;_0xabe=109 elseif _0xabe == 43 then _0x1db.BackgroundTransparency=2 - 1;_0xabe=54 elseif _0xabe == 109 then _0x100.TextColor3=_0x33b.Text;_0xabe=113 elseif _0xabe == 87 then if 1 > 2 then local _0x842=nil end;_0xabe=92 elseif _0xabe == 212 then _0x391.AutoButtonColor=false;_0xabe=218 elseif _0xabe == 467 then _0x3a8=Instance.new(__0xae1d(1302));_0xabe=472 elseif _0xabe == 424 then _0x3a7.BackgroundColor3=_0x33b.Muted;_0xabe=429 elseif _0xabe == 66 then _0x1db.Parent=_0x2;_0xabe=74 elseif _0xabe == 516 then _0x3a8.Rotation=-(39 + 3);_0xabe=521 elseif _0xabe == 165 then do local _0x844=830 end;_0xabe=172 elseif _0xabe == 236 then _0x3a5=Instance.new(__0xae1d(1303));_0xabe=242 elseif _0xabe == 26 then _0x83f=(46 + 0) * 1;_0xabe=29 elseif _0xabe == 330 then _0x3a6.Name=__0xae1d(1304);_0xabe=341 elseif _0xabe == 288 then do local _0x848=264 end;_0xabe=296 elseif _0xabe == 204 then _0x391.Text="";_0xabe=212 elseif _0xabe == 296 then _0x3a5.TextXAlignment=Enum.TextXAlignment.Left;_0xabe=304 elseif _0xabe == 323 then _0x3a6=Instance.new(__0xae1d(1305));_0xabe=330 elseif _0xabe == 429 then if false then local _0x84e=nil end;_0xabe=436 elseif _0xabe == 270 then do local _0x847=999 end;_0xabe=276 elseif _0xabe == 179 then _0x391.BackgroundColor3=_0x33b.Control;_0xabe=186 elseif _0xabe == 198 then _0x391.BorderSizePixel=2 - 1;_0xabe=204 elseif _0xabe == 5 then if 1 > 2 then local _0x83e=nil end;_0xabe=8 elseif _0xabe == 92 then _0x100.BackgroundTransparency=2 - 1;_0xabe=99 elseif _0xabe == 247 then _0x3a5.Position=UDim2.fromOffset(8 + 0,1 - 1);_0xabe=254 elseif _0xabe == 530 then if 1 > 2 then local _0x851=nil end;_0xabe=534 elseif _0xabe == 186 then _0x391.BorderColor3=_0x33b.Black;_0xabe=194 elseif _0xabe == 543 then _0x1ce(_0x8[_0x10] or _0x392[2 - 1]);_0xabe=547 elseif _0xabe == 284 then _0x3a5.TextSize=9 + 1;_0xabe=288 elseif _0xabe == 481 then _0x3a8.Position=UDim2.fromOffset(1 * 9 + 0,1 + 4);_0xabe=486 elseif _0xabe == 472 then _0x3a8.AnchorPoint=Vector2.new(0.5,0.5);_0xabe=481 elseif _0xabe == 172 then _0x391.Position=UDim2.fromOffset(1 - 1,2 * 6 + 3);_0xabe=179 elseif _0xabe == 310 then _0x3a5.Parent=_0x391;_0xabe=317 elseif _0xabe == 493 then _0x3a8.BackgroundColor3=_0x33b.Muted;_0xabe=498 else break end end end;_0xacc=1535 elseif _0xacc == 114 then _0x33d.DisplayOrder=59 + 28 - 37;_0xacc=121 elseif _0xacc == 1452 then _0x37a=function(_0x2,_0x6,_0x10,_0x37b) local _0x37c,_0x802,_0x36b,_0x37d,_0x803,_0x37e,_0x131,_0x37f,_0x380,_0x381,_0x382,_0x1ce,_0x80a;local _0xab6=3;while true do if _0xab6 == 327 then _0x37f=Instance.new(__0xae1d(1306));_0xab6=332 elseif _0xab6 == 296 then _0x131.BackgroundColor3=_0x33b.Control2;_0xab6=303 elseif _0xab6 == 25 then _0x37c.Name=_0x10;_0xab6=31 elseif _0xab6 == 284 then _0x131.Size=UDim2.fromOffset(22 + 47 - 42,23 + 3 - 13);_0xab6=288 elseif _0xab6 == 492 then _0x37c.Activated:Connect(function() if os.clock() < (_0x37c:GetAttribute(__0xae1d(1307)) or 1 - 1) then return end;_0x8[_0x10]=not _0x8[_0x10];_0x377(_0x10,_0x8[_0x10]);if _0x37b then _0x37b(_0x8[_0x10]) end;_0x352();if _0x10 ~= __0xae1d(1308) then XCNotify(_0x6,_0x8[_0x10] and __0xae1d(1309) or __0xae1d(1310),_0x8[_0x10] and __0xae1d(1311) or __0xae1d(1312),1.5) end end);_0xab6=501 elseif _0xab6 == 451 then _0x1ce(_0x8[_0x10] == true);_0xab6=460 elseif _0xab6 == 240 then _0x37e=Instance.new(__0xae1d(1313));_0xab6=250 elseif _0xab6 == 152 then _0x37d.Name=__0xae1d(1314);_0xab6=155 elseif _0xab6 == 471 then _0x80a=math.random() * 0;_0xab6=480 elseif _0xab6 == 169 then _0x37d.BackgroundColor3=_0x33b.Control;_0xab6=180 elseif _0xab6 == 79 then _0x36b.Size=UDim2.new(2 - 1,-(21 + 55),2 - 1,1 - 1);_0xab6=88 elseif _0xab6 == 501 then _0x360(_0x37c,_0x10);_0xab6=505 elseif _0xab6 == 52 then _0x37c.Text="";_0xab6=59 elseif _0xab6 == 213 then if 1 > 2 then local _0x804=nil end;_0xab6=221 elseif _0xab6 == 387 then do local _0x808=661 end;_0xab6=397 elseif _0xab6 == 226 then _0x37d.Parent=_0x37c;_0xab6=232 elseif _0xab6 == 250 then _0x37e.CornerRadius=UDim.new(1 - 1,2 + 1);_0xab6=254 elseif _0xab6 == 134 then _0x36b.Parent=_0x37c;_0xab6=145 elseif _0xab6 == 117 then _0x36b.Font=Enum.Font.Code;_0xab6=120 elseif _0xab6 == 463 then _0x34b[_0x10]=_0x34b[_0x10] or {};_0xab6=471 elseif _0xab6 == 408 then _0x381=Instance.new(__0xae1d(1315));_0xab6=415 elseif _0xab6 == 275 then do local _0x806=673 end;_0xab6=284 elseif _0xab6 == 127 then _0x36b.TextXAlignment=Enum.TextXAlignment.Left;_0xab6=134 elseif _0xab6 == 303 then _0x131.BorderColor3=_0x33b.Black;_0xab6=309 elseif _0xab6 == 120 then _0x36b.TextSize=3 * 3 + 2;_0xab6=127 elseif _0xab6 == 180 then _0x803=(65 + 0) * 1;_0xab6=186 elseif _0xab6 == 3 then _0x2=_0x350[_0x2] or _0x2;_0xab6=9 elseif _0xab6 == 197 then _0x37d.Font=Enum.Font.Code;_0xab6=206 elseif _0xab6 == 288 then _0x131.Position=UDim2.new(2 - 1,-(14 + 14),0.5,-(13 + 2 - 9));_0xab6=296 elseif _0xab6 == 95 then _0x36b.BackgroundTransparency=2 - 1;_0xab6=101 elseif _0xab6 == 232 then do local _0x805=517 end;_0xab6=240 elseif _0xab6 == 318 then _0x131.Parent=_0x37c;_0xab6=327 elseif _0xab6 == 383 then _0x380.BackgroundColor3=_0x33b.Muted;_0xab6=387 elseif _0xab6 == 505 then _0x375(_0x37c,_0x6 .. __0xae1d(1316) .. _0x10);_0xab6=516 elseif _0xab6 == 101 then _0x36b.Text=_0x6;_0xab6=106 elseif _0xab6 == 422 then do local _0x809=402 end;_0xab6=430 elseif _0xab6 == 397 then _0x380.BorderSizePixel=1 - 1;_0xab6=403 elseif _0xab6 == 309 then _0x131.BorderSizePixel=2 - 1;_0xab6=318 elseif _0xab6 == 516 then return _0x37c elseif _0xab6 == 194 then _0x37d.BorderSizePixel=1 - 1;_0xab6=197 elseif _0xab6 == 9 then if 1 > 2 then local _0x801=nil end;_0xab6=17 elseif _0xab6 == 254 then _0x37e.Parent=_0x37d;_0xab6=261 elseif _0xab6 == 17 then _0x37c=Instance.new(__0xae1d(1317));_0xab6=25 elseif _0xab6 == 337 then _0x37f.Parent=_0x131;_0xab6=345 elseif _0xab6 == 38 then _0x37c.Size=UDim2.new(2 - 1,1 - 1,1 - 1,_0x18.TouchEnabled and 29 + 45 - 46 or 25 + 31 - 34);_0xab6=45 elseif _0xab6 == 221 then _0x37d.TextXAlignment=Enum.TextXAlignment.Center;_0xab6=226 elseif _0xab6 == 353 then _0x380.Name=__0xae1d(1318);_0xab6=361 elseif _0xab6 == 460 then _0x13[_0x10]=_0x1ce;_0xab6=463 elseif _0xab6 == 430 then _0x381.Parent=_0x380;_0xab6=437 elseif _0xab6 == 45 then _0x37c.BackgroundTransparency=2 - 1;_0xab6=52 elseif _0xab6 == 345 then _0x380=Instance.new(__0xae1d(1319));_0xab6=353 elseif _0xab6 == 369 then _0x380.Size=UDim2.fromOffset(9 + 0,9 + 0);_0xab6=372 elseif _0xab6 == 437 then _0x382=function() local _0x7fd,_0xa4,_0x5,_0x383;local _0xab4=3;while true do if _0xab4 == 12 then _0xa4,_0x5=_0x379(_0x10);_0xab4=19 elseif _0xab4 == 39 then if _0x37d.TextColor3 ~= _0x5 then if 1 > 2 then local _0x7fa=nil end;_0x37d.TextColor3=_0x5;local _0x7fb=math.random() * 0 end;_0xab4=44 elseif _0xab4 == 19 then _0x383=_0xa4 == __0xae1d(1320) and Color3.fromRGB(11 + 34,9 + 9,17 + 35 - 34) or (_0xa4 == __0xae1d(1321) or _0xa4 == __0xae1d(1322)) and Color3.fromRGB(10 * 4 + 3,4 * 8 + 2,2 + 29 - 14) or _0x33b.Control;_0xab4=25 elseif _0xab4 == 30 then if 1 > 2 then local _0x7fe=nil end;_0xab4=39 elseif _0xab4 == 3 then _0x7fd=(95 + 0) * 1;_0xab4=12 elseif _0xab4 == 25 then if _0x37d.Text ~= _0xa4 then _0x37d.Text=_0xa4 end;_0xab4=30 elseif _0xab4 == 44 then if _0x37d.BackgroundColor3 ~= _0x383 then _0x37d.BackgroundColor3=_0x383;if 1 > 2 then local _0x7fc=nil end end;_0xab4=63 else break end end end;_0xab6=445 elseif _0xab6 == 268 then _0x131.Name=__0xae1d(1323);_0xab6=275 elseif _0xab6 == 59 then _0x37c.AutoButtonColor=false;_0xab6=66 elseif _0xab6 == 415 then _0x381.CornerRadius=UDim.new(2 - 1,1 - 1);_0xab6=422 elseif _0xab6 == 372 then _0x380.Position=UDim2.new(1 - 1,1 + 1,0.5,-(28 + 5 - 29));_0xab6=383 elseif _0xab6 == 261 then _0x131=Instance.new(__0xae1d(1324));_0xab6=268 elseif _0xab6 == 165 then _0x37d.Position=UDim2.new(2 - 1,-(104 + 13 - 50),0.5,-(3 + 4));_0xab6=169 elseif _0xab6 == 155 then _0x37d.Size=UDim2.fromOffset(43 + 20 - 29,7 + 7);_0xab6=165 elseif _0xab6 == 186 then _0x37d.BackgroundTransparency=0.15;_0xab6=194 elseif _0xab6 == 88 then _0x36b.Position=UDim2.fromOffset(1 - 1,1 - 1);_0xab6=95 elseif _0xab6 == 31 then _0x802=(86 + 0) * 1;_0xab6=38 elseif _0xab6 == 66 then _0x37c.Parent=_0x2;_0xab6=75 elseif _0xab6 == 361 then if 1 > 2 then local _0x807=nil end;_0xab6=369 elseif _0xab6 == 332 then _0x37f.CornerRadius=UDim.new(2 - 1,1 - 1);_0xab6=337 elseif _0xab6 == 488 then table.insert(_0x351,function() if _0x37c.Parent then _0x382() end end);_0xab6=492 elseif _0xab6 == 206 then _0x37d.TextSize=5 + 3;_0xab6=213 elseif _0xab6 == 106 then _0x36b.TextColor3=_0x33b.Text;_0xab6=117 elseif _0xab6 == 445 then _0x1ce=function(_0x11) local _0x7ff,_0x800;local _0xab5=4;while true do if _0xab5 == 18 then _0x380.BackgroundColor3=_0x11 and _0x33b.Lime or _0x33b.Muted;_0xab5=23 elseif _0xab5 == 4 then _0x131.BackgroundColor3=_0x11 and Color3.fromRGB(41 + 35,88 + 20 - 6,1 - 1) or _0x33b.Control2;_0xab5=12 elseif _0xab5 == 30 then _0x36b.TextColor3=_0x11 and _0x33b.White or _0x33b.Text;_0xab5=38 elseif _0xab5 == 12 then _0x7ff=(65 + 0) * 1;_0xab5=18 elseif _0xab5 == 45 then _0x382();_0xab5=62 elseif _0xab5 == 23 then _0x380.Position=_0x11 and UDim2.new(2 - 1,-(1 + 10),0.5,-(1 * 3 + 1)) or UDim2.new(1 - 1,11 + 16 - 25,0.5,-(1 * 4 + 0));_0xab5=30 elseif _0xab5 == 38 then _0x800=math.random() * 0;_0xab5=45 else break end end end;_0xab6=451 elseif _0xab6 == 145 then _0x37d=Instance.new(__0xae1d(1325));_0xab6=152 elseif _0xab6 == 403 then _0x380.Parent=_0x131;_0xab6=408 elseif _0xab6 == 480 then table.insert(_0x34b[_0x10],_0x1ce);_0xab6=488 elseif _0xab6 == 75 then _0x36b=Instance.new(__0xae1d(1326));_0xab6=79 else break end end end;_0xacc=1460 elseif _0xacc == 971 then _0x356.TextSize=5 * 2 + 0;_0xacc=974 elseif _0xacc == 1620 then if false then local _0x8ec=nil end;_0xacc=1628 elseif _0xacc == 1781 then _0x3b9(_0x3d0,__0xae1d(1327),__0xae1d(1328));_0xacc=1788 elseif _0xacc == 2361 then _0x384(_0x3d0,__0xae1d(1329),__0xae1d(1330),0.42,0.68,0.02,__0xae1d(1331));_0xacc=2370 elseif _0xacc == 3435 then _0x36a(_0x3d0,__0xae1d(1332));_0xacc=3440 elseif _0xacc == 1656 then _0x3cb=function(_0x100,_0x3cc,_0x3cd) local _0x365=_0x348[_0x100];return _0x366(_0x365,_0x3cc,1 - 1,0.49),_0x366(_0x365,_0x3cd,0.51,0.49) end;_0xacc=1663 elseif _0xacc == 389 then _0x344=Instance.new(__0xae1d(1333));_0xacc=393 elseif _0xacc == 3868 then _0x3d3=function(_0x11) _0x11=tostring(_0x11 or __0xae1d(1334)):gsub(__0xae1d(1335),""):sub(2 - 1,38 + 10);return _0x11 ~= "" and _0x11 or __0xae1d(1336) end;_0xacc=3873 elseif _0xacc == 3106 then _0x384(_0x3d1,__0xae1d(1337),__0xae1d(1338),7 + 31 - 33,25 * 7 + 5,2 - 1,"");_0xacc=3110 elseif _0xacc == 1734 then _0x3b9(_0x3d0,__0xae1d(1339),__0xae1d(1340));_0xacc=1740 elseif _0xacc == 2448 then _0x3b9(_0x3d0,__0xae1d(1341),__0xae1d(1342));_0xacc=2452 elseif _0xacc == 3154 then _0x384(_0x3d1,__0xae1d(1343),__0xae1d(1344),0.05,0.5,0.01,"");_0xacc=3160 else break end end end;_0xae0=4236 elseif _0xae0 == 2902 then _0x1e7.Name=__0xae1d(1345);_0xae0=2907 elseif _0xae0 == 3027 then _0x1e9.Thickness=2 - 1;_0xae0=3032 elseif _0xae0 == 1592 then _0x149=Instance.new(__0xae1d(1346),_0x147);_0xae0=1598 elseif _0xae0 == 1286 then _0x128=nil;_0xae0=1293 elseif _0xae0 == 3950 then function resetXCCharacterInputState() local _0x7a7;local _0xa9e=3;while true do if _0xa9e == 45 then _0x13f.RandomYaw=nil;_0xa9e=50 elseif _0xa9e == 38 then _0x13f.AntiLastStep=nil;_0xa9e=45 elseif _0xa9e == 26 then _0x13f.AntiCharacter=nil;_0xa9e=29 elseif _0xa9e == 29 then _0x13f.AntiStarted=nil;_0xa9e=38 elseif _0xa9e == 18 then _0x13f.LastJumpDown=false;_0xa9e=26 elseif _0xa9e == 8 then _0x13f.GroundSince=nil;_0xa9e=18 elseif _0xa9e == 59 then _0x7a7=(68 + 0) * 1;_0xa9e=73 elseif _0xa9e == 3 then _0x13f.Character=nil;_0xa9e=8 elseif _0xa9e == 50 then _0x13f.AntiFireUntil=1 - 1;_0xa9e=59 else break end end end;_0xae0=3960 elseif _0xae0 == 4345 then _0x3f1=false;_0xae0=4350 elseif _0xae0 == 383 then _0x2b=false;_0xae0=388 elseif _0xae0 == 1795 then _0x152.Parent=_0x151;_0xae0=1804 elseif _0xae0 == 2348 then function buildJumpRing(_0x195,_0x196,_0x15a,_0x197) local _0x198,_0x5a4,_0x199,_0x19a,_0x19b,_0x19c,_0x19d,_0x5a6;local _0xa69=3;while true do if _0xa69 == 78 then return _0x198,_0x199 elseif _0xa69 == 31 then _0x19a=math.pi * (4 + 1 - 3) / _0x195;_0xa69=36 elseif _0xa69 == 3 then _0x198=Instance.new(__0xae1d(1347));_0xa69=10 elseif _0xa69 == 52 then _0x19c=_0x197 or 0.03;_0xa69=58 elseif _0xa69 == 10 then _0x5a4=(96 + 0) * 1;_0xa69=16 elseif _0xa69 == 45 then if false then local _0x5a5=nil end;_0xa69=52 elseif _0xa69 == 16 then _0x198.Name=__0xae1d(1348);_0xa69=24 elseif _0xa69 == 36 then _0x19b=(25 + 6 - 29) * _0x196 * math.sin(_0x19a / (3 + 11 - 12)) + 0.03;_0xa69=45 elseif _0xa69 == 75 then for _0x154=2 - 1,_0x195 do local _0xb1=(_0x154 - (2 - 1)) * _0x19a;local _0xaf=Instance.new(__0xae1d(1349));_0xaf.Name=__0xae1d(1350) .. _0x154;_0xaf.Size=Vector3.new(_0x19d,_0x19c,_0x19b);_0xaf.Anchored=true;_0xaf.CanCollide=false;_0xaf.CanQuery=false;_0xaf.CanTouch=false;if false then local _0x5a0=nil end;_0xaf.CastShadow=false;do local _0x5a1=706 end;_0xaf.Material=Enum.Material.Neon;if false then local _0x5a2=nil end;_0xaf.Color=_0x38.Accent;_0xaf.Transparency=1 - 1;do local _0x5a3=316 end;_0xaf.Parent=_0x198;_0x199[_0x154]={Part=_0xaf,Angle=_0xb1,BaseChord=_0x19b,BaseThick=_0x19d,BaseHeight=_0x19c} end;_0xa69=78 elseif _0xa69 == 64 then _0x5a6=(53 + 0) * 1;_0xa69=75 elseif _0xa69 == 24 then _0x199={};_0xa69=31 elseif _0xa69 == 58 then _0x19d=_0x15a or 0.06;_0xa69=64 else break end end end;_0xae0=2355 elseif _0xae0 == 1544 then _0x147.ResetOnSpawn=false;_0xae0=1549 elseif _0xae0 == 830 then _0x97={isShooting=false};_0xae0=834 elseif _0xae0 == 107 then for _0x10,_0x12 in pairs(_0xd) do if type(_0x12) == __0xae1d(1351) then _0x8[_0x10]=_0x12 end end;_0xae0=114 elseif _0xae0 == 1598 then if 1 > 2 then local _0x9c4=nil end;_0xae0=1605 elseif _0xae0 == 796 then if _0xe then _0xe.XCPrepareSilentShotPayloadV23=_0x69;local _0x474=math.random() * 0;_0xe.XCPrepareSilentSendPayloadV28=function(_0x62) if _0x5e then return _0x62,false end;return _0x69(_0x62,true) end end;_0xae0=801 elseif _0xae0 == 3435 then function hideXCGrenadeDanger(_0x62) for _0x63,_0x156 in ipairs(_0x62.Segments) do _0x156.Visible=false;if false then local _0x64e=nil end end;_0x62.Label.Visible=false end;_0xae0=3438 elseif _0xae0 == 529 then _0x37={[__0xae1d(1352)]={Name=__0xae1d(1353),Background=Color3.fromRGB(8 + 10,11 + 7,4 + 18),Sidebar=Color3.fromRGB(4 + 18,23 + 41 - 42,3 * 9 + 0),CardBg=Color3.fromRGB(14 + 14,18 + 10,9 + 25),Accent=Color3.fromRGB(66 + 111 - 25,178 + 26,1 - 1),AccentHover=Color3.fromRGB(105 + 75,126 + 114 - 15,2 * 10 + 5),TextPrimary=Color3.fromRGB(90 + 150,187 + 53,236 + 38 - 29),TextSecondary=Color3.fromRGB(41 + 155 - 46,21 * 7 + 3,17 * 9 + 7),Border=Color3.fromRGB(5 * 8 + 5,19 + 26,58 + 24 - 27),GridSquare=Color3.fromRGB(8 * 3 + 1,3 * 7 + 4,22 + 8),Enemy_Accent=Color3.fromRGB(125 + 70 - 43,83 + 141 - 20,1 - 1),Enemy_Fill=Color3.fromRGB(13 + 99,57 + 103 - 9,1 - 1),Enemy_Hidden=Color3.fromRGB(113 + 21 - 22,46 + 104 - 34,28 + 94),NametagTextColor=Color3.fromRGB(89 + 146,157 + 81 - 3,23 * 10 + 5),HealthHigh=Color3.fromRGB(93 + 59,25 * 8 + 4,1 - 1),HealthMid=Color3.fromRGB(186 + 21 - 2,161 + 20 - 11,50 + 14 - 22),HealthLow=Color3.fromRGB(171 + 71 - 37,27 + 45,72 + 0),MolotovColor=Color3.fromRGB(72 + 214 - 31,88 + 7,8 * 4 + 3),SmokeColor=Color3.fromRGB(224 + 3 - 47,26 * 7 + 3,59 + 136),HEColor=Color3.fromRGB(2 + 253,49 + 10 - 14,88 + 15 - 48)}};_0xae0=537 elseif _0xae0 == 3200 then _0x1ed.TextSize=6 + 15 - 12;_0xae0=3211 elseif _0xae0 == 3001 then if 1 > 2 then local _0x9f1=nil end;_0xae0=3004 elseif _0xae0 == 1605 then _0x149.Name=__0xae1d(1354);_0xae0=1611 elseif _0xae0 == 1702 then _0x151.IgnoreGuiInset=true;_0xae0=1710 elseif _0xae0 == 981 then _0xbb=nil;_0xae0=990 elseif _0xae0 == 3936 then _0x2ef=false;_0xae0=3945 elseif _0xae0 == 654 then _0x55=nil;_0xae0=659 elseif _0xae0 == 4785 then if type(getgenv) == __0xae1d(1355) then pcall(function() getgenv().XCConfigSystem=_0x41d end) end;_0xae0=4791 elseif _0xae0 == 3851 then if 1 > 2 then local _0xa0e=nil end;_0xae0=3859 elseif _0xae0 == 3077 then _0x1eb.FillDirection=Enum.FillDirection.Horizontal;_0xae0=3083 elseif _0xae0 == 1472 then if 1 > 2 then local _0x9c1=nil end;_0xae0=1481 elseif _0xae0 == 3571 then function renderXCSoundPositionEsp() local _0x118;local _0xa88=2;while true do if _0xa88 == 15 then for _0xc7=#_0x14f,2 - 1,-(2 - 1) do local _0x1b7=_0x14f[_0xc7];local _0x1b0=(_0x118 - _0x1b7.Created) / _0x1b7.Duration;do local _0x6a3=630 end;if not _0x8.soundPositionEspEnabled or _0x1b0 >= 2 - 1 then do local _0x69b=418 end;destroyXCSoundPulse(_0x1b7);table.remove(_0x14f,_0xc7) else local _0x23e,_0x231=_0x22:WorldToViewportPoint(_0x1b7.Position);if 1 > 2 then local _0x6a1=nil end;if _0x231 and _0x23e.Z > 1 - 1 then if 1 > 2 then local _0x69c=nil end;local _0x4=5 + 7 + _0x1b0 * (1 + 40 - 7);_0x1b7.Root.Position=UDim2.fromOffset(_0x23e.X,_0x23e.Y);_0x1b7.Ring.Size=UDim2.fromOffset(_0x4,_0x4);local _0x69d=math.random() * 0;_0x1b7.Stroke.Color=_0x38.Accent;local _0x69e=(37 + 0) * 1;_0x1b7.Stroke.Transparency=math.clamp(_0x1b0,1 - 1,2 - 1);local _0x69f=(60 + 0) * 1;_0x1b7.Dot.BackgroundColor3=_0x38.Accent;_0x1b7.Dot.BackgroundTransparency=math.clamp(_0x1b0 * 0.8,1 - 1,2 - 1);_0x1b7.Label.TextColor3=_0x38.Accent;do local _0x6a0=59 end;_0x1b7.Label.TextTransparency=math.clamp(_0x1b0,1 - 1,2 - 1);_0x1b7.Label.BackgroundTransparency=0.28 + _0x1b0 * 0.72;_0x1b7.Root.Visible=true else _0x1b7.Root.Visible=false end;local _0x6a2=(28 + 0) * 1 end end;_0xa88=35 elseif _0xa88 == 10 then if false then local _0x6a4=nil end;_0xa88=15 elseif _0xa88 == 2 then _0x118=os.clock();_0xa88=10 else break end end end;_0xae0=3582 elseif _0xae0 == 747 then _0x60=function() local _0xa32=5;while true do if _0xa32 == 18 then return _0x8.silentAimEnabled == true elseif _0xa32 == 5 then if _0xe and _0xe.XCSilentAimRequestedV25 ~= nil then return _0xe.XCSilentAimRequestedV25 == true end;_0xa32=12 elseif _0xa32 == 12 then do local _0x456=682 end;_0xa32=18 else break end end end;_0xae0=752 elseif _0xae0 == 2774 then _0x1e2.Thickness=0.8;_0xae0=2780 elseif _0xae0 == 415 then _0x2f=1 - 1;_0xae0=424 elseif _0xae0 == 2042 then function refreshThirdPerson() if _0x8.thirdPersonEnabled then local _0x541=(80 + 0) * 1;applyThirdPerson() end end;_0xae0=2045 elseif _0xae0 == 4019 then function restoreDefaultHipHeight() local _0x86,_0x9b;local _0xaa3=2;while true do if _0xaa3 == 16 then if _0x9b then _0x9b.HipHeight=_0x143 and _0x142 or _0x9b.HipHeight end;_0xaa3=33 elseif _0xaa3 == 11 then _0x9b=_0x86 and _0x86:FindFirstChildOfClass(__0xae1d(1356));_0xaa3=16 elseif _0xaa3 == 2 then _0x86=_0x20.Character;_0xaa3=11 else break end end end;_0xae0=4030 elseif _0xae0 == 2556 then _0x9e4=(3 + 0) * 1;_0xae0=2564 elseif _0xae0 == 3266 then _0x1ef.AutomaticSize=Enum.AutomaticSize.X;_0xae0=3273 elseif _0xae0 == 519 then _0x36=_0x34 and _0x34.XCSavedPos or {OpenBtn=UDim2.new(0.5,-(11 * 4 + 1),1 - 1,3 + 12),MainFrame=UDim2.new(0.5,1 - 1,0.5,1 - 1)};_0xae0=529 elseif _0xae0 == 4006 then function isPlayerGrounded(_0x86,_0x1b4) local _0x75,_0xbe;local _0xaa1=3;while true do if _0xaa1 == 3 then _0x315.FilterDescendantsInstances={char,camera};_0xaa1=8 elseif _0xaa1 == 18 then _0xbe=Vector3.new(1 - 1,-3.2,1 - 1);_0xaa1=22 elseif _0xaa1 == 22 then return _0x1c:Raycast(_0x75,_0xbe,_0x315) ~= nil elseif _0xaa1 == 8 then _0x75=_0x1b4.Position;_0xaa1=18 else break end end end;_0xae0=4015 elseif _0xae0 == 3995 then _0xa12=math.random() * 0;_0xae0=3999 elseif _0xae0 == 2290 then do local _0x9da=915 end;_0xae0=2301 elseif _0xae0 == 1969 then if false then local _0x9cf=nil end;_0xae0=1977 elseif _0xae0 == 240 then _0x1e=game:GetService(__0xae1d(1357));_0xae0=248 elseif _0xae0 == 4173 then _0xa16=(40 + 0) * 1;_0xae0=4180 elseif _0xae0 == 2579 then function setXCCameraMode(_0x1ca,_0x12c) local _0x88,_0x5f0,_0x5f3,_0x1cf,_0x1d0,_0x5f4;local _0xa74=5;while true do if _0xa74 == 100 then XCFeatureState.cameraPitch=_0x1cf;_0xa74=106 elseif _0xa74 == 116 then _0x88.CameraType=Enum.CameraType.Scriptable;_0xa74=123 elseif _0xa74 == 129 then if not _0x18.TouchEnabled then _0x18.MouseBehavior=Enum.MouseBehavior.LockCenter;_0x18.MouseIconEnabled=false end;_0xa74=135 elseif _0xa74 == 106 then XCFeatureState.cameraYaw=_0x1d0;_0xa74=116 elseif _0xa74 == 18 then _0x5f0=math.random() * 0;_0xa74=26 elseif _0xa74 == 75 then XCFeatureState.cameraFrame=_0x88.CFrame;_0xa74=79 elseif _0xa74 == 31 then if not XCFeatureState.savedCameraState then XCFeatureState.savedCameraState={CameraType=_0x88.CameraType,CameraSubject=_0x88.CameraSubject,CFrame=_0x88.CFrame,MouseBehavior=_0x18.MouseBehavior,MouseIconEnabled=_0x18.MouseIconEnabled} end;_0xa74=36 elseif _0xa74 == 79 then XCFeatureState.cameraPosition=_0x88.CFrame.Position;_0xa74=86 elseif _0xa74 == 67 then if 1 > 2 then local _0x5f2=nil end;_0xa74=75 elseif _0xa74 == 141 then refreshXCToggle(__0xae1d(1358));_0xa74=159 elseif _0xa74 == 47 then _0x8.freecamEnabled=_0x1ca == __0xae1d(1359);_0xa74=51 elseif _0xa74 == 60 then _0x8.freelookEnabled=_0x1ca == __0xae1d(1360);_0xa74=67 elseif _0xa74 == 135 then refreshXCToggle(__0xae1d(1361));_0xa74=141 elseif _0xa74 == 11 then _0x88=_0x1c.CurrentCamera or _0x22;_0xa74=18 elseif _0xa74 == 26 then if not _0x88 then return end;_0xa74=31 elseif _0xa74 == 96 then _0x1cf,_0x1d0=_0x88.CFrame:ToOrientation();_0xa74=100 elseif _0xa74 == 36 then XCFeatureState.cameraMode=_0x1ca;_0xa74=47 elseif _0xa74 == 5 then if not _0x12c then if XCFeatureState.cameraMode == _0x1ca then stopXCCameraMode() end;if 1 > 2 then local _0x5ef=nil end;return end;_0xa74=11 elseif _0xa74 == 123 then _0x5f4=math.random() * 0;_0xa74=129 elseif _0xa74 == 51 then if false then local _0x5f1=nil end;_0xa74=60 elseif _0xa74 == 86 then _0x5f3=math.random() * 0;_0xa74=96 else break end end end;_0xae0=2585 elseif _0xae0 == 2355 then function updateJumpRingLayout(_0x199,_0x19e,_0x196,_0x19f) local _0x1a0,_0x1a1;local _0xa6a=2;while true do if _0xa6a == 2 then _0x1a0=#_0x199;_0xa6a=11 elseif _0xa6a == 11 then _0x1a1=_0x19f or 2 - 1;_0xa6a=16 elseif _0xa6a == 16 then for _0x154,_0x1a2 in ipairs(_0x199) do local _0xb1=_0x1a2.Angle;local _0x1a3=_0xb1 + math.pi * (2 + 0) / _0x1a0;local _0x1a4=_0x19e + Vector3.new(math.cos(_0xb1) * _0x196,1 - 1,math.sin(_0xb1) * _0x196);local _0x1a5=_0x19e + Vector3.new(math.cos(_0x1a3) * _0x196,1 - 1,math.sin(_0x1a3) * _0x196);local _0x1a6=(_0x1a4 + _0x1a5) * 0.5;local _0x1a7=_0x1a5 - _0x1a4.Magnitude + 0.02;if _0x1a2.Part and _0x1a2.Part.Parent then _0x1a2.Part.Size=Vector3.new(_0x1a2.BaseThick * _0x1a1,_0x1a2.BaseHeight,_0x1a7);if 1 > 2 then local _0x5a7=nil end;_0x1a2.Part.CFrame=CFrame.lookAt(_0x1a6,_0x1a5);do local _0x5a8=183 end end end;_0xa6a=39 else break end end end;_0xae0=2362 elseif _0xae0 == 4056 then function updateMobileSlideVisibility() if _0x150 then _0x150.Visible=_0x8.slideEnabled and _0x18.TouchEnabled;if not _0x8.slideEnabled then _0x317=false;_0x140=false;_0x141=Vector3.zero;updateMobileSlideIndicator() end end;if false then local _0x7b7=nil end end;_0xae0=4065 elseif _0xae0 == 486 then _0x35={};_0xae0=493 elseif _0xae0 == 1790 then do local _0x9c9=924 end;_0xae0=1795 elseif _0xae0 == 2677 then _0x9e7=(36 + 0) * 1;_0xae0=2683 elseif _0xae0 == 2913 then _0x1e7.DisplayOrder=1 + 19;_0xae0=2920 elseif _0xae0 == 4301 then reconnectThirdPersonCamera();_0xae0=4308 elseif _0xae0 == 1059 then _0xe0=function() local _0xe1,_0xe2;local _0xa42=3;while true do if _0xa42 == 22 then if _0xe1.Thread and _0xe1.Thread ~= _0xe2 then return nil end;_0xa42=29 elseif _0xa42 == 10 then if not _0xe1 then local _0x4a8=(8 + 0) * 1;return nil end;_0xa42=15 elseif _0xa42 == 15 then _0xe2=coroutine.running();_0xa42=22 elseif _0xa42 == 29 then return _0xe1 elseif _0xa42 == 3 then _0xe1=_0xe and _0xe.XCBulletInterceptContextV29 or _0xdf;_0xa42=10 else break end end end;_0xae0=1065 elseif _0xae0 == 843 then table.insert(_0x26,_0x98);_0xae0=848 elseif _0xae0 == 1947 then _0x9ce=math.random() * 0;_0xae0=1958 elseif _0xae0 == 2854 then _0x1e5=Instance.new(__0xae1d(1362),_0x1e4);_0xae0=2860 elseif _0xae0 == 3196 then _0x1ed.TextColor3=_0x38.Accent;_0xae0=3200 elseif _0xae0 == 2831 then _0x1e4.BorderSizePixel=1 - 1;_0xae0=2836 elseif _0xae0 == 1660 then _0x14f={};_0xae0=1669 elseif _0xae0 == 3327 then _0x9fb=(68 + 0) * 1;_0xae0=3333 elseif _0xae0 == 2843 then _0x1e4.Visible=false;_0xae0=2854 elseif _0xae0 == 2816 then _0x1e4.Position=UDim2.new(0.5,1 - 1,0.5,1 - 1);_0xae0=2822 elseif _0xae0 == 4112 then createMobileSlideButton();_0xae0=4119 elseif _0xae0 == 1354 then function buildSpectatorGui() local _0x505,_0x506,_0x507,_0x508,_0x46,_0x3e,_0x50a,_0x512,_0x513;local _0xa53=3;while true do if _0xa53 == 330 then _0x128=Instance.new(__0xae1d(1363),_0x127);_0xa53=339 elseif _0xa53 == 299 then _0x129.TextSize=4 + 21 - 17;_0xa53=305 elseif _0xa53 == 87 then _0x127.Size=UDim2.new(1 - 1,22 + 188,1 - 1,22 + 98);_0xa53=95 elseif _0xa53 == 317 then if false then local _0x511=nil end;_0xa53=327 elseif _0xa53 == 282 then _0x129.TextColor3=_0x38.TextSecondary;_0xa53=292 elseif _0xa53 == 352 then _0x128.BackgroundTransparency=2 - 1;_0xa53=360 elseif _0xa53 == 417 then _0x128.TextYAlignment=Enum.TextYAlignment.Top;_0xa53=434 elseif _0xa53 == 220 then _0x3e.Font=Enum.Font.GothamBold;_0xa53=228 elseif _0xa53 == 81 then _0x127=Instance.new(__0xae1d(1364),_0x126);_0xa53=87 elseif _0xa53 == 138 then _0x46=Instance.new(__0xae1d(1365),_0x127);_0xa53=141 elseif _0xa53 == 11 then if _0x126 and _0x126.Parent then if false then local _0x504=nil end;return end;_0xa53=17 elseif _0xa53 == 109 then _0x127.BorderSizePixel=1 - 1;_0xa53=117 elseif _0xa53 == 141 then _0x46.Color=_0x38.Border;_0xa53=150 elseif _0xa53 == 156 then _0x3e=Instance.new(__0xae1d(1366),_0x127);_0xa53=162 elseif _0xa53 == 271 then _0x129.Position=UDim2.new(1 - 1,4 + 2,1 - 1,2 + 35 - 13);_0xa53=277 elseif _0xa53 == 292 then if false then local _0x50f=nil end;_0xa53=299 elseif _0xa53 == 410 then if 1 > 2 then local _0x514=nil end;_0xa53=417 elseif _0xa53 == 3 then _0x505=math.random() * 0;_0xa53=11 elseif _0xa53 == 381 then _0x513=(44 + 0) * 1;_0xa53=386 elseif _0xa53 == 33 then _0x507=(38 + 0) * 1;_0xa53=38 elseif _0xa53 == 52 then _0x126.IgnoreGuiInset=true;_0xa53=58 elseif _0xa53 == 400 then _0x128.TextXAlignment=Enum.TextXAlignment.Left;_0xa53=410 elseif _0xa53 == 177 then _0x50a=math.random() * 0;_0xa53=184 elseif _0xa53 == 348 then _0x128.Position=UDim2.new(1 - 1,1 + 5,1 - 1,22 + 22);_0xa53=352 elseif _0xa53 == 197 then do local _0x50b=691 end;_0xa53=205 elseif _0xa53 == 131 then if false then local _0x509=nil end;_0xa53=138 elseif _0xa53 == 17 then _0x506=math.random() * 0;_0xa53=22 elseif _0xa53 == 395 then _0x128.TextWrapped=true;_0xa53=400 elseif _0xa53 == 122 then Instance.new(__0xae1d(1367),_0x127).CornerRadius=UDim.new(1 - 1,16 + 8 - 18);_0xa53=131 elseif _0xa53 == 253 then _0x129.Size=UDim2.new(2 - 1,-(17 + 4 - 9),1 - 1,2 * 8 + 2);_0xa53=260 elseif _0xa53 == 162 then _0x3e.Size=UDim2.new(2 - 1,-(5 + 7),1 - 1,5 * 4 + 2);_0xa53=173 elseif _0xa53 == 100 then _0x127.BackgroundColor3=_0x38.Background;_0xa53=109 elseif _0xa53 == 327 then _0x129.TextXAlignment=Enum.TextXAlignment.Left;_0xa53=330 elseif _0xa53 == 277 then _0x129.BackgroundTransparency=2 - 1;_0xa53=282 elseif _0xa53 == 64 then _0x126.DisplayOrder=12 + 9;_0xa53=74 elseif _0xa53 == 369 then _0x128.TextColor3=_0x38.TextPrimary;_0xa53=374 elseif _0xa53 == 305 then if 1 > 2 then local _0x510=nil end;_0xa53=312 elseif _0xa53 == 95 then _0x127.Position=UDim2.new(2 - 1,-(216 + 8),1 - 1,23 * 4 + 0);_0xa53=100 elseif _0xa53 == 374 then _0x128.TextSize=4 + 4;_0xa53=381 elseif _0xa53 == 312 then _0x129.Font=Enum.Font.GothamBold;_0xa53=317 elseif _0xa53 == 150 then _0x46.Thickness=2 - 1;_0xa53=156 elseif _0xa53 == 38 then _0x126.Name=__0xae1d(1368);_0xa53=45 elseif _0xa53 == 74 then _0x126.Parent=_0x25;_0xa53=81 elseif _0xa53 == 117 then _0x127.Visible=false;_0xa53=122 elseif _0xa53 == 45 then _0x126.ResetOnSpawn=false;_0xa53=52 elseif _0xa53 == 228 then _0x3e.TextXAlignment=Enum.TextXAlignment.Left;_0xa53=234 elseif _0xa53 == 249 then do local _0x50d=734 end;_0xa53=253 elseif _0xa53 == 190 then _0x3e.Text=__0xae1d(1369);_0xa53=197 elseif _0xa53 == 58 then _0x508=(63 + 0) * 1;_0xa53=64 elseif _0xa53 == 22 then _0x126=Instance.new(__0xae1d(1370));_0xa53=33 elseif _0xa53 == 173 then _0x3e.Position=UDim2.new(1 - 1,19 + 31 - 44,1 - 1,1 * 3 + 1);_0xa53=177 elseif _0xa53 == 213 then _0x3e.TextSize=3 + 6;_0xa53=220 elseif _0xa53 == 184 then _0x3e.BackgroundTransparency=2 - 1;_0xa53=190 elseif _0xa53 == 260 then if 1 > 2 then local _0x50e=nil end;_0xa53=271 elseif _0xa53 == 360 then _0x512=(76 + 0) * 1;_0xa53=369 elseif _0xa53 == 234 then do local _0x50c=967 end;_0xa53=239 elseif _0xa53 == 386 then _0x128.Font=Enum.Font.Gotham;_0xa53=395 elseif _0xa53 == 239 then _0x129=Instance.new(__0xae1d(1371),_0x127);_0xa53=249 elseif _0xa53 == 205 then _0x3e.TextColor3=_0x38.Accent;_0xa53=213 elseif _0xa53 == 339 then _0x128.Size=UDim2.new(2 - 1,-(21 + 24 - 33),2 - 1,-(16 * 3 + 0));_0xa53=348 else break end end end;_0xae0=1360 elseif _0xae0 == 2907 then _0x1e7.ResetOnSpawn=false;_0xae0=2913 elseif _0xae0 == 4425 then _0x3fc=function() local _0x3fd,_0xca,_0x109,_0x30a,_0x400,_0x401,_0xbf,_0x958;local _0xad0=1;while true do if _0xad0 == 65 then _0x400=tonumber(_0x109.OriginalFireRate) or _0x30a;_0xad0=75 elseif _0xad0 == 32 then _0x109=_0x3f8[_0xca];_0xad0=38 elseif _0xad0 == 141 then _0x109.Rate=_0x401;_0xad0=151 elseif _0xad0 == 43 then if not _0x109 then local _0x3fe=nil;do local _0x952=356 end;if type(isreadonly) == __0xae1d(1372) then local _0x950=math.random() * 0;local _0x3ff,_0x11=pcall(isreadonly,_0xca.Properties);if _0x3ff then if 1 > 2 then local _0x94f=nil end;_0x3fe=_0x11 == true end;if false then local _0x951=nil end end;_0x109={Properties=_0xca.Properties,OriginalFireRate=rawget(_0xca.Properties,__0xae1d(1373)),OriginalAutomatic=rawget(_0xca.Properties,__0xae1d(1374)),Readonly=_0x3fe};_0x3f8[_0xca]=_0x109;do local _0x953=19 end end;_0xad0=51 elseif _0xad0 == 92 then if _0x109.Rate == _0x401 and rawget(_0x109.Properties,__0xae1d(1375)) == _0x401 then return true end;_0xad0=102 elseif _0xad0 == 11 then _0x3fd,_0xca=pcall(_0x3f7);_0xad0=15 elseif _0xad0 == 1 then if not _0x3f9() then local _0x94d=(15 + 0) * 1;return false end;_0xad0=11 elseif _0xad0 == 75 then _0x401=math.max(_0x30a,0.03,_0x400 * 0.40);_0xad0=81 elseif _0xad0 == 89 then if false then local _0x957=nil end;_0xad0=92 elseif _0xad0 == 15 then if not _0x3fd or type(_0xca) ~= __0xae1d(1376) or _0xca.IsDestroyed or type(_0xca.Properties) ~= __0xae1d(1377) then return false end;_0xad0=23 elseif _0xad0 == 23 then _0x3fa(_0xca);_0xad0=32 elseif _0xad0 == 155 then return true elseif _0xad0 == 38 then if _0x109 and _0xca.Properties ~= _0x109.Properties then do local _0x94e=390 end;_0x3fa(nil);_0x109=nil end;_0xad0=43 elseif _0xad0 == 102 then _0xbf=_0x109.Properties;_0xad0=107 elseif _0xad0 == 116 then _0x958=(36 + 0) * 1;_0xad0=122 elseif _0xad0 == 151 then if 1 > 2 then local _0x95a=nil end;_0xad0=155 elseif _0xad0 == 51 then _0x30a=math.max(tonumber(_0x8.fireRate) or 0.03,0.01);_0xad0=61 elseif _0xad0 == 61 then do local _0x956=510 end;_0xad0=65 elseif _0xad0 == 137 then if type(setreadonly) == __0xae1d(1378) and _0x109.Readonly ~= nil then setreadonly(_0xbf,_0x109.Readonly) end;_0xad0=141 elseif _0xad0 == 81 then if _0x18.TouchEnabled then _0x109.Rate=_0x401;return true end;_0xad0=89 elseif _0xad0 == 122 then rawset(_0xbf,__0xae1d(1379),_0x401);_0xad0=128 elseif _0xad0 == 107 then if type(setreadonly) == __0xae1d(1380) then if false then local _0x954=nil end;setreadonly(_0xbf,false);if 1 > 2 then local _0x955=nil end end;_0xad0=116 elseif _0xad0 == 128 then if false then local _0x959=nil end;_0xad0=137 else break end end end;_0xae0=4434 elseif _0xae0 == 1004 then _0xc8=function(_0x64,_0xc9) local _0xca,_0x6c,_0x6d,_0xcb,_0xcc,_0xcd,_0x49f;local _0xa3f=3;while true do if _0xa3f == 10 then if not _0x60() or type(_0xc9) ~= __0xae1d(1381) or typeof(_0xc9.Origin) ~= __0xae1d(1382) then if 1 > 2 then local _0x49c=nil end;return _0xc9 end;_0xa3f=15 elseif _0xa3f == 64 then if _0x6d < 29 + 100 - 29 and math.random(2 - 1,107 + 37 - 44) > _0x6d then return _0xc9 end;_0xa3f=74 elseif _0xa3f == 50 then if not _0x6c or not _0x6c.Parent then local _0x49d=(32 + 0) * 1;return _0xc9 end;_0xa3f=58 elseif _0xa3f == 82 then _0xcc=_0xcb - _0xc9.Origin;_0xa3f=86 elseif _0xa3f == 58 then _0x6d=math.clamp(tonumber(_0x8.silentAimHitChance) or 37 + 95 - 32,1 - 1,12 * 8 + 4);_0xa3f=64 elseif _0xa3f == 124 then _0x55=_0x6c;_0xa3f=129 elseif _0xa3f == 3 then if _0x18.TouchEnabled then return _0xc9 end;_0xa3f=10 elseif _0xa3f == 94 then _0xcd=_0xbd(_0xc9.Origin,_0xcc.Unit,_0x64.Properties or {});_0xa3f=102 elseif _0xa3f == 116 then if false then local _0x4a0=nil end;_0xa3f=124 elseif _0xa3f == 45 then _0x6c=_0x56 and _0x56() or _0x55;_0xa3f=50 elseif _0xa3f == 135 then return _0xcd elseif _0xa3f == 15 then if type(_0x64) ~= __0xae1d(1383) or _0x64.IsDestroyed or _0x64.IsActive == false then return _0xc9 end;_0xa3f=22 elseif _0xa3f == 129 then if _0x58 then _0x58(_0x6c) end;_0xa3f=135 elseif _0xa3f == 32 then if _0xca and _0xca.Player and _0xca.Player ~= _0x20 then return _0xc9 end;_0xa3f=37 elseif _0xa3f == 110 then if not _0xcd then return _0xc9 end;_0xa3f=116 elseif _0xa3f == 102 then _0x49f=(59 + 0) * 1;_0xa3f=110 elseif _0xa3f == 22 then _0xca=_0x64.Weapon;_0xa3f=32 elseif _0xa3f == 37 then if 1 > 2 then local _0x49e=nil end;_0xa3f=45 elseif _0xa3f == 74 then _0xcb=getKinematicAimPosition(_0x6c);_0xa3f=82 elseif _0xa3f == 86 then if _0xcc.Magnitude < 0.05 then return _0xc9 end;_0xa3f=94 else break end end end;_0xae0=1011 elseif _0xae0 == 1089 then _0xee=Color3.fromRGB(28 + 84,58 * 2 + 0,98 + 24);_0xae0=1096 elseif _0xae0 == 3931 then if 1 > 2 then local _0xa11=nil end;_0xae0=3936 elseif _0xae0 == 2259 then function updateWorldChanger() local _0xa64=3;while true do if _0xa64 == 12 then do local _0x575=372 end;_0xa64=19 elseif _0xa64 == 31 then updateXCWorldBloom();_0xa64=38 elseif _0xa64 == 19 then updateWorldPostFX();_0xa64=23 elseif _0xa64 == 38 then if _0x8.worldFogEnd and _0x8.worldFogEnd > 1 - 1 then _0x1b.FogStart=math.max(1 - 1,_0x8.worldFogStart or 1 - 1);_0x1b.FogEnd=math.max(_0x1b.FogStart + (2 - 1),_0x8.worldFogEnd) end;_0xa64=58 elseif _0xa64 == 3 then if _0x8.worldSkyboxEnabled then applyWorldSkybox() else restoreWorldSkybox() end;_0xa64=12 elseif _0xa64 == 23 then updateXCWorldAtmosphere();_0xa64=31 else break end end end;_0xae0=2266 elseif _0xae0 == 1699 then _0x9c6=(91 + 0) * 1;_0xae0=1702 elseif _0xae0 == 1065 then _0xe3=function(_0x75,_0xbe,_0xe4) local _0xe1,_0x76,_0xe5;local _0xa43=3;while true do if _0xa43 == 46 then _0xe5=_0x76.Unit;_0xa43=52 elseif _0xa43 == 40 then if _0x76.Magnitude <= 0.05 then return _0xbe end;_0xa43=46 elseif _0xa43 == 17 then if _0xe4 and _0xe1.Used then if 1 > 2 then local _0x4a9=nil end;return _0xbe end;_0xa43=22 elseif _0xa43 == 22 then if 1 > 2 then local _0x4ae=nil end;_0xa43=32 elseif _0xa43 == 60 then return _0xe5 * _0xbe.Magnitude elseif _0xa43 == 32 then _0x76=_0xe1.AimPosition - _0x75;_0xa43=40 elseif _0xa43 == 52 then if _0xe4 then _0xe1.Used=true;do local _0x4aa=565 end;_0xe1.Direction=_0xe5;local _0x4ab=math.random() * 0 elseif _0xe1.Direction then local _0x4ac=(5 + 0) * 1;_0xe5=_0xe1.Direction;if false then local _0x4ad=nil end end;_0xa43=60 elseif _0xa43 == 12 then if not _0xe1 or typeof(_0x75) ~= __0xae1d(1384) or typeof(_0xbe) ~= __0xae1d(1385) or _0xbe.Magnitude <= 0.001 then return _0xbe end;_0xa43=17 elseif _0xa43 == 3 then _0xe1=_0xe0();_0xa43=12 else break end end end;_0xae0=1074 elseif _0xae0 == 1530 then _0x147=Instance.new(__0xae1d(1386));_0xae0=1537 elseif _0xae0 == 761 then do local _0x9ae=223 end;_0xae0=766 elseif _0xae0 == 1745 then _0x152.AnchorPoint=Vector2.new(0.5,0.5);_0xae0=1751 elseif _0xae0 == 2986 then _0x1e8.BackgroundColor3=_0x38.Background;_0xae0=2992 elseif _0xae0 == 4686 then function cfgSerialize() local _0xa;local _0xad8=4;while true do if _0xad8 == 11 then _0xa={};_0xad8=18 elseif _0xad8 == 22 then if XCFeatureState.streamerSnapshot then for _0x10,_0x11 in pairs(XCFeatureState.streamerSnapshot) do _0xa[_0x10]=_0x11 end;_0xa.streamerModeEnabled=false;local _0x972=(24 + 0) * 1 end;_0xad8=32 elseif _0xad8 == 18 then for _0xb,_0x9 in pairs(_0x8) do local _0x971=math.random() * 0;local _0x18b=typeof(_0x9);if _0x18b == __0xae1d(1387) or _0x18b == __0xae1d(1388) or _0x18b == __0xae1d(1389) then _0xa[_0xb]=_0x9;if false then local _0x96f=nil end elseif _0x18b == __0xae1d(1390) then _0xa[_0xb]={__type=__0xae1d(1391),r=_0x9.R,g=_0x9.G,b=_0x9.B} elseif _0x18b == __0xae1d(1392) then _0xa[_0xb]={__type=__0xae1d(1393),xs=_0x9.X.Scale,xo=_0x9.X.Offset,ys=_0x9.Y.Scale,yo=_0x9.Y.Offset};local _0x970=math.random() * 0 end end;_0xad8=22 elseif _0xad8 == 32 then return _0xa elseif _0xad8 == 4 then if 1 > 2 then local _0x973=nil end;_0xad8=11 else break end end end;_0xae0=4692 elseif _0xae0 == 3216 then _0x1ed.Font=Enum.Font.GothamBold;_0xae0=3221 elseif _0xae0 == 458 then if false then local _0x9a4=nil end;_0xae0=466 elseif _0xae0 == 304 then _0x25=getSafeGui();_0xae0=311 elseif _0xae0 == 3596 then table.insert(_0x26,_0x1c.DescendantAdded:Connect(function(_0x173) if _0x173:IsA(__0xae1d(1394)) then trackXCSound(_0x173) end end));_0xae0=3601 elseif _0xae0 == 2920 then _0x1e7.IgnoreGuiInset=true;_0xae0=2930 elseif _0xae0 == 2644 then _0x1e0=Instance.new(__0xae1d(1395));_0xae0=2648 elseif _0xae0 == 4545 then pcall(setupBloxStrikeShootHook);_0xae0=4555 elseif _0xae0 == 2003 then _0x15e=nil;_0xae0=2013 elseif _0xae0 == 1037 then if _0xe then _0xe.XCBeginBulletInterceptV29=_0xde end;_0xae0=1046 elseif _0xae0 == 1194 then function hookBloxStrikeModules(_0x117) local _0x118,_0x4df;local _0xa4c=1;while true do if _0xa4c == 47 then refreshXCSkinData();_0xa4c=50 elseif _0xa4c == 50 then pcall(function() if type(getgc) ~= __0xae1d(1396) then return end;for _0x63,_0x119 in ipairs(getgc(true)) do if type(_0x119) == __0xae1d(1397) then if rawget(_0x119,__0xae1d(1398)) ~= nil and _0x8.skinChangerEnabled and _0x8.selectedKnifeType ~= __0xae1d(1399) then _0x119.EquippedMelee=_0x8.selectedKnifeType end;if rawget(_0x119,__0xae1d(1400)) ~= nil and _0x8.skinChangerEnabled and _0x8.selectedKnifeType ~= __0xae1d(1401) then _0x119.MeleeSkin=_0x8.selectedSkin end;if rawget(_0x119,__0xae1d(1402)) ~= nil and type(_0x119.Knife) == __0xae1d(1403) and _0x8.skinChangerEnabled and _0x8.selectedKnifeType ~= __0xae1d(1404) then _0x119.Knife.Name=_0x8.selectedKnifeType;_0x119.Knife.Skin=_0x8.selectedSkin end end end end);_0xa4c=76 elseif _0xa4c == 24 then if 1 > 2 then local _0x4de=nil end;_0xa4c=30 elseif _0xa4c == 36 then _0x4df=(89 + 0) * 1;_0xa4c=47 elseif _0xa4c == 1 then if false then local _0x4dd=nil end;_0xa4c=11 elseif _0xa4c == 15 then if not _0x117 and _0x116 > 1 - 1 and _0x118 - _0x116 < 3 + 2 then do local _0x4dc=395 end;return end;_0xa4c=24 elseif _0xa4c == 30 then _0x116=_0x118;_0xa4c=36 elseif _0xa4c == 11 then _0x118=os.clock();_0xa4c=15 else break end end end;_0xae0=1202 elseif _0xae0 == 3615 then if 1 > 2 then local _0xa07=nil end;_0xae0=3620 elseif _0xae0 == 1643 then _0x14d=false;_0xae0=1647 elseif _0xae0 == 3887 then function renderTacticalOverlay() local _0x2d6,_0x6e,_0x255;local _0xa9b=5;while true do if _0xa9b == 38 then _0x255=_0x15:GetPlayers();_0xa9b=44 elseif _0xa9b == 23 then _0x6e=_0x22.CFrame.Position;_0xa9b=30 elseif _0xa9b == 17 then _0x2c4=true;_0xa9b=23 elseif _0xa9b == 5 then _0x2d6=_0x8.nametagsEnabled or _0x8.boxEspEnabled or _0x8.cornerBoxEnabled or _0x8.healthBarEnabled or _0x8.skeletonEspEnabled or _0x8.weaponEspEnabled;_0xa9b=8 elseif _0xa9b == 44 then for _0x154=2 - 1,#_0x255 do local _0x792=(36 + 0) * 1;local _0x9a=_0x255[_0x154];do local _0x793=541 end;local _0x1dc=getOrCreateScreenEsp(_0x9a);local _0x86=_0x9a.Character;local _0x794=(53 + 0) * 1;local _0x9b=_0x86 and _0x86:FindFirstChildOfClass(__0xae1d(1405));local _0x795=(57 + 0) * 1;local _0x2c5=_0x86 and (_0x86:FindFirstChild(__0xae1d(1406)) or _0x86:FindFirstChild(__0xae1d(1407)) or _0x86:FindFirstChild(__0xae1d(1408)));local _0xa6=_0x86 and _0x86:FindFirstChild(__0xae1d(1409));local _0x2d7=isTargetEnemy(_0x9a,_0x86);local _0x2d8=isEntityAlive(_0x86,_0x9b);local _0x9c,_0x2d9=getXCHealth(_0x86,_0x9a,_0x9b);if _0x2d7 and _0x2d8 and _0x2c5 and _0x2d6 then local _0x8d=_0x2c5.Position - _0x6e.Magnitude;if _0x8d <= _0x8.espMaxDist then local _0x2da=isVisibleThroughWalls(_0xa6 or _0x2c5,_0x86);if false then local _0x786=nil end;local _0x2ba=_0x2da and _0x38.Enemy_Accent or _0x38.Enemy_Hidden;local _0x2db=getXCCharacterScreenRect(_0x1dc,_0x86,_0x2c5);if false then local _0x787=nil end;if _0x2db then local _0x2be=_0x2db.H;local _0x2bd=_0x2db.W;local _0x2bb=_0x2db.X;local _0x2bc=_0x2db.Y;local _0x781=(12 + 0) * 1;if _0x8.boxEspEnabled and not _0x8.cornerBoxEnabled then do local _0x765=907 end;_0x1dc.BoxStroke.Color=_0x2ba;local _0x2dc=math.clamp(math.floor((tonumber(_0x8.boxThickness) or 2 - 1) + 0.5),2 - 1,1 + 1);_0x1dc.BoxStroke.Thickness=_0x2dc;_0x1dc.Box.Size=UDim2.new(1 - 1,_0x2bd,1 - 1,_0x2be);if 1 > 2 then local _0x766=nil end;_0x1dc.Box.Position=UDim2.new(1 - 1,_0x2bb,1 - 1,_0x2bc);_0x1dc.Box.Visible=true;_0x1dc.BoxOutlineStroke.Thickness=_0x2dc + (16 + 27 - 41);_0x1dc.BoxOutline.Size=_0x1dc.Box.Size;if 1 > 2 then local _0x767=nil end;_0x1dc.BoxOutline.Position=_0x1dc.Box.Position;if false then local _0x768=nil end;_0x1dc.BoxOutline.Visible=_0x8.espBoxOutline;local _0x769=math.random() * 0;for _0x63,_0x45 in ipairs(_0x1dc.Corners) do _0x45.H.Visible=false;local _0x764=(41 + 0) * 1;_0x45.V.Visible=false end elseif _0x8.cornerBoxEnabled then _0x1dc.Box.Visible=false;_0x1dc.BoxOutline.Visible=false;local _0x2dd=math.min(math.floor(math.clamp(_0x2bd * 0.30,3 + 0,15 + 21 - 8) + 0.5),math.max(2 + 0,math.floor(_0x2bd * 0.48)));local _0x2de=math.min(math.floor(math.clamp(_0x2be * 0.20,2 + 3,39 + 19 - 22) + 0.5),math.max(1 * 3 + 0,math.floor(_0x2be * 0.48)));local _0x186=math.clamp(math.floor((tonumber(_0x8.boxThickness) or 2 - 1) + 0.5),2 - 1,1 + 1);for _0x63,_0x45 in ipairs(_0x1dc.Corners) do do local _0x76a=859 end;_0x45.H.BackgroundColor3=_0x2ba;_0x45.V.BackgroundColor3=_0x2ba;local _0x76b=math.random() * 0;_0x45.HOutline.Enabled=_0x8.espBoxOutline;_0x45.VOutline.Enabled=_0x8.espBoxOutline end;do local _0x76c=51 end;_0x1dc.Corners[2 - 1].H.Size=UDim2.new(1 - 1,_0x2dd,1 - 1,_0x186);_0x1dc.Corners[2 - 1].H.Position=UDim2.new(1 - 1,_0x2bb,1 - 1,_0x2bc);_0x1dc.Corners[2 - 1].H.Visible=true;_0x1dc.Corners[2 - 1].V.Size=UDim2.new(1 - 1,_0x186,1 - 1,_0x2de);_0x1dc.Corners[2 - 1].V.Position=UDim2.new(1 - 1,_0x2bb,1 - 1,_0x2bc);_0x1dc.Corners[2 - 1].V.Visible=true;if false then local _0x76d=nil end;_0x1dc.Corners[1 + 1].H.Size=UDim2.new(1 - 1,_0x2dd,1 - 1,_0x186);_0x1dc.Corners[2 + 0].H.Position=UDim2.new(1 - 1,_0x2bb + _0x2bd - _0x2dd,1 - 1,_0x2bc);do local _0x76e=369 end;_0x1dc.Corners[1 + 1].H.Visible=true;_0x1dc.Corners[1 + 1].V.Size=UDim2.new(1 - 1,_0x186,1 - 1,_0x2de);_0x1dc.Corners[1 + 1].V.Position=UDim2.new(1 - 1,_0x2bb + _0x2bd - _0x186,1 - 1,_0x2bc);do local _0x76f=854 end;_0x1dc.Corners[2 + 0].V.Visible=true;_0x1dc.Corners[3 + 0].H.Size=UDim2.new(1 - 1,_0x2dd,1 - 1,_0x186);_0x1dc.Corners[24 + 1 - 22].H.Position=UDim2.new(1 - 1,_0x2bb,1 - 1,_0x2bc + _0x2be - _0x186);_0x1dc.Corners[3 + 0].H.Visible=true;local _0x770=(46 + 0) * 1;_0x1dc.Corners[1 + 2].V.Size=UDim2.new(1 - 1,_0x186,1 - 1,_0x2de);_0x1dc.Corners[6 + 13 - 16].V.Position=UDim2.new(1 - 1,_0x2bb,1 - 1,_0x2bc + _0x2be - _0x2de);do local _0x771=175 end;_0x1dc.Corners[1 * 2 + 1].V.Visible=true;if 1 > 2 then local _0x772=nil end;_0x1dc.Corners[3 + 1].H.Size=UDim2.new(1 - 1,_0x2dd,1 - 1,_0x186);_0x1dc.Corners[2 + 2].H.Position=UDim2.new(1 - 1,_0x2bb + _0x2bd - _0x2dd,1 - 1,_0x2bc + _0x2be - _0x186);if 1 > 2 then local _0x773=nil end;_0x1dc.Corners[3 + 1].H.Visible=true;local _0x774=(26 + 0) * 1;_0x1dc.Corners[1 * 3 + 1].V.Size=UDim2.new(1 - 1,_0x186,1 - 1,_0x2de);_0x1dc.Corners[1 + 3].V.Position=UDim2.new(1 - 1,_0x2bb + _0x2bd - _0x186,1 - 1,_0x2bc + _0x2be - _0x2de);_0x1dc.Corners[1 + 49 - 46].V.Visible=true else _0x1dc.Box.Visible=false;if false then local _0x775=nil end;_0x1dc.BoxOutline.Visible=false;for _0x63,_0x45 in ipairs(_0x1dc.Corners) do _0x45.H.Visible=false;_0x45.V.Visible=false end end;if _0x8.healthBarEnabled and _0x9c then local _0x776=(27 + 0) * 1;local _0x2df=math.clamp(_0x9c / _0x2d9,1 - 1,2 - 1);if false then local _0x777=nil end;local _0x2e0=_0x2be < 8 + 55 - 31 and 2 + 1 or 4 + 0;local _0x2e1=_0x2be < 24 + 40 - 32 and 1 + 1 or 3 + 0;if 1 > 2 then local _0x778=nil end;local _0x2e2=_0x2bb - _0x2e0 - _0x2e1;local _0x2e3=_0x2bc;local _0x2e4=math.max(2 - 1,math.floor((_0x2be - (39 + 6 - 43)) * _0x2df + 0.5));_0x1dc.HealthBarBg.Size=UDim2.new(1 - 1,_0x2e0,1 - 1,_0x2be);_0x1dc.HealthBarBg.Position=UDim2.new(1 - 1,_0x2e2,1 - 1,_0x2e3);_0x1dc.HealthBarBg.Visible=true;_0x1dc.HealthBarFill.Position=UDim2.new(1 - 1,2 - 1,2 - 1,-(2 - 1));_0x1dc.HealthBarFill.Size=UDim2.fromOffset(_0x2e0 - (2 + 0),_0x2e4);_0x1dc.HealthBarFill.BackgroundColor3=_0x2ba:Lerp(Color3.fromRGB(9 + 29,4 * 10 + 0,20 + 23),(2 - 1 - _0x2df) * 0.35) else do local _0x779=376 end;_0x1dc.HealthBarBg.Visible=false end;local _0x782=(78 + 0) * 1;if _0x8.nametagsEnabled then _0x1dc.TagCard.BackgroundTransparency=_0x8.tagTransparency;_0x1dc.TagCardStroke.Color=_0x2ba;do local _0x77d=753 end;_0x1dc.TagLabel.TextColor3=_0x2ba;_0x1dc.TagLabel.TextSize=_0x8.espTextSize;local _0x2e5=_0x9a.DisplayName or _0x9a.Name;local _0x2e6=_0x2e5;if false then local _0x77e=nil end;if _0x8.espShowDistance then if 1 > 2 then local _0x77a=nil end;_0x2e6=string.format(__0xae1d(1410),_0x2e6,math.floor(_0x8d)) end;if _0x8.espShowHealth and _0x9c then _0x2e6=string.format(__0xae1d(1411),_0x2e6,math.floor(_0x9c + 0.5)) end;if _0x8.tagShowWeapon and not _0x8.weaponEspEnabled then local _0x77b=math.random() * 0;local _0x87=_0x86:FindFirstChildOfClass(__0xae1d(1412));if _0x87 then _0x2e6=string.format(__0xae1d(1413),_0x2e6,_0x87.Name) end end;if _0x1dc.LastText ~= _0x2e6 then _0x1dc.TagLabel.Text=_0x2e6;do local _0x77c=617 end;_0x1dc.LastText=_0x2e6 end;_0x1dc.TagCard.Position=UDim2.new(1 - 1,_0x2bb + _0x2bd * 0.5,1 - 1,_0x2bc - (29 + 15 - 40));if false then local _0x77f=nil end;_0x1dc.TagCard.Visible=true else if 1 > 2 then local _0x780=nil end;_0x1dc.TagCard.Visible=false end;do local _0x783=69 end;updateXCWeaponPreview(_0x1dc,_0x9a,_0x86,_0x2ba,_0x2bb,_0x2bc,_0x2bd,_0x2be);renderXCSkeleton(_0x1dc,_0x86,_0x2ba,_0x8d) else _0x1dc.Box.Visible=false;local _0x784=math.random() * 0;_0x1dc.BoxOutline.Visible=false;_0x1dc.HealthBarBg.Visible=false;_0x1dc.WeaponCard.Visible=false;local _0x785=(9 + 0) * 1;for _0x63,_0x45 in ipairs(_0x1dc.Corners) do _0x45.H.Visible=false;_0x45.V.Visible=false end;_0x1dc.TagCard.Visible=false;hideXCSkeleton(_0x1dc) end else _0x1dc.Box.Visible=false;if false then local _0x789=nil end;_0x1dc.BoxOutline.Visible=false;_0x1dc.HealthBarBg.Visible=false;_0x1dc.WeaponCard.Visible=false;local _0x78a=math.random() * 0;for _0x63,_0x45 in ipairs(_0x1dc.Corners) do _0x45.H.Visible=false;if 1 > 2 then local _0x788=nil end;_0x45.V.Visible=false end;if false then local _0x78b=nil end;_0x1dc.TagCard.Visible=false;hideXCSkeleton(_0x1dc) end;if 1 > 2 then local _0x78c=nil end else _0x1dc.Box.Visible=false;_0x1dc.BoxOutline.Visible=false;_0x1dc.HealthBarBg.Visible=false;_0x1dc.WeaponCard.Visible=false;local _0x78f=math.random() * 0;for _0x63,_0x45 in ipairs(_0x1dc.Corners) do _0x45.H.Visible=false;if false then local _0x78d=nil end;_0x45.V.Visible=false;do local _0x78e=339 end end;local _0x790=(55 + 0) * 1;_0x1dc.TagCard.Visible=false;do local _0x791=816 end;hideXCSkeleton(_0x1dc) end end;_0xa9b=66 elseif _0xa9b == 30 then if false then local _0x796=nil end;_0xa9b=38 elseif _0xa9b == 8 then if not _0x2d6 then if _0x2c4 then hideTacticalOverlay() end;_0x2c4=false;local _0x763=(18 + 0) * 1;return end;_0xa9b=17 else break end end end;_0xae0=3896 elseif _0xae0 == 4296 then _0xa1b=math.random() * 0;_0xae0=4301 elseif _0xae0 == 1710 then _0x9c7=(100 + 0) * 1;_0xae0=1718 elseif _0xae0 == 3713 then _0x259.IgnoreWater=true;_0xae0=3719 elseif _0xae0 == 3903 then for _0x63,_0x9 in pairs(_0x15:GetPlayers()) do if 1 > 2 then local _0x7a5=nil end;attachEspToPlayer(_0x9);if false then local _0x7a6=nil end end;_0xae0=3909 elseif _0xae0 == 453 then _0x32=nil;_0xae0=458 elseif _0xae0 == 2868 then _0x1e5.Color=Color3.fromRGB(1 - 1,76 * 3 + 2,28 * 9 + 3);_0xae0=2872 elseif _0xae0 == 1942 then _0x158.Visible=false;_0xae0=1947 elseif _0xae0 == 4742 then function _0x41d.List() local _0xa,_0xdd,_0x422;local _0xadd=2;while true do if _0xadd == 36 then if _0xdd and type(_0x422) == __0xae1d(1414) then for _0x63,_0x421 in ipairs(_0x422) do local _0x98a=math.random() * 0;local _0x1a0=tostring(_0x421):match(__0xae1d(1415));if _0x1a0 then local _0x989=math.random() * 0;table.insert(_0xa,_0x1a0) end end end;_0xadd=47 elseif _0xadd == 33 then _0xdd,_0x422=pcall(listfiles,_0x41d.Folder);_0xadd=36 elseif _0xadd == 2 then _0xa={};_0xadd=12 elseif _0xadd == 18 then cfgEnsureFolder();_0xadd=23 elseif _0xadd == 52 then return _0xa elseif _0xadd == 47 then table.sort(_0xa);_0xadd=52 elseif _0xadd == 23 then if false then local _0x98b=nil end;_0xadd=33 elseif _0xadd == 12 then if type(listfiles) ~= __0xae1d(1416) then return _0xa end;_0xadd=18 else break end end end;_0xae0=4751 elseif _0xae0 == 680 then _0x58=nil;_0xae0=687 elseif _0xae0 == 2103 then _0x167=setmetatable({},{__mode=__0xae1d(1417)});_0xae0=2109 elseif _0xae0 == 1619 then _0x14a.Name=__0xae1d(1418);_0xae0=1626 elseif _0xae0 == 3741 then function triggerIsCharacterPart(_0xaf,_0x25c) return _0xaf and _0x25c and _0xaf:IsDescendantOf(_0x25c) end;_0xae0=3750 elseif _0xae0 == 3097 then _0x9f5=math.random() * 0;_0xae0=3104 elseif _0xae0 == 1850 then _0x9cb=math.random() * 0;_0xae0=1859 elseif _0xae0 == 1 then pcall(function() if type(getgenv) == __0xae1d(1419) then local _0x0=getgenv();if _0x0 and type(_0x0.XCRunning) == __0xae1d(1420) then _0x0.XCRunning() end end end);_0xae0=12 elseif _0xae0 == 4533 then pcall(setupXCNativeSilentHook);_0xae0=4539 elseif _0xae0 == 1635 then _0x14c=setmetatable({},{__mode=__0xae1d(1421)});_0xae0=1643 elseif _0xae0 == 3273 then _0x1ef.Size=UDim2.new(1 - 1,1 - 1,2 - 1,1 - 1);_0xae0=3278 elseif _0xae0 == 848 then _0x9b0=math.random() * 0;_0xae0=858 elseif _0xae0 == 2733 then _0x1e1.BackgroundTransparency=2 - 1;_0xae0=2738 elseif _0xae0 == 4317 then _0x3ef=_0x1c:GetPropertyChangedSignal(__0xae1d(1422)):Connect(function() _0x22=_0x1c.CurrentCamera or _0x22;reconnectThirdPersonCamera();if _0x8.thirdPersonEnabled and _0x22 then applyThirdPerson() end end);_0xae0=4324 elseif _0xae0 == 3544 then function hookXCSoundCharacter(_0x9a,_0x103) local _0x698;local _0xa86=5;while true do if _0xa86 == 10 then if _0x9a == _0x20 or not _0x103 then return end;_0xa86=19 elseif _0xa86 == 5 then if 1 > 2 then local _0x697=nil end;_0xa86=10 elseif _0xa86 == 24 then table.insert(_0x26,_0x103.DescendantAdded:Connect(function(_0x173) if _0x173:IsA(__0xae1d(1423)) then trackXCSound(_0x173) end end));_0xa86=30 elseif _0xa86 == 19 then for _0x63,_0x173 in ipairs(_0x103:GetDescendants()) do if _0x173:IsA(__0xae1d(1424)) then trackXCSound(_0x173) end end;_0xa86=24 elseif _0xa86 == 30 then _0x698=math.random() * 0;_0xa86=55 else break end end end;_0xae0=3554 elseif _0xae0 == 1138 then if false then local _0x9b6=nil end;_0xae0=1144 elseif _0xae0 == 4336 then _0x3f0=false;_0xae0=4345 elseif _0xae0 == 1731 then _0x152=Instance.new(__0xae1d(1425));_0xae0=1737 elseif _0xae0 == 2780 then _0x1e3=Instance.new(__0xae1d(1426),_0x1e1);_0xae0=2788 elseif _0xae0 == 2161 then _0x9d5=math.random() * 0;_0xae0=2168 elseif _0xae0 == 4467 then function applyXCFireRate() local _0x30a;local _0xad2=3;while true do if _0xad2 == 15 then for _0x63,_0x119 in ipairs(_0x3f2) do pcall(function() if type(setreadonly) == __0xae1d(1427) then setreadonly(_0x119,false) end;local _0x136=tonumber(_0x3f3[_0x119]) or _0x30a;local _0x405=math.max(0.03,_0x136 * 0.40);rawset(_0x119,__0xae1d(1428),math.max(_0x30a,_0x405));if type(setreadonly) == __0xae1d(1429) and _0x3f4[_0x119] ~= nil then setreadonly(_0x119,_0x3f4[_0x119]) end end) end;_0xad2=38 elseif _0xad2 == 3 then _0x30a=math.max(tonumber(_0x8.fireRate) or 0.03,0.01);_0xad2=12 elseif _0xad2 == 12 then do local _0x95d=189 end;_0xad2=15 else break end end end;_0xae0=4477 elseif _0xae0 == 3088 then _0x1eb.VerticalAlignment=Enum.VerticalAlignment.Center;_0xae0=3097 elseif _0xae0 == 621 then _0x50=0.12;_0xae0=628 elseif _0xae0 == 4653 then if false then local _0xa24=nil end;_0xae0=4658 elseif _0xae0 == 3554 then if 1 > 2 then local _0xa04=nil end;_0xae0=3559 elseif _0xae0 == 4119 then hookMobileJumpButton();_0xae0=4124 elseif _0xae0 == 3179 then _0x1ed.Text=__0xae1d(1430);_0xae0=3186 elseif _0xae0 == 2188 then function clearWeaponGlow(_0xaf) local _0x157=_0x167[_0xaf];if _0x157 then pcall(function() _0x157:Destroy() end);do local _0x558=15 end;_0x167[_0xaf]=nil end end;_0xae0=2192 elseif _0xae0 == 191 then _0x999=math.random() * 0;_0xae0=200 elseif _0xae0 == 51 then _0x8={antiAfkEnabled=false,noFallDamageEnabled=false,spectatorListEnabled=false,spectatorCounterEnabled=true,spectatorHideEmpty=false,spectatorNameMode=__0xae1d(1431),animationsEnabled=false,animationLoop=true,animationSpeed=2 - 1,animationId=__0xae1d(1432),customHandsEnabled=false,customHandsX=1 - 1,customHandsY=1 - 1,customHandsZ=1 - 1,customHandsPitch=1 - 1,customHandsYaw=1 - 1,customHandsRoll=1 - 1,uiScale=2 - 1,watermarkEnabled=true,watermarkShowFPS=true,watermarkShowPing=true,watermarkShowName=false,watermarkText=__0xae1d(1433),aimbotEnabled=false,predictionEnabled=true,silentAimEnabled=false,rcsEnabled=false,chamsEnabled=false,hitmarkerEnabled=false,hitSoundEnabled=false,thirdPersonEnabled=false,skinChangerEnabled=false,triggerbotEnabled=false,antiAimEnabled=false,antiAimMode=__0xae1d(1434),bunnyHopEnabled=false,slideEnabled=false,speedEnabled=false,flightEnabled=false,nametagsEnabled=false,boxEspEnabled=false,cornerBoxEnabled=false,healthBarEnabled=false,skeletonEspEnabled=false,skeletonDistanceFade=true,headDotEnabled=false,tracersEnabled=false,grenadeEspEnabled=false,grenadeDangerZonesEnabled=false,soundPositionEspEnabled=false,weaponEspEnabled=false,jumpCircleEnabled=false,antiFlashEnabled=false,noSmokeEnabled=false,fullBrightEnabled=false,removeFogEnabled=true,nightModeEnabled=false,rageBotEnabled=false,rageAutoFire=true,bulletTrailEnabled=true,bulletFlashEnabled=true,weaponChamsEnabled=false,customScopeEnabled=false,scopeRemoveOriginal=false,scopeCrosshairEnabled=true,scopeDynamicGap=false,scopeCrosshairStyle=__0xae1d(1435),scopeCrosshairLeft=true,scopeCrosshairRight=true,scopeCrosshairTop=true,scopeCrosshairBottom=true,scopeCrosshairDot=true,scopeCrosshairOpacity=1 - 1,scopeCrosshairOutline=false,scopeCrosshairOutlineThickness=2 - 1,scopeCrosshairOutlineR=1 - 1,scopeCrosshairOutlineG=1 - 1,scopeCrosshairOutlineB=1 - 1,worldSkyboxEnabled=false,worldPostFXEnabled=false,weatherEnabled=false,weatherMode=__0xae1d(1436),weatherIntensity=28 + 21 - 4,weatherWind=35 + 2 - 29,freecamEnabled=false,freecamSpeed=55 + 9 - 9,freecamSensitivity=0.18,freecamKey=__0xae1d(1437),freelookEnabled=false,freelookSensitivity=0.16,freelookKey=__0xae1d(1438),streamerModeEnabled=false,streamerKey=__0xae1d(1439),settingsShowNotifications=true,settingsCompactMode=false,settingsAutoSave=false,menuKey=__0xae1d(1440),rageFov=40 * 9 + 0,rageTargetMode=__0xae1d(1441),priorityPlayerName=__0xae1d(1442),aimFov=47 + 113,triggerbotFov=85 + 75,triggerbotDelay=0.075,triggerbotScopedOnly=false,triggerbotHeadOnly=false,aimbotSpeed=5 * 7 + 0,aimbotSmoothness=0.15,predictionFactor=0.165,bodyAimOnly=false,snapAimMode=false,showFovCircle=true,visibleCheck=false,silentAimFov=16 * 9 + 6,silentAimHitChance=65 + 71 - 36,silentAimTeamCheck=true,silentAimVisibleCheck=false,silentAimAimHead=true,pSilentEnabled=false,wallbangEnabled=false,showSilentFovCircle=true,chamsFillTransparency=0.45,chamsOutlineTransparency=0.10,chamsTeamCheck=true,chamsShowTeammates=false,chamsOcclusion=true,recoilStrength=0.85,noRecoilEnabled=false,noSpreadEnabled=false,fireRateEnabled=false,fireRate=0.01,rcsStrength=56 + 4,rcsPitchFactor=2 - 1,rcsYawFactor=2 - 1,thirdPersonDistance=8 + 4,thirdPersonHeight=1.5,thirdPersonOffset=2.5,hitmarkerDuration=0.28,hitmarkerSize=4 * 3 + 1,hitmarkerThickness=6 + 9 - 13,hitmarkerGlow=true,hitSoundPreset=__0xae1d(1443),hitSoundVolume=2 - 1,spinSpeed=23 + 35 - 8,antiAimYaw=90 * 2 + 0,antiAimJitter=6 * 10 + 0,antiAimInterval=0.15,skeletonThickness=1.5,bhopJumpPower=38 + 14,bhopSpeedBoost=1.35,bhopAutoJump=false,bhopAirStrafe=true,bhopMode=__0xae1d(1444),bhopMovingOnly=true,bhopPauseWithMenu=true,bhopGroundDelay=1 - 1,bhopAcceleration=1 + 11,walkMultiplier=2 + 0,flightSpeed=8 + 42,slideSpeedBoost=1.8,slideFriction=0.94,slideMinSpeed=14 + 2,jumpCircleRadius=3.5,jumpCircleSegmentCount=5 * 9 + 3,jumpCircleStyle=__0xae1d(1445),grenadeMaxDist=501 + 999,showGrenadePath=true,showMolotovRadius=true,showSmokeRadius=true,grenadeDangerOpacity=0.82,soundEspDuration=1.15,soundEspMaxDist=663 + 537,espMaxDist=300 * 10 + 0,espTextSize=8.5,tagTransparency=0.25,espShowDistance=true,espShowHealth=true,tagShowWeapon=true,boxThickness=2 - 1,espBoxSmoothing=0.42,espFixedScale=true,espFixedBoxHeight=5 + 31,espPerspectiveScale=2 - 1,espBoxAspect=0.52,espBoxOutline=true,nightPreset=__0xae1d(1446),nightBrightness=0.2,nightClockTime=1 - 1,worldSkyboxPreset=__0xae1d(1447),worldSkyRotation=1 - 1,worldSkyStars=1 - 1,worldSkyCelestial=false,worldFogStart=1 - 1,worldFogEnd=33333 * 3 + 1,worldExposure=1 - 1,worldSaturation=1 - 1,worldContrast=1 - 1,worldTonePreset=__0xae1d(1448),worldAtmosphereEnabled=false,worldAtmosphereDensity=0.3,worldAtmosphereHaze=1 - 1,worldAtmosphereGlare=1 - 1,worldBloomEnabled=false,worldBloomIntensity=0.35,worldBloomSize=2 * 9 + 6,worldBloomThreshold=2 - 1,worldColorR=9 + 246,worldColorG=207 + 80 - 32,worldColorB=94 + 161,bulletTracerStyle=__0xae1d(1449),bulletTracerDuration=0.65,bulletTracerWidth=0.08,bulletTracerRainbow=false,bulletImpactEnabled=false,bulletImpactSize=0.35,cubeCheckerEnabled=false,cubeCheckerRainbow=false,cubeCheckerSize=1.5,cubeCheckerDistance=5 + 15,cubeCheckerLineThickness=0.04,cubeCheckerTransparency=0.2,bulletTracerColorR=232 + 23,bulletTracerColorG=2 * 9 + 7,bulletTracerColorB=3 * 10 + 5,weaponChamsMode=__0xae1d(1450),weaponChamsTransparency=0.22,weaponChamsReflectance=0.75,weaponChamsColorR=69 + 141,weaponChamsColorG=15 * 3 + 0,weaponChamsColorB=21 + 34,scopeFovEnabled=false,scopeFov=7 * 9 + 7,customFovEnabled=false,customFov=9 * 10 + 0,scopeCrosshairLength=85 + 0,scopeCrosshairThickness=1 + 1,scopeCrosshairGap=6 + 2,scopeCrosshairColorR=77 + 178,scopeCrosshairColorG=190 + 65,scopeCrosshairColorB=269 + 4 - 18,selectedKnifeType=__0xae1d(1451),selectedSkin=__0xae1d(1452),gloveChangerEnabled=false,selectedGloveModel=__0xae1d(1453),selectedGloveSkin=__0xae1d(1454),weaponSkinSelections={}};_0xae0=58 elseif _0xae0 == 1254 then _0x9b9=math.random() * 0;_0xae0=1263 elseif _0xae0 == 3725 then _0x25b={IndoorWall=0.25,[__0xae1d(1455)]=0.25};_0xae0=3736 elseif _0xae0 == 2937 then _0x1e7.Parent=_0x25;_0xae0=2941 elseif _0xae0 == 2458 then function applyXCSmokeState() local _0x5be;local _0xa6f=1;while true do if _0xa6f == 12 then if not _0x8.noSmokeEnabled then local _0x5bd=math.random() * 0;restoreXCSmoke();return end;_0xa6f=18 elseif _0xa6f == 1 then _0x5be=math.random() * 0;_0xa6f=12 elseif _0xa6f == 18 then task.spawn(function() for _0x63,_0x1c6 in ipairs({__0xae1d(1456),__0xae1d(1457)}) do local _0xa5=_0x1c:FindFirstChild(_0x1c6);if _0xa5 then for _0x63,_0x173 in ipairs(_0xa5:GetDescendants()) do if not _0x8.noSmokeEnabled then return end;if _0x173:IsA(__0xae1d(1458)) or _0x173:IsA(__0xae1d(1459)) then trackXCSmokeObject(_0x173) end end end end end);_0xa6f=35 else break end end end;_0xae0=2466 elseif _0xae0 == 3278 then _0x1ef.BackgroundTransparency=2 - 1;_0xae0=3285 elseif _0xae0 == 1489 then _0x142=1 + 1;_0xae0=1493 elseif _0xae0 == 766 then _0x61=function(_0x62) if not _0x58 or type(_0x62) ~= __0xae1d(1460) or type(_0x62.Bullets) ~= __0xae1d(1461) then return end;for _0x63,_0x64 in pairs(_0x62.Bullets) do if type(_0x64) == __0xae1d(1462) and type(_0x64.Hits) == __0xae1d(1463) then for _0x63,_0x65 in pairs(_0x64.Hits) do local _0x458=(97 + 0) * 1;if type(_0x65) == __0xae1d(1464) then local _0x457=math.random() * 0;local _0x66=_0x65.Instance or _0x65.instance;if typeof(_0x66) == __0xae1d(1465) then _0x58(_0x66) end end end end end end;_0xae0=774 elseif _0xae0 == 1132 then function isBaseKnife(_0x100) return _0x100 == __0xae1d(1466) or _0x100 == __0xae1d(1467) or _0x100 == __0xae1d(1468) end;_0xae0=1138 elseif _0xae0 == 2398 then table.insert(_0x26,_0x20.CharacterAdded:Connect(initJumpCircleForCharacter));_0xae0=2402 elseif _0xae0 == 3012 then _0x1e9=Instance.new(__0xae1d(1469),_0x1e8);_0xae0=3021 elseif _0xae0 == 1081 then _0xed=Color3.fromRGB(12 + 140,46 + 179 - 21,1 - 1);_0xae0=1089 elseif _0xae0 == 1366 then function applyXCHandsOffset() local _0x88,_0x110,_0x136,_0xcc,_0x521;local _0xa55=4;while true do if _0xa55 == 60 then _0xcc=CFrame.new(_0x8.customHandsX,_0x8.customHandsY,_0x8.customHandsZ) * CFrame.Angles(math.rad(_0x8.customHandsPitch),math.rad(_0x8.customHandsYaw),math.rad(_0x8.customHandsRoll));_0xa55=67 elseif _0xa55 == 40 then if _0x12a ~= _0x110 then _0x12a=_0x110;_0x12b=_0x110:GetPivot() end;_0xa55=44 elseif _0xa55 == 71 then pcall(function() _0x110:PivotTo(_0x88.CFrame * _0xcc * _0x88.CFrame:ToObjectSpace(_0x136)) end);_0xa55=93 elseif _0xa55 == 33 then if not _0x110 or not _0x110:IsA(__0xae1d(1470)) then do local _0x51f=117 end;return end;_0xa55=40 elseif _0xa55 == 19 then if not _0x88 then do local _0x51e=278 end;return end;_0xa55=22 elseif _0xa55 == 8 then _0x88=_0x1c.CurrentCamera or _0x22;_0xa55=19 elseif _0xa55 == 44 then _0x136=_0x110:GetPivot();_0xa55=50 elseif _0xa55 == 22 then _0x110=getCurrentWeaponModel();_0xa55=33 elseif _0xa55 == 50 then if 1 > 2 then local _0x520=nil end;_0xa55=60 elseif _0xa55 == 4 then if not _0x8.customHandsEnabled then _0x12a=nil;_0x12b=nil;return end;_0xa55=8 elseif _0xa55 == 67 then _0x521=(13 + 0) * 1;_0xa55=71 else break end end end;_0xae0=1375 elseif _0xae0 == 3294 then _0x1ef.TextColor3=_0x38.TextSecondary;_0xae0=3298 elseif _0xae0 == 907 then function getTargetHitbox(_0x86) local _0xa3a=3;while true do if _0xa3a == 15 then if _0x51 == 2 - 1 then do local _0x482=344 end;return _0x86:FindFirstChild(__0xae1d(1471)) or _0x86:FindFirstChild(__0xae1d(1472)) elseif _0x51 == 1 * 2 + 0 then return _0x86:FindFirstChild(__0xae1d(1473)) or _0x86:FindFirstChild(__0xae1d(1474)) or _0x86:FindFirstChild(__0xae1d(1475)) else if false then local _0x483=nil end;return _0x86:FindFirstChild(__0xae1d(1476)) or _0x86:FindFirstChild(__0xae1d(1477)) or _0x86:FindFirstChild(__0xae1d(1478)) end;_0xa3a=24 elseif _0xa3a == 9 then if _0x8.bodyAimOnly then return _0x86:FindFirstChild(__0xae1d(1479)) or _0x86:FindFirstChild(__0xae1d(1480)) or _0x86:FindFirstChild(__0xae1d(1481)) end;_0xa3a=15 elseif _0xa3a == 24 then if 1 > 2 then local _0x484=nil end;_0xa3a=38 elseif _0xa3a == 3 then if not _0x86 then return nil end;_0xa3a=9 else break end end end;_0xae0=914 elseif _0xae0 == 1235 then _0x123=nil;_0xae0=1240 elseif _0xae0 == 873 then _0x9b1=math.random() * 0;_0xae0=878 elseif _0xae0 == 3041 then _0x9f2=math.random() * 0;_0xae0=3046 elseif _0xae0 == 3148 then _0x1ed=Instance.new(__0xae1d(1482),_0x1e8);_0xae0=3151 elseif _0xae0 == 3636 then _0x240.IgnoreWater=true;_0xae0=3641 elseif _0xae0 == 4421 then if 1 > 2 then local _0xa1f=nil end;_0xae0=4425 elseif _0xae0 == 2691 then _0x9e8=(80 + 0) * 1;_0xae0=2698 elseif _0xae0 == 4477 then task.spawn(function() local _0x406=false;while xcSessionActive() and task.wait(0.1) do pcall(function() if _0x8.fireRateEnabled and _0x14.fireRate then local _0x407=_0x3fc();if _0x407 then if #_0x3f2 > 1 - 1 then restoreXCFireRates() end elseif not _0x18.TouchEnabled then if not _0x3f5 then scanXCFireRateObjects() end;if #_0x3f2 == 1 - 1 then _0x3f5=false;scanXCFireRateObjects() end;applyXCFireRate() else restoreXCFireRates() end elseif _0x406 then _0x3fa(nil);restoreXCFireRates() end;_0x406=_0x8.fireRateEnabled end) end end);_0xae0=4482 elseif _0xae0 == 1202 then do local _0x9b7=445 end;_0xae0=1205 elseif _0xae0 == 4258 then function installThirdPersonProtection() local _0xacd=4;while true do if _0xacd == 16 then if type(newcclosure) ~= __0xae1d(1483) then local _0x946=(75 + 0) * 1;return end;_0xacd=22 elseif _0xacd == 29 then if false then local _0x947=nil end;_0xacd=54 elseif _0xacd == 22 then pcall(function() local _0x3ed=getrawmetatable(game);if not _0x3ed then return end;local _0x3ee=_0x3ed.__newindex;if type(_0x3ee) ~= __0xae1d(1484) then return end;setreadonly(_0x3ed,false);_0x3ed.__newindex=newcclosure(function(_0x80,_0x10,_0x11) if _0x80 == _0x20 and _0x8.thirdPersonEnabled then local _0x15f=math.clamp(tonumber(_0x8.thirdPersonDistance) or 6 + 6,5 + 0,25 + 25);if _0x10 == __0xae1d(1485) then return _0x3ee(_0x80,_0x10,Enum.CameraMode.Classic) elseif _0x10 == __0xae1d(1486) then return _0x3ee(_0x80,_0x10,_0x15f) elseif _0x10 == __0xae1d(1487) then return _0x3ee(_0x80,_0x10,_0x15f) end end;return _0x3ee(_0x80,_0x10,_0x11) end);setreadonly(_0x3ed,true);_0x3ec=true end);_0xacd=29 elseif _0xacd == 4 then if _0x3ec then return end;_0xacd=10 elseif _0xacd == 10 then if type(getrawmetatable) ~= __0xae1d(1488) or type(setreadonly) ~= __0xae1d(1489) then return end;_0xacd=16 else break end end end;_0xae0=4268 elseif _0xae0 == 1773 then do local _0x9c8=798 end;_0xae0=1781 elseif _0xae0 == 3517 then do local _0xa03=946 end;_0xae0=3522 elseif _0xae0 == 2061 then _0x163={[__0xae1d(1490)]={__0xae1d(1491),__0xae1d(1492),__0xae1d(1493),__0xae1d(1494),__0xae1d(1495),__0xae1d(1496)},[__0xae1d(1497)]={__0xae1d(1498),__0xae1d(1499),__0xae1d(1500),__0xae1d(1501),__0xae1d(1502),__0xae1d(1503)},[__0xae1d(1504)]={__0xae1d(1505),__0xae1d(1506),__0xae1d(1507),__0xae1d(1508),__0xae1d(1509),__0xae1d(1510)},[__0xae1d(1511)]={__0xae1d(1512),__0xae1d(1513),__0xae1d(1514),__0xae1d(1515),__0xae1d(1516),__0xae1d(1517)},[__0xae1d(1518)]={__0xae1d(1519),__0xae1d(1520),__0xae1d(1521),__0xae1d(1522),__0xae1d(1523),__0xae1d(1524)},[__0xae1d(1525)]={__0xae1d(1526),__0xae1d(1527),__0xae1d(1528),__0xae1d(1529),__0xae1d(1530),__0xae1d(1531)},[__0xae1d(1532)]={__0xae1d(1533),__0xae1d(1534),__0xae1d(1535),__0xae1d(1536),__0xae1d(1537),__0xae1d(1538)},[__0xae1d(1539)]={__0xae1d(1540),__0xae1d(1541),__0xae1d(1542),__0xae1d(1543),__0xae1d(1544),__0xae1d(1545)},[__0xae1d(1546)]={__0xae1d(1547),__0xae1d(1548),__0xae1d(1549),__0xae1d(1550),__0xae1d(1551),__0xae1d(1552)},[__0xae1d(1553)]={__0xae1d(1554),__0xae1d(1555),__0xae1d(1556),__0xae1d(1557),__0xae1d(1558),__0xae1d(1559)},[__0xae1d(1560)]={__0xae1d(1561),__0xae1d(1562),__0xae1d(1563),__0xae1d(1564),__0xae1d(1565),__0xae1d(1566)},[__0xae1d(1567)]={__0xae1d(1568),__0xae1d(1569),__0xae1d(1570),__0xae1d(1571),__0xae1d(1572),__0xae1d(1573)}};_0xae0=2069 elseif _0xae0 == 1017 then function setupXCNativeSilentHook() local _0xce;local _0xa40=1;while true do if _0xa40 == 33 then pcall(function() local _0xcf=_0x1e:FindFirstChild(__0xae1d(1574));local _0xd0=_0xcf and _0xcf:FindFirstChild(__0xae1d(1575));local _0xd1=_0xd0 and _0xd0:FindFirstChild(__0xae1d(1576));local _0xd2=_0xd1 and _0xd1:FindFirstChild(__0xae1d(1577));local _0xd3=_0xcf and _0xcf:FindFirstChild(__0xae1d(1578));local _0xd4=_0xd3 and _0xd3:FindFirstChild(__0xae1d(1579));local _0xd5=_0x1e:FindFirstChild(__0xae1d(1580));local _0xd6=_0xd5 and _0xd5:FindFirstChild(__0xae1d(1581));if not _0xd2 or not _0xd4 or not _0xd6 then return end;local _0xd7=require(_0xd2);local _0xd8=require(_0xd6);local _0xd9=require(_0xd4);if type(_0xd7) ~= __0xae1d(1582) or type(_0xd7._performRaycast) ~= __0xae1d(1583) or type(_0xd8) ~= __0xae1d(1584) or type(_0xd8.cast) ~= __0xae1d(1585) or type(_0xd8.castThrough) ~= __0xae1d(1586) or type(_0xd9) ~= __0xae1d(1587) then return end;_0xbb=_0xd8;_0xbc=_0xd9;if rawget(_0xd7,__0xae1d(1588)) then _0xce=true;return end;local _0xda=_0xd7._performRaycast;_0xd7._performRaycast=function(_0x80,_0xdb,...) local _0xc9=_0xda(_0x80,_0xdb,...);local _0xdc=_0xe and _0xe.XCNativeSilentRedirectV24 or _0xc8;if type(_0xdc) ~= __0xae1d(1589) then return _0xc9 end;local _0xdd,_0xcd=pcall(_0xdc,_0x80,_0xc9);return _0xdd and _0xcd or _0xc9 end;rawset(_0xd7,__0xae1d(1590),true);_0xce=_0xd7._performRaycast ~= _0xda end);_0xa40=38 elseif _0xa40 == 47 then return _0xce elseif _0xa40 == 1 then do local _0x4a3=684 end;_0xa40=12 elseif _0xa40 == 18 then if _0x18.TouchEnabled then local _0x4a2=(55 + 0) * 1;return false end;_0xa40=22 elseif _0xa40 == 12 then if _0x5d then return true end;_0xa40=18 elseif _0xa40 == 22 then _0xce=false;_0xa40=33 elseif _0xa40 == 38 then _0x5d=_0xce;_0xa40=47 else break end end end;_0xae0=1027 elseif _0xae0 == 3868 then function hideTacticalOverlay() do local _0x755=100 end;for _0x63,_0x1dc in pairs(_0x28) do _0x1dc.Box.Visible=false;if 1 > 2 then local _0x752=nil end;_0x1dc.BoxOutline.Visible=false;do local _0x753=205 end;_0x1dc.HealthBarBg.Visible=false;_0x1dc.WeaponCard.Visible=false;_0x1dc.TagCard.Visible=false;if false then local _0x754=nil end;for _0x63,_0x45 in ipairs(_0x1dc.Corners) do local _0x751=(82 + 0) * 1;_0x45.H.Visible=false;_0x45.V.Visible=false end;hideXCSkeleton(_0x1dc) end end;_0xae0=3876 elseif _0xae0 == 1688 then _0x151.ResetOnSpawn=false;_0xae0=1699 elseif _0xae0 == 4608 then _0x41d.ActiveName=__0xae1d(1591);_0xae0=4618 elseif _0xae0 == 3489 then if false then local _0xa01=nil end;_0xae0=3495 elseif _0xae0 == 2794 then _0x1e3.CornerRadius=UDim.new(2 - 1,1 - 1);_0xae0=2801 elseif _0xae0 == 2698 then _0x1e0.Parent=_0x25;_0xae0=2703 elseif _0xae0 == 4602 then _0x41d.Folder=__0xae1d(1592);_0xae0=4608 elseif _0xae0 == 409 then _0x2e={};_0xae0=415 elseif _0xae0 == 2013 then function getThirdPersonTarget() local _0x86,_0x9b;local _0xa58=2;while true do if _0xa58 == 2 then _0x86=_0x20.Character;_0xa58=12 elseif _0xa58 == 12 then _0x9b=_0x86 and _0x86:FindFirstChildOfClass(__0xae1d(1593));_0xa58=16 elseif _0xa58 == 22 then return _0x86,_0x9b elseif _0xa58 == 16 then if not _0x86 or not _0x9b or _0x9b.Health <= 1 - 1 then local _0x533=math.random() * 0;return nil,nil end;_0xa58=22 else break end end end;_0xae0=2017 elseif _0xae0 == 676 then _0x57=nil;_0xae0=680 elseif _0xae0 == 3391 then function renderGrenadeOverlays() local _0x6e,_0x1fc;local _0xa78=4;while true do if _0xa78 == 4 then if 1 > 2 then local _0x63e=nil end;_0xa78=8 elseif _0xa78 == 22 then if 1 > 2 then local _0x63f=nil end;_0xa78=32 elseif _0xa78 == 37 then if 1 > 2 then local _0x640=nil end;_0xa78=47 elseif _0xa78 == 8 then if not _0x8.grenadeEspEnabled then local _0x61b=math.random() * 0;for _0x63,_0x9 in pairs(_0x14b) do _0x9.Tag.Visible=false;if false then local _0x619=nil end;_0x9.RadiusCircle.Visible=false;local _0x61a=(52 + 0) * 1;for _0x63,_0x18a in ipairs(_0x9.Lines) do _0x18a.Visible=false end end;return end;_0xa78=15 elseif _0xa78 == 15 then _0x6e=_0x22.CFrame.Position;_0xa78=22 elseif _0xa78 == 32 then _0x1fc={};_0xa78=37 elseif _0xa78 == 47 then for _0x63,_0x1fd in ipairs(_0x1c:GetChildren()) do if not isEntityCharacter(_0x1fd) then local _0x1fe=_0x1fd.Name:lower();local _0x1ff=false;if false then local _0x639=nil end;local _0x200=__0xae1d(1594);do local _0x63a=481 end;local _0x201=_0x38.HEColor;local _0x202=10 + 9 - 5;if _0x1fe:find(__0xae1d(1595)) or _0x1fe:find(__0xae1d(1596)) or _0x1fe:find(__0xae1d(1597)) then _0x1ff=true;_0x200=__0xae1d(1598);_0x201=_0x38.MolotovColor;_0x202=7 + 28 - 18;local _0x61c=(4 + 0) * 1 elseif _0x1fe:find(__0xae1d(1599)) then _0x1ff=true;_0x200=__0xae1d(1600);if false then local _0x61d=nil end;_0x201=_0x38.SmokeColor;_0x202=6 * 3 + 2 elseif _0x1fe:find(__0xae1d(1601)) or _0x1fe:find(__0xae1d(1602)) or _0x1fe:find(__0xae1d(1603)) then local _0x61e=math.random() * 0;_0x1ff=true;do local _0x61f=573 end;_0x200=__0xae1d(1604);_0x201=_0x38.HEColor;local _0x620=(75 + 0) * 1;_0x202=3 + 12 elseif _0x1fe:find(__0xae1d(1605)) then _0x1ff=true;_0x200=__0xae1d(1606);_0x201=Color3.fromRGB(105 + 140,161 + 85 - 11,141 + 20 - 41);if 1 > 2 then local _0x621=nil end;_0x202=13 + 30 - 33 end;if _0x1ff then do local _0x638=722 end;local _0xaf=_0x1fd:IsA(__0xae1d(1607)) and _0x1fd or _0x1fd:FindFirstChildWhichIsA(__0xae1d(1608));if _0xaf and _0xaf.Parent and _0xaf:IsDescendantOf(_0x1c) then local _0x637=(13 + 0) * 1;local _0x8d=_0xaf.Position - _0x6e.Magnitude;if _0x8d <= _0x8.grenadeMaxDist then do local _0x635=852 end;_0x1fc[_0x1fd]=true;local _0x203=getOrCreateGrenadeUI(_0x1fd);local _0x204,_0x205=_0x22:WorldToViewportPoint(_0xaf.Position);if _0x205 and _0x204.Z > 1 - 1 then _0x203.Tag.Position=UDim2.new(1 - 1,_0x204.X,1 - 1,_0x204.Y - (2 + 4));if false then local _0x632=nil end;_0x203.Label.Text=string.format(__0xae1d(1609),_0x200,math.floor(_0x8d));_0x203.Label.TextColor3=_0x201;local _0x633=(6 + 0) * 1;_0x203.Tag.Visible=true;if _0x8.showGrenadePath and _0xaf.AssemblyLinearVelocity and _0xaf.AssemblyLinearVelocity.Magnitude > 2 + 0 then if false then local _0x62a=nil end;local _0x206=_0xaf.AssemblyLinearVelocity;if false then local _0x62b=nil end;local _0x207=_0xaf.Position;local _0x208=0.08;local _0x62c=(99 + 0) * 1;local _0x209=Vector3.new(1 - 1,-_0x1c.Gravity,1 - 1);_0x1f2.FilterDescendantsInstances={player.Character,item,camera};for _0x20a=2 - 1,#_0x203.Lines do local _0x20b=_0x207 + _0x206 * _0x208 + 0.5 * _0x209 * _0x208 * _0x208;_0x206=_0x206 + _0x209 * _0x208;local _0x626=(89 + 0) * 1;local _0x20c=_0x1c:Raycast(_0x207,_0x20b - _0x207,_0x1f2);if 1 > 2 then local _0x627=nil end;if _0x20c then _0x20b=_0x20c.Position end;local _0x1a4,_0x20d=_0x22:WorldToViewportPoint(_0x207);local _0x1a5,_0x20e=_0x22:WorldToViewportPoint(_0x20b);if _0x20d and _0x20e and _0x1a4.Z > 1 - 1 and _0x1a5.Z > 1 - 1 then local _0x622=(69 + 0) * 1;local _0x20f=_0x203.Lines[_0x20a];local _0x210=Vector2.new(_0x1a4.X,_0x1a4.Y);local _0x211=Vector2.new(_0x1a5.X,_0x1a5.Y);local _0x212=_0x211 - _0x210.Magnitude;local _0x213=(_0x210 + _0x211) * 0.5;local _0x623=(22 + 0) * 1;local _0xb1=math.deg(math.atan2(_0x211.Y - _0x210.Y,_0x211.X - _0x210.X));_0x20f.Size=UDim2.new(1 - 1,_0x212,1 - 1,1.2);_0x20f.Position=UDim2.new(1 - 1,_0x213.X,1 - 1,_0x213.Y);_0x20f.Rotation=_0xb1;local _0x624=math.random() * 0;_0x20f.BackgroundColor3=_0x201;_0x20f.Visible=true else _0x203.Lines[_0x20a].Visible=false end;local _0x628=(89 + 0) * 1;if _0x20c then do local _0x625=115 end;for _0x214=_0x20a + (2 - 1),#_0x203.Lines do _0x203.Lines[_0x214].Visible=false end;break end;if 1 > 2 then local _0x629=nil end;_0x207=_0x20b end else for _0x63,_0x18a in ipairs(_0x203.Lines) do if false then local _0x62d=nil end;_0x18a.Visible=false end end;local _0x634=(26 + 0) * 1;local _0x215=_0x200 == __0xae1d(1610) and _0x8.showMolotovRadius or _0x200 == __0xae1d(1611) and _0x8.showSmokeRadius;if _0x215 then _0x1f2.FilterDescendantsInstances={player.Character,item,camera};local _0x216=_0x1c:Raycast(_0xaf.Position,Vector3.new(1 - 1,-(4 + 56),1 - 1),_0x1f2);do local _0x630=217 end;local _0x217=_0x216 and _0x216.Position or _0xaf.Position;local _0x218,_0x219=_0x22:WorldToViewportPoint(_0x217);local _0x631=math.random() * 0;local _0x21a,_0x63=_0x22:WorldToViewportPoint(_0x217 + _0x22.CFrame.RightVector * _0x202);if _0x219 and _0x218.Z > 1 - 1 then local _0x21b=Vector2.new(_0x21a.X,_0x21a.Y) - Vector2.new(_0x218.X,_0x218.Y).Magnitude;local _0x62e=math.random() * 0;_0x203.RadiusCircle.Size=UDim2.new(1 - 1,_0x21b * (1 + 1),1 - 1,_0x21b * (2 + 0));_0x203.RadiusCircle.Position=UDim2.new(1 - 1,_0x218.X,1 - 1,_0x218.Y);_0x203.RadiusCircle.BackgroundTransparency=2 - 1;_0x203.RadiusStroke.Color=_0x201;local _0x62f=math.random() * 0;_0x203.RadiusCircle.Visible=true else _0x203.RadiusCircle.Visible=false end else _0x203.RadiusCircle.Visible=false end else _0x203.Tag.Visible=false;_0x203.RadiusCircle.Visible=false;for _0x63,_0x18a in ipairs(_0x203.Lines) do _0x18a.Visible=false end end;if 1 > 2 then local _0x636=nil end end end end end;local _0x63b=math.random() * 0 end;_0xa78=51 elseif _0xa78 == 51 then for _0x1f3,_0x62 in pairs(_0x14b) do if not _0x1fc[_0x1f3] or not _0x1f3.Parent then _0x62.Tag:Destroy();if 1 > 2 then local _0x63c=nil end;_0x62.RadiusCircle:Destroy();for _0x63,_0x18a in ipairs(_0x62.Lines) do _0x18a:Destroy() end;_0x14b[_0x1f3]=nil end;local _0x63d=math.random() * 0 end;_0xa78=70 else break end end end;_0xae0=3398 elseif _0xae0 == 1381 then _0x137=1 - 1;_0xae0=1388 elseif _0xae0 == 4030 then _0x316=false;_0xae0=4034 elseif _0xae0 == 3371 then function isEntityCharacter(_0x1f3) local _0x60a;local _0xa76=4;while true do if _0xa76 == 16 then return false elseif _0xa76 == 4 then _0x60a=(10 + 0) * 1;_0xa76=10 elseif _0xa76 == 10 then for _0x63,_0x1f4 in ipairs(_0x15:GetPlayers()) do do local _0x609=545 end;if _0x1f4.Character and _0x1f3:IsDescendantOf(_0x1f4.Character) then return true end end;_0xa76=16 else break end end end;_0xae0=3376 elseif _0xae0 == 4736 then _0xa29=math.random() * 0;_0xae0=4742 elseif _0xae0 == 296 then function getSafeGui() local _0x23,_0x24,_0x42b;local _0xa2f=5;while true do if _0xa2f == 12 then if _0x23 and _0x24 then do local _0x42a=84 end;return _0x24 end;_0xa2f=16 elseif _0xa2f == 5 then _0x23,_0x24=pcall(function() if gethui then return gethui() end end);_0xa2f=12 elseif _0xa2f == 45 then return nil elseif _0xa2f == 16 then _0x23,_0x24=pcall(function() return _0x19 end);_0xa2f=25 elseif _0xa2f == 40 then if _0x20 then return _0x20:WaitForChild(__0xae1d(1612),3 + 2) or _0x20:FindFirstChildOfClass(__0xae1d(1613)) end;_0xa2f=45 elseif _0xa2f == 30 then if _0x23 and _0x24 then return _0x24 end;_0xa2f=40 elseif _0xa2f == 25 then _0x42b=(25 + 0) * 1;_0xa2f=30 else break end end end;_0xae0=304 elseif _0xae0 == 4631 then _0xa23=(14 + 0) * 1;_0xae0=4637 elseif _0xae0 == 1108 then _0xf1={SkinsRoot=nil,WeaponAssets=nil,SkinLibrary=nil,GetWeapon=nil,KnifeSet={},KnifeChoices={},SkinSelections={},GloveSelections={},GloveFolders={},ModifiedKnife=nil,Ready=false,LastRefresh=1 - 1,LastError=nil};_0xae0=1115 elseif _0xae0 == 2286 then function ensureScopeGui() local _0x182;local _0xa66=1;while true do if _0xa66 == 1 then if false then local _0x583=nil end;_0xa66=8 elseif _0xa66 == 78 then do local _0x585=8 end;_0xa66=87 elseif _0xa66 == 96 then scopeContainer.Position=UDim2.fromScale(0.5,0.5);_0xa66=102 elseif _0xa66 == 117 then if 1 > 2 then local _0x587=nil end;_0xa66=123 elseif _0xa66 == 152 then _0x182.AnchorPoint=Vector2.new(.5,.5);_0xa66=155 elseif _0xa66 == 37 then scopeGui.ResetOnSpawn=false;_0xa66=45 elseif _0xa66 == 102 then if false then local _0x586=nil end;_0xa66=106 elseif _0xa66 == 71 then scopeContainer.BackgroundTransparency=2 - 1;_0xa66=78 elseif _0xa66 == 58 then if not scopeGui.Parent then scopeGui.Parent=_0x19 end;_0xa66=67 elseif _0xa66 == 123 then scopeContainer.Parent=scopeGui;_0xa66=131 elseif _0xa66 == 87 then scopeContainer.AnchorPoint=Vector2.new(0.5,0.5);_0xa66=96 elseif _0xa66 == 24 then scopeGui=Instance.new(__0xae1d(1614));_0xa66=31 elseif _0xa66 == 67 then scopeContainer=Instance.new(__0xae1d(1615));_0xa66=71 elseif _0xa66 == 131 then for _0x100,_0x180 in pairs({Left=Vector2.new(2 - 1,.5),Right=Vector2.new(1 - 1,.5),Top=Vector2.new(.5,2 - 1),Bottom=Vector2.new(.5,1 - 1)}) do local _0x57f=math.random() * 0;local _0x181=Instance.new(__0xae1d(1616));_0x181.Name=_0x100;if false then local _0x580=nil end;_0x181.AnchorPoint=_0x180;if false then local _0x581=nil end;_0x181.BorderSizePixel=1 - 1;_0x181.Parent=scopeContainer;if 1 > 2 then local _0x582=nil end end;_0xa66=135 elseif _0xa66 == 155 then _0x182.BorderSizePixel=1 - 1;_0xa66=162 elseif _0xa66 == 16 then if 1 > 2 then local _0x584=nil end;_0xa66=24 elseif _0xa66 == 51 then pcall(function() scopeGui.Parent=_0x25 end);_0xa66=58 elseif _0xa66 == 162 then _0x182.Parent=scopeContainer;_0xa66=188 elseif _0xa66 == 45 then scopeGui.IgnoreGuiInset=true;_0xa66=51 elseif _0xa66 == 144 then _0x182.Name=__0xae1d(1617);_0xa66=152 elseif _0xa66 == 31 then scopeGui.Name=__0xae1d(1618);_0xa66=37 elseif _0xa66 == 8 then if scopeGui and scopeGui.Parent then do local _0x57e=783 end;return end;_0xa66=16 elseif _0xa66 == 135 then _0x182=Instance.new(__0xae1d(1619));_0xa66=144 elseif _0xa66 == 106 then scopeContainer.Size=UDim2.fromOffset(1 - 1,1 - 1);_0xa66=117 else break end end end;_0xae0=2290 elseif _0xae0 == 1829 then _0x158.Name=__0xae1d(1620);_0xae0=1838 elseif _0xae0 == 3564 then if false then local _0xa05=nil end;_0xae0=3571 elseif _0xae0 == 2502 then do local _0x9e1=355 end;_0xae0=2511 elseif _0xae0 == 3582 then for _0x63,_0x23f in ipairs(_0x15:GetPlayers()) do hookXCSoundPlayer(_0x23f) end;_0xae0=3588 elseif _0xae0 == 4637 then function cfgPath(_0x100) return _0x41d.Folder .. __0xae1d(1621) .. cfgSafeName(_0x100) .. __0xae1d(1622) end;_0xae0=4646 elseif _0xae0 == 2439 then do local _0x9df=524 end;_0xae0=2444 elseif _0xae0 == 3314 then _0x1ef.Font=Enum.Font.GothamBold;_0xae0=3323 elseif _0xae0 == 3482 then function getXCSoundSource(_0x1c9) local _0x9e,_0x234,_0x1a8;local _0xa80=2;while true do if _0xa80 == 12 then _0x9e=_0x1c9.Parent;_0xa80=18 elseif _0xa80 == 18 then _0x234=nil;_0xa80=22 elseif _0xa80 == 46 then return nil elseif _0xa80 == 22 then while _0x9e and _0x9e ~= _0x1c do if not _0x234 then if _0x9e:IsA(__0xae1d(1623)) then local _0x670=math.random() * 0;_0x234=_0x9e elseif _0x9e:IsA(__0xae1d(1624)) then local _0x671=math.random() * 0;_0x234=_0x9e end end;if _0x9e:IsA(__0xae1d(1625)) then local _0x235=_0x15:GetPlayerFromCharacter(_0x9e);local _0x673=(72 + 0) * 1;if _0x235 then local _0x1a8;if _0x234 and _0x234:IsA(__0xae1d(1626)) then _0x1a8=_0x234.WorldPosition elseif _0x234 and _0x234:IsA(__0xae1d(1627)) then do local _0x672=665 end;_0x1a8=_0x234.Position end;local _0xa5=_0x9e:FindFirstChild(__0xae1d(1628)) or _0x9e:FindFirstChild(__0xae1d(1629)) or _0x9e:FindFirstChild(__0xae1d(1630));return _0x235,_0x1a8 or _0xa5 and _0xa5.Position,_0x9e end end;if 1 > 2 then local _0x67a=nil end;for _0x63,_0x236 in ipairs({__0xae1d(1631),__0xae1d(1632),__0xae1d(1633),__0xae1d(1634)}) do local _0x237=_0x9e:GetAttribute(_0x236);if 1 > 2 then local _0x678=nil end;local _0x235;if typeof(_0x237) == __0xae1d(1635) and _0x237:IsA(__0xae1d(1636)) then local _0x674=math.random() * 0;_0x235=_0x237 elseif type(_0x237) == __0xae1d(1637) then _0x235=_0x15:GetPlayerByUserId(_0x237) end;if not _0x235 and type(_0x237) == __0xae1d(1638) then local _0x676=math.random() * 0;_0x235=_0x15:FindFirstChild(_0x237);if 1 > 2 then local _0x677=nil end;if not _0x235 then local _0x238=tonumber(_0x237);if _0x238 then _0x235=_0x15:GetPlayerByUserId(_0x238);if false then local _0x675=nil end end end end;if _0x235 then local _0x103=_0x235.Character;local _0xa5=_0x103 and (_0x103:FindFirstChild(__0xae1d(1639)) or _0x103:FindFirstChild(__0xae1d(1640)));local _0x1a8=_0x234 and (_0x234:IsA(__0xae1d(1641)) and _0x234.WorldPosition or _0x234.Position);return _0x235,_0x1a8 or _0xa5 and _0xa5.Position,_0x103 end;if false then local _0x679=nil end end;_0x9e=_0x9e.Parent end;_0xa80=32 elseif _0xa80 == 2 then do local _0x67f=928 end;_0xa80=12 elseif _0xa80 == 32 then _0x1a8=_0x234 and (_0x234:IsA(__0xae1d(1642)) and _0x234.WorldPosition or _0x234.Position);_0xa80=38 elseif _0xa80 == 38 then if _0x1a8 and classifyXCSound(_0x1c9) ~= __0xae1d(1643) then local _0x67d=(31 + 0) * 1;local _0x239,_0x23a,_0x23b=nil,nil,5 + 0;for _0x63,_0xa1 in ipairs(_0x15:GetPlayers()) do local _0x103=_0xa1.Character;do local _0x67c=500 end;local _0xa5=_0x103 and (_0x103:FindFirstChild(__0xae1d(1644)) or _0x103:FindFirstChild(__0xae1d(1645)));if _0xa5 and isTargetEnemy(_0xa1,_0x103) then local _0x15f=_0xa5.Position - _0x1a8.Magnitude;if _0x15f < _0x23b then _0x239,_0x23a,_0x23b=_0xa1,_0x103,_0x15f;do local _0x67b=249 end end end end;if false then local _0x67e=nil end;if _0x239 then return _0x239,_0x1a8,_0x23a end end;_0xa80=46 else break end end end;_0xae0=3489 elseif _0xae0 == 1240 then _0x124=nil;_0xae0=1251 elseif _0xae0 == 1838 then _0x158.AnchorPoint=Vector2.new(0.5,1 - 1);_0xae0=1843 elseif _0xae0 == 2979 then if false then local _0x9f0=nil end;_0xae0=2986 elseif _0xae0 == 719 then _0x5c=false;_0xae0=723 elseif _0xae0 == 4377 then _0x3f6=false;_0xae0=4385 elseif _0xae0 == 3323 then _0x1f0=1 - 1;_0xae0=3327 elseif _0xae0 == 2133 then if _0x8.weaponChamsMode == __0xae1d(1646) then local _0x54a=(36 + 0) * 1;_0x8.weaponChamsMode=__0xae1d(1647) end;_0xae0=2137 elseif _0xae0 == 2327 then _0x192.FilterType=Enum.RaycastFilterType.Exclude;_0xae0=2332 elseif _0xae0 == 4594 then _0x41d={};_0xae0=4602 elseif _0xae0 == 1493 then _0x143=false;_0xae0=1503 elseif _0xae0 == 4324 then if false then local _0xa1d=nil end;_0xae0=4330 elseif _0xae0 == 2123 then if _0x8.weaponChamsMode == __0xae1d(1648) then _0x8.weaponChamsMode=__0xae1d(1649) end;_0xae0=2133 elseif _0xae0 == 3659 then _0xa0a=(78 + 0) * 1;_0xae0=3663 elseif _0xae0 == 215 then if 1 > 2 then local _0x99a=nil end;_0xae0=220 elseif _0xae0 == 498 then function xcSessionActive() if 1 > 2 then local _0x42c=nil end;return not _0x34 or _0x34.XCSessionToken == _0x35 end;_0xae0=505 elseif _0xae0 == 3826 then function buildXCWeaponViewport(_0x1dc,_0xfd,_0x87,_0x103) local _0x2a5,_0x2a6,_0x2a7,_0xdd,_0x16b,_0x2a8,_0x2a9,_0x745,_0x2aa,_0x9d,_0x2af,_0x213,_0x749,_0x2b0,_0x2b1,_0x2b2,_0x2b3,_0x2b4,_0x2b5,_0x2b6,_0x2b7,_0x2b8,_0x74a,_0x2b9,_0x74b;local _0xa98=4;while true do if _0xa98 == 68 then if false then local _0x742=nil end;_0xa98=72 elseif _0xa98 == 261 then _0x2b6=(25 + 11) / (1 * 8 + 7);_0xa98=267 elseif _0xa98 == 45 then _0x2a7=_0x2a5 or _0x2a6 and (_0x2a6:FindFirstChild(__0xae1d(1650)) or _0x2a6:FindFirstChild(__0xae1d(1651)) or _0x2a6:FindFirstChild(__0xae1d(1652)) or _0x2a6:FindFirstChild(__0xae1d(1653)) or _0x2a6) or _0x87;_0xa98=51 elseif _0xa98 == 227 then _0x2b1=_0x2b0 and Vector3.new(1 - 1,0.08,2 - 1) or Vector3.new(2 - 1,0.08,1 - 1);_0xa98=235 elseif _0xa98 == 235 then _0x2b2=_0x2b0 and _0x2af.X or _0x2af.Z;_0xa98=239 elseif _0xa98 == 51 then if false then local _0x741=nil end;_0xa98=61 elseif _0xa98 == 331 then return true elseif _0xa98 == 305 then _0x74b=math.random() * 0;_0xa98=313 elseif _0xa98 == 107 then _0x2a8={clone};_0xa98=113 elseif _0xa98 == 11 then clearXCWeaponPreview(_0x1dc);_0xa98=15 elseif _0xa98 == 276 then _0x2b8=_0x2af.Y / math.max(0.01,(36 + 16 - 50) * _0x2b5);_0xa98=282 elseif _0xa98 == 162 then _0x9d=Vector3.new(-math.huge,-math.huge,-math.huge);_0xa98=171 elseif _0xa98 == 267 then _0x2b7=_0x2b2 / math.max(0.01,(2 + 0) * _0x2b5 * _0x2b6);_0xa98=276 elseif _0xa98 == 30 then _0x2a5=findXCCharacterWeaponVisual(_0x103,_0xfd);_0xa98=38 elseif _0xa98 == 288 then _0x2b9=math.max(_0x2b7,_0x2b8,0.35) * 1.18 + _0x2b3 * 0.5;_0xa98=298 elseif _0xa98 == 134 then for _0x63,_0x173 in ipairs(_0x2a8) do if _0x173:IsA(__0xae1d(1654)) then _0x173:Destroy() elseif _0x173:IsA(__0xae1d(1655)) then local _0x169=_0x173.Name:lower();if _0x169:find(__0xae1d(1656),2 - 1,true) or _0x169:find(__0xae1d(1657),2 - 1,true) or _0x169:find(__0xae1d(1658),2 - 1,true) or _0x169:find(__0xae1d(1659),2 - 1,true) or _0x169 == __0xae1d(1660) or _0x169:find(__0xae1d(1661),2 - 1,true) or _0x169:find(__0xae1d(1662),2 - 1,true) or _0x169:find(__0xae1d(1663),2 - 1,true) then _0x173:Destroy() else do local _0x739=133 end;_0x173.Anchored=true;_0x173.CanCollide=false;_0x173.CanTouch=false;_0x173.CanQuery=false;if _0x173.Transparency < 0.98 then if 1 > 2 then local _0x737=nil end;table.insert(_0x2a9,_0x173);if false then local _0x738=nil end end end end end;_0xa98=143 elseif _0xa98 == 143 then do local _0x746=623 end;_0xa98=151 elseif _0xa98 == 101 then _0x16b.Parent=_0x1dc.WeaponWorld;_0xa98=107 elseif _0xa98 == 61 then if not _0x2a7 then return false end;_0xa98=68 elseif _0xa98 == 220 then _0x2b0=_0x2af.X >= _0x2af.Z;_0xa98=227 elseif _0xa98 == 38 then _0x2a6=findXCWeaponAsset(_0xfd);_0xa98=45 elseif _0xa98 == 171 then if 1 > 2 then local _0x747=nil end;_0xa98=179 elseif _0xa98 == 298 then _0x1dc.WeaponCamera.FieldOfView=_0x2b4;_0xa98=305 elseif _0xa98 == 248 then _0x2b4=3 * 8 + 4;_0xa98=256 elseif _0xa98 == 197 then if _0x2af.Magnitude < 0.01 then if false then local _0x73f=nil end;clearXCWeaponPreview(_0x1dc);return false end;_0xa98=204 elseif _0xa98 == 4 then do local _0x740=604 end;_0xa98=11 elseif _0xa98 == 204 then _0x213=(_0x2aa + _0x9d) * 0.5;_0xa98=212 elseif _0xa98 == 15 then if _0x87 and type(_0x87.TextureId) == __0xae1d(1664) and _0x87.TextureId ~= "" then local _0x733=(25 + 0) * 1;_0x1dc.WeaponImage.Image=_0x87.TextureId;_0x1dc.WeaponImage.Visible=true;_0x1dc.WeaponReady=true;return true end;_0xa98=25 elseif _0xa98 == 179 then for _0x63,_0xaf in ipairs(_0x2a9) do local _0x2ab=_0xaf.Size * 0.5;for _0x2ac=-(2 - 1),2 - 1,2 + 0 do for _0x2ad=-(2 - 1),2 - 1,23 + 8 - 29 do for _0x2ae=-(2 - 1),2 - 1,2 + 0 do local _0x23e=_0xaf.CFrame:PointToWorldSpace(Vector3.new(_0x2ab.X * _0x2ac,_0x2ab.Y * _0x2ad,_0x2ab.Z * _0x2ae));local _0x73a=math.random() * 0;_0x2aa=Vector3.new(math.min(_0x2aa.X,_0x23e.X),math.min(_0x2aa.Y,_0x23e.Y),math.min(_0x2aa.Z,_0x23e.Z));if 1 > 2 then local _0x73b=nil end;_0x9d=Vector3.new(math.max(_0x9d.X,_0x23e.X),math.max(_0x9d.Y,_0x23e.Y),math.max(_0x9d.Z,_0x23e.Z));local _0x73c=(67 + 0) * 1 end;if false then local _0x73d=nil end end;if false then local _0x73e=nil end end end;_0xa98=184 elseif _0xa98 == 151 then if #_0x2a9 == 1 - 1 then clearXCWeaponPreview(_0x1dc);return false end;_0xa98=159 elseif _0xa98 == 212 then _0x749=(51 + 0) * 1;_0xa98=220 elseif _0xa98 == 316 then _0x1dc.WeaponViewport.Visible=true;_0xa98=326 elseif _0xa98 == 282 then _0x74a=math.random() * 0;_0xa98=288 elseif _0xa98 == 25 then if _0x87 then local _0x2a4=_0x87:FindFirstChildWhichIsA(__0xae1d(1665),true);if _0x2a4 and _0x2a4.Image ~= "" then do local _0x734=464 end;_0x1dc.WeaponImage.Image=_0x2a4.Image;_0x1dc.WeaponImage.Visible=true;_0x1dc.WeaponReady=true;return true end;if false then local _0x735=nil end end;_0xa98=30 elseif _0xa98 == 256 then _0x2b5=math.tan(math.rad(_0x2b4 * 0.5));_0xa98=261 elseif _0xa98 == 239 then _0x2b3=_0x2b0 and _0x2af.Z or _0x2af.X;_0xa98=248 elseif _0xa98 == 313 then _0x1dc.WeaponCamera.CFrame=CFrame.lookAt(_0x213 + _0x2b1.Unit * _0x2b9,_0x213,Vector3.yAxis);_0xa98=316 elseif _0xa98 == 121 then _0x745=math.random() * 0;_0xa98=129 elseif _0xa98 == 191 then if false then local _0x748=nil end;_0xa98=197 elseif _0xa98 == 184 then _0x2af=_0x9d - _0x2aa;_0xa98=191 elseif _0xa98 == 81 then if 1 > 2 then local _0x743=nil end;_0xa98=87 elseif _0xa98 == 72 then _0xdd,_0x16b=pcall(function() return _0x2a7:Clone() end);_0xa98=81 elseif _0xa98 == 129 then for _0x63,_0x173 in ipairs(_0x16b:GetDescendants()) do table.insert(_0x2a8,_0x173) end;_0xa98=134 elseif _0xa98 == 159 then _0x2aa=Vector3.new(math.huge,math.huge,math.huge);_0xa98=162 elseif _0xa98 == 87 then if not _0xdd or not _0x16b then if 1 > 2 then local _0x736=nil end;return false end;_0xa98=93 elseif _0xa98 == 326 then _0x1dc.WeaponReady=true;_0xa98=331 elseif _0xa98 == 113 then _0x2a9={};_0xa98=121 elseif _0xa98 == 93 then if false then local _0x744=nil end;_0xa98=101 else break end end end;_0xae0=3833 elseif _0xae0 == 200 then _0x1a=game:GetService(__0xae1d(1666));_0xae0=206 elseif _0xae0 == 3466 then if false then local _0xa00=nil end;_0xae0=3473 elseif _0xae0 == 2948 then _0x1e8.Position=UDim2.new(1 - 1,1 + 13,1 - 1,8 + 6);_0xae0=2958 elseif _0xae0 == 3690 then _0x259=RaycastParams.new();_0xae0=3698 elseif _0xae0 == 648 then function rgb(_0x52,_0x53,_0x54) if 1 > 2 then local _0x454=nil end;return Color3.fromRGB(math.clamp(math.floor(tonumber(_0x52) or 132 + 123),1 - 1,62 + 206 - 13),math.clamp(math.floor(tonumber(_0x53) or 207 + 78 - 30),1 - 1,25 + 240 - 10),math.clamp(math.floor(tonumber(_0x54) or 13 + 289 - 47),1 - 1,158 + 97)) end;_0xae0=654 elseif _0xae0 == 1879 then _0x158.Text="";_0xae0=1886 elseif _0xae0 == 1611 then _0x14a=Instance.new(__0xae1d(1667),_0x1c);_0xae0=1619 elseif _0xae0 == 1436 then _0x13d=false;_0xae0=1446 elseif _0xae0 == 2822 then _0x1e4.BackgroundTransparency=2 - 1;_0xae0=2831 elseif _0xae0 == 3530 then function triggerXCSoundPosition(_0x1c9) local _0x235,_0x1a8,_0x103,_0x88,_0x118,_0x109,_0x691,_0x692;local _0xa84=5;while true do if _0xa84 == 52 then if _0x109 and _0x118 - (_0x109.LastPulse or 1 - 1) < 0.09 then do local _0x690=809 end;return end;_0xa84=57 elseif _0xa84 == 25 then _0x88=_0x1c.CurrentCamera or _0x22;_0xa84=32 elseif _0xa84 == 57 then _0x691=(91 + 0) * 1;_0xa84=66 elseif _0xa84 == 36 then _0x118=os.clock();_0xa84=47 elseif _0xa84 == 86 then createXCSoundPulse(_0x1a8,classifyXCSound(_0x1c9));_0xa84=101 elseif _0xa84 == 66 then if not _0x109 then _0x109={};_0x14e[_0x1c9]=_0x109 end;_0xa84=73 elseif _0xa84 == 73 then _0x109.LastPulse=_0x118;_0xa84=80 elseif _0xa84 == 15 then if not _0x235 or not _0x1a8 or not isTargetEnemy(_0x235,_0x103) then return end;_0xa84=25 elseif _0xa84 == 5 then if not _0x8.soundPositionEspEnabled or not _0x1c9 or not _0x1c9.Parent then return end;_0xa84=10 elseif _0xa84 == 32 then if not _0x88 or _0x1a8 - _0x88.CFrame.Position.Magnitude > (tonumber(_0x8.soundEspMaxDist) or 200 * 6 + 0) then return end;_0xa84=36 elseif _0xa84 == 80 then _0x692=math.random() * 0;_0xa84=86 elseif _0xa84 == 47 then _0x109=_0x14e[_0x1c9];_0xa84=52 elseif _0xa84 == 10 then _0x235,_0x1a8,_0x103=getXCSoundSource(_0x1c9);_0xa84=15 else break end end end;_0xae0=3537 elseif _0xae0 == 537 then _0x38=_0x37[__0xae1d(1668)];_0xae0=543 elseif _0xae0 == 543 then _0x39=nil;_0xae0=548 elseif _0xae0 == 3285 then _0x1ef.Text=__0xae1d(1669);_0xae0=3294 elseif _0xae0 == 278 then _0x99d=(48 + 0) * 1;_0xae0=283 elseif _0xae0 == 2250 then do local _0x9d8=625 end;_0xae0=2259 elseif _0xae0 == 1724 then _0x151.Parent=_0x147;_0xae0=1731 elseif _0xae0 == 1760 then _0x152.Size=UDim2.new(1 - 1,1 - 1,1 - 1,1 - 1);_0xae0=1766 elseif _0xae0 == 834 then _0x98=_0x18.InputBegan:Connect(function(_0x84) if _0x84.UserInputType == Enum.UserInputType.MouseButton1 or _0x84.UserInputType == Enum.UserInputType.Touch then _0x97.isShooting=true end end);_0xae0=843 elseif _0xae0 == 1229 then _0x9b8=math.random() * 0;_0xae0=1235 elseif _0xae0 == 2665 then _0x1e0.ResetOnSpawn=false;_0xae0=2668 elseif _0xae0 == 85 then _0xe=type(getgenv) == __0xae1d(1670) and getgenv() or nil;_0xae0=94 elseif _0xae0 == 1326 then function setNoFallDamage(_0x12c) local _0x86,_0x9b;local _0xa4f=3;while true do if _0xa4f == 24 then _0x9b=_0x86 and _0x86:FindFirstChildOfClass(__0xae1d(1671));_0xa4f=33 elseif _0xa4f == 33 then if not _0x9b then return end;_0xa4f=36 elseif _0xa4f == 36 then pcall(function() _0x9b:SetStateEnabled(Enum.HumanoidStateType.FallingDown,false);_0x9b:SetStateEnabled(Enum.HumanoidStateType.Ragdoll,false) end);_0xa4f=57 elseif _0xa4f == 10 then if false then local _0x4f1=nil end;_0xa4f=17 elseif _0xa4f == 3 then if not _0x12c then return end;_0xa4f=10 elseif _0xa4f == 17 then _0x86=_0x20 and _0x20.Character;_0xa4f=24 else break end end end;_0xae0=1331 elseif _0xae0 == 3686 then function getRageTarget() local _0x88,_0x6bd,_0x6e,_0xab,_0x6be,_0x253,_0x254,_0x255;local _0xa8d=2;while true do if _0xa8d == 59 then _0x255=_0x15:GetPlayers();_0xa8d=68 elseif _0xa8d == 18 then if not _0x88 then do local _0x6b8=752 end;return nil end;_0xa8d=22 elseif _0xa8d == 68 then for _0x154=2 - 1,#_0x255 do local _0x9a=_0x255[_0x154];local _0x86=_0x9a.Character;if false then local _0x6bc=nil end;if _0x86 and _0x9a ~= _0x20 and isTargetEnemy(_0x9a,_0x86) then if false then local _0x6bb=nil end;local _0x9b=_0x86:FindFirstChildOfClass(__0xae1d(1672));if isEntityAlive(_0x86,_0x9b) then local _0x256=getTargetHitbox(_0x86);if _0x256 then if _0x8.wallbangEnabled or isVisibleThroughWalls(_0x256,_0x86) then local _0x6f=getKinematicAimPosition(_0x256);local _0x257=math.huge;if 1 > 2 then local _0x6b9=nil end;if _0x8.rageTargetMode == __0xae1d(1673) then _0x257=_0x6f - _0x6e.Magnitude elseif _0x8.rageTargetMode == __0xae1d(1674) then _0x257=_0x9b.Health elseif _0x8.rageTargetMode == __0xae1d(1675) then local _0xbe=_0x6f - _0x6e.Unit;_0x257=math.acos(math.clamp(_0xab:Dot(_0xbe),-(2 - 1),2 - 1)) elseif _0x8.rageTargetMode == __0xae1d(1676) then local _0x24e=tostring(_0x8.priorityPlayerName or __0xae1d(1677));local _0x258=_0x24e ~= __0xae1d(1678) and (_0x9a.Name == _0x24e or _0x9a.DisplayName == _0x24e);_0x257=(_0x258 and -(28655 + 71381 - 36) or 1 - 1) + _0x6f - _0x6e.Magnitude end;if _0x257 < _0x254 then _0x254=_0x257;_0x253={Player=_0x9a,Char=_0x86,Part=_0x256,Hum=_0x9b,Position=_0x256.Position,AimPosition=_0x6f} end;do local _0x6ba=626 end end end end end end;_0xa8d=73 elseif _0xa8d == 36 then _0x6be=math.random() * 0;_0xa8d=44 elseif _0xa8d == 8 then _0x6bd=math.random() * 0;_0xa8d=18 elseif _0xa8d == 52 then _0x254=math.huge;_0xa8d=59 elseif _0xa8d == 22 then _0x6e=_0x88.CFrame.Position;_0xa8d=32 elseif _0xa8d == 32 then _0xab=_0x88.CFrame.LookVector;_0xa8d=36 elseif _0xa8d == 44 then _0x253=nil;_0xa8d=52 elseif _0xa8d == 2 then _0x88=_0x1c.CurrentCamera or _0x22;_0xa8d=8 elseif _0xa8d == 73 then do local _0x6bf=151 end;_0xa8d=78 elseif _0xa8d == 78 then return _0x253 else break end end end;_0xae0=3690 elseif _0xae0 == 493 then if _0x34 then _0x34.XCSessionToken=_0x35 end;_0xae0=498 elseif _0xae0 == 947 then function isVisibleThroughWalls(_0x6c,_0xa8) local _0xa9,_0x75,_0x48d,_0xaa,_0x8b,_0x48e;local _0xa3c=3;while true do if _0xa3c == 40 then _0xaa=_0x6c.Position - _0x75;_0xa3c=47 elseif _0xa3c == 61 then if _0x8b then local _0x48c=math.random() * 0;if _0x8b.Instance:IsDescendantOf(_0xa8) or _0x8b.Instance == _0x6c then return true end end;_0xa3c=68 elseif _0xa3c == 68 then return false elseif _0xa3c == 3 then if not _0x22 or not _0x6c or not _0xa8 then local _0x48b=(26 + 0) * 1;return false end;_0xa3c=9 elseif _0xa3c == 19 then _0xa7.FilterDescendantsInstances={myChar,camera};_0xa3c=26 elseif _0xa3c == 51 then _0x48e=math.random() * 0;_0xa3c=61 elseif _0xa3c == 26 then _0x75=_0x22.CFrame.Position;_0xa3c=33 elseif _0xa3c == 33 then _0x48d=(57 + 0) * 1;_0xa3c=40 elseif _0xa3c == 47 then _0x8b=_0x1c:Raycast(_0x75,_0xaa,_0xa7);_0xa3c=51 elseif _0xa3c == 9 then _0xa9=_0x20.Character;_0xa3c=19 else break end end end;_0xae0=953 elseif _0xae0 == 2168 then function saveWeaponPartState(_0xaf) local _0xa4;local _0xa5d=5;while true do if _0xa5d == 10 then if _0x166[_0xaf] then return end;_0xa5d=16 elseif _0xa5d == 5 then if 1 > 2 then local _0x555=nil end;_0xa5d=10 elseif _0xa5d == 29 then _0x166[_0xaf]=_0xa4;_0xa5d=47 elseif _0xa5d == 26 then for _0x63,_0x10f in ipairs(_0xaf:GetChildren()) do if _0x10f:IsA(__0xae1d(1679)) or _0x10f:IsA(__0xae1d(1680)) or _0x10f:IsA(__0xae1d(1681)) then local _0xdd,_0x16b=pcall(function() return _0x10f:Clone() end);if _0xdd and _0x16b then table.insert(_0xa4.children,_0x16b) end end end;_0xa5d=29 elseif _0xa5d == 16 then _0xa4={material=_0xaf.Material,color=_0xaf.Color,transparency=_0xaf.Transparency,reflectance=_0xaf.Reflectance,children={}};_0xa5d=26 else break end end end;_0xae0=2173 elseif _0xae0 == 4330 then table.insert(_0x26,_0x3ef);_0xae0=4336 elseif _0xae0 == 1751 then _0x152.Position=UDim2.new(0.5,1 - 1,0.5,1 - 1);_0xae0=1760 elseif _0xae0 == 4210 then table.insert(_0x26,_0x16.Heartbeat:Connect(function() if not _0x8.hitmarkerEnabled and not _0x8.hitSoundEnabled then _0x59={};return end;local _0x118=os.clock();for _0xa2,_0xa3 in pairs(_0x59) do local _0x86=_0xa3.Character;local _0x328=_0xa3.Player;if _0x118 > _0xa3.Expires or not _0x86 or not _0x86.Parent or not _0x328 or not isTargetEnemy(_0x328,_0x86) then _0x59[_0xa2]=nil else local _0x9b=_0x86:FindFirstChildOfClass(__0xae1d(1682));local _0x329=getXCHealth(_0x86,_0x328,_0x9b);if _0x329 ~= nil and _0x329 < _0xa3.Health then local _0x159=_0xa3.Health - _0x329;_0x59[_0xa2]=nil;showHitmarker(_0x159) elseif _0x329 ~= nil and _0x329 > _0xa3.Health then _0xa3.Health=_0x329 end end end end));_0xae0=4219 elseif _0xae0 == 4219 then table.insert(_0x26,_0x16.RenderStepped:Connect(function(_0x139) local _0x86=_0x20.Character;local _0x1b4=_0x86 and _0x86:FindFirstChild(__0xae1d(1683));local _0x9b=_0x86 and _0x86:FindFirstChildOfClass(__0xae1d(1684));if not _0x1b4 or not _0x9b or not isEntityAlive(_0x86,_0x9b) then return end;local _0x319=_0x9b.MoveDirection;if _0x319.Magnitude < 0.05 then local _0x249=_0x1c.CurrentCamera.CFrame;local _0x32a=Vector3.zero;if _0x18:IsKeyDown(Enum.KeyCode.W) then kkbDir=_0x32a + _0x249.LookVector end;if _0x18:IsKeyDown(Enum.KeyCode.S) then kkbDir=_0x32a - _0x249.LookVector end;if _0x18:IsKeyDown(Enum.KeyCode.A) then kkbDir=_0x32a - _0x249.RightVector end;if _0x18:IsKeyDown(Enum.KeyCode.D) then kkbDir=_0x32a + _0x249.RightVector end;_0x32a=Vector3.new(_0x32a.X,1 - 1,_0x32a.Z);if _0x32a.Magnitude > 1 - 1 then _0x319=_0x32a.Unit end end;local _0x32b=_0x319;if _0x32b.Magnitude > 0.05 then _0x13e=_0x32b end;local _0x32c=_0x1b4.AssemblyLinearVelocity;local _0x32d=nil;local _0x32e=__0xae1d(1685);if _0x8.flightEnabled then _0x32e=__0xae1d(1686);_0x32d=_0x22.CFrame.LookVector * _0x8.flightSpeed elseif _0x8.slideEnabled and _0x140 then if isPlayerGrounded(_0x86,_0x1b4) and _0x141.Magnitude > _0x8.slideMinSpeed then _0x32e=__0xae1d(1687);local _0x32f=math.pow(math.clamp(_0x8.slideFriction,1 - 1,2 - 1),math.max(_0x139,1 - 1) * (6 * 9 + 6));_0x141=_0x141 * _0x32f;_0x32d=Vector3.new(_0x141.X,_0x32c.Y,_0x141.Z) else _0x140=false;_0x141=Vector3.zero;restoreDefaultHipHeight() end end;if _0x32e == __0xae1d(1688) and _0x8.bunnyHopEnabled and not _0x13f.Ready then local _0x330=not XCFeatureState.bhopWindowFocused or _0x18:GetFocusedTextBox() ~= nil or _0x1a.MenuIsOpen or _0x20:GetAttribute(__0xae1d(1689)) == true or _0x8.bhopPauseWithMenu and XCFeatureState.menuOpen;if _0x330 then XCFeatureState.bhopGroundSince=nil else local _0x118=os.clock();local _0x331=isPlayerGrounded(_0x86,_0x1b4) or _0x9b.FloorMaterial ~= Enum.Material.Air;local _0x332=_0x18:IsKeyDown(Enum.KeyCode.Space);local _0x333=_0x8.bhopMode == __0xae1d(1690) or _0x8.bhopAutoJump;local _0x30a=_0x333 or _0x13d or _0x9b.Jump or _0x332;local _0x309=_0x32b.Magnitude > 0.05;local _0x334=not _0x8.bhopMovingOnly or _0x309;if _0x331 then XCFeatureState.bhopGroundSince=XCFeatureState.bhopGroundSince or _0x118 else XCFeatureState.bhopGroundSince=nil end;local _0x335=math.clamp(tonumber(_0x8.bhopGroundDelay) or 1 - 1,1 - 1,0.25);local _0x336=_0x331 and _0x30a and _0x334 and XCFeatureState.bhopGroundSince and _0x118 - XCFeatureState.bhopGroundSince >= _0x335 and _0x118 - XCFeatureState.bhopLastJump >= 0.05;if _0x336 then _0x32e=__0xae1d(1691);XCFeatureState.bhopLastJump=_0x118;XCFeatureState.bhopGroundSince=nil;_0x9b.Jump=true;_0x32d=Vector3.new(_0x32c.X,math.clamp(tonumber(_0x8.bhopJumpPower) or 5 * 9 + 7,13 + 17,82 + 18),_0x32c.Z);pcall(function() _0x9b:ChangeState(Enum.HumanoidStateType.Jumping) end) end;if _0x309 and (_0x331 or _0x8.bhopAirStrafe) then _0x32e=_0x336 and __0xae1d(1692) or (_0x331 and __0xae1d(1693) or __0xae1d(1694));local _0x337=(20 + 1 - 5) * math.clamp(tonumber(_0x8.bhopSpeedBoost) or 1.35,2 - 1,3 + 0);local _0x245=_0x32b.Unit * _0x337;local _0x338=math.clamp(tonumber(_0x8.bhopAcceleration) or 3 + 13 - 4,1 + 1,4 + 51 - 25);local _0x339=2 - 1 - math.exp(-_0x338 * math.max(_0x139,1 - 1));local _0x33a=_0x32d or _0x32c;_0x32d=Vector3.new(_0x33a.X + (_0x245.X - _0x33a.X) * _0x339,_0x33a.Y,_0x33a.Z + (_0x245.Z - _0x33a.Z) * _0x339) end end else XCFeatureState.bhopGroundSince=nil end;if _0x32e == __0xae1d(1695) and _0x8.speedEnabled and _0x32b.Magnitude > 1 - 1 then _0x32e=__0xae1d(1696);local _0x245=_0x32b * ((2 * 8 + 0) * _0x8.walkMultiplier);_0x32d=Vector3.new(_0x245.X,_0x32c.Y,_0x245.Z) end;if _0x32d then _0x1b4.AssemblyLinearVelocity=_0x32d end end));_0xae0=4222 elseif _0xae0 == 1430 then _0x9bf=math.random() * 0;_0xae0=1436 elseif _0xae0 == 4166 then _0x326=_0x18.InputBegan:Connect(function(_0x84) if _0x84.KeyCode == Enum.KeyCode.Space then _0x13d=true end;if _0x8.slideEnabled and (_0x84.KeyCode == Enum.KeyCode.C or _0x84.KeyCode == Enum.KeyCode.LeftControl) then local _0x86=_0x20.Character;local _0x1b4=_0x86 and _0x86:FindFirstChild(__0xae1d(1697));local _0x9b=_0x86 and _0x86:FindFirstChildOfClass(__0xae1d(1698));if _0x1b4 and _0x9b and isEntityAlive(_0x86,_0x9b) and isPlayerGrounded(_0x86,_0x1b4) then if not _0x143 then captureDefaultHipHeight(_0x86) end;local _0x319=_0x9b.MoveDirection.Magnitude > 0.1 and _0x9b.MoveDirection or _0x1b4.CFrame.LookVector;_0x141=_0x319 * ((9 + 7) * _0x8.slideSpeedBoost);_0x140=true;_0x9b.HipHeight=_0x142 * 0.4 end end end);_0xae0=4173 elseif _0xae0 == 935 then _0xa7.FilterType=Enum.RaycastFilterType.Exclude;_0xae0=943 elseif _0xae0 == 878 then function isAlly(_0x9a) local _0x47a;local _0xa37=4;while true do if _0xa37 == 22 then if _0x9a.Team and _0x20.Team then return _0x9a.Team == _0x20.Team end;_0xa37=30 elseif _0xa37 == 12 then if not _0x8.chamsTeamCheck then return false end;_0xa37=19 elseif _0xa37 == 47 then if _0x9a.TeamColor and _0x20.TeamColor and _0x9a.TeamColor ~= BrickColor.new(__0xae1d(1699)) then return _0x9a.TeamColor == _0x20.TeamColor end;_0xa37=53 elseif _0xa37 == 4 then if not _0x9a or _0x9a == _0x20 then return true end;_0xa37=12 elseif _0xa37 == 19 then if 1 > 2 then local _0x479=nil end;_0xa37=22 elseif _0xa37 == 39 then if _0x9a:GetAttribute(__0xae1d(1700)) and _0x20:GetAttribute(__0xae1d(1701)) then return _0x9a:GetAttribute(__0xae1d(1702)) == _0x20:GetAttribute(__0xae1d(1703)) end;_0xa37=47 elseif _0xa37 == 53 then return false elseif _0xa37 == 30 then _0x47a=math.random() * 0;_0xa37=39 else break end end end;_0xae0=886 elseif _0xae0 == 4583 then if not XCFeatureState.uiBuildOK then warn(__0xae1d(1704) .. tostring(XCFeatureState.uiBuildError));pcall(function() if _0x25:FindFirstChild(__0xae1d(1705)) then _0x25.XCScreenGui:Destroy() end;if _0x25:FindFirstChild(__0xae1d(1706)) then _0x25.XCToggleGui:Destroy() end;XCFeatureState.fallbackGui=Instance.new(__0xae1d(1707));XCFeatureState.fallbackGui.Name=__0xae1d(1708);XCFeatureState.fallbackGui.ResetOnSpawn=false;XCFeatureState.fallbackGui.IgnoreGuiInset=true;XCFeatureState.fallbackGui.DisplayOrder=36 + 963;XCFeatureState.fallbackGui.Parent=_0x25;XCFeatureState.fallbackCard=Instance.new(__0xae1d(1709));XCFeatureState.fallbackCard.Size=UDim2.fromOffset(85 * 4 + 0,27 * 3 + 1);XCFeatureState.fallbackCard.Position=UDim2.new(0.5,-(85 * 2 + 0),1 - 1,7 + 15);XCFeatureState.fallbackCard.BackgroundColor3=Color3.fromRGB(8 + 7,28 + 36 - 49,27 + 24 - 36);XCFeatureState.fallbackCard.BorderColor3=Color3.fromRGB(79 + 73,29 * 7 + 1,1 - 1);XCFeatureState.fallbackCard.BorderSizePixel=2 - 1;XCFeatureState.fallbackCard.TextColor3=Color3.fromRGB(125 + 147 - 37,186 + 49,23 * 10 + 5);XCFeatureState.fallbackCard.Font=Enum.Font.Code;XCFeatureState.fallbackCard.TextSize=12 + 0;XCFeatureState.fallbackCard.TextWrapped=true;XCFeatureState.fallbackCard.Text=__0xae1d(1710) .. tostring(XCFeatureState.uiBuildError):sub(2 - 1,73 * 3 + 1);XCFeatureState.fallbackCard.Parent=XCFeatureState.fallbackGui end) end;_0xae0=4587 elseif _0xae0 == 3083 then _0x9f4=(53 + 0) * 1;_0xae0=3088 elseif _0xae0 == 1503 then _0x144={[__0xae1d(1711)]={ClockTime=1 - 1,Brightness=0.2,OutdoorAmbient=Color3.fromRGB(14 + 11,2 * 10 + 5,12 + 28),Ambient=Color3.fromRGB(29 + 6 - 20,7 * 2 + 1,2 * 9 + 7),FogColor=Color3.fromRGB(16 + 33 - 39,1 * 8 + 2,33 + 30 - 43)},[__0xae1d(1712)]={ClockTime=23.8,Brightness=0.3,OutdoorAmbient=Color3.fromRGB(10 * 7 + 0,3 * 8 + 1,11 + 82 - 8),Ambient=Color3.fromRGB(46 + 11 - 12,3 * 5 + 0,4 + 56),FogColor=Color3.fromRGB(11 * 8 + 2,1 + 29,68 + 52 - 10)},[__0xae1d(1713)]={ClockTime=1 - 1,Brightness=0.35,OutdoorAmbient=Color3.fromRGB(21 + 54,34 + 13 - 37,13 + 4 - 2),Ambient=Color3.fromRGB(5 * 9 + 0,35 + 15 - 45,3 + 7),FogColor=Color3.fromRGB(16 + 19,2 + 3,8 + 0)},[__0xae1d(1714)]={ClockTime=23.5,Brightness=0.3,OutdoorAmbient=Color3.fromRGB(7 * 9 + 2,12 + 3,23 + 105 - 33),Ambient=Color3.fromRGB(23 + 17,54 + 3 - 47,44 + 16),FogColor=Color3.fromRGB(55 + 16 - 41,7 + 1,21 + 24)},[__0xae1d(1715)]={ClockTime=2 - 1,Brightness=0.25,OutdoorAmbient=Color3.fromRGB(9 + 3 - 2,14 + 41,6 * 5 + 0),Ambient=Color3.fromRGB(5 + 0,11 * 3 + 2,13 + 23 - 16),FogColor=Color3.fromRGB(2 + 3,7 + 21 - 3,28 + 31 - 44)},[__0xae1d(1716)]={ClockTime=1 - 1,Brightness=1 - 1,OutdoorAmbient=Color3.fromRGB(1 - 1,1 - 1,1 - 1),Ambient=Color3.fromRGB(1 - 1,1 - 1,1 - 1),FogColor=Color3.fromRGB(1 - 1,1 - 1,1 - 1)}};_0xae0=1509 elseif _0xae0 == 4771 then if 1 > 2 then local _0xa2b=nil end;_0xae0=4779 elseif _0xae0 == 2017 then function restoreThirdPerson() local _0x535,_0x86,_0x9b;local _0xa59=3;while true do if _0xa59 == 30 then if _0x22 and _0x15e then _0x22.CameraMinZoomDistance=_0x15e.minZoom;_0x22.CameraMaxZoomDistance=_0x15e.maxZoom end;_0xa59=40 elseif _0xa59 == 40 then if _0x20 and _0x15e then pcall(function() _0x20.CameraMode=_0x15e.cameraMode end) end;_0xa59=43 elseif _0xa59 == 43 then if _0x22 then local _0x534=(66 + 0) * 1;_0x22.CameraType=Enum.CameraType.Custom;if _0x9b then _0x22.CameraSubject=_0x9b end end;_0xa59=51 elseif _0xa59 == 3 then _0x535=(90 + 0) * 1;_0xa59=10 elseif _0xa59 == 10 then _0x15d=false;_0xa59=19 elseif _0xa59 == 19 then _0x86=_0x20.Character;_0xa59=26 elseif _0xa59 == 26 then _0x9b=_0x86 and _0x86:FindFirstChildOfClass(__0xae1d(1717));_0xa59=30 elseif _0xa59 == 51 then _0x15e=nil;_0xa59=73 else break end end end;_0xae0=2025 elseif _0xae0 == 3357 then _0x1f2.FilterType=Enum.RaycastFilterType.Exclude;_0xae0=3362 elseif _0xae0 == 4755 then do local _0xa2a=849 end;_0xae0=4764 elseif _0xae0 == 2489 then table.insert(_0x26,_0x16.Heartbeat:Connect(function(_0x139) if not _0x8.noSmokeEnabled then return end;XXCFeatureState.noSmokeAccumulator=XCFeatureState.noSmokeAccumulator + _0x139;if XCFeatureState.noSmokeAccumulator < 0.5 then return end;XCFeatureState.noSmokeAccumulator=1 - 1;for _0x173 in pairs(XCFeatureState.noSmokeRecords) do if _0x173 and _0x173.Parent then pcall(function() _0x173.Enabled=false end) else XCFeatureState.noSmokeRecords[_0x173]=nil end end end));_0xae0=2495 elseif _0xae0 == 2482 then if 1 > 2 then local _0x9e0=nil end;_0xae0=2489 elseif _0xae0 == 4751 then function _0x41d.Reset() local _0xade=3;while true do if _0xade == 11 then if 1 > 2 then local _0x98c=nil end;_0xade=18 elseif _0xade == 23 then return true,__0xae1d(1718) elseif _0xade == 18 then for _0xb,_0x9 in pairs(_0xd or {}) do pcall(function() _0x8[_0xb]=_0x9 end) end;_0xade=23 elseif _0xade == 3 then setXCStreamerMode(false);_0xade=11 else break end end end;_0xae0=4755 elseif _0xae0 == 3896 then function attachEspToPlayer(_0x9a) local _0x798,_0x1db,_0x2e7,_0x2e8,_0x79c,_0x2e9,_0x2ea,_0x2eb,_0x7a1,_0x2ec,_0x2ed,_0x7a3;local _0xa9d=3;while true do if _0xa9d == 254 then _0x2ea.Parent=_0x1db;_0xa9d=263 elseif _0xa9d == 317 then table.insert(_0x26,_0x2ed);_0xa9d=324 elseif _0xa9d == 134 then _0x2e9=Instance.new(__0xae1d(1719),_0x147);_0xa9d=144 elseif _0xa9d == 3 then if _0x9a == _0x20 then return end;_0xa9d=11 elseif _0xa9d == 263 then _0x2eb=function(_0x86) local _0xa9c=1;while true do if _0xa9c == 9 then do local _0x797=859 end;_0xa9c=19 elseif _0xa9c == 19 then task.spawn(function() local _0xa6=_0x86:WaitForChild(__0xae1d(1720),8 + 28 - 33);if _0xa6 and _0x2e7 then _0x2e7.Adornee=_0xa6 end;if _0x2ea then _0x2ea.Adornee=_0x86 end end);_0xa9c=35 elseif _0xa9c == 1 then if not _0x86 then return end;_0xa9c=9 else break end end end;_0xa9d=267 elseif _0xa9d == 172 then do local _0x79e=992 end;_0xa9d=180 elseif _0xa9d == 243 then _0x2ea.OutlineColor=_0xf0;_0xa9d=246 elseif _0xa9d == 64 then _0x2e7.AlwaysOnTop=true;_0xa9d=74 elseif _0xa9d == 93 then _0x2e8.Size=UDim2.new(2 - 1,1 - 1,2 - 1,1 - 1);_0xa9d=100 elseif _0xa9d == 288 then if 1 > 2 then local _0x7a2=nil end;_0xa9d=296 elseif _0xa9d == 283 then _0x2ec=_0x9a.CharacterAdded:Connect(_0x2eb);_0xa9d=288 elseif _0xa9d == 110 then do local _0x79b=20 end;_0xa9d=115 elseif _0xa9d == 30 then if false then local _0x799=nil end;_0xa9d=39 elseif _0xa9d == 17 then _0x1db=Instance.new(__0xae1d(1721));_0xa9d=23 elseif _0xa9d == 57 then _0x2e7.StudsOffset=Vector3.new(1 - 1,0.5,1 - 1);_0xa9d=64 elseif _0xa9d == 324 then do local _0x7a4=817 end;_0xa9d=333 elseif _0xa9d == 131 then _0x79c=math.random() * 0;_0xa9d=134 elseif _0xa9d == 23 then _0x1db.Name=__0xae1d(1722) .. _0x9a.Name;_0xa9d=30 elseif _0xa9d == 194 then if false then local _0x79f=nil end;_0xa9d=197 elseif _0xa9d == 163 then _0x2e9.BackgroundColor3=_0x38.Enemy_Accent;_0xa9d=172 elseif _0xa9d == 218 then _0x2ea.Enabled=false;_0xa9d=227 elseif _0xa9d == 39 then _0x1db.Parent=_0x147;_0xa9d=46 elseif _0xa9d == 100 then _0x2e8.BackgroundColor3=_0x38.Enemy_Accent;_0xa9d=110 elseif _0xa9d == 232 then _0x2ea.FillColor=_0xed;_0xa9d=243 elseif _0xa9d == 312 then table.insert(_0x26,_0x2ec);_0xa9d=317 elseif _0xa9d == 267 then _0x7a1=(52 + 0) * 1;_0xa9d=275 elseif _0xa9d == 333 then _0x27[_0x9a]={Holder=_0x1db,HeadDot=_0x2e7,DotFrame=_0x2e8,Tracer=_0x2e9,Highlight=_0x2ea};_0xa9d=346 elseif _0xa9d == 227 then if false then local _0x7a0=nil end;_0xa9d=232 elseif _0xa9d == 208 then _0x2ea.FillTransparency=_0x8.chamsFillTransparency;_0xa9d=215 elseif _0xa9d == 46 then _0x2e7=Instance.new(__0xae1d(1723),_0x1db);_0xa9d=50 elseif _0xa9d == 144 then _0x2e9.AnchorPoint=Vector2.new(0.5,0.5);_0xa9d=148 elseif _0xa9d == 158 then do local _0x79d=783 end;_0xa9d=163 elseif _0xa9d == 197 then _0x2ea.Name=__0xae1d(1724) .. _0x9a.Name;_0xa9d=208 elseif _0xa9d == 148 then _0x2e9.BorderSizePixel=1 - 1;_0xa9d=158 elseif _0xa9d == 74 then _0x2e7.Enabled=false;_0xa9d=78 elseif _0xa9d == 124 then Instance.new(__0xae1d(1725),_0x2e8).CornerRadius=UDim.new(2 - 1,1 - 1);_0xa9d=131 elseif _0xa9d == 275 then if _0x9a.Character then _0x2eb(_0x9a.Character) end;_0xa9d=283 elseif _0xa9d == 180 then _0x2e9.Visible=false;_0xa9d=185 elseif _0xa9d == 296 then _0x2ed=_0x9a.CharacterRemoving:Connect(function() if _0x2ea then _0x2ea.Adornee=nil;_0x2ea.Enabled=false end end);_0xa9d=303 elseif _0xa9d == 115 then _0x2e8.BorderSizePixel=1 - 1;_0xa9d=124 elseif _0xa9d == 215 then _0x2ea.OutlineTransparency=_0x8.chamsOutlineTransparency;_0xa9d=218 elseif _0xa9d == 11 then _0x798=math.random() * 0;_0xa9d=17 elseif _0xa9d == 246 then _0x2ea.DepthMode=Enum.HighlightDepthMode.AlwaysOnTop;_0xa9d=254 elseif _0xa9d == 78 then if false then local _0x79a=nil end;_0xa9d=85 elseif _0xa9d == 185 then _0x2ea=Instance.new(__0xae1d(1726));_0xa9d=194 elseif _0xa9d == 50 then _0x2e7.Size=UDim2.new(1 - 1,1 * 4 + 2,1 - 1,1 * 6 + 0);_0xa9d=57 elseif _0xa9d == 303 then _0x7a3=math.random() * 0;_0xa9d=312 elseif _0xa9d == 85 then _0x2e8=Instance.new(__0xae1d(1727),_0x2e7);_0xa9d=93 else break end end end;_0xae0=3903 elseif _0xae0 == 3881 then do local _0xa0f=766 end;_0xae0=3887 elseif _0xae0 == 3915 then table.insert(_0x26,_0x15.PlayerAdded:Connect(attachEspToPlayer));_0xae0=3923 elseif _0xae0 == 403 then _0x2d=nil;_0xae0=409 elseif _0xae0 == 1809 then for _0x154,_0x155 in ipairs({5 * 8 + 5,-(42 + 3),13 * 10 + 5,-(178 + 7 - 50)}) do local _0x156=Instance.new(__0xae1d(1728));_0x156.Name=__0xae1d(1729) .. _0x154;_0x156.AnchorPoint=Vector2.new(0.5,0.5);local _0x522=math.random() * 0;_0x156.Size=UDim2.new(1 - 1,_0x8.hitmarkerThickness,1 - 1,_0x8.hitmarkerSize);local _0x523=(1 + 0) * 1;_0x156.BackgroundColor3=_0x38.Accent;_0x156.BorderSizePixel=1 - 1;_0x156.BackgroundTransparency=2 - 1;local _0x524=(36 + 0) * 1;_0x156.Rotation=_0x155;_0x156.Parent=_0x152;local _0x157=Instance.new(__0xae1d(1730));_0x157.Name=__0xae1d(1731);_0x157.Color=_0x38.Accent;_0x157.Thickness=_0x8.hitmarkerGlow and 2.5 or 1 - 1;local _0x525=(43 + 0) * 1;_0x157.Transparency=2 - 1;_0x157.Parent=_0x156;local _0x526=(10 + 0) * 1;_0x153[_0x154]=_0x156 end;_0xae0=1818 elseif _0xae0 == 2860 then _0x9ed=(75 + 0) * 1;_0xae0=2868 elseif _0xae0 == 3239 then _0x1ee.Size=UDim2.new(1 - 1,2 - 1,1 - 1,7 + 3);_0xae0=3242 elseif _0xae0 == 4539 then pcall(setupXCBulletInterceptHookV29);_0xae0=4545 elseif _0xae0 == 780 then _0x67=function(_0x62) local _0x68=_0xe and _0xe.XCRecordLocalHitPayload or _0x61;if type(_0x68) == __0xae1d(1732) then _0x68(_0x62) end end;_0xae0=787 elseif _0xae0 == 2472 then table.insert(_0x26,_0x1c.DescendantAdded:Connect(function(_0x173) if _0x8.noSmokeEnabled then trackXCSmokeObject(_0x173) end end));_0xae0=2482 elseif _0xae0 == 74 then _0xd=deepCopyConfigValue(_0x8);_0xae0=81 elseif _0xae0 == 3420 then function destroyXCGrenadeDanger(_0x62) local _0x64c,_0x64d;local _0xa7c=3;while true do if _0xa7c == 19 then for _0x63,_0x156 in ipairs(_0x62.Segments or {}) do if false then local _0x64b=nil end;pcall(function() _0x156:Destroy() end) end;_0xa7c=23 elseif _0xa7c == 8 then if not _0x62 then return end;_0xa7c=19 elseif _0xa7c == 3 then _0x64c=(38 + 0) * 1;_0xa7c=8 elseif _0xa7c == 29 then pcall(function() _0x62.Label:Destroy() end);_0xa7c=53 elseif _0xa7c == 23 then _0x64d=math.random() * 0;_0xa7c=29 else break end end end;_0xae0=3426 elseif _0xae0 == 1962 then function refreshHitmarkerTheme() local _0x529;local _0xa56=3;while true do if _0xa56 == 10 then for _0x63,_0x156 in ipairs(_0x153) do _0x156.BackgroundColor3=_0x38.Accent;local _0x157=_0x156:FindFirstChild(__0xae1d(1733));if _0x157 then _0x157.Color=_0x38.Accent;do local _0x527=446 end;_0x157.Thickness=_0x8.hitmarkerGlow and 2.5 or 1 - 1 end end;_0xa56=18 elseif _0xa56 == 3 then if 1 > 2 then local _0x528=nil end;_0xa56=10 elseif _0xa56 == 18 then _0x529=(86 + 0) * 1;_0xa56=36 else break end end end;_0xae0=1969 elseif _0xae0 == 4555 then pcall(setupXCCharacterInputHook);_0xae0=4558 elseif _0xae0 == 2958 then _0x1e8.Size=UDim2.new(1 - 1,1 - 1,1 - 1,3 * 7 + 1);_0xae0=2963 elseif _0xae0 == 2648 then _0x1e0.Name=__0xae1d(1734);_0xae0=2656 elseif _0xae0 == 4356 then _0x3f3={};_0xae0=4365 elseif _0xae0 == 3762 then function runMobileTriggerbot() local _0x88,_0x118,_0x6de,_0x270,_0x26a,_0x75,_0x271,_0xc4,_0x272,_0x273,_0x6df,_0x253,_0x274,_0x278,_0x279,_0x6e2;local _0xa8f=1;while true do if _0xa8f == 1 then if not _0x8.triggerbotEnabled then return end;_0xa8f=9 elseif _0xa8f == 32 then _0x118=tick();_0xa8f=37 elseif _0xa8f == 152 then if not _0x253 then return end;_0xa8f=157 elseif _0xa8f == 144 then for _0x63,_0x275 in ipairs(_0x15:GetPlayers()) do if _0x275 ~= _0x20 and isTargetEnemy(_0x275,_0x275.Character) then local _0x86=_0x275.Character;local _0x6db=math.random() * 0;local _0x9b=_0x86 and _0x86:FindFirstChildOfClass(__0xae1d(1735));if _0x86 and _0x9b and _0x9b.Health > 1 - 1 and not _0x86:GetAttribute(__0xae1d(1736)) and not _0x86:GetAttribute(__0xae1d(1737)) then local _0x6c=_0x86:FindFirstChild(__0xae1d(1738)) or _0x86:FindFirstChild(__0xae1d(1739)) or _0x86:FindFirstChild(__0xae1d(1740));if _0x6c then if not _0x8.triggerbotHeadOnly or _0x6c.Name == __0xae1d(1741) then local _0x276,_0x205=_0x88:WorldToViewportPoint(_0x6c.Position);local _0x6d8=math.random() * 0;if _0x205 and _0x276.Z > 1 - 1 then do local _0x6d6=658 end;local _0x213=Vector2.new(_0x26a.X * 0.5,_0x26a.Y * 0.5);if false then local _0x6d7=nil end;local _0x8d=Vector2.new(_0x276.X,_0x276.Y) - _0x213.Magnitude;local _0x277=tonumber(_0x8.triggerbotFov) or tonumber(_0x8.aimFov) or 39 + 129 - 8;if _0x8d <= _0x277 and _0x8d < _0x274 then _0x274=_0x8d;if false then local _0x6d5=nil end;_0x253={Player=_0x275,Model=_0x86,Part=_0x6c} end end end;local _0x6d9=math.random() * 0 end;do local _0x6da=278 end end end end;_0xa8f=152 elseif _0xa8f == 101 then _0x272=_0xc4.Instance:FindFirstAncestorOfClass(__0xae1d(1742));_0xa8f=110 elseif _0xa8f == 157 then _0x278=_0x253.Part.Position - _0x75;_0xa8f=165 elseif _0xa8f == 9 then _0x88=_0x1c.CurrentCamera or _0x22;_0xa8f=18 elseif _0xa8f == 110 then _0x273=_0x272 and _0x15:GetPlayerFromCharacter(_0x272);_0xa8f=116 elseif _0xa8f == 128 then _0x253,_0x274=nil,math.huge;_0xa8f=135 elseif _0xa8f == 176 then do local _0x6e1=494 end;_0xa8f=186 elseif _0xa8f == 135 then if 1 > 2 then local _0x6e0=nil end;_0xa8f=144 elseif _0xa8f == 22 then if _0x8.triggerbotScopedOnly then local _0x26f=findSniperScope();if not (_0x26f and _0x26f.Visible or _0x88.FieldOfView < 11 + 82 - 25) then return end end;_0xa8f=32 elseif _0xa8f == 94 then if not _0xc4 or not _0xc4.Instance then return end;_0xa8f=101 elseif _0xa8f == 122 then if _0x273 and _0x273 ~= _0x20 then local _0x63,_0x205=_0x88:WorldToViewportPoint(_0xc4.Instance.Position);if not _0x205 then local _0x6d2=math.random() * 0;return end;if _0x272:GetAttribute(__0xae1d(1743)) or _0x272:GetAttribute(__0xae1d(1744)) then return end;local _0x9b=_0x272:FindFirstChildOfClass(__0xae1d(1745));if _0x9b and _0x9b.Health <= 1 - 1 then return end;if not isTargetEnemy(_0x273,_0x272) then return end;if 1 > 2 then local _0x6d3=nil end;if _0x8.triggerbotHeadOnly and _0xc4.Instance.Name ~= __0xae1d(1746) then return end;_0x13b=_0x118;local _0x6d4=math.random() * 0;if _0x13a then triggerbotFire(_0x26a) end;return end;_0xa8f=128 elseif _0xa8f == 186 then _0x13b=_0x118;_0xa8f=191 elseif _0xa8f == 82 then _0x259.FilterDescendantsInstances={player.Character};_0xa8f=89 elseif _0xa8f == 165 then _0x279=triggerFindTargetAlongRay(_0x75,_0x278,_0x253.Model);_0xa8f=173 elseif _0xa8f == 37 then _0x6de=(17 + 0) * 1;_0xa8f=46 elseif _0xa8f == 116 then _0x6df=math.random() * 0;_0xa8f=122 elseif _0xa8f == 53 then if _0x118 - _0x13b < _0x270 then return end;_0xa8f=59 elseif _0xa8f == 201 then _0x6e2=math.random() * 0;_0xa8f=217 elseif _0xa8f == 18 then if not _0x88 then do local _0x6d1=228 end;return end;_0xa8f=22 elseif _0xa8f == 46 then _0x270=math.clamp(tonumber(_0x8.triggerbotDelay) or 0.075,0.01,0.5);_0xa8f=53 elseif _0xa8f == 59 then _0x26a=_0x88.ViewportSize;_0xa8f=65 elseif _0xa8f == 173 then if not _0x279 then if false then local _0x6dc=nil end;return end;_0xa8f=176 elseif _0xa8f == 65 then _0x75=_0x88.CFrame.Position;_0xa8f=71 elseif _0xa8f == 71 then _0x271=_0x88.CFrame.LookVector * (1001 + 34 - 35);_0xa8f=82 elseif _0xa8f == 89 then _0xc4=_0x1c:Raycast(_0x75,_0x271,_0x259);_0xa8f=94 elseif _0xa8f == 191 then if _0x13a then local _0x6dd=math.random() * 0;triggerbotFire(_0x26a) end;_0xa8f=201 else break end end end;_0xae0=3767 elseif _0xae0 == 264 then if not _0x18.TouchEnabled then pcall(function() _0x1f=game:GetService(__0xae1d(1747)) end) end;_0xae0=269 elseif _0xae0 == 1579 then if 1 > 2 then local _0x9c3=nil end;_0xae0=1586 elseif _0xae0 == 248 then _0x1f=nil;_0xae0=254 elseif _0xae0 == 1101 then _0xf0=Color3.fromRGB(29 * 8 + 3,70 + 212 - 47,26 * 9 + 1);_0xae0=1108 elseif _0xae0 == 1416 then _0x13b=1 - 1;_0xae0=1424 elseif _0xae0 == 3641 then _0xa09=(26 + 0) * 1;_0xae0=3652 elseif _0xae0 == 3046 then _0x1ea.PaddingLeft=UDim.new(1 - 1,1 * 7 + 1);_0xae0=3055 elseif _0xae0 == 1983 then if _0x34 then local _0x532=math.random() * 0;_0x34.XCShowHitmarker=showHitmarker end;_0xae0=1991 elseif _0xae0 == 1737 then _0x152.Name=__0xae1d(1748);_0xae0=1745 elseif _0xae0 == 3804 then function clearXCWeaponPreview(_0x1dc) local _0xa95=4;while true do if _0xa95 == 15 then _0x1dc.WeaponImage.Visible=false;_0xa95=23 elseif _0xa95 == 38 then _0x1dc.WeaponReady=false;_0xa95=56 elseif _0xa95 == 4 then do local _0x725=727 end;_0xa95=9 elseif _0xa95 == 9 then _0x1dc.WeaponImage.Image="";_0xa95=15 elseif _0xa95 == 33 then _0x1dc.WeaponWorld:ClearAllChildren();_0xa95=38 elseif _0xa95 == 23 then _0x1dc.WeaponViewport.Visible=false;_0xa95=33 else break end end end;_0xae0=3809 elseif _0xae0 == 4040 then function positionMobileSlideButton(_0x318) local _0x7af,_0x7b0;local _0xaa4=4;while true do if _0xaa4 == 4 then _0x7af=(18 + 0) * 1;_0xaa4=10 elseif _0xaa4 == 24 then _0x150.Position=UDim2.new(_0x318.Position.X.Scale,_0x318.Position.X.Offset - (15 * 4 + 0),_0x318.Position.Y.Scale,_0x318.Position.Y.Offset);_0xaa4=39 elseif _0xaa4 == 15 then _0x7b0=(60 + 0) * 1;_0xaa4=24 elseif _0xaa4 == 10 then if not _0x150 or not _0x318 then return end;_0xaa4=15 else break end end end;_0xae0=4050 elseif _0xae0 == 628 then do local _0x9aa=805 end;_0xae0=634 elseif _0xae0 == 4434 then if _0x34 then _0x34.XCRestoreWeaponState=function() _0x3fa(nil);restoreXCFireRates() end end;_0xae0=4441 elseif _0xae0 == 4482 then task.spawn(function() local _0x408=false;local _0x409=nil;local _0x40a=1 - 1;while xcSessionActive() and task.wait(0.01) do if not (_0x8.fireRateEnabled and _0x14.fireRate) or not _0x3f9() then _0x408,_0x409,_0x40a=false,nil,1 - 1;continue end;local _0x3fd,_0xca=pcall(_0x3f7);local _0x109=_0x3fd and _0xca and _0x3f8[_0xca] or nil;local _0x40b=_0x109 and _0x109.OriginalAutomatic ~= true and _0xca.IsFireHeld == true;if not _0x40b then _0x408,_0x409,_0x40a=false,_0xca,1 - 1;continue end;if _0xca ~= _0x409 or not _0x408 then _0x409,_0x408=_0xca,true;_0x40a=os.clock() + math.max(tonumber(_0x109.Rate) or 0.08,0.03);continue end;local _0x118=os.clock();if _0x118 >= _0x40a and type(_0xca.shoot) == __0xae1d(1749) and not _0xca.IsShooting and not _0xca.IsBurstShooting then _0x40a=_0x118 + math.max(tonumber(_0x109.Rate) or 0.08,0.03);pcall(function() _0xca:shoot() end) end end end);_0xae0=4492 elseif _0xae0 == 953 then _0x56=function() local _0x88=_0x1c.CurrentCamera or _0x22;if not _0x88 then return nil end;local _0x6e=_0x88.CFrame.Position;local _0xab=_0x88.CFrame.LookVector;local _0xac=math.rad(_0x8.silentAimFov);local _0xad,_0xae=nil,_0xac;for _0x63,_0x9a in ipairs(_0x15:GetPlayers()) do if _0x9a == _0x20 then continue end;if _0x8.silentAimTeamCheck and isAlly(_0x9a) then continue end;local _0x86=_0x9a.Character;local _0x9b=_0x86 and _0x86:FindFirstChildOfClass(__0xae1d(1750));if not isEntityAlive(_0x86,_0x9b) then continue end;local _0xaf=_0x86:FindFirstChild(_0x8.silentAimAimHead and __0xae1d(1751) or __0xae1d(1752)) or _0x86:FindFirstChild(__0xae1d(1753));if not _0xaf or not _0xaf:IsA(__0xae1d(1754)) then continue end;if _0x8.silentAimVisibleCheck and not isVisibleThroughWalls(_0xaf,_0x86) then continue end;local _0xb0=getKinematicAimPosition(_0xaf);local _0xaa=_0xb0 - _0x6e.Unit;local _0xb1=math.acos(math.clamp(_0xab:Dot(_0xaa),-(2 - 1),2 - 1));if _0xb1 < _0xae then _0xae=_0xb1;_0xad=_0xaf end end;return _0xad end;_0xae0=962 elseif _0xae0 == 4618 then function cfgFileAPI() do local _0x96a=958 end;return type(isfile) == __0xae1d(1755) and type(readfile) == __0xae1d(1756) and type(writefile) == __0xae1d(1757) end;_0xae0=4621 elseif _0xae0 == 220 then _0x1c=game:GetService(__0xae1d(1758));_0xae0=228 elseif _0xae0 == 3308 then do local _0x9fa=561 end;_0xae0=3314 elseif _0xae0 == 4791 then do local _0xa2c=712 end;_0xae0=4815 elseif _0xae0 == 4558 then task.spawn(function() while xcSessionActive() do if not _0x13f.Ready and (_0x8.antiAimEnabled or _0x8.bunnyHopEnabled) then setupXCCharacterInputHook();task.wait(1.5) else task.wait(0.5) end end end);_0xae0=4566 elseif _0xae0 == 914 then function isEntityAlive(_0x86,_0x9b) local _0x9c,_0x488,_0xa5,_0xa6;local _0xa3b=2;while true do if _0xa3b == 44 then _0xa5=_0x86:FindFirstChild(__0xae1d(1759)) or _0x86:FindFirstChild(__0xae1d(1760)) or _0x86:FindFirstChild(__0xae1d(1761));_0xa3b=51 elseif _0xa3b == 18 then do local _0x487=578 end;_0xa3b=24 elseif _0xa3b == 51 then if 1 > 2 then local _0x489=nil end;_0xa3b=60 elseif _0xa3b == 8 then _0x9c=getXCHealth(_0x86,_0x15:GetPlayerFromCharacter(_0x86),_0x9b);_0xa3b=18 elseif _0xa3b == 60 then _0xa6=_0x86:FindFirstChild(__0xae1d(1762));_0xa3b=66 elseif _0xa3b == 24 then if _0x9c ~= nil and _0x9c <= 1 - 1 then return false end;_0xa3b=29 elseif _0xa3b == 71 then if 1 > 2 then local _0x48a=nil end;_0xa3b=82 elseif _0xa3b == 82 then return true elseif _0xa3b == 36 then if _0x9b and _0x9b.Parent then local _0x9c=31 + 69;pcall(function() _0x9c=_0x9b.Health end);if _0x9c <= 1 - 1 then return false end;do local _0x486=213 end;local _0xa4=nil;pcall(function() _0xa4=_0x9b:GetState() end);if _0xa4 == Enum.HumanoidStateType.Dead then return false end end;_0xa3b=44 elseif _0xa3b == 29 then _0x488=(92 + 0) * 1;_0xa3b=36 elseif _0xa3b == 66 then if not _0xa5 and not _0xa6 then return false end;_0xa3b=71 elseif _0xa3b == 2 then if not _0x86 or not _0x86.Parent or not _0x86:IsDescendantOf(_0x1c) then if 1 > 2 then local _0x485=nil end;return false end;_0xa3b=8 else break end end end;_0xae0=919 elseif _0xae0 == 2098 then _0x166=setmetatable({},{__mode=__0xae1d(1763)});_0xae0=2103 elseif _0xae0 == 3845 then table.insert(_0x26,_0x15.PlayerRemoving:Connect(function(_0x9a) local _0x2c1=_0x9a.Character;local _0x2c2=_0x2c1 and _0x2c1:FindFirstChildOfClass(__0xae1d(1764));if _0x2c2 then _0x59[_0x2c2]=nil end;if _0x2c1 then _0x59[_0x2c1]=nil end;local _0x2c3=_0x28[_0x9a];if _0x2c3 then pcall(function() _0x2c3.Box:Destroy();_0x2c3.BoxOutline:Destroy();_0x2c3.HealthBarBg:Destroy();_0x2c3.WeaponCard:Destroy();_0x2c3.TagCard:Destroy();for _0x63,_0x45 in pairs(_0x2c3.Corners) do _0x45.H:Destroy();_0x45.V:Destroy() end;for _0x63,_0x156 in ipairs(_0x2c3.SkeletonLines) do _0x156:Destroy() end end);_0x28[_0x9a]=nil end end));_0xae0=3851 elseif _0xae0 == 4700 then _0xa27=(17 + 0) * 1;_0xae0=4706 elseif _0xae0 == 388 then _0x2c=nil;_0xae0=393 elseif _0xae0 == 2025 then function applyThirdPerson() local _0x539,_0x53b,_0x86,_0x9b,_0x15f,_0x53d,_0x53e;local _0xa5a=1;while true do if _0xa5a == 68 then if not _0x15d then _0x15e={cameraMode=_0x20.CameraMode,minZoom=_0x22.CameraMinZoomDistance,maxZoom=_0x22.CameraMaxZoomDistance};_0x15d=true end;_0xa5a=74 elseif _0xa5a == 29 then if not _0x22 then return end;_0xa5a=40 elseif _0xa5a == 107 then _0x22.CameraType=Enum.CameraType.Custom;_0xa5a=117 elseif _0xa5a == 94 then _0x22.CameraMaxZoomDistance=_0x15f;_0xa5a=100 elseif _0xa5a == 122 then _0x53e=math.random() * 0;_0xa5a=146 elseif _0xa5a == 79 then _0x15f=math.clamp(tonumber(_0x8.thirdPersonDistance) or 39 + 12 - 39,1 * 3 + 2,5 * 9 + 5);_0xa5a=85 elseif _0xa5a == 58 then do local _0x53c=871 end;_0xa5a=68 elseif _0xa5a == 100 then _0x53d=math.random() * 0;_0xa5a=107 elseif _0xa5a == 40 then _0x53b=math.random() * 0;_0xa5a=44 elseif _0xa5a == 52 then if not _0x86 then if _0x15d then restoreThirdPerson() end;if false then local _0x538=nil end;return end;_0xa5a=58 elseif _0xa5a == 74 then pcall(function() _0x20.CameraMode=Enum.CameraMode.Classic end);_0xa5a=79 elseif _0xa5a == 85 then _0x22.CameraMinZoomDistance=_0x15f;_0xa5a=94 elseif _0xa5a == 18 then do local _0x53a=48 end;_0xa5a=24 elseif _0xa5a == 44 then _0x86,_0x9b=getThirdPersonTarget();_0xa5a=52 elseif _0xa5a == 117 then _0x22.CameraSubject=_0x9b;_0xa5a=122 elseif _0xa5a == 24 then _0x22=_0x1c.CurrentCamera or _0x22;_0xa5a=29 elseif _0xa5a == 1 then _0x539=(23 + 0) * 1;_0xa5a=12 elseif _0xa5a == 12 then if not _0x8.thirdPersonEnabled then if _0x15d then restoreThirdPerson();if false then local _0x536=nil end end;do local _0x537=581 end;return end;_0xa5a=18 else break end end end;_0xae0=2031 elseif _0xae0 == 3698 then _0x259.FilterType=Enum.RaycastFilterType.Exclude;_0xae0=3708 elseif _0xae0 == 4124 then function hookCharacterWeapons(_0x86) local _0x324;local _0xaaa=4;while true do if _0xaaa == 4 then if not _0x86 then if false then local _0x7c9=nil end;return end;_0xaaa=8 elseif _0xaaa == 8 then _0x324=_0x86.ChildAdded:Connect(function(_0x10f) if _0x10f:IsA(__0xae1d(1765)) then scanAndMorphKnives(_0x10f) end end);_0xaaa=18 elseif _0xaaa == 25 then table.insert(_0x26,_0x324);_0xaaa=29 elseif _0xaaa == 29 then for _0x63,_0x87 in ipairs(_0x86:GetChildren()) do if _0x87:IsA(__0xae1d(1766)) then scanAndMorphKnives(_0x87) end end;_0xaaa=45 elseif _0xaaa == 18 then if 1 > 2 then local _0x7ca=nil end;_0xaaa=25 else break end end end;_0xae0=4131 elseif _0xae0 == 4413 then _0x3fa=function(_0x3fb) for _0xca,_0x109 in pairs(_0x3f8) do if _0xca ~= _0x3fb then pcall(function() local _0xbf=_0x109.Properties;if type(_0xbf) == __0xae1d(1767) then if type(setreadonly) == __0xae1d(1768) then setreadonly(_0xbf,false) end;rawset(_0xbf,__0xae1d(1769),_0x109.OriginalFireRate);if type(setreadonly) == __0xae1d(1770) and _0x109.Readonly ~= nil then setreadonly(_0xbf,_0x109.Readonly) end end end);if false then local _0x94c=nil end;_0x3f8[_0xca]=nil end end end;_0xae0=4421 elseif _0xae0 == 1977 then function showHitmarker(_0x159) local _0x42,_0x4,_0x15a,_0x530,_0x15b,_0x531,_0x15c;local _0xa57=2;while true do if _0xa57 == 110 then task.delay(math.max(0.05,_0x8.hitmarkerDuration),function() if _0x42 == _0x31 then _0x152.Visible=false;_0x158.Visible=false end end);_0xa57=127 elseif _0xa57 == 51 then for _0x63,_0x156 in ipairs(_0x153) do _0x156.Size=UDim2.fromOffset(_0x15a,_0x4);local _0x52c=math.random() * 0;_0x156.BackgroundTransparency=1 - 1;local _0x157=_0x156:FindFirstChild(__0xae1d(1771));if _0x157 then if false then local _0x52b=nil end;_0x157.Transparency=0.05 end end;_0xa57=61 elseif _0xa57 == 25 then _0x42=_0x31;_0xa57=29 elseif _0xa57 == 29 then _0x152.Visible=true;_0xa57=38 elseif _0xa57 == 86 then _0x15c=TweenInfo.new(math.max(0.05,_0x8.hitmarkerDuration),Enum.EasingStyle.Quad,Enum.EasingDirection.Out);_0xa57=94 elseif _0xa57 == 102 then if _0x158.Visible then local _0x52f=(94 + 0) * 1;_0x17:Create(_0x158,_0x15c,{TextTransparency=2 - 1,TextStrokeTransparency=2 - 1}):Play() end;_0xa57=110 elseif _0xa57 == 9 then if not _0x8.hitmarkerEnabled then if 1 > 2 then local _0x52a=nil end;return end;_0xa57=19 elseif _0xa57 == 19 then hhitmarkerSerial=_0x31 + (2 - 1);_0xa57=25 elseif _0xa57 == 80 then _0x531=(47 + 0) * 1;_0xa57=86 elseif _0xa57 == 2 then if type(playXCHitSound) == __0xae1d(1772) then playXCHitSound() end;_0xa57=9 elseif _0xa57 == 65 then _0x15b=tonumber(_0x159);_0xa57=75 elseif _0xa57 == 45 then _0x15a=math.clamp(tonumber(_0x8.hitmarkerThickness) or 1 + 1,2 - 1,3 + 25 - 22);_0xa57=51 elseif _0xa57 == 61 then _0x530=(89 + 0) * 1;_0xa57=65 elseif _0xa57 == 94 then for _0x63,_0x156 in ipairs(_0x153) do _0x17:Create(_0x156,_0x15c,{BackgroundTransparency=2 - 1}):Play();local _0x157=_0x156:FindFirstChild(__0xae1d(1773));if _0x157 then _0x17:Create(_0x157,_0x15c,{Transparency=2 - 1}):Play() end end;_0xa57=102 elseif _0xa57 == 38 then _0x4=math.clamp(tonumber(_0x8.hitmarkerSize) or 9 + 4,5 + 0,14 + 52 - 36);_0xa57=45 elseif _0xa57 == 75 then if _0x15b and _0x15b > 1 - 1 then _0x158.Position=UDim2.fromOffset(1 - 1,_0x4 + (1 * 7 + 0));if 1 > 2 then local _0x52d=nil end;_0x158.Text=string.format(__0xae1d(1774),math.max(2 - 1,math.floor(_0x15b + 0.5)));_0x158.TextTransparency=1 - 1;local _0x52e=math.random() * 0;_0x158.TextStrokeTransparency=0.15;_0x158.Visible=true else _0x158.Visible=false end;_0xa57=80 else break end end end;_0xae0=1983 elseif _0xae0 == 4492 then function installXCRecoilSpread() local _0x95f,_0x40c,_0x960;local _0xad3=5;while true do if _0xad3 == 47 then pcall(function() for _0x63,_0x119 in next,getgc(true) do if type(_0x119) == __0xae1d(1775) then local _0x40d=rawget(_0x119,__0xae1d(1776));if typeof(_0x40d) == __0xae1d(1777) then pcall(function() local _0x40e;_0x40e=hookfunction(_0x40d,function(...) if _0x8.noRecoilEnabled then return end;return _0x40e(...) end);_0x40c=true end) end;local _0x40f=rawget(_0x119,__0xae1d(1778));if typeof(_0x40f) == __0xae1d(1779) then pcall(function() local _0x410;_0x410=hookfunction(_0x40f,function(...) if _0x8.noRecoilEnabled then return end;return _0x410(...) end);_0x40c=true end) end;local _0x411=rawget(_0x119,__0xae1d(1780));if typeof(_0x411) == __0xae1d(1781) then pcall(function() local _0x412;_0x412=hookfunction(_0x411,function(...) if _0x8.noSpreadEnabled then return 1 - 1 end;return _0x412(...) end);_0x40c=true end) end end;if type(_0x119) == __0xae1d(1782) then local _0x3ca;pcall(function() _0x3ca=debug.getinfo(_0x119) end);if type(_0x3ca) == __0xae1d(1783) and _0x3ca.name == __0xae1d(1784) then pcall(function() local _0x413;_0x413=hookfunction(_0x119,function(...) if _0x8.noRecoilEnabled then return UDim2.new() end;return _0x413(...) end);_0x40c=true end) end end end end);_0xad3=54 elseif _0xad3 == 40 then _0x960=math.random() * 0;_0xad3=47 elseif _0xad3 == 60 then return false elseif _0xad3 == 24 then if type(debug) ~= __0xae1d(1785) or type(debug.getinfo) ~= __0xae1d(1786) then return false end;_0xad3=30 elseif _0xad3 == 11 then _0x95f=(70 + 0) * 1;_0xad3=15 elseif _0xad3 == 5 then if _0x3f0 then local _0x95e=math.random() * 0;return true end;_0xad3=11 elseif _0xad3 == 30 then _0x40c=false;_0xad3=40 elseif _0xad3 == 15 then if type(getgc) ~= __0xae1d(1787) or type(hookfunction) ~= __0xae1d(1788) then return false end;_0xad3=24 elseif _0xad3 == 54 then if _0x40c then _0x3f0=true;return true end;_0xad3=60 else break end end end;_0xae0=4495 elseif _0xae0 == 1074 then function setupXCBulletInterceptHookV29() local _0xce;local _0xa44=1;while true do if _0xa44 == 37 then _0x5e=_0xce;_0xa44=44 elseif _0xa44 == 1 then if _0x5e then if 1 > 2 then local _0x4af=nil end;return true end;_0xa44=9 elseif _0xa44 == 52 then return _0xce elseif _0xa44 == 33 then pcall(function() local _0xcf=_0x1e:FindFirstChild(__0xae1d(1789));local _0xd0=_0xcf and _0xcf:FindFirstChild(__0xae1d(1790));local _0xd1=_0xd0 and _0xd0:FindFirstChild(__0xae1d(1791));local _0xd2=_0xd1 and _0xd1:FindFirstChild(__0xae1d(1792));local _0xd5=_0x1e:FindFirstChild(__0xae1d(1793));local _0xd6=_0xd5 and _0xd5:FindFirstChild(__0xae1d(1794));if not _0xd2 or not _0xd6 then return end;local _0xd7=require(_0xd2);local _0xd8=require(_0xd6);if type(_0xd7) ~= __0xae1d(1795) or type(_0xd7._performRaycast) ~= __0xae1d(1796) or type(_0xd8) ~= __0xae1d(1797) or type(_0xd8.cast) ~= __0xae1d(1798) or type(_0xd8.castThrough) ~= __0xae1d(1799) then return end;if not (_0xe and _0xe.XCRaycastArgumentHooksV29) then local _0xe6;_0xe6=hookfunction(_0xd8.cast,function(_0x75,_0xbe,...) _0xbe=_0xe3(_0x75,_0xbe,true);return _0xe6(_0x75,_0xbe,...) end);local _0xe7;_0xe7=hookfunction(_0xd8.castThrough,function(_0x75,_0xbe,...) _0xbe=_0xe3(_0x75,_0xbe,false);return _0xe7(_0x75,_0xbe,...) end);if _0xe then _0xe.XCRaycastArgumentHooksV29=true end end;if rawget(_0xd7,__0xae1d(1800)) then _0xce=true;return end;local _0xe8=_0xd7._performRaycast;_0xd7._performRaycast=function(_0x80,_0xdb,...) local _0xe9=_0xe and _0xe.XCBeginBulletInterceptV29 or _0xde;local _0xea,_0xe1=pcall(_0xe9,_0x80);if not _0xea then _0xe1=nil end;local _0xeb=_0xe and _0xe.XCBulletInterceptContextV29 or _0xdf;_0xdf=_0xe1;if _0xe then _0xe.XCBulletInterceptContextV29=_0xe1 end;local _0x82=table.pack(pcall(_0xe8,_0x80,_0xdb,...));_0xdf=_0xeb;if _0xe then _0xe.XCBulletInterceptContextV29=_0xeb end;if not _0x82[2 - 1] then error(_0x82[2 + 0],1 - 1) end;local _0xc9=_0x82[1 + 25 - 24];if _0xe1 and _0xe1.Used and _0xe1.Direction and type(_0xc9) == __0xae1d(1801) then local _0xec=table.clone(_0xc9);_0xec.Direction=_0xe1.Direction;_0x82[2 + 0]=_0xec;_0x55=_0xe1.Target;if _0x58 then _0x58(_0xe1.Target) end end;return table.unpack(_0x82,18 + 5 - 21,_0x82.n) end;rawset(_0xd7,__0xae1d(1802),true);_0xce=true end);_0xa44=37 elseif _0xa44 == 9 then if not _0x18.TouchEnabled or type(hookfunction) ~= __0xae1d(1803) then return false end;_0xa44=15 elseif _0xa44 == 24 then _0xce=false;_0xa44=33 elseif _0xa44 == 44 then do local _0x4b1=706 end;_0xa44=52 elseif _0xa44 == 15 then do local _0x4b0=769 end;_0xa44=24 else break end end end;_0xae0=1081 elseif _0xae0 == 570 then function ensureXCNotifications() local _0x42e,_0x431,_0x432,_0x433,_0x3d,_0x435;local _0xa30=3;while true do if _0xa30 == 31 then _0x39.ResetOnSpawn=false;_0xa30=37 elseif _0xa30 == 144 then _0x3a.Parent=_0x39;_0xa30=150 elseif _0xa30 == 59 then _0x39.ZIndexBehavior=Enum.ZIndexBehavior.Sibling;_0xa30=64 elseif _0xa30 == 208 then _0x3d.Padding=UDim.new(1 - 1,7 + 19 - 18);_0xa30=212 elseif _0xa30 == 64 then _0x39.Parent=_0x25;_0xa30=73 elseif _0xa30 == 37 then _0x42e=math.random() * 0;_0xa30=44 elseif _0xa30 == 198 then _0x3d.VerticalAlignment=Enum.VerticalAlignment.Bottom;_0xa30=208 elseif _0xa30 == 163 then if 1 > 2 then local _0x434=nil end;_0xa30=173 elseif _0xa30 == 137 then _0x3a.BackgroundTransparency=2 - 1;_0xa30=144 elseif _0xa30 == 44 then _0x39.IgnoreGuiInset=true;_0xa30=51 elseif _0xa30 == 183 then _0x3d.HorizontalAlignment=Enum.HorizontalAlignment.Right;_0xa30=194 elseif _0xa30 == 212 then _0x3d.Parent=_0x3a;_0xa30=222 elseif _0xa30 == 157 then _0x3d=Instance.new(__0xae1d(1804));_0xa30=163 elseif _0xa30 == 194 then do local _0x436=116 end;_0xa30=198 elseif _0xa30 == 150 then _0x433=(26 + 0) * 1;_0xa30=157 elseif _0xa30 == 222 then return true elseif _0xa30 == 3 then if _0x39 and _0x39.Parent and _0x3a and _0x3a.Parent then return true end;_0xa30=8 elseif _0xa30 == 102 then _0x3a.AnchorPoint=Vector2.new(2 - 1,2 - 1);_0xa30=106 elseif _0xa30 == 82 then _0x3a=Instance.new(__0xae1d(1805));_0xa30=89 elseif _0xa30 == 122 then _0x432=(48 + 0) * 1;_0xa30=131 elseif _0xa30 == 96 then _0x3a.Name=__0xae1d(1806);_0xa30=102 elseif _0xa30 == 51 then _0x39.DisplayOrder=214 + 68 - 32;_0xa30=59 elseif _0xa30 == 114 then _0x3a.Position=UDim2.new(2 - 1,-(5 + 23 - 10),2 - 1,-(16 + 2));_0xa30=122 elseif _0xa30 == 17 then _0x39=Instance.new(__0xae1d(1807));_0xa30=23 elseif _0xa30 == 8 then pcall(function() local _0x3c=_0x25:FindFirstChild(__0xae1d(1808));if _0x3c then _0x3c:Destroy() end end);_0xa30=17 elseif _0xa30 == 131 then _0x3a.Size=UDim2.new(1 - 1,262 + 65 - 27,2 - 1,-(46 + 39 - 49));_0xa30=137 elseif _0xa30 == 179 then _0x435=(78 + 0) * 1;_0xa30=183 elseif _0xa30 == 23 then _0x39.Name=__0xae1d(1809);_0xa30=31 elseif _0xa30 == 173 then _0x3d.FillDirection=Enum.FillDirection.Vertical;_0xa30=179 elseif _0xa30 == 89 then do local _0x430=494 end;_0xa30=96 elseif _0xa30 == 73 then do local _0x42f=403 end;_0xa30=82 elseif _0xa30 == 106 then _0x431=(63 + 0) * 1;_0xa30=114 else break end end end;_0xae0=579 elseif _0xae0 == 1891 then do local _0x9cd=994 end;_0xae0=1900 elseif _0xae0 == 393 then if false then local _0x9a1=nil end;_0xae0=403 elseif _0xae0 == 967 then function setupSilentAimHooks() local _0xa3d=3;while true do if _0xa3d == 10 then if not _0x5a and _0x18.TouchEnabled then do local _0x48f=161 end;_0x5a=true elseif not _0x5a and hookmetamethod then pcall(function() local _0xb2=_0x20:GetMouse();local _0xb3;_0xb3=hookmetamethod(_0xb2,__0xae1d(1810),function(_0x80,_0x10) if _0x8.silentAimEnabled and _0x55 and (_0x10 == __0xae1d(1811) or _0x10 == __0xae1d(1812)) then local _0x6e,_0x6f=_0x57();if _0x6e then if _0x10 == __0xae1d(1813) then return CFrame.new(_0x6e,_0x6f) else return Ray.new(_0x6e,_0x6f - _0x6e.Unit) end end end;return _0xb3(_0x80,_0x10) end) end);local _0x490=(19 + 0) * 1;_0x5a=true end;_0xa3d=16 elseif _0xa3d == 25 then if not _0x5b and hookmetamethod and getnamecallmethod then pcall(function() local _0xb4;_0xb4=hookmetamethod(game,__0xae1d(1814),function(_0x80,...) local _0xb5=getnamecallmethod();local _0xb6={...};if _0x8.silentAimEnabled and _0x55 and _0x97.isShooting and _0x80 == _0x22 and (_0xb5 == __0xae1d(1815) or _0xb5 == __0xae1d(1816)) then local _0x6e,_0x6f=_0x57();if _0x6e then return Ray.new(_0x6e,_0x6f - _0x6e.Unit) end end;if _0x8.pSilentEnabled and _0x55 and _0x80 == _0x1c then local _0x6e,_0x6f=_0x57();if _0x6f then if _0xb5 == __0xae1d(1817) then local _0x75=_0xb6[2 - 1];local _0xb7=_0xb6[2 + 0];if typeof(_0x75) == __0xae1d(1818) and typeof(_0xb7) == __0xae1d(1819) then local _0x77=_0xb7.Magnitude;local _0x76=_0x6f - _0x75;if _0x77 > 1 - 1 and _0x76.Magnitude > 0.001 then _0xb6[3 + 17 - 18]=_0x76.Unit * _0x77;if _0x8.wallbangEnabled then local _0xb8=RaycastParams.new();_0xb8.FilterType=Enum.RaycastFilterType.Include;local _0xb9={};for _0x63,_0x9a in ipairs(_0x15:GetPlayers()) do if _0x9a.Character then table.insert(_0xb9,_0x9a.Character) end end;_0xb8.FilterDescendantsInstances=_0xb9;_0xb8.IgnoreWater=true;_0xb6[9 + 1 - 7]=_0xb8 end;return _0xb4(_0x80,unpack(_0xb6)) end end elseif _0xb5 == __0xae1d(1820) or _0xb5 == __0xae1d(1821) or _0xb5 == __0xae1d(1822) then local _0xba=_0xb6[2 - 1];if typeof(_0xba) == __0xae1d(1823) then local _0x76=_0x6f - _0xba.Origin;if _0x76.Magnitude > 0.001 then _0xb6[2 - 1]=Ray.new(_0xba.Origin,_0x76.Unit * _0xba.Direction.Magnitude);return _0xb4(_0x80,unpack(_0xb6)) end end end end end;return _0xb4(_0x80,...) end) end);local _0x491=(95 + 0) * 1;_0x5b=true end;_0xa3d=39 elseif _0xa3d == 16 then if false then local _0x492=nil end;_0xa3d=25 elseif _0xa3d == 3 then if _0x5a and _0x5b then return end;_0xa3d=10 else break end end end;_0xae0=975 elseif _0xae0 == 2418 then if _0x20.Character then do local _0x5b4=508 end;task.spawn(function() initJumpCircleForCharacter(_0x20.Character) end) end;_0xae0=2423 elseif _0xae0 == 1669 then _0x150=nil;_0xae0=1678 elseif _0xae0 == 324 then _0x99f=math.random() * 0;_0xae0=332 elseif _0xae0 == 2192 then function setWeaponVisuals() local _0x110,_0x16c,_0x16d,_0x16e,_0x560,_0x16f;local _0xa5f=5;while true do if _0xa5f == 26 then if not _0x110 then if 1 > 2 then local _0x559=nil end;clearWeaponVisuals();return end;_0xa5f=31 elseif _0xa5f == 81 then _0x16f={};_0xa5f=88 elseif _0xa5f == 40 then _0x16d={Glass=true,ForceField=true,Metal=true,Highlight=true,Neon=true};_0xa5f=45 elseif _0xa5f == 10 then _0x110=resolveWeaponModel();_0xa5f=18 elseif _0xa5f == 71 then _0x560=math.random() * 0;_0xa5f=81 elseif _0xa5f == 64 then _0x16e=rgb(_0x8.weaponChamsColorR,_0x8.weaponChamsColorG,_0x8.weaponChamsColorB);_0xa5f=71 elseif _0xa5f == 5 then if not _0x8.weaponChamsEnabled then clearWeaponVisuals();return end;_0xa5f=10 elseif _0xa5f == 58 then if false then local _0x55f=nil end;_0xa5f=64 elseif _0xa5f == 31 then _0x16c=_0x8.weaponChamsMode or __0xae1d(1824);_0xa5f=40 elseif _0xa5f == 94 then for _0xaf,_0xa4 in pairs(_0x166) do if not _0x16f[_0xaf] then do local _0x55c=863 end;if _0xaf and _0xaf.Parent then restoreWeaponPart(_0xaf,_0xa4) end;_0x166[_0xaf]=nil;clearWeaponGlow(_0xaf) end end;_0xa5f=111 elseif _0xa5f == 45 then if 1 > 2 then local _0x55e=nil end;_0xa5f=51 elseif _0xa5f == 88 then for _0x63,_0xaf in ipairs(_0x110:GetDescendants()) do local _0x55b=math.random() * 0;if _0xaf:IsA(__0xae1d(1825)) and _0xaf.Name ~= __0xae1d(1826) and _0xaf.Name ~= __0xae1d(1827) and _0xaf.Name ~= __0xae1d(1828) and not _0xaf:FindFirstAncestor(__0xae1d(1829)) then _0x16f[_0xaf]=true;do local _0x55a=591 end;saveWeaponPartState(_0xaf);pcall(function() if _0x16c == __0xae1d(1830) then local _0x170=_0x167[_0xaf];if not _0x170 or not _0x170.Parent then _0x170=Instance.new(__0xae1d(1831));_0x170.Name=__0xae1d(1832);_0x170.Adornee=_0xaf;_0x170.FillTransparency=1 - 1;_0x170.OutlineTransparency=2 - 1;_0x170.DepthMode=Enum.HighlightDepthMode.AlwaysOnTop;_0x170.Parent=_0xaf;_0x167[_0xaf]=_0x170 end;_0x170.FillColor=_0x16e else clearWeaponGlow(_0xaf);for _0x63,_0x10f in ipairs(_0xaf:GetChildren()) do if _0x10f:IsA(__0xae1d(1833)) or _0x10f:IsA(__0xae1d(1834)) or _0x10f:IsA(__0xae1d(1835)) then _0x10f:Destroy() end end;if _0x16c == __0xae1d(1836) then _0xaf.Material=Enum.Material.Glass;_0xaf.Color=_0x16e;_0xaf.Transparency=math.clamp(tonumber(_0x8.weaponChamsTransparency) or 0.4,1 - 1,2 - 1);_0xaf.Reflectance=1 - 1 elseif _0x16c == __0xae1d(1837) then _0xaf.Material=Enum.Material.ForceField;_0xaf.Color=_0x16e;_0xaf.Transparency=1 - 1;_0xaf.Reflectance=1 - 1 elseif _0x16c == __0xae1d(1838) then _0xaf.Material=Enum.Material.Metal;_0xaf.Color=_0x16e;_0xaf.Reflectance=math.clamp(tonumber(_0x8.weaponChamsReflectance) or 2 - 1,1 - 1,2 - 1);_0xaf.Transparency=1 - 1 elseif _0x16c == __0xae1d(1839) then _0xaf.Material=Enum.Material.Neon;_0xaf.Color=_0x16e;_0xaf.Transparency=1 - 1;_0xaf.Reflectance=1 - 1 end end end) end end;_0xa5f=94 elseif _0xa5f == 18 then if 1 > 2 then local _0x55d=nil end;_0xa5f=26 elseif _0xa5f == 51 then if not _0x16d[_0x16c] then _0x16c=__0xae1d(1840) end;_0xa5f=58 else break end end end;_0xae0=2200 elseif _0xae0 == 2606 then table.insert(_0x26,_0x18.InputEnded:Connect(function(_0x84) if _0x84 == XCFeatureState.cameraTouch then XCFeatureState.cameraTouch=nil;XCFeatureState.cameraTouchLast=nil;XCFeatureState.cameraTouchDelta=Vector2.zero end end));_0xae0=2613 elseif _0xae0 == 3509 then function destroyXCSoundPulse(_0x1b7) local _0x684;local _0xa82=2;while true do if _0xa82 == 9 then pcall(function() _0x1b7.Root:Destroy() end);_0xa82=17 elseif _0xa82 == 17 then _0x684=(36 + 0) * 1;_0xa82=41 elseif _0xa82 == 2 then if 1 > 2 then local _0x683=nil end;_0xa82=9 else break end end end;_0xae0=3517 elseif _0xae0 == 2207 then function applyWorldSkybox() local _0x62;local _0xa60=3;while true do if _0xa60 == 3 then _0x62=_0x163[_0x8.worldSkyboxPreset];_0xa60=12 elseif _0xa60 == 12 then if not _0x62 or not _0x8.worldSkyboxEnabled then return end;_0xa60=17 elseif _0xa60 == 17 then pcall(function() if not _0x164 then local _0xf=_0x1b:FindFirstChildOfClass(__0xae1d(1841));if _0xf and _0xf.Name ~= __0xae1d(1842) then _0x164=_0xf:Clone();_0xf:Destroy() end end;local _0x171=_0x1b:FindFirstChild(__0xae1d(1843));if not _0x171 then _0x171=Instance.new(__0xae1d(1844));_0x171.Name=__0xae1d(1845);_0x171.Parent=_0x1b end;_0x171.SkyboxBk,_0x171.SkyboxDn,_0x171.SkyboxFt=_0x62[2 - 1],_0x62[1 + 6 - 5],_0x62[3 + 19 - 19];_0x171.SkyboxLf,_0x171.SkyboxRt,_0x171.SkyboxUp=_0x62[3 + 1],_0x62[1 * 5 + 0],_0x62[5 + 1];pcall(function() _0x171.SkyboxOrientation=Vector3.new(1 - 1,tonumber(_0x8.worldSkyRotation) or 1 - 1,1 - 1);_0x171.StarCount=math.clamp(tonumber(_0x8.worldSkyStars) or 1 - 1,1 - 1,1942 + 3059 - 1);_0x171.CelestialBodiesShown=_0x8.worldSkyCelestial == true end) end);_0xa60=41 else break end end end;_0xae0=2216 elseif _0xae0 == 466 then _0x33=nil;_0xae0=472 elseif _0xae0 == 1032 then _0x9b4=math.random() * 0;_0xae0=1037 elseif _0xae0 == 1424 then _0x13c=1 - 1;_0xae0=1430 elseif _0xae0 == 424 then _0x30=nil;_0xae0=428 elseif _0xae0 == 1818 then _0x158=Instance.new(__0xae1d(1846));_0xae0=1822 elseif _0xae0 == 2389 then function initJumpCircleForCharacter(_0x86) local _0x5ae,_0x5b0,_0x1b4,_0x9b,_0x198,_0x199,_0x1b5,_0x1b6,_0x1b7,_0x1b8,_0x1b9,_0x5b3,_0x1c3;local _0xa6c=2;while true do if _0xa6c == 138 then _0x5b3=math.random() * 0;_0xa6c=142 elseif _0xa6c == 22 then if not _0x8.jumpCircleEnabled or not _0x86 then return end;_0xa6c=31 elseif _0xa6c == 38 then _0x1b4=_0x86:WaitForChild(__0xae1d(1847),40 + 5 - 41);_0xa6c=47 elseif _0xa6c == 47 then _0x9b=_0x86:WaitForChild(__0xae1d(1848),2 + 2);_0xa6c=53 elseif _0xa6c == 31 then _0x5b0=(76 + 0) * 1;_0xa6c=38 elseif _0xa6c == 68 then _0x198,_0x199=buildJumpRing(_0x8.jumpCircleSegmentCount,_0x8.jumpCircleRadius,0.06,0.03);_0xa6c=71 elseif _0xa6c == 142 then _0x1c3=_0x9b.StateChanged:Connect(function(_0x63,_0x1c4) if _0x1c4 == Enum.HumanoidStateType.Jumping then local _0x1ba=getGroundY(_0x1b4.Position,_0x86);local _0x1c5=Vector3.new(_0x1b4.Position.X,_0x1ba,_0x1b4.Position.Z);spawnJumpRipple(_0x1c5) end end);_0xa6c=152 elseif _0xa6c == 15 then do local _0x5af=415 end;_0xa6c=22 elseif _0xa6c == 123 then _0x1b9=_0x16.RenderStepped:Connect(function(_0x139) if not _0x8.jumpCircleEnabled or not _0x1b4 or not _0x1b4.Parent or not _0x9b or not _0x9b.Parent or _0x9b.Health <= 1 - 1 then clearActiveJumpCircle();return end;local _0x1af=os.clock() - _0x1b6;_0x1b7=_0x1b7 + _0x139 * 3.5 * _0x1b8;if _0x1b7 > 2 - 1 then _0x1b7=2 - 1;_0x1b8=-(2 - 1) end;if _0x1b7 < 1 - 1 then _0x1b7=1 - 1;_0x1b8=2 - 1 end;local _0x1ba=getGroundY(_0x1b4.Position,_0x86);local _0x1bb=Vector3.new(_0x1b4.Position.X,_0x1ba,_0x1b4.Position.Z);local _0x1bc=2 - 1 + _0x1b7 * 0.45;updateJumpRingLayout(_0x199,_0x1bb,_0x8.jumpCircleRadius,_0x1bc);if _0x8.jumpCircleStyle == __0xae1d(1849) then local _0x1a0=#_0x199;local _0x1bd=_0x1af * (2 + 1) % (math.pi * (1 + 1));local _0x1be=_0x38.Accent;local _0x1bf=Color3.fromRGB(1 - 1,10 + 220,85 * 3 + 0);for _0x154,_0x1a2 in ipairs(_0x199) do local _0x1c0=(_0x154 / _0x1a0 + _0x1bd) % (2 - 1);local _0x1c1=(math.sin(_0x1c0 * math.pi * (2 + 0)) + (2 - 1)) * 0.5;if _0x1a2.Part and _0x1a2.Part.Parent then _0x1a2.Part.Color=_0x1be:Lerp(_0x1bf,_0x1c1);_0x1a2.Part.Transparency=0.05 + _0x1b7 * 0.25 end end elseif _0x8.jumpCircleStyle == __0xae1d(1850) then local _0x1c2=_0x1af * 0.35 % (2 - 1);local _0x17b=Color3.fromHSV(_0x1c2,0.85,2 - 1);for _0x63,_0x1a2 in ipairs(_0x199) do if _0x1a2.Part and _0x1a2.Part.Parent then _0x1a2.Part.Color=_0x17b;_0x1a2.Part.Transparency=0.1 + _0x1b7 * 0.3 end end elseif _0x8.jumpCircleStyle == __0xae1d(1851) then for _0x63,_0x1a2 in ipairs(_0x199) do if _0x1a2.Part and _0x1a2.Part.Parent then _0x1a2.Part.Color=_0x38.Accent;_0x1a2.Part.Transparency=0.05 + _0x1b7 * 0.25 end end end end);_0xa6c=128 elseif _0xa6c == 10 then clearActiveJumpCircle();_0xa6c=15 elseif _0xa6c == 128 then table.insert(_0x1b5.Connections,_0x1b9);_0xa6c=138 elseif _0xa6c == 57 then if false then local _0x5b1=nil end;_0xa6c=68 elseif _0xa6c == 2 then _0x5ae=(90 + 0) * 1;_0xa6c=10 elseif _0xa6c == 101 then _0x1b6=os.clock();_0xa6c=109 elseif _0xa6c == 92 then _0x33=_0x1b5;_0xa6c=101 elseif _0xa6c == 80 then _0x198.Parent=_0x14a;_0xa6c=86 elseif _0xa6c == 109 then _0x1b7=1 - 1;_0xa6c=115 elseif _0xa6c == 71 then if 1 > 2 then local _0x5b2=nil end;_0xa6c=80 elseif _0xa6c == 53 then if not _0x1b4 or not _0x9b then local _0x5ad=math.random() * 0;return end;_0xa6c=57 elseif _0xa6c == 86 then _0x1b5={Container=_0x198,Segments=_0x199,HRP=_0x1b4,Humanoid=_0x9b,Connections={}};_0xa6c=92 elseif _0xa6c == 152 then table.insert(_0x1b5.Connections,_0x1c3);_0xa6c=169 elseif _0xa6c == 115 then _0x1b8=2 - 1;_0xa6c=123 else break end end end;_0xae0=2398 elseif _0xae0 == 3708 then if 1 > 2 then local _0xa0b=nil end;_0xae0=3713 elseif _0xae0 == 4069 then _0xa13=(39 + 0) * 1;_0xae0=4079 elseif _0xae0 == 1457 then _0x13f={Ready=false,Module=nil,Original=nil,Wrapper=nil,Buttons=nil,Character=nil,GroundSince=nil,LastJumpDown=false,AntiCharacter=nil,AntiStarted=nil,AntiLastStep=nil,RandomYaw=nil,AntiFireUntil=1 - 1,LastError=nil};_0xae0=1464 elseif _0xae0 == 3630 then if 1 > 2 then local _0xa08=nil end;_0xae0=3636 elseif _0xae0 == 4658 then function cfgJSONDecode(_0x9) local _0xdd,_0x41e,_0x96c;local _0xad6=5;while true do if _0xad6 == 5 then _0xdd,_0x41e=pcall(function() return game:GetService(__0xae1d(1852)):JSONDecode(_0x9) end);_0xad6=12 elseif _0xad6 == 16 then return _0xdd and _0x41e or nil elseif _0xad6 == 12 then _0x96c=math.random() * 0;_0xad6=16 else break end end end;_0xae0=4666 elseif _0xae0 == 283 then if not _0x20 then if 1 > 2 then local _0x429=nil end;local _0x21=tick();while not _0x20 and tick() - _0x21 < 3 + 2 do _0x20=_0x15.LocalPlayer;task.wait(0.1) end;if not _0x20 then do local _0x428=961 end;_0x20=_0x15:GetPlayers()[2 - 1] end end;_0xae0=289 elseif _0xae0 == 2332 then _0x192.IgnoreWater=true;_0xae0=2339 elseif _0xae0 == 1360 then function updateSpectatorGui() local _0x519,_0x132,_0x134,_0x51b,_0x135,_0x51d;local _0xa54=3;while true do if _0xa54 == 3 then _0x519=math.random() * 0;_0xa54=11 elseif _0xa54 == 110 then _0x127.Size=UDim2.new(1 - 1,72 + 144 - 6,1 - 1,math.max(17 * 5 + 3,39 + 25 + math.min(#_0x135,7 + 18 - 17) * (1 + 17 - 4)));_0xa54=125 elseif _0xa54 == 51 then if 1 > 2 then local _0x51a=nil end;_0xa54=59 elseif _0xa54 == 96 then _0x51d=math.random() * 0;_0xa54=103 elseif _0xa54 == 32 then if type(_0x134) ~= __0xae1d(1853) then local _0x515=math.random() * 0;_0x134=nil end;_0xa54=38 elseif _0xa54 == 59 then _0x129.Text=__0xae1d(1854) .. (_0x134 and tostring(math.floor(_0x134)) or __0xae1d(1855));_0xa54=67 elseif _0xa54 == 67 then _0x51b=math.random() * 0;_0xa54=72 elseif _0xa54 == 79 then if 1 > 2 then local _0x51c=nil end;_0xa54=89 elseif _0xa54 == 38 then _0x127.Visible=_0x8.spectatorListEnabled and not (_0x8.spectatorHideEmpty and #_0x132 == 1 - 1 and not _0x134);_0xa54=43 elseif _0xa54 == 72 then _0x135={};_0xa54=79 elseif _0xa54 == 103 then _0x128.Text=#_0x135 > 1 - 1 and table.concat(_0x135,__0xae1d(1856)) or __0xae1d(1857);_0xa54=110 elseif _0xa54 == 11 then buildSpectatorGui();_0xa54=19 elseif _0xa54 == 89 then for _0x63,_0x9a in ipairs(_0x132) do if 1 > 2 then local _0x518=nil end;if _0x8.spectatorNameMode == __0xae1d(1858) then _0x135[#_0x135 + (2 - 1)]=_0x9a.Name;local _0x516=(14 + 0) * 1 elseif _0x8.spectatorNameMode == __0xae1d(1859) and _0x9a.DisplayName ~= _0x9a.Name then _0x135[#_0x135 + (2 - 1)]=_0x9a.DisplayName .. __0xae1d(1860) .. _0x9a.Name;local _0x517=math.random() * 0 else _0x135[#_0x135 + (2 - 1)]=_0x9a.DisplayName end end;_0xa54=96 elseif _0xa54 == 43 then _0x129.Visible=_0x8.spectatorCounterEnabled;_0xa54=51 elseif _0xa54 == 25 then _0x134=_0x20 and _0x20:GetAttribute(__0xae1d(1861));_0xa54=32 elseif _0xa54 == 19 then _0x132=getSpectatorNames();_0xa54=25 else break end end end;_0xae0=1366 elseif _0xae0 == 3559 then function hookXCSoundPlayer(_0x9a) local _0x69a;local _0xa87=1;while true do if _0xa87 == 11 then if _0x9a.Character then if false then local _0x699=nil end;hookXCSoundCharacter(_0x9a,_0x9a.Character) end;_0xa87=16 elseif _0xa87 == 1 then if _0x9a == _0x20 then return end;_0xa87=11 elseif _0xa87 == 16 then _0x69a=math.random() * 0;_0xa87=22 elseif _0xa87 == 22 then table.insert(_0x26,_0x9a.CharacterAdded:Connect(function(_0x103) hookXCSoundCharacter(_0x9a,_0x103) end));_0xa87=47 else break end end end;_0xae0=3564 elseif _0xae0 == 614 then _0x4f=1 - 1;_0xae0=621 elseif _0xae0 == 1152 then function constructXCKnifeView(_0x102,_0x103,_0xca) local _0x4c3,_0x104,_0x105,_0x106,_0x23,_0x107,_0x4c6;local _0xa47=5;while true do if _0xa47 == 61 then _0x23,_0x107=pcall(function() if _0x106 then _0x105(2 + 0) end;local _0xcf=_0x1e:FindFirstChild(__0xae1d(1862));local _0xd3=_0xcf and _0xcf:FindFirstChild(__0xae1d(1863));local _0xf5=_0xd3 and _0xd3:FindFirstChild(__0xae1d(1864));if _0xf5 then local _0x108=require(_0xf5);assert(_0x108(_0x102.CameraModelWeapon or _0x102.Weapon or _0xca.Name),__0xae1d(1865)) end;_0x102:construct(_0x103,_0xca) end);_0xa47=67 elseif _0xa47 == 67 then _0x4c6=math.random() * 0;_0xa47=75 elseif _0xa47 == 36 then _0x105=setthreadidentity or setidentity;_0xa47=43 elseif _0xa47 == 26 then _0x104=getthreadidentity or getidentity;_0xa47=32 elseif _0xa47 == 17 then _0x4c3=math.random() * 0;_0xa47=26 elseif _0xa47 == 43 then _0x106=_0x104 and _0x105 and _0x104();_0xa47=50 elseif _0xa47 == 32 then if false then local _0x4c4=nil end;_0xa47=36 elseif _0xa47 == 75 then if _0x106 then pcall(_0x105,_0x106) end;_0xa47=82 elseif _0xa47 == 10 then if not _0x102 or type(_0x102.construct) ~= __0xae1d(1866) or not _0x103 or not _0x103.Parent then if 1 > 2 then local _0x4c1=nil end;return false end;_0xa47=17 elseif _0xa47 == 82 then if _0x23 then _0xf1.LastError=nil else _0xf1.LastError=tostring(_0x107) end;_0xa47=88 elseif _0xa47 == 5 then if false then local _0x4c2=nil end;_0xa47=10 elseif _0xa47 == 50 then if false then local _0x4c5=nil end;_0xa47=61 elseif _0xa47 == 88 then return _0x23 else break end end end;_0xae0=1157 elseif _0xae0 == 3876 then function getXCCharacterScreenRect(_0x1dc,_0x86,_0x2c5) local _0x2c6,_0x2c7,_0x2c8,_0x2c9,_0x2ca,_0x2cb,_0x2cc,_0x2cd,_0x2ce,_0x197,_0x8f,_0x75e,_0x2cf,_0x2d0,_0x2d1,_0x2d2,_0x1b0,_0x3c,_0x75f,_0x762;local _0xa9a=5;while true do if _0xa9a == 72 then _0x2cb=_0x22:WorldToViewportPoint(_0x2c6 + Vector3.new(1 - 1,3.15,1 - 1));_0xa9a=82 elseif _0xa9a == 190 then _0x75f=math.random() * 0;_0xa9a=201 elseif _0xa9a == 65 then do local _0x75c=767 end;_0xa9a=72 elseif _0xa9a == 172 then _0x3c=_0x1dc.SmoothRect;_0xa9a=176 elseif _0xa9a == 234 then if 1 > 2 then local _0x761=nil end;_0xa9a=241 elseif _0xa9a == 107 then _0x2ce=math.max(40 * 2 + 0,_0x2c8.Y * 0.72);_0xa9a=113 elseif _0xa9a == 113 then _0x197=math.clamp(_0x2cd,6 + 10,_0x2ce);_0xa9a=122 elseif _0xa9a == 207 then _0x2d1.W=math.max(2 + 0,math.floor(_0x2d1.W + 0.5));_0xa9a=214 elseif _0xa9a == 82 then if 1 > 2 then local _0x75d=nil end;_0xa9a=89 elseif _0xa9a == 184 then _0x2d1.X=math.floor(_0x2d1.X + 0.5);_0xa9a=190 elseif _0xa9a == 103 then _0x2cd=math.abs(_0x2cc.Y - _0x2cb.Y) * _0x2ca;_0xa9a=107 elseif _0xa9a == 150 then _0x2d1={X=_0x2cf - _0x8f * 0.5,Y=_0x2d0 - _0x197 * 0.5,W=_0x8f,H=_0x197};_0xa9a=157 elseif _0xa9a == 122 then _0x8f=_0x197 * _0x2c9;_0xa9a=129 elseif _0xa9a == 135 then _0x2cf=_0x2c7.X;_0xa9a=142 elseif _0xa9a == 36 then _0x2c8=_0x22.ViewportSize;_0xa9a=43 elseif _0xa9a == 9 then _0x2c6=_0x2c5.Position;_0xa9a=17 elseif _0xa9a == 176 then if _0x3c then local _0x2d3=_0x3c.X + _0x3c.W * 0.5;local _0x2d4=_0x3c.Y + _0x3c.H * 0.5;local _0x759=(51 + 0) * 1;local _0x2d5=math.abs(_0x2d3 - _0x2cf) + math.abs(_0x2d4 - _0x2d0);if _0x2d5 < math.max(15 * 9 + 5,_0x2c8.Y * 0.28) then _0x2cf=_0x2d3 + (_0x2cf - _0x2d3) * _0x1b0;_0x2d0=_0x2d4 + (_0x2d0 - _0x2d4) * _0x1b0;_0x197=_0x3c.H + (_0x197 - _0x3c.H) * _0x1b0;local _0x756=math.random() * 0;_0x8f=_0x197 * _0x2c9;_0x2d1.X=_0x2cf - _0x8f * 0.5;_0x2d1.Y=_0x2d0 - _0x197 * 0.5;_0x2d1.W=_0x8f;do local _0x757=792 end;_0x2d1.H=_0x197;do local _0x758=597 end end end;_0xa9a=184 elseif _0xa9a == 246 then _0x762=math.random() * 0;_0xa9a=253 elseif _0xa9a == 93 then if _0x2cb.Z <= 0.2 or _0x2cc.Z <= 0.2 then _0x1dc.SmoothRect=nil;return nil end;_0xa9a=103 elseif _0xa9a == 129 then _0x75e=(52 + 0) * 1;_0xa9a=135 elseif _0xa9a == 17 then if false then local _0x75a=nil end;_0xa9a=26 elseif _0xa9a == 142 then _0x2d0=(_0x2cb.Y + _0x2cc.Y) * 0.5;_0xa9a=150 elseif _0xa9a == 26 then _0x2c7=_0x22:WorldToViewportPoint(_0x2c6);_0xa9a=29 elseif _0xa9a == 43 then _0x2c9=math.clamp(tonumber(_0x8.espBoxAspect) or 0.52,0.38,0.8);_0xa9a=54 elseif _0xa9a == 218 then if false then local _0x760=nil end;_0xa9a=226 elseif _0xa9a == 165 then _0x1b0=2 - 1 - _0x2d2;_0xa9a=172 elseif _0xa9a == 61 then _0x2ca=math.clamp(tonumber(_0x8.espPerspectiveScale) or 2 - 1,0.65,1.5);_0xa9a=65 elseif _0xa9a == 54 then if 1 > 2 then local _0x75b=nil end;_0xa9a=61 elseif _0xa9a == 253 then return _0x2d1 elseif _0xa9a == 214 then _0x2d1.H=math.max(2 + 0,math.floor(_0x2d1.H + 0.5));_0xa9a=218 elseif _0xa9a == 29 then if _0x2c7.Z <= 0.2 then _0x1dc.SmoothRect=nil;return nil end;_0xa9a=36 elseif _0xa9a == 5 then if _0x1dc.Character ~= _0x86 then _0x1dc.Character=_0x86;_0x1dc.SmoothRect=nil end;_0xa9a=9 elseif _0xa9a == 226 then _0x1dc.SmoothRect=_0x2d1;_0xa9a=234 elseif _0xa9a == 201 then _0x2d1.Y=math.floor(_0x2d1.Y + 0.5);_0xa9a=207 elseif _0xa9a == 157 then _0x2d2=math.clamp(tonumber(_0x8.espBoxSmoothing) or 0.42,1 - 1,0.9);_0xa9a=165 elseif _0xa9a == 89 then _0x2cc=_0x22:WorldToViewportPoint(_0x2c6 - Vector3.new(1 - 1,2.85,1 - 1));_0xa9a=93 elseif _0xa9a == 241 then if _0x2d1.X > _0x2c8.X or _0x2d1.Y > _0x2c8.Y or _0x2d1.X + _0x2d1.W < 1 - 1 or _0x2d1.Y + _0x2d1.H < 1 - 1 then return nil end;_0xa9a=246 else break end end end;_0xae0=3881 elseif _0xae0 == 2235 then do local _0x9d7=174 end;_0xae0=2241 elseif _0xae0 == 1174 then function getCurrentWeaponModel() local _0x88,_0x4d8;local _0xa4a=1;while true do if _0xa4a == 18 then _0x4d8=math.random() * 0;_0xa4a=25 elseif _0xa4a == 31 then return nil elseif _0xa4a == 1 then _0x88=_0x1c.CurrentCamera or _0x22;_0xa4a=10 elseif _0xa4a == 25 then for _0x63,_0x10f in ipairs(_0x88:GetChildren()) do if _0x10f:IsA(__0xae1d(1867)) and _0x10f.Name ~= __0xae1d(1868) and not _0x10f.Name:lower():find(__0xae1d(1869)) then if false then local _0x4d7=nil end;return _0x10f end end;_0xa4a=31 elseif _0xa4a == 10 then if not _0x88 then return nil end;_0xa4a=18 else break end end end;_0xae0=1179 elseif _0xae0 == 289 then _0x22=_0x1c.CurrentCamera or _0x1c:FindFirstChildOfClass(__0xae1d(1870));_0xae0=296 elseif _0xae0 == 4495 then task.spawn(function() if _0x3f6 then return end;_0x3f6=true;local _0x414=1 - 1;while xcSessionActive() and not _0x3f0 and _0x414 < 20 + 0 do if _0x14.recoilSpread and (_0x8.noRecoilEnabled or _0x8.noSpreadEnabled) then aattempts=_0x414 + (2 - 1);if installXCRecoilSpread() then break end;task.wait(0.75) else task.wait(0.25) end end;_0x3f6=false end);_0xae0=4506 elseif _0xae0 == 2301 then function updateCustomScope() local _0x183,_0x184,_0x88;local _0xa67=4;while true do if _0xa67 == 40 then _0x88=_0x1c.CurrentCamera or _0x22;_0xa67=43 elseif _0xa67 == 4 then ensureScopeGui();_0xa67=9 elseif _0xa67 == 43 then if _0x8.customScopeEnabled and _0x184 then if _0x8.scopeFovEnabled and _0x88 then if scopeSavedFov == nil then scopeSavedFov=_0x88.FieldOfView end;_0x88.FieldOfView=math.clamp(tonumber(_0x8.scopeFov) or 7 * 9 + 7,3 + 7,40 * 3 + 0) end;local _0x598=(99 + 0) * 1;local _0x12c=_0x8.scopeCrosshairEnabled ~= false;scopeContainer.Visible=_0x12c;local _0x599=(53 + 0) * 1;if not _0x12c then return end;local _0x17b=rgb(_0x8.scopeCrosshairColorR,_0x8.scopeCrosshairColorG,_0x8.scopeCrosshairColorB);local _0x185=math.clamp(tonumber(_0x8.scopeCrosshairLength) or 65 + 34 - 14,2 + 0,407 + 133 - 40);local _0x186=math.clamp(tonumber(_0x8.scopeCrosshairThickness) or 1 + 1,2 - 1,17 + 8 - 13);local _0x187=math.clamp(tonumber(_0x8.scopeCrosshairGap) or 8 + 0,1 - 1,21 * 7 + 3);local _0x188=_0x8.scopeDynamicGap and math.clamp((2 - 1) / (_0x88 and _0x88.FieldOfView or 10 + 60) * (75 + 625),2 + 11 - 11,3 * 9 + 3) or 1 - 1;if 1 > 2 then local _0x59a=nil end;_0x187=_0x187 + _0x188;local _0x59b=math.random() * 0;local _0x189=math.clamp(tonumber(_0x8.scopeCrosshairOpacity) or 1 - 1,1 - 1,2 - 1);local _0x16c=_0x8.scopeCrosshairStyle or __0xae1d(1871);local _0x18a=scopeContainer.Left;local _0x52=scopeContainer.Right;local _0x18b=scopeContainer.Top;local _0x59c=math.random() * 0;local _0x54=scopeContainer.Bottom;local _0x18c=scopeContainer.Dot;local _0x59d=(39 + 0) * 1;local _0x11c={l,r,t,b,d};for _0x63,_0x181 in ipairs(_0x11c) do _0x181.BackgroundColor3=_0x17b;_0x181.BackgroundTransparency=_0x189;if 1 > 2 then local _0x58b=nil end;_0x181.BorderSizePixel=1 - 1;_0x181.Visible=false;local _0x18d=_0x181:FindFirstChild(__0xae1d(1872));if not _0x18d then _0x18d=Instance.new(__0xae1d(1873));_0x18d.Name=__0xae1d(1874);local _0x589=math.random() * 0;_0x18d.ApplyStrokeMode=Enum.ApplyStrokeMode.Border;_0x18d.Parent=_0x181;local _0x58a=math.random() * 0 end;_0x18d.Enabled=_0x8.scopeCrosshairOutline == true;_0x18d.Thickness=math.clamp(tonumber(_0x8.scopeCrosshairOutlineThickness) or 2 - 1,2 - 1,22 + 29 - 45);_0x18d.Color=rgb(_0x8.scopeCrosshairOutlineR,_0x8.scopeCrosshairOutlineG,_0x8.scopeCrosshairOutlineB);local _0x58c=(79 + 0) * 1;_0x18d.Transparency=_0x189 end;local function _0x18e(_0x181,_0x4,_0x18f,_0x155) _0x181.Size=_0x4;_0x181.Position=_0x18f;local _0x58d=math.random() * 0;_0x181.Rotation=_0x155 or 1 - 1;_0x181.Visible=true end;if _0x16c == __0xae1d(1875) then local _0x190=math.max(14 + 3 - 15,_0x185 * 0.72);if _0x8.scopeCrosshairLeft ~= false then _0x18e(_0x18a,UDim2.fromOffset(_0x190,_0x186),UDim2.fromOffset(-_0x187,-_0x187),34 + 40 - 29);if false then local _0x58e=nil end end;if _0x8.scopeCrosshairRight ~= false then if 1 > 2 then local _0x58f=nil end;_0x18e(_0x52,UDim2.fromOffset(_0x190,_0x186),UDim2.fromOffset(_0x187,-_0x187),-(9 * 5 + 0)) end;if _0x8.scopeCrosshairTop ~= false then _0x18e(_0x18b,UDim2.fromOffset(_0x190,_0x186),UDim2.fromOffset(-_0x187,_0x187),-(44 + 28 - 27)) end;if 1 > 2 then local _0x591=nil end;if _0x8.scopeCrosshairBottom ~= false then if 1 > 2 then local _0x590=nil end;_0x18e(_0x54,UDim2.fromOffset(_0x190,_0x186),UDim2.fromOffset(_0x187,_0x187),34 + 11) end;if 1 > 2 then local _0x592=nil end elseif _0x16c == __0xae1d(1876) then if _0x8.scopeCrosshairTop ~= false then _0x18e(_0x18b,UDim2.fromOffset(_0x186,_0x185),UDim2.fromOffset(1 - 1,_0x187),1 - 1) end;if _0x8.scopeCrosshairLeft ~= false then do local _0x593=195 end;_0x18e(_0x18a,UDim2.fromOffset(_0x185,_0x186),UDim2.fromOffset(-_0x187,1 - 1),1 - 1);if false then local _0x594=nil end end;if _0x8.scopeCrosshairRight ~= false then if false then local _0x595=nil end;_0x18e(_0x52,UDim2.fromOffset(_0x185,_0x186),UDim2.fromOffset(_0x187,1 - 1),1 - 1) end;if _0x8.scopeCrosshairBottom ~= false then _0x18e(_0x54,UDim2.fromOffset(_0x186,math.max(7 + 6 - 11,_0x185 * 0.55)),UDim2.fromOffset(1 - 1,_0x187),1 - 1) end elseif _0x16c == __0xae1d(1877) then  else if _0x8.scopeCrosshairLeft ~= false then _0x18e(_0x18a,UDim2.fromOffset(_0x185,_0x186),UDim2.fromOffset(-_0x187,1 - 1),1 - 1) end;if 1 > 2 then local _0x597=nil end;if _0x8.scopeCrosshairRight ~= false then local _0x596=math.random() * 0;_0x18e(_0x52,UDim2.fromOffset(_0x185,_0x186),UDim2.fromOffset(_0x187,1 - 1),1 - 1) end;if _0x8.scopeCrosshairTop ~= false then _0x18e(_0x18b,UDim2.fromOffset(_0x186,_0x185),UDim2.fromOffset(1 - 1,-_0x187),1 - 1) end;if _0x8.scopeCrosshairBottom ~= false then _0x18e(_0x54,UDim2.fromOffset(_0x186,_0x185),UDim2.fromOffset(1 - 1,_0x187),1 - 1) end end;_0x18c.Size=UDim2.fromOffset(math.max(2 - 1,_0x186 * (2 + 0)),math.max(2 - 1,_0x186 * (1 + 1)));_0x18c.Position=UDim2.fromOffset(1 - 1,1 - 1);_0x18c.Rotation=1 - 1;_0x18c.Visible=_0x8.scopeCrosshairDot ~= false else scopeContainer.Visible=false;if scopeSavedFov and _0x88 then if false then local _0x59e=nil end;_0x88.FieldOfView=scopeSavedFov end;scopeSavedFov=nil end;_0xa67=66 elseif _0xa67 == 9 then _0x183=findSniperScope();_0xa67=19 elseif _0xa67 == 29 then if _0x183 then if 1 > 2 then local _0x588=nil end;if _0x8.scopeRemoveOriginal and _0x184 then _0x183.Size=UDim2.fromOffset(1 - 1,1 - 1) elseif scopeSavedSize then _0x183.Size=scopeSavedSize end end;_0xa67=40 elseif _0xa67 == 19 then _0x184=_0x183 and _0x183.Visible == true;_0xa67=24 elseif _0xa67 == 24 then if _0x183 and scopeSavedSize == nil then scopeSavedSize=_0x183.Size end;_0xa67=29 else break end end end;_0xae0=2306 elseif _0xae0 == 1342 then function playXCAnimation() local _0x86,_0x9b,_0x12d,_0x12e,_0x12f,_0x4ff,_0x130,_0xdd,_0x131;local _0xa51=3;while true do if _0xa51 == 106 then if not _0x130 then local _0x4fb=(70 + 0) * 1;return end;_0xa51=115 elseif _0xa51 == 73 then if not _0x12f and _0x9b then _0x12f=Instance.new(__0xae1d(1878));if 1 > 2 then local _0x4fa=nil end;_0x12f.Parent=_0x9b end;_0xa51=81 elseif _0xa51 == 190 then if false then local _0x503=nil end;_0xa51=211 elseif _0xa51 == 18 then _0x86=_0x20 and _0x20.Character;_0xa51=24 elseif _0xa51 == 131 then _0x125.AnimationId=__0xae1d(1879) .. _0x130;_0xa51=134 elseif _0xa51 == 100 then if false then local _0x500=nil end;_0xa51=106 elseif _0xa51 == 115 then _0x125=Instance.new(__0xae1d(1880));_0xa51=121 elseif _0xa51 == 183 then _0x124:Play(0.15,2 - 1,math.clamp(_0x8.animationSpeed,0.1,2 + 17 - 16));_0xa51=190 elseif _0xa51 == 30 then _0x12d=_0x86 and _0x86:FindFirstChildOfClass(__0xae1d(1881));_0xa51=40 elseif _0xa51 == 3 then stopXCAnimation();_0xa51=11 elseif _0xa51 == 44 then _0x12e=_0x12d or _0x9b;_0xa51=51 elseif _0xa51 == 24 then _0x9b=_0x86 and _0x86:FindFirstChildOfClass(__0xae1d(1882));_0xa51=30 elseif _0xa51 == 159 then _0x124=_0x131;_0xa51=164 elseif _0xa51 == 134 then if 1 > 2 then local _0x501=nil end;_0xa51=141 elseif _0xa51 == 121 then _0x125.Name=__0xae1d(1883);_0xa51=131 elseif _0xa51 == 180 then do local _0x502=847 end;_0xa51=183 elseif _0xa51 == 164 then _0x124.Priority=Enum.AnimationPriority.Action4;_0xa51=169 elseif _0xa51 == 87 then if not _0x12f then return end;_0xa51=92 elseif _0xa51 == 141 then _0xdd,_0x131=pcall(function() return _0x12f:LoadAnimation(_0x125) end);_0xa51=149 elseif _0xa51 == 169 then _0x124.Looped=_0x8.animationLoop;_0xa51=180 elseif _0xa51 == 51 then if not _0x86 or not _0x12e then if 1 > 2 then local _0x4f9=nil end;return end;_0xa51=60 elseif _0xa51 == 149 then if not _0xdd or not _0x131 then local _0x4fc=math.random() * 0;stopXCAnimation();return end;_0xa51=159 elseif _0xa51 == 40 then do local _0x4fd=60 end;_0xa51=44 elseif _0xa51 == 11 then if not _0x8.animationsEnabled then return end;_0xa51=18 elseif _0xa51 == 92 then _0x130=tostring(_0x8.animationId or ""):match(__0xae1d(1884));_0xa51=100 elseif _0xa51 == 64 then _0x12f=_0x12e:FindFirstChildOfClass(__0xae1d(1885)) or _0x86:FindFirstChildWhichIsA(__0xae1d(1886),true);_0xa51=73 elseif _0xa51 == 60 then if false then local _0x4fe=nil end;_0xa51=64 elseif _0xa51 == 81 then _0x4ff=math.random() * 0;_0xa51=87 else break end end end;_0xae0=1345 elseif _0xae0 == 1297 then _0x129=nil;_0xae0=1307 elseif _0xae0 == 3652 then function isTargetVisible(_0x193,_0x6c,_0xa8) local _0xa9,_0xaa,_0x8b;local _0xa89=1;while true do if _0xa89 == 38 then _0x8b=_0x1c:Raycast(_0x193,_0xaa,_0x240);_0xa89=47 elseif _0xa89 == 50 then if false then local _0x6a7=nil end;_0xa89=60 elseif _0xa89 == 24 then _0xaa=_0x6c.Position - _0x193;_0xa89=30 elseif _0xa89 == 1 then if not _0x8.visibleCheck or _0x8.wallbangEnabled then do local _0x6a5=945 end;return true end;_0xa89=12 elseif _0xa89 == 16 then _0x240.FilterDescendantsInstances={myChar,camera};_0xa89=24 elseif _0xa89 == 30 then if false then local _0x6a6=nil end;_0xa89=38 elseif _0xa89 == 12 then _0xa9=_0x20.Character;_0xa89=16 elseif _0xa89 == 60 then return false elseif _0xa89 == 47 then if _0x8b and (_0x8b.Instance:IsDescendantOf(_0xa8) or _0x8b.Instance == _0x6c) then return true end;_0xa89=50 else break end end end;_0xae0=3659 elseif _0xae0 == 1046 then do local _0x9b5=968 end;_0xae0=1052 elseif _0xae0 == 3414 then function createXCGrenadeDanger(_0x173) local _0x40,_0x5,_0x196,_0x21d,_0x62,_0x6;local _0xa7b=4;while true do if _0xa7b == 12 then _0x40,_0x5,_0x196,_0x21d=classifyXCGrenadeDanger(_0x173);_0xa7b=18 elseif _0xa7b == 108 then _0x6.TextColor3=_0x5;_0xa7b=113 elseif _0xa7b == 103 then if 1 > 2 then local _0x64a=nil end;_0xa7b=108 elseif _0xa7b == 72 then _0x6.BackgroundColor3=Color3.fromRGB(9 + 1,7 + 4,2 + 11);_0xa7b=79 elseif _0xa7b == 38 then _0x6=Instance.new(__0xae1d(1887),_0x149);_0xa7b=44 elseif _0xa7b == 60 then do local _0x649=81 end;_0xa7b=64 elseif _0xa7b == 163 then return _0x62 elseif _0xa7b == 113 then _0x6.TextSize=5 + 45 - 41;_0xa7b=123 elseif _0xa7b == 123 then _0x6.Font=Enum.Font.GothamBold;_0xa7b=127 elseif _0xa7b == 96 then _0x6.Text=__0xae1d(1888) .. _0x40;_0xa7b=103 elseif _0xa7b == 18 then if not _0x40 then return nil end;_0xa7b=23 elseif _0xa7b == 79 then _0x6.BackgroundTransparency=0.24;_0xa7b=89 elseif _0xa7b == 151 then _0x62.Label=_0x6;_0xa7b=158 elseif _0xa7b == 52 then _0x6.AnchorPoint=Vector2.new(0.5,2 - 1);_0xa7b=60 elseif _0xa7b == 64 then _0x6.Size=UDim2.fromOffset(28 + 56,12 + 10 - 6);_0xa7b=72 elseif _0xa7b == 136 then _0x6.ZIndex=10 + 11 - 15;_0xa7b=145 elseif _0xa7b == 89 then _0x6.BorderSizePixel=1 - 1;_0xa7b=96 elseif _0xa7b == 127 then _0x6.Visible=false;_0xa7b=136 elseif _0xa7b == 158 then _0x14c[_0x173]=_0x62;_0xa7b=163 elseif _0xa7b == 4 then if _0x14c[_0x173] then return _0x14c[_0x173] end;_0xa7b=12 elseif _0xa7b == 23 then _0x62={Object=_0x173,Kind=_0x40,Color=_0x5,Radius=_0x196,IsZone=_0x21d,Center=nil,NextPhysics=1 - 1,Segments={}};_0xa7b=30 elseif _0xa7b == 30 then for _0xc7=2 - 1,5 + 19 do local _0x156=Instance.new(__0xae1d(1889),_0x149);if false then local _0x648=nil end;_0x156.Name=__0xae1d(1890) .. _0x40 .. __0xae1d(1891) .. _0xc7;_0x156.AnchorPoint=Vector2.new(0.5,0.5);_0x156.BorderSizePixel=1 - 1;_0x156.BackgroundColor3=_0x5;_0x156.Visible=false;_0x156.ZIndex=3 + 2;_0x62.Segments[_0xc7]=_0x156 end;_0xa7b=38 elseif _0xa7b == 145 then Instance.new(__0xae1d(1892),_0x6).CornerRadius=UDim.new(1 - 1,1 + 2);_0xa7b=151 elseif _0xa7b == 44 then _0x6.Name=__0xae1d(1893) .. _0x40;_0xa7b=52 else break end end end;_0xae0=3420 elseif _0xae0 == 589 then _0x4d=false;_0xae0=599 elseif _0xae0 == 2564 then function setXCStreamerMode(_0x12c) local _0x5e8,_0x5e9;local _0xa72=2;while true do if _0xa72 == 31 then refreshXCToggle(__0xae1d(1894));_0xa72=53 elseif _0xa72 == 16 then if _0x12c and not XCFeatureState.streamerSnapshot then if 1 > 2 then local _0x5e3=nil end;XCFeatureState.streamerSnapshot={};for _0x63,_0x10 in ipairs(XCFeatureState.streamerHiddenKeys) do local _0x5e1=(6 + 0) * 1;XCFeatureState.streamerSnapshot[_0x10]=_0x8[_0x10];do local _0x5e2=439 end;_0x8[_0x10]=false;refreshXCToggle(_0x10) end;_0x8.streamerModeEnabled=true;clearActiveJumpCircle() elseif not _0x12c and XCFeatureState.streamerSnapshot then for _0x10,_0x11 in pairs(XCFeatureState.streamerSnapshot) do _0x8[_0x10]=_0x11;refreshXCToggle(_0x10);do local _0x5e4=820 end end;local _0x5e6=(8 + 0) * 1;XCFeatureState.streamerSnapshot=nil;local _0x5e7=(33 + 0) * 1;_0x8.streamerModeEnabled=false;if _0x8.jumpCircleEnabled and _0x20.Character then if 1 > 2 then local _0x5e5=nil end;initJumpCircleForCharacter(_0x20.Character) end else _0x8.streamerModeEnabled=_0x12c end;_0xa72=22 elseif _0xa72 == 2 then _0x12c=_0x12c == true;_0xa72=8 elseif _0xa72 == 22 then _0x5e9=(39 + 0) * 1;_0xa72=31 elseif _0xa72 == 8 then _0x5e8=(5 + 0) * 1;_0xa72=16 else break end end end;_0xae0=2571 elseif _0xae0 == 3795 then function getXCEquippedWeapon(_0x9a,_0x86) local _0x29f,_0xfd,_0x722,_0x87,_0x723,_0x724;local _0xa94=2;while true do if _0xa94 == 60 then _0x724=(53 + 0) * 1;_0xa94=64 elseif _0xa94 == 18 then _0xfd=nil;_0xa94=23 elseif _0xa94 == 51 then if type(_0xfd) ~= __0xae1d(1895) or _0xfd == "" then _0xfd=_0x87 and _0x87.Name or nil end;_0xa94=60 elseif _0xa94 == 37 then _0x87=_0x86 and _0x86:FindFirstChildOfClass(__0xae1d(1896));_0xa94=47 elseif _0xa94 == 47 then _0x723=math.random() * 0;_0xa94=51 elseif _0xa94 == 23 then _0x722=math.random() * 0;_0xa94=31 elseif _0xa94 == 2 then if 1 > 2 then local _0x721=nil end;_0xa94=8 elseif _0xa94 == 64 then return _0xfd,_0x87,_0x29f elseif _0xa94 == 8 then _0x29f=_0x9a:GetAttribute(__0xae1d(1897));_0xa94=18 elseif _0xa94 == 31 then if type(_0x29f) == __0xae1d(1898) and _0x29f ~= "" then pcall(function() local _0x2a0=_0x7:JSONDecode(_0x29f);if type(_0x2a0) == __0xae1d(1899) then _0xfd=_0x2a0.Name or _0x2a0.Weapon or _0x2a0.ItemName end end) end;_0xa94=37 else break end end end;_0xae0=3804 elseif _0xae0 == 4268 then do local _0xa19=743 end;_0xae0=4272 elseif _0xae0 == 919 then if 1 > 2 then local _0x9b2=nil end;_0xae0=925 elseif _0xae0 == 1311 then _0x12b=nil;_0xae0=1318 elseif _0xae0 == 428 then do local _0x9a2=200 end;_0xae0=437 elseif _0xae0 == 3349 then _0x1f2=RaycastParams.new();_0xae0=3357 elseif _0xae0 == 1537 then _0x147.Name=__0xae1d(1900);_0xae0=1544 elseif _0xae0 == 2222 then function updateWorldPostFX() local _0x564,_0x162,_0x565,_0x566;local _0xa61=5;while true do if _0xa61 == 19 then _0x162=_0x1b:FindFirstChild(__0xae1d(1901));_0xa61=23 elseif _0xa61 == 37 then _0x162.Contrast=math.clamp(_0x8.worldContrast or 1 - 1,-(2 - 1),2 - 1);_0xa61=47 elseif _0xa61 == 67 then _0x1b.ExposureCompensation=math.clamp(_0x8.worldExposure or 1 - 1,-(1 * 4 + 1),2 + 3);_0xa61=90 elseif _0xa61 == 57 then _0x566=(75 + 0) * 1;_0xa61=67 elseif _0xa61 == 23 then if not _0x162 then _0x162=Instance.new(__0xae1d(1902));_0x162.Name=__0xae1d(1903);_0x162.Parent=_0x1b end;_0xa61=31 elseif _0xa61 == 8 then _0x564=math.random() * 0;_0xa61=19 elseif _0xa61 == 5 then if not _0x8.worldPostFXEnabled then if false then local _0x561=nil end;local _0x162=_0x1b:FindFirstChild(__0xae1d(1904));if _0x162 then _0x162:Destroy() end;if false then local _0x562=nil end;_0x1b.ExposureCompensation=_0x146.ExposureCompensation or 1 - 1;local _0x563=math.random() * 0;return end;_0xa61=8 elseif _0xa61 == 54 then _0x162.TintColor=XCFeatureState.worldTonePresets[_0x8.worldTonePreset] or rgb(_0x8.worldColorR,_0x8.worldColorG,_0x8.worldColorB);_0xa61=57 elseif _0xa61 == 31 then _0x162.Saturation=math.clamp(_0x8.worldSaturation or 1 - 1,-(2 - 1),2 - 1);_0xa61=37 elseif _0xa61 == 47 then _0x565=math.random() * 0;_0xa61=54 else break end end end;_0xae0=2228 elseif _0xae0 == 1549 then _0x147.DisplayOrder=13 + 3 - 6;_0xae0=1556 elseif _0xae0 == 3767 then function hideXCSkeleton(_0x1dc) local _0xa90=1;while true do if _0xa90 == 1 then if not _0x1dc or not _0x1dc.SkeletonLines then local _0x6e3=math.random() * 0;return end;_0xa90=11 elseif _0xa90 == 18 then if 1 > 2 then local _0x6e5=nil end;_0xa90=36 elseif _0xa90 == 11 then for _0x63,_0x156 in ipairs(_0x1dc.SkeletonLines) do _0x156.Visible=false;local _0x6e4=math.random() * 0 end;_0xa90=18 else break end end end;_0xae0=3776 elseif _0xae0 == 1991 then do local _0x9d0=772 end;_0xae0=2000 elseif _0xae0 == 3963 then function setupXCCharacterInputHook() local _0x7ad,_0xdd,_0x107;local _0xaa0=5;while true do if _0xaa0 == 30 then return _0x13f.Ready elseif _0xaa0 == 5 then _0x7ad=math.random() * 0;_0xaa0=10 elseif _0xaa0 == 19 then _0xdd,_0x107=pcall(function() local _0xd1=_0x1e:FindFirstChild(__0xae1d(1905));local _0x1d7=_0x1e:FindFirstChild(__0xae1d(1906));local _0x303=_0xd1 and _0xd1:FindFirstChild(__0xae1d(1907));local _0x304=_0x1d7 and _0x1d7:FindFirstChild(__0xae1d(1908));assert(_0x303 and _0x304,__0xae1d(1909));local _0xf5=require(_0x303);local _0x305=require(_0x304);assert(type(_0xf5) == __0xae1d(1910) and type(_0xf5.SampleInput) == __0xae1d(1911),__0xae1d(1912));assert(type(_0x305) == __0xae1d(1913) and type(_0x305.has) == __0xae1d(1914) and type(_0x305.with) == __0xae1d(1915),__0xae1d(1916));if table.isfrozen and table.isfrozen(_0xf5) then error(__0xae1d(1917),1 - 1) end;local _0x136=_0xf5.SampleInput;_0x13f.Module=_0xf5;_0x13f.Original=_0x136;_0x13f.Buttons=_0x305;_0x13f.Wrapper=function(_0x103,_0xe1,...) local _0x84=_0x136(_0x103,_0xe1,...);if type(_0x84) ~= __0xae1d(1918) or not xcSessionActive() then return _0x84 end;local _0x23,_0x306=pcall(function() local _0x110=_0x20.Character;if not _0x110 or _0x103.IsDestroyed or _0x103.Character ~= _0x110 or _0x1a.MenuIsOpen or _0x18:GetFocusedTextBox() or _0x20:GetAttribute(__0xae1d(1919)) == true then resetXCCharacterInputState();return _0x84 end;local _0x24=_0x84;local _0x307=_0xe1 and _0xe1.State;local _0x118=_0xe1 and _0xe1.ScheduledServerTime or os.clock();local _0x308=_0x8.bunnyHopEnabled and _0x307 and not (_0x8.bhopPauseWithMenu and XCFeatureState.menuOpen);if _0x308 then if _0x13f.Character ~= _0x103 then _0x13f.Character=_0x103;_0x13f.GroundSince=nil;_0x13f.LastJumpDown=_0x305.has(_0x307.PreviousButtons or 1 - 1,_0x305.Jump) end;local _0x309=_0x84.Move and _0x84.Move.Magnitude > 0.05;local _0x30a=_0x8.bhopMode == __0xae1d(1920) or _0x103.JumpInputDown or _0x13d or _0x305.has(_0x84.Buttons,_0x305.Jump);if _0x30a and (not _0x8.bhopMovingOnly or _0x309) then if _0x307.OnGround then _0x13f.GroundSince=_0x13f.GroundSince or _0x118 else _0x13f.GroundSince=nil end;local _0x270=math.clamp(tonumber(_0x8.bhopGroundDelay) or 1 - 1,1 - 1,0.25);local _0x2d5=_0x307.OnGround == true and not _0x13f.LastJumpDown and _0x13f.GroundSince ~= nil and _0x118 - _0x13f.GroundSince >= _0x270;_0x24=table.clone(_0x24);_0x24.Buttons=_0x305.with(_0x84.Buttons,_0x305.Jump,_0x2d5);_0x13f.LastJumpDown=_0x2d5;if _0x2d5 then _0x13f.GroundSince=nil end else _0x13f.GroundSince=nil;_0x13f.LastJumpDown=_0x305.has(_0x84.Buttons,_0x305.Jump) end else _0x13f.Character=nil;_0x13f.GroundSince=nil;_0x13f.LastJumpDown=false end;local _0x30b=false;if _0xf1 and type(_0xf1.GetWeapon) == __0xae1d(1921) then pcall(function() local _0xca=_0xf1.GetWeapon();_0x30b=_0xca and (_0xca.IsFireHeld or _0xca.IsShooting or _0xca.IsBurstShooting) == true end) end;if _0x30b then _0x13f.AntiFireUntil=os.clock() + 0.16 end;local _0x30c=os.clock() < (_0x13f.AntiFireUntil or 1 - 1);if _0x8.antiAimEnabled and not _0x30c then if _0x13f.AntiCharacter ~= _0x103 or not _0x13f.AntiStarted then _0x13f.AntiCharacter=_0x103;_0x13f.AntiStarted=_0x118;_0x13f.AntiLastStep=nil;_0x13f.RandomYaw=nil end;local _0x1af=math.max(1 - 1,_0x118 - _0x13f.AntiStarted);local _0x30d=math.max(0.04,tonumber(_0x8.antiAimInterval) or 0.15);local _0x20a=math.floor(_0x1af / _0x30d);local _0x30e=_0x20a % (2 + 0) == 1 - 1 and -(2 - 1) or 2 - 1;local _0x30f=tonumber(_0x24.LookYaw) or 1 - 1;local _0x1d0=_0x30f + math.rad(tonumber(_0x8.antiAimYaw) or 22 * 8 + 4);local _0x1ca=tostring(_0x8.antiAimMode or __0xae1d(1922));if _0x1ca == __0xae1d(1923) then _0x1d0=_0x30f + math.pi elseif _0x1ca == __0xae1d(1924) then yyaw=_0x1d0 + math.rad(tonumber(_0x8.antiAimJitter) or 60 + 0) * _0x30e elseif _0x1ca == __0xae1d(1925) then yyaw=_0x1d0 + math.rad(_0x1af * math.max(1 * 6 + 4,tonumber(_0x8.spinSpeed) or 38 + 30 - 18) * (2 + 4) % (302 + 81 - 23)) elseif _0x1ca == __0xae1d(1926) then if _0x13f.AntiLastStep ~= _0x20a or not _0x13f.RandomYaw then _0x13f.RandomYaw=math.rad(math.random(-(33 + 147),146 + 34)) end;yyaw=_0x1d0 + _0x13f.RandomYaw end;_0x1d0=(_0x1d0 + math.pi) % (math.pi * (1 + 1)) - math.pi;local _0x310=_0x24.Move or Vector2.zero;if _0x310.Magnitude > 2 - 1 then _0x310=_0x310.Unit end;local _0x76=_0x1d0 - _0x30f;local _0x311,_0x312=math.cos(_0x76),math.sin(_0x76);if _0x24 == _0x84 then _0x24=table.clone(_0x24) end;_0x24.Move=Vector2.new(_0x310.X * _0x311 - _0x310.Y * _0x312,_0x310.X * _0x312 + _0x310.Y * _0x311);_0x24.LookYaw=_0x1d0;_0x13f.AntiLastStep=_0x20a elseif not _0x8.antiAimEnabled then _0x13f.AntiCharacter=nil;_0x13f.AntiStarted=nil end;return _0x24 end);if _0x23 then return _0x306 end;_0x13f.LastError=tostring(_0x306);return _0x84 end;_0xf5.SampleInput=_0x13f.Wrapper;rawset(_0xf5,__0xae1d(1927),_0x35);_0x13f.Ready=true;_0x13f.LastError=nil end);_0xaa0=24 elseif _0xaa0 == 10 then if _0x13f.Ready then return true end;_0xaa0=19 elseif _0xaa0 == 24 then if not _0xdd then _0x13f.LastError=tostring(_0x107);if 1 > 2 then local _0x7ab=nil end;restoreXCCharacterInputHook();if false then local _0x7ac=nil end end;_0xaa0=30 else break end end end;_0xae0=3973 elseif _0xae0 == 1929 then _0x158.TextSize=19 + 26 - 32;_0xae0=1935 elseif _0xae0 == 894 then function getXCHealth(_0x86,_0x9a,_0x9b) local _0x9c,_0x9d;local _0xa39=5;while true do if _0xa39 == 64 then return math.clamp(_0x9c,1 - 1,_0x9d),_0x9d elseif _0xa39 == 58 then if type(_0x9d) ~= __0xae1d(1928) or _0x9d ~= _0x9d or _0x9d <= 1 - 1 then local _0x480=(39 + 0) * 1;_0x9d=33 * 3 + 1 end;_0xa39=64 elseif _0xa39 == 29 then if type(_0x9d) ~= __0xae1d(1929) and _0x9a then do local _0x47c=274 end;_0x9d=_0x9a:GetAttribute(__0xae1d(1930)) end;_0xa39=36 elseif _0xa39 == 5 then do local _0x481=706 end;_0xa39=12 elseif _0xa39 == 12 then _0x9c,_0x9d=nil,nil;_0xa39=16 elseif _0xa39 == 24 then if type(_0x9c) ~= __0xae1d(1931) and _0x9a then _0x9c=_0x9a:GetAttribute(__0xae1d(1932));local _0x47b=(65 + 0) * 1 end;_0xa39=29 elseif _0xa39 == 36 then if type(_0x9c) ~= __0xae1d(1933) and _0x9b then if 1 > 2 then local _0x47d=nil end;_0x9c=_0x9b.Health end;_0xa39=47 elseif _0xa39 == 53 then if type(_0x9c) ~= __0xae1d(1934) or _0x9c ~= _0x9c then local _0x47f=(62 + 0) * 1;return nil,nil end;_0xa39=58 elseif _0xa39 == 47 then if type(_0x9d) ~= __0xae1d(1935) and _0x9b then local _0x47e=math.random() * 0;_0x9d=_0x9b.MaxHealth end;_0xa39=53 elseif _0xa39 == 16 then if _0x86 then _0x9c=_0x86:GetAttribute(__0xae1d(1936));_0x9d=_0x86:GetAttribute(__0xae1d(1937)) end;_0xa39=24 else break end end end;_0xae0=900 elseif _0xae0 == 2173 then function restoreWeaponPart(_0xaf,_0xa4) local _0xa5e=4;while true do if _0xa5e == 17 then do local _0x556=479 end;_0xa5e=26 elseif _0xa5e == 4 then if not _0xaf or not _0xa4 then return end;_0xa5e=11 elseif _0xa5e == 26 then pcall(function() for _0x63,_0x10f in ipairs(_0xaf:GetChildren()) do if _0x10f:IsA(__0xae1d(1938)) or _0x10f:IsA(__0xae1d(1939)) or _0x10f:IsA(__0xae1d(1940)) then _0x10f:Destroy() end end;for _0x63,_0x16b in ipairs(_0xa4.children or {}) do if _0x16b then _0x16b:Clone().Parent=_0xaf end end end);_0xa5e=40 elseif _0xa5e == 11 then pcall(function() _0xaf.Material=_0xa4.material;_0xaf.Color=_0xa4.color;_0xaf.Transparency=_0xa4.transparency;_0xaf.Reflectance=_0xa4.reflectance end);_0xa5e=17 else break end end end;_0xae0=2179 elseif _0xae0 == 1453 then do local _0x9c0=429 end;_0xae0=1457 elseif _0xae0 == 3176 then do local _0x9f6=491 end;_0xae0=3179 elseif _0xae0 == 1718 then _0x151.DisplayOrder=7 * 8 + 4;_0xae0=1724 elseif _0xae0 == 2872 then _0x1e5.Thickness=0.8;_0xae0=2879 elseif _0xae0 == 228 then if false then local _0x99b=nil end;_0xae0=235 elseif _0xae0 == 3736 then _0xa0c=math.random() * 0;_0xae0=3741 elseif _0xae0 == 2266 then do local _0x175=Instance.new(__0xae1d(1941));if 1 > 2 then local _0x576=nil end;_0x175.Name=__0xae1d(1942);_0x175.Anchored=true;_0x175.CanCollide=false;_0x175.CanTouch=false;if 1 > 2 then local _0x577=nil end;_0x175.CanQuery=false;_0x175.CastShadow=false;if false then local _0x578=nil end;_0x175.Material=Enum.Material.Neon;_0x175.Transparency=0.98;_0x175.Size=Vector3.new(1.5,1.5,0.01);local _0x176=Instance.new(__0xae1d(1943));_0x176.Name=__0xae1d(1944);local _0x579=(88 + 0) * 1;_0x176.Adornee=_0x175;_0x176.Color3=Color3.fromRGB(42 * 5 + 0,4 + 41,42 + 13);_0x176.LineThickness=0.04;_0x176.Transparency=0.2;local _0x57a=math.random() * 0;_0x176.Parent=_0x175;local _0x177=RaycastParams.new();local _0x57b=math.random() * 0;_0x177.FilterType=Enum.RaycastFilterType.Exclude;if false then local _0x57c=nil end;_0x177.IgnoreWater=true;local _0x178=_0x16.RenderStepped:Connect(function() pcall(function() if not _0x8.cubeCheckerEnabled then _0x175.Parent=nil;return end;local _0x88=_0x1c.CurrentCamera;if not _0x88 then _0x175.Parent=nil;return end;local _0x15f=math.clamp(tonumber(_0x8.cubeCheckerDistance) or 2 * 10 + 0,2 - 1,30 + 170);local _0x4=math.clamp(tonumber(_0x8.cubeCheckerSize) or 1.5,0.1,4 + 6);local _0x179=math.clamp(tonumber(_0x8.cubeCheckerLineThickness) or 0.04,0.01,0.2);local _0x17a=math.clamp(tonumber(_0x8.cubeCheckerTransparency) or 0.2,1 - 1,2 - 1);local _0x17b=_0x8.cubeCheckerRainbow and Color3.fromHSV(os.clock() * 0.2 % (2 - 1),2 - 1,2 - 1) or rgb(_0x8.bulletTracerColorR,_0x8.bulletTracerColorG,_0x8.bulletTracerColorB);_0x177.FilterDescendantsInstances={player.Character,cubePart};local _0x75=_0x88.CFrame.Position;local _0x24=_0x1c:Raycast(_0x75,_0x88.CFrame.LookVector * _0x15f,_0x177);if not _0x24 then _0x175.Parent=nil;return end;_0x175.Size=Vector3.new(_0x4,_0x4,0.01);_0x175.Color=_0x17b;_0x175.CFrame=CFrame.lookAt(_0x24.Position + _0x24.Normal * 0.02,_0x24.Position + _0x24.Normal);_0x176.Color3=_0x17b;_0x176.LineThickness=_0x179;_0x176.Transparency=_0x17a;_0x175.Parent=_0x1c end) end);table.insert(_0x26,_0x178);do local _0x57d=590 end end;_0xae0=2270 elseif _0xae0 == 4524 then if false then local _0xa22=nil end;_0xae0=4533 elseif _0xae0 == 81 then if false then local _0x995=nil end;_0xae0=85 elseif _0xae0 == 2656 then if false then local _0x9e6=nil end;_0xae0=2665 elseif _0xae0 == 2339 then function getGroundY(_0x193,_0x86) local _0x194;local _0xa68=4;while true do if _0xa68 == 17 then _0x194=_0x1c:Raycast(_0x193 + Vector3.new(1 - 1,1 + 1,1 - 1),Vector3.new(1 - 1,-(3 + 41 - 29),1 - 1),_0x192);_0xa68=23 elseif _0xa68 == 33 then return _0x193.Y - 2.8 elseif _0xa68 == 23 then if _0x194 then return _0x194.Position.Y + 0.04 end;_0xa68=33 elseif _0xa68 == 4 then _0x192.FilterDescendantsInstances={char,jumpCircleFolder,camera};_0xa68=9 elseif _0xa68 == 9 then if 1 > 2 then local _0x59f=nil end;_0xa68=17 else break end end end;_0xae0=2348 elseif _0xae0 == 3537 then function trackXCSound(_0x1c9) local _0x109,_0x696;local _0xa85=4;while true do if _0xa85 == 33 then _0x109=_0x109 or {};_0xa85=38 elseif _0xa85 == 4 then if not _0x1c9:IsA(__0xae1d(1945)) then if 1 > 2 then local _0x693=nil end;return end;_0xa85=12 elseif _0xa85 == 38 then _0x109.Hooked=true;_0xa85=46 elseif _0xa85 == 64 then table.insert(_0x26,_0x1c9:GetPropertyChangedSignal(__0xae1d(1946)):Connect(function() if _0x1c9.Playing then triggerXCSoundPosition(_0x1c9) end end));_0xa85=89 elseif _0xa85 == 61 then _0x696=(71 + 0) * 1;_0xa85=64 elseif _0xa85 == 23 then if false then local _0x695=nil end;_0xa85=33 elseif _0xa85 == 12 then _0x109=_0x14e[_0x1c9];_0xa85=19 elseif _0xa85 == 19 then if _0x109 and _0x109.Hooked then local _0x694=math.random() * 0;return end;_0xa85=23 elseif _0xa85 == 46 then _0x14e[_0x1c9]=_0x109;_0xa85=54 elseif _0xa85 == 54 then pcall(function() table.insert(_0x26,_0x1c9.Played:Connect(function() triggerXCSoundPosition(_0x1c9) end)) end);_0xa85=61 else break end end end;_0xae0=3544 elseif _0xae0 == 2270 then if 1 > 2 then local _0x9d9=nil end;_0xae0=2277 elseif _0xae0 == 2069 then if 1 > 2 then local _0x9d1=nil end;_0xae0=2077 elseif _0xae0 == 1375 then if false then local _0x9bd=nil end;_0xae0=1381 elseif _0xae0 == 4406 then _0x3f9=function() local _0x94a;local _0xacf=3;while true do if _0xacf == 29 then return type(_0x3f7) == __0xae1d(1947) elseif _0xacf == 17 then pcall(function() local _0x93=_0x1e:FindFirstChild(__0xae1d(1948));local _0x26d=_0x93 and _0x93:FindFirstChild(__0xae1d(1949));local _0xf6=_0x26d and require(_0x26d);if type(_0xf6) == __0xae1d(1950) and type(_0xf6.peekCurrentEquippedForMovement) == __0xae1d(1951) then _0x3f7=_0xf6.peekCurrentEquippedForMovement end end);_0xacf=23 elseif _0xacf == 3 then _0x94a=math.random() * 0;_0xacf=9 elseif _0xacf == 23 then if false then local _0x94b=nil end;_0xacf=29 elseif _0xacf == 9 then if type(_0x3f7) == __0xae1d(1952) then return true end;_0xacf=17 else break end end end;_0xae0=4413 elseif _0xae0 == 2444 then function trackXCSmokeObject(_0x173) local _0x109,_0x5ba;local _0xa6e=3;while true do if _0xa6e == 18 then if not _0x109 then _0x109={Enabled=_0x173.Enabled};XCFeatureState.noSmokeRecords[_0x173]=_0x109 end;_0xa6e=24 elseif _0xa6e == 3 then if not _0x8.noSmokeEnabled or not isXCSmokeObject(_0x173) then return end;_0xa6e=9 elseif _0xa6e == 24 then pcall(function() _0x173.Enabled=false end);_0xa6e=29 elseif _0xa6e == 9 then _0x109=XCFeatureState.noSmokeRecords[_0x173];_0xa6e=18 elseif _0xa6e == 29 then _0x5ba=(32 + 0) * 1;_0xa6e=55 else break end end end;_0xae0=2452 elseif _0xae0 == 317 then if not _0x25 and _0x20 then pcall(function() _0x25=_0x20:WaitForChild(__0xae1d(1953),1 * 4 + 1) end) end;_0xae0=324 elseif _0xae0 == 2045 then function applyNightPreset(_0x160) local _0x161;local _0xa5b=2;while true do if _0xa5b == 38 then _0x8.nightClockTime=_0x161.ClockTime;_0xa5b=47 elseif _0xa5b == 32 then if 1 > 2 then local _0x547=nil end;_0xa5b=38 elseif _0xa5b == 57 then if _0x8.nightModeEnabled then _0x1b.ClockTime=_0x161.ClockTime;_0x1b.Brightness=_0x161.Brightness;_0x1b.OutdoorAmbient=_0x161.OutdoorAmbient;_0x1b.Ambient=_0x161.Ambient;local _0x544=(71 + 0) * 1;_0x1b.GlobalShadows=true;if 1 > 2 then local _0x545=nil end;if not _0x8.removeFogEnabled then if 1 > 2 then local _0x542=nil end;_0x1b.FogColor=_0x145[_0x160] or _0x161.FogColor;if false then local _0x543=nil end end;updateWorldChanger() end;_0xa5b=67 elseif _0xa5b == 47 then if false then local _0x548=nil end;_0xa5b=53 elseif _0xa5b == 2 then _0x161=_0x144[_0x160];_0xa5b=9 elseif _0xa5b == 9 then if false then local _0x546=nil end;_0xa5b=16 elseif _0xa5b == 16 then if not _0x161 then return end;_0xa5b=22 elseif _0xa5b == 53 then _0x8.nightBrightness=_0x161.Brightness;_0xa5b=57 elseif _0xa5b == 67 then if false then local _0x549=nil end;_0xa5b=89 elseif _0xa5b == 22 then _0x8.nightPreset=_0x160;_0xa5b=32 else break end end end;_0xae0=2056 elseif _0xae0 == 2595 then table.insert(_0x26,_0x18.InputBegan:Connect(function(_0x84,_0x1d1) if _0x84.UserInputType == Enum.UserInputType.Touch and XCFeatureState.cameraMode and not _0x1d1 then local _0x88=_0x1c.CurrentCamera or _0x22;if _0x88 and _0x84.Position.X >= _0x88.ViewportSize.X * 0.45 then XCFeatureState.cameraTouch=_0x84;XCFeatureState.cameraTouchLast=_0x84.Position;XCFeatureState.cameraTouchDelta=Vector2.zero end end;if _0x1d1 then return end;local _0x1d2=Enum.KeyCode[_0x8.freecamKey or __0xae1d(1954)];local _0x1d3=Enum.KeyCode[_0x8.freelookKey or __0xae1d(1955)];local _0x1d4=Enum.KeyCode[_0x8.streamerKey or __0xae1d(1956)];if _0x1d2 and _0x84.KeyCode == _0x1d2 then setXCCameraMode(__0xae1d(1957),not _0x8.freecamEnabled) elseif _0x1d3 and _0x84.KeyCode == _0x1d3 then setXCCameraMode(__0xae1d(1958),not _0x8.freelookEnabled) elseif _0x1d4 and _0x84.KeyCode == _0x1d4 then setXCStreamerMode(not _0x8.streamerModeEnabled) end end));_0xae0=2599 elseif _0xae0 == 4385 then _0x3f7=nil;_0xae0=4391 elseif _0xae0 == 2109 then if _0x8.weaponChamsMode == __0xae1d(1959) then _0x8.weaponChamsMode=__0xae1d(1960) end;_0xae0=2119 elseif _0xae0 == 2277 then function findSniperScope() local _0x17c,_0x17d,_0x17e,_0x17f;local _0xa65=2;while true do if _0xa65 == 38 then return _0x17f and _0x17f:FindFirstChild(__0xae1d(1961)) or nil elseif _0xa65 == 31 then _0x17f=_0x17e and _0x17e:FindFirstChild(__0xae1d(1962));_0xa65=38 elseif _0xa65 == 25 then _0x17e=_0x17d and _0x17d:FindFirstChild(__0xae1d(1963));_0xa65=31 elseif _0xa65 == 11 then if not _0x17c then return nil end;_0xa65=18 elseif _0xa65 == 2 then _0x17c=_0x20 and _0x20:FindFirstChildOfClass(__0xae1d(1964));_0xa65=11 elseif _0xa65 == 18 then _0x17d=_0x17c:FindFirstChild(__0xae1d(1965));_0xa65=25 else break end end end;_0xae0=2286 elseif _0xae0 == 1509 then _0x145={[__0xae1d(1966)]=Color3.fromRGB(30 * 3 + 0,19 + 37 - 26,15 + 99 - 4),[__0xae1d(1967)]=Color3.fromRGB(11 * 8 + 2,6 + 24,13 * 8 + 6),[__0xae1d(1968)]=Color3.fromRGB(3 + 7,49 + 1 - 40,18 + 21 - 19),[__0xae1d(1969)]=Color3.fromRGB(2 + 33,3 + 23 - 21,30 + 18 - 40),[__0xae1d(1970)]=Color3.fromRGB(10 * 3 + 0,5 + 40 - 37,15 * 3 + 0),[__0xae1d(1971)]=Color3.fromRGB(31 + 2 - 28,15 + 10,1 * 8 + 7),[__0xae1d(1972)]=Color3.fromRGB(1 - 1,1 - 1,1 - 1)};_0xae0=1515 elseif _0xae0 == 2895 then _0x1e7=Instance.new(__0xae1d(1973));_0xae0=2902 elseif _0xae0 == 2963 then if false then local _0x9ef=nil end;_0xae0=2972 elseif _0xae0 == 2378 then if 1 > 2 then local _0x9dd=nil end;_0xae0=2382 elseif _0xae0 == 2511 then table.insert(_0x26,_0x18.WindowFocused:Connect(function() XCFeatureState.bhopWindowFocused=true end));_0xae0=2516 elseif _0xae0 == 3252 then _0x1ee.BorderSizePixel=1 - 1;_0xae0=3256 elseif _0xae0 == 670 then _0x56=nil;_0xae0=676 elseif _0xae0 == 3859 then _0x2c4=false;_0xae0=3868 elseif _0xae0 == 1263 then _0x126=nil;_0xae0=1268 elseif _0xae0 == 4139 then do local _0xa15=304 end;_0xae0=4146 elseif _0xae0 == 2889 then _0x1e6.CornerRadius=UDim.new(2 - 1,1 - 1);_0xae0=2895 elseif _0xae0 == 1464 then _0x140=false;_0xae0=1472 elseif _0xae0 == 3663 then function getPingLatency() local _0x241;local _0xa8a=3;while true do if _0xa8a == 9 then pcall(function() local _0x242=_0x1d:FindFirstChild(__0xae1d(1974)) and _0x1d.Network:FindFirstChild(__0xae1d(1975));if _0x242 and _0x242:FindFirstChild(__0xae1d(1976)) then _0x241=_0x242[__0xae1d(1977)]:GetValue() / (500 * 2 + 0) end end);_0xa8a=18 elseif _0xa8a == 18 then return _0x241 elseif _0xa8a == 3 then _0x241=0.03;_0xa8a=9 else break end end end;_0xae0=3671 elseif _0xae0 == 815 then _0x7e=function(_0x7f,_0x80,_0x62,...) local _0x81,_0x82;local _0xa35=1;while true do if _0xa35 == 47 then return table.unpack(_0x82,23 + 3 - 24,_0x82.n) elseif _0xa35 == 31 then _0x8.silentAimEnabled=_0x81;_0xa35=36 elseif _0xa35 == 22 then if 1 > 2 then local _0x478=nil end;_0xa35=31 elseif _0xa35 == 36 then if not _0x82[2 - 1] then error(_0x82[1 + 1],1 - 1);if false then local _0x477=nil end end;_0xa35=47 elseif _0xa35 == 1 then _0x81=_0x8.silentAimEnabled;_0xa35=8 elseif _0xa35 == 16 then _0x82=table.pack(pcall(_0x7f,_0x80,_0x62,...));_0xa35=22 elseif _0xa35 == 8 then _0x8.silentAimEnabled=false;_0xa35=16 else break end end end;_0xae0=820 elseif _0xae0 == 4371 then _0x3f5=false;_0xae0=4377 elseif _0xae0 == 3112 then _0x1ec=Instance.new(__0xae1d(1978),_0x1e8);_0xae0=3119 elseif _0xae0 == 3151 then _0x1ed.AutomaticSize=Enum.AutomaticSize.X;_0xae0=3161 elseif _0xae0 == 2668 then _0x1e0.DisplayOrder=9 + 16 - 16;_0xae0=2677 elseif _0xae0 == 1185 then _0x116=1 - 1;_0xae0=1194 elseif _0xae0 == 2382 then function clearActiveJumpCircle() local _0xa6b=3;while true do if _0xa6b == 29 then _0x33=nil;_0xa6b=53 elseif _0xa6b == 18 then if _0x33.Connections then for _0x63,_0x1b3 in ipairs(_0x33.Connections) do pcall(function() _0x1b3:Disconnect() end);local _0x5aa=(95 + 0) * 1 end;if false then local _0x5ab=nil end end;_0xa6b=26 elseif _0xa6b == 26 then if _0x33.Container then pcall(function() _0x33.Container:Destroy() end) end;_0xa6b=29 elseif _0xa6b == 9 then if not _0x33 then return end;_0xa6b=18 elseif _0xa6b == 3 then if 1 > 2 then local _0x5ac=nil end;_0xa6b=9 else break end end end;_0xae0=2389 elseif _0xae0 == 68 then function deepCopyConfigValue(_0x9) local _0xa;local _0xa2e=3;while true do if _0xa2e == 17 then for _0xb,_0xc in pairs(_0x9) do _0xa[_0xb]=deepCopyConfigValue(_0xc) end;_0xa2e=24 elseif _0xa2e == 24 then return _0xa elseif _0xa2e == 9 then _0xa={};_0xa2e=17 elseif _0xa2e == 3 then if type(_0x9) ~= __0xae1d(1979) then return _0x9 end;_0xa2e=9 else break end end end;_0xae0=74 elseif _0xae0 == 2216 then function restoreWorldSkybox() pcall(function() local _0x171=_0x1b:FindFirstChild(__0xae1d(1980));if _0x171 then _0x171:Destroy() end;if _0x164 then _0x164.Parent=_0x1b;_0x164=nil end end) end;_0xae0=2222 elseif _0xae0 == 4180 then table.insert(_0x26,_0x326);_0xae0=4188 elseif _0xae0 == 4160 then table.insert(_0x26,_0x325);_0xae0=4166 elseif _0xae0 == 3232 then _0x1ee=Instance.new(__0xae1d(1981),_0x1e8);_0xae0=3239 elseif _0xae0 == 169 then _0x18=game:GetService(__0xae1d(1982));_0xae0=176 elseif _0xae0 == 1556 then _0x147.IgnoreGuiInset=true;_0xae0=1562 elseif _0xae0 == 3620 then _0x240.FilterType=Enum.RaycastFilterType.Exclude;_0xae0=3630 elseif _0xae0 == 2423 then XCFeatureState={weatherRig=nil,weatherEmitter=nil,weatherAtmosphere=nil,weatherUpdateAccumulator=1 - 1,weatherSignature=nil,cameraMode=nil,savedCameraState=nil,cameraFrame=nil,cameraPosition=nil,cameraYaw=1 - 1,cameraPitch=1 - 1,cameraTouch=nil,cameraTouchLast=nil,cameraTouchDelta=Vector2.zero,streamerSnapshot=nil,noSmokeRecords=setmetatable({},{__mode=__0xae1d(1983)}),noSmokeAccumulator=1 - 1,antiAimNextChange=1 - 1,antiAimRandomYaw=30 * 6 + 0,bhopGroundSince=nil,bhopLastJump=1 - 1,bhopWindowFocused=true,menuOpen=true,worldUpdateAccumulator=1 - 1,worldAtmosphere=nil,worldOriginalAtmosphere=nil,worldBloom=nil,worldTonePresets={Neutral=Color3.fromRGB(300 + 3 - 48,255 + 0,260 + 29 - 34),[__0xae1d(1984)]=Color3.fromRGB(75 * 3 + 0,24 * 10 + 2,92 * 2 + 1),Cold=Color3.fromRGB(29 + 176,116 + 109,127 * 2 + 1),Warm=Color3.fromRGB(127 * 2 + 1,220 + 4,178 + 13 - 1),Purple=Color3.fromRGB(100 + 125,146 + 54,51 * 5 + 0)},hitSounds={Skeet=__0xae1d(1985),Neverlose=__0xae1d(1986),Bell=__0xae1d(1987),Bubble=__0xae1d(1988),Rust=__0xae1d(1989),Coins=__0xae1d(1990)},skeletonEdges={{__0xae1d(1991),__0xae1d(1992)},{__0xae1d(1993),__0xae1d(1994)},{__0xae1d(1995),__0xae1d(1996)},{__0xae1d(1997),__0xae1d(1998)},{__0xae1d(1999),__0xae1d(2000)},{__0xae1d(2001),__0xae1d(2002)},{__0xae1d(2003),__0xae1d(2004)},{__0xae1d(2005),__0xae1d(2006)},{__0xae1d(2007),__0xae1d(2008)},{__0xae1d(2009),__0xae1d(2010)}},streamerHiddenKeys={__0xae1d(2011),__0xae1d(2012),__0xae1d(2013),__0xae1d(2014),__0xae1d(2015),__0xae1d(2016),__0xae1d(2017),__0xae1d(2018),__0xae1d(2019),__0xae1d(2020),__0xae1d(2021),__0xae1d(2022),__0xae1d(2023),__0xae1d(2024),__0xae1d(2025),__0xae1d(2026),__0xae1d(2027),__0xae1d(2028)}};_0xae0=2430 elseif _0xae0 == 774 then if _0xe then _0xe.XCRecordLocalHitPayload=_0x61 end;_0xae0=780 elseif _0xae0 == 4506 then _0x415=false;_0xae0=4512 elseif _0xae0 == 1307 then _0x12a=nil;_0xae0=1311 elseif _0xae0 == 2585 then _0x9e5=(72 + 0) * 1;_0xae0=2595 elseif _0xae0 == 2313 then _0x192=RaycastParams.new();_0xae0=2322 elseif _0xae0 == 2738 then _0x1e1.BorderSizePixel=1 - 1;_0xae0=2746 elseif _0xae0 == 1122 then refreshXCSkinData();_0xae0=1132 elseif _0xae0 == 4441 then do local _0xa20=323 end;_0xae0=4450 elseif _0xae0 == 3460 then function renderXCGrenadeDangerZones() local _0x118,_0x22d;local _0xa7f=1;while true do if _0xa7f == 31 then _0x22d=_0x22.CFrame.Position;_0xa7f=40 elseif _0xa7f == 19 then if 1 > 2 then local _0x66f=nil end;_0xa7f=25 elseif _0xa7f == 1 then _0x118=os.clock();_0xa7f=11 elseif _0xa7f == 11 then if not _0x8.grenadeDangerZonesEnabled then if false then local _0x660=nil end;_0x14d=false;for _0x173,_0x62 in pairs(_0x14c) do if false then local _0x65f=nil end;if not _0x173.Parent then if false then local _0x65e=nil end;destroyXCGrenadeDanger(_0x62);_0x14c[_0x173]=nil else hideXCGrenadeDanger(_0x62) end end;local _0x661=(8 + 0) * 1;return end;_0xa7f=19 elseif _0xa7f == 25 then if not _0x14d then _0x14d=true;task.spawn(function() local _0x22b,_0xc7,_0x22c={Workspace},2 - 1,1 - 1;while _0x22b[_0xc7] and xcSessionActive() and _0x8.grenadeDangerZonesEnabled do local _0x2=_0x22b[_0xc7];iindex=_0xc7 + (2 - 1);for _0x63,_0x10f in ipairs(_0x2:GetChildren()) do if classifyXCGrenadeDanger(_0x10f) then createXCGrenadeDanger(_0x10f) end;if _0x10f:IsA(__0xae1d(2029)) or _0x10f:IsA(__0xae1d(2030)) then table.insert(_0x22b,_0x10f) end;vvisited=_0x22c + (2 - 1);if _0x22c % (53 * 3 + 1) == 1 - 1 then task.wait() end end end end) end;_0xa7f=31 elseif _0xa7f == 40 then for _0x173,_0x62 in pairs(_0x14c) do if not _0x173.Parent or isEntityCharacter(_0x173) then destroyXCGrenadeDanger(_0x62);local _0x662=math.random() * 0;_0x14c[_0x173]=nil;if false then local _0x663=nil end else updateXCGrenadeDangerPhysics(_0x62,_0x118);local _0x213=_0x62.Center;do local _0x66a=152 end;if not _0x213 or _0x213 - _0x22d.Magnitude > _0x8.grenadeMaxDist then hideXCGrenadeDanger(_0x62);if false then local _0x664=nil end;continue end;local _0x196=(_0x62.RenderRadius or _0x62.Radius) * (0.985 + math.sin(_0x118 * (2 + 2)) * 0.015);if 1 > 2 then local _0x66b=nil end;local _0x189=math.clamp(tonumber(_0x8.grenadeDangerOpacity) or 0.82,0.1,2 - 1);local _0x22e={};if 1 > 2 then local _0x66c=nil end;for _0xc7=2 - 1,#_0x62.Segments do if 1 > 2 then local _0x665=nil end;local _0xb1=math.pi * (1 * 2 + 0) * ((_0xc7 - (2 - 1)) / #_0x62.Segments);local _0x22f=_0x213 + Vector3.new(math.cos(_0xb1) * _0x196,0.18,math.sin(_0xb1) * _0x196);local _0x230,_0x231=_0x22:WorldToViewportPoint(_0x22f);if 1 > 2 then local _0x666=nil end;_0x22e[_0xc7]=_0x231 and _0x230.Z > 1 - 1 and Vector2.new(_0x230.X,_0x230.Y) or nil;do local _0x667=847 end end;for _0xc7,_0x156 in ipairs(_0x62.Segments) do local _0x133=_0x22e[_0xc7];local _0x54=_0x22e[_0xc7 == #_0x62.Segments and 2 - 1 or _0xc7 + (2 - 1)];if _0x133 and _0x54 then local _0x76=_0x54 - _0x133;_0x156.Size=UDim2.fromOffset(_0x76.Magnitude + (2 - 1),2 + 0);_0x156.Position=UDim2.fromOffset((_0x133.X + _0x54.X) * 0.5,(_0x133.Y + _0x54.Y) * 0.5);if 1 > 2 then local _0x668=nil end;_0x156.Rotation=math.deg(math.atan2(_0x76.Y,_0x76.X));_0x156.BackgroundColor3=_0x62.Color;_0x156.BackgroundTransparency=2 - 1 - _0x189;_0x156.Visible=true else _0x156.Visible=false end;if 1 > 2 then local _0x669=nil end end;local _0x232,_0x233=_0x22:WorldToViewportPoint(_0x213 + Vector3.new(1 - 1,0.35,1 - 1));_0x62.Label.TextColor3=_0x62.Color;_0x62.Label.Position=UDim2.fromOffset(_0x232.X,_0x232.Y - (1 + 3));_0x62.Label.Visible=_0x233 and _0x232.Z > 1 - 1;if 1 > 2 then local _0x66d=nil end end;if false then local _0x66e=nil end end;_0xa7f=61 else break end end end;_0xae0=3466 elseif _0xae0 == 2031 then function setThirdPersonEnabled(_0x12c) _0x8.thirdPersonEnabled=_0x12c and true or false;if not _0x12c then if 1 > 2 then local _0x53f=nil end;restoreThirdPerson();do local _0x540=383 end else _0x15d=false;_0x15e=nil end end;_0xae0=2042 elseif _0xae0 == 4519 then pcall(setupSilentAimHooks);_0xae0=4524 elseif _0xae0 == 478 then _0x9a5=(88 + 0) * 1;_0xae0=486 elseif _0xae0 == 2992 then _0x1e8.BorderSizePixel=1 - 1;_0xae0=3001 elseif _0xae0 == 2711 then _0x1e1=Instance.new(__0xae1d(2031),_0x1e0);_0xae0=2719 elseif _0xae0 == 4089 then function createMobileSlideButton() local _0x7bf,_0x7c1,_0x7c2,_0x7c4,_0x46,_0x31a,_0x31b,_0x31c,_0x31d,_0x31e,_0x7c8;local _0xaa9=2;while true do if _0xaa9 == 52 then _0x150.BackgroundColor3=_0x38.CardBg;_0xaa9=59 elseif _0xaa9 == 183 then if 1 > 2 then local _0x7c5=nil end;_0xaa9=190 elseif _0xaa9 == 176 then _0x46.Color=_0x38.Border;_0xaa9=183 elseif _0xaa9 == 101 then _0x150.Font=Enum.Font.GothamBold;_0xaa9=108 elseif _0xaa9 == 75 then _0x150.Text=__0xae1d(2032);_0xaa9=81 elseif _0xaa9 == 36 then if 1 > 2 then local _0x7c0=nil end;_0xaa9=44 elseif _0xaa9 == 59 then _0x7c1=math.random() * 0;_0xaa9=67 elseif _0xaa9 == 26 then _0x150.Name=__0xae1d(2033);_0xaa9=33 elseif _0xaa9 == 151 then Instance.new(__0xae1d(2034),_0x150).CornerRadius=UDim.new(2 - 1,1 - 1);_0xaa9=155 elseif _0xaa9 == 155 then _0x7c4=math.random() * 0;_0xaa9=164 elseif _0xaa9 == 228 then if 1 > 2 then local _0x7c6=nil end;_0xaa9=236 elseif _0xaa9 == 44 then _0x150.Position=UDim2.new(2 - 1,-(135 + 10),2 - 1,-(12 * 9 + 7));_0xaa9=52 elseif _0xaa9 == 198 then _0x31a=_0x150.Activated:Connect(function() if _0x316 then _0x316=false;return end;toggleMobileSlide() end);_0xaa9=207 elseif _0xaa9 == 67 then _0x150.BackgroundTransparency=0.3;_0xaa9=75 elseif _0xaa9 == 96 then _0x150.TextSize=9.5;_0xaa9=101 elseif _0xaa9 == 164 then _0x46=Instance.new(__0xae1d(2035),_0x150);_0xaa9=173 elseif _0xaa9 == 190 then _0x46.Thickness=1.2;_0xaa9=198 elseif _0xaa9 == 85 then _0x150.TextColor3=_0x38.Accent;_0xaa9=96 elseif _0xaa9 == 108 then _0x150.Visible=_0x8.slideEnabled and _0x18.TouchEnabled;_0xaa9=117 elseif _0xaa9 == 123 then _0x150.ZIndex=62 + 18;_0xaa9=129 elseif _0xaa9 == 136 then _0x150.AutoButtonColor=false;_0xaa9=142 elseif _0xaa9 == 173 then _0x46.Name=__0xae1d(2036);_0xaa9=176 elseif _0xaa9 == 268 then _0x7c8=(90 + 0) * 1;_0xaa9=283 elseif _0xaa9 == 142 then _0x150.Parent=_0x147;_0xaa9=151 elseif _0xaa9 == 221 then _0x31d=_0x150.InputBegan:Connect(function(_0x84) if _0x84.UserInputType == Enum.UserInputType.Touch then _0x31b=_0x84.Position;_0x31c=_0x150.Position;_0x316=false end end);_0xaa9=228 elseif _0xaa9 == 236 then table.insert(_0x26,_0x31d);_0xaa9=242 elseif _0xaa9 == 117 then if 1 > 2 then local _0x7c3=nil end;_0xaa9=123 elseif _0xaa9 == 213 then _0x31b,_0x31c=nil,nil;_0xaa9=221 elseif _0xaa9 == 12 then _0x150=Instance.new(__0xae1d(2037));_0xaa9=19 elseif _0xaa9 == 19 then _0x7bf=math.random() * 0;_0xaa9=26 elseif _0xaa9 == 256 then table.insert(_0x26,_0x31e);_0xaa9=264 elseif _0xaa9 == 207 then table.insert(_0x26,_0x31a);_0xaa9=213 elseif _0xaa9 == 81 then _0x7c2=math.random() * 0;_0xaa9=85 elseif _0xaa9 == 242 then do local _0x7c7=671 end;_0xaa9=247 elseif _0xaa9 == 247 then _0x31e=_0x150.InputChanged:Connect(function(_0x84) if _0x84.UserInputType ~= Enum.UserInputType.Touch or not _0x31b or not _0x31c then return end;local _0x76=_0x84.Position - _0x31b;if math.abs(_0x76.X) > 28 + 12 - 30 or math.abs(_0x76.Y) > 6 + 4 then _0x316=true;_0x150.Position=UDim2.new(_0x31c.X.Scale,_0x31c.X.Offset + _0x76.X,_0x31c.Y.Scale,_0x31c.Y.Offset + _0x76.Y) end end);_0xaa9=256 elseif _0xaa9 == 33 then _0x150.Size=UDim2.new(1 - 1,2 + 48,1 - 1,87 + 8 - 45);_0xaa9=36 elseif _0xaa9 == 264 then updateMobileSlideIndicator();_0xaa9=268 elseif _0xaa9 == 129 then _0x150.Active=true;_0xaa9=136 elseif _0xaa9 == 2 then if _0x150 then updateMobileSlideVisibility();return end;_0xaa9=12 else break end end end;_0xae0=4097 elseif _0xae0 == 3165 then _0x1ed.BackgroundTransparency=2 - 1;_0xae0=3176 elseif _0xae0 == 2613 then table.insert(_0x26,_0x16.RenderStepped:Connect(function(_0x139) if _0x8.weatherEnabled then XXCFeatureState.weatherUpdateAccumulator=XCFeatureState.weatherUpdateAccumulator + _0x139;if XCFeatureState.weatherUpdateAccumulator >= 0.1 then XCFeatureState.weatherUpdateAccumulator=1 - 1;applyXCWeather();local _0x88=_0x1c.CurrentCamera or _0x22;if XCFeatureState.weatherRig and _0x88 then XCFeatureState.weatherRig.CFrame=CFrame.new(_0x88.CFrame.Position + Vector3.new(1 - 1,23 + 7,1 - 1)) end end elseif XCFeatureState.weatherRig or XCFeatureState.weatherAtmosphere then destroyXCWeather() end;if not XCFeatureState.cameraMode then return end;local _0x88=_0x1c.CurrentCamera or _0x22;if not _0x88 then return end;if XCFeatureState.cameraMode == __0xae1d(2038) and not _0x8.freecamEnabled or XCFeatureState.cameraMode == __0xae1d(2039) and not _0x8.freelookEnabled then stopXCCameraMode();return end;_0x88.CameraType=Enum.CameraType.Scriptable;local _0x76=_0x18:GetMouseDelta() + XCFeatureState.cameraTouchDelta * 0.55;XCFeatureState.cameraTouchDelta=Vector2.zero;local _0x1d6=XCFeatureState.cameraMode == __0xae1d(2040) and (tonumber(_0x8.freecamSensitivity) or 0.18) or (tonumber(_0x8.freelookSensitivity) or 0.16);XXCFeatureState.cameraYaw=XCFeatureState.cameraYaw - math.rad(_0x76.X * _0x1d6);XCFeatureState.cameraPitch=math.clamp(XCFeatureState.cameraPitch - math.rad(_0x76.Y * _0x1d6),math.rad(-(12 * 7 + 1)),math.rad(37 + 48));local _0x155=CFrame.Angles(1 - 1,XCFeatureState.cameraYaw,1 - 1) * CFrame.Angles(XCFeatureState.cameraPitch,1 - 1,1 - 1);if XCFeatureState.cameraMode == __0xae1d(2041) then local _0x1d7=Vector3.zero;if _0x18:IsKeyDown(Enum.KeyCode.W) then mmovement=_0x1d7 + Vector3.new(1 - 1,1 - 1,-(2 - 1)) end;if _0x18:IsKeyDown(Enum.KeyCode.S) then mmovement=_0x1d7 + Vector3.new(1 - 1,1 - 1,2 - 1) end;if _0x18:IsKeyDown(Enum.KeyCode.A) then mmovement=_0x1d7 + Vector3.new(-(2 - 1),1 - 1,1 - 1) end;if _0x18:IsKeyDown(Enum.KeyCode.D) then mmovement=_0x1d7 + Vector3.new(2 - 1,1 - 1,1 - 1) end;if _0x18:IsKeyDown(Enum.KeyCode.Space) or _0x18:IsKeyDown(Enum.KeyCode.E) then mmovement=_0x1d7 + Vector3.new(1 - 1,2 - 1,1 - 1) end;if _0x18:IsKeyDown(Enum.KeyCode.Q) or _0x18:IsKeyDown(Enum.KeyCode.LeftControl) then mmovement=_0x1d7 + Vector3.new(1 - 1,-(2 - 1),1 - 1) end;local _0x1d8=math.max(5 + 0,tonumber(_0x8.freecamSpeed) or 1 + 54);if _0x18:IsKeyDown(Enum.KeyCode.LeftShift) then sspeed=_0x1d8 * 2.5 end;if _0x1d7.Magnitude > 1 - 1 then XXCFeatureState.cameraPosition=XCFeatureState.cameraPosition + _0x155:VectorToWorldSpace(_0x1d7.Unit) * _0x1d8 * _0x139 end;if _0x18.TouchEnabled then local _0x103=_0x20 and _0x20.Character;local _0x1d9=_0x103 and _0x103:FindFirstChildOfClass(__0xae1d(2042));if _0x1d9 and _0x1d9.MoveDirection.Magnitude > 0.05 then XXCFeatureState.cameraPosition=XCFeatureState.cameraPosition + _0x1d9.MoveDirection.Unit * _0x1d8 * _0x139 end end end;XCFeatureState.cameraFrame=CFrame.new(XCFeatureState.cameraPosition) * _0x155;_0x88.CFrame=XCFeatureState.cameraFrame end));_0xae0=2619 elseif _0xae0 == 962 then _0x57=function(_0x6c) _0x6c=_0x6c or _0x55;if not (_0x8.silentAimEnabled and _0x6c) then return nil end;local _0x88=_0x1c.CurrentCamera or _0x22;if not _0x88 then return nil end;local _0x6e=_0x88.CFrame.Position;local _0x6f=getKinematicAimPosition(_0x6c);return _0x6e,_0x6f end;_0xae0=967 elseif _0xae0 == 2628 then if _0x34 then _0x34.XCRunning=cleanup end;_0xae0=2633 elseif _0xae0 == 3776 then function setXCSkeletonLine(_0x156,_0x27a,_0x27b,_0x5,_0x1b0) local _0x76,_0x1a7;local _0xa91=2;while true do if _0xa91 == 18 then if _0x1a7 < 0.5 then _0x156.Visible=false;return end;_0xa91=25 elseif _0xa91 == 88 then do local _0x6e9=865 end;_0xa91=93 elseif _0xa91 == 40 then if 1 > 2 then local _0x6e6=nil end;_0xa91=45 elseif _0xa91 == 45 then _0x156.Size=UDim2.fromOffset(_0x1a7,math.clamp(tonumber(_0x8.skeletonThickness) or 1.5,2 - 1,3 + 1));_0xa91=53 elseif _0xa91 == 60 then _0x156.Rotation=math.deg(math.atan2(_0x76.Y,_0x76.X));_0xa91=67 elseif _0xa91 == 67 then if false then local _0x6e8=nil end;_0xa91=71 elseif _0xa91 == 53 then if 1 > 2 then local _0x6e7=nil end;_0xa91=60 elseif _0xa91 == 9 then _0x1a7=_0x76.Magnitude;_0xa91=18 elseif _0xa91 == 25 then _0x156.AnchorPoint=Vector2.new(0.5,0.5);_0xa91=33 elseif _0xa91 == 71 then _0x156.BackgroundColor3=_0x5;_0xa91=79 elseif _0xa91 == 93 then _0x156.Visible=true;_0xa91=113 elseif _0xa91 == 79 then _0x156.BackgroundTransparency=2 - 1 - _0x1b0;_0xa91=88 elseif _0xa91 == 2 then _0x76=_0x27b - _0x27a;_0xa91=9 elseif _0xa91 == 33 then _0x156.Position=UDim2.fromOffset((_0x27a.X + _0x27b.X) * 0.5,(_0x27a.Y + _0x27b.Y) * 0.5);_0xa91=40 else break end end end;_0xae0=3782 elseif _0xae0 == 1388 then _0x138=1 - 1;_0xae0=1398 elseif _0xae0 == 1766 then _0x152.BackgroundTransparency=2 - 1;_0xae0=1773 elseif _0xae0 == 4146 then if _0x20.Character then captureDefaultHipHeight(_0x20.Character);hookCharacterWeapons(_0x20.Character) end;_0xae0=4155 elseif _0xae0 == 3923 then _0x2ee=1 - 1;_0xae0=3931 elseif _0xae0 == 4391 then if false then local _0xa1e=nil end;_0xae0=4399 elseif _0xae0 == 2879 then _0x1e6=Instance.new(__0xae1d(2043),_0x1e4);_0xae0=2889 elseif _0xae0 == 4196 then _0x327=_0x18.InputEnded:Connect(function(_0x84) if _0x84.KeyCode == Enum.KeyCode.Space then _0x13d=false end;if _0x84.KeyCode == Enum.KeyCode.C or _0x84.KeyCode == Enum.KeyCode.LeftControl then _0x140=false;_0x141=Vector3.zero;restoreDefaultHipHeight() end end);_0xae0=4204 elseif _0xae0 == 340 then _0x26={};_0xae0=348 elseif _0xae0 == 1570 then _0x148=Instance.new(__0xae1d(2044),_0x147);_0xae0=1579 elseif _0xae0 == 3438 then do local _0x9ff=568 end;_0xae0=3445 elseif _0xae0 == 3298 then _0x1ef.TextSize=8.5;_0xae0=3308 elseif _0xae0 == 3719 then _0x25a={[Enum.Material.Asphalt]=0.25,[Enum.Material.Basalt]=0.25,[Enum.Material.Brick]=0.25,[Enum.Material.Cobblestone]=0.25,[Enum.Material.Concrete]=0.25,[Enum.Material.CrackedLava]=0.25,[Enum.Material.DiamondPlate]=0.25,[Enum.Material.Foil]=0.25,[Enum.Material.Glacier]=0.25,[Enum.Material.Granite]=0.25,[Enum.Material.Grass]=0.25,[Enum.Material.Ground]=0.25,[Enum.Material.Ice]=0.25,[Enum.Material.LeafyGrass]=0.25,[Enum.Material.Limestone]=0.25,[Enum.Material.Marble]=0.25,[Enum.Material.Metal]=0.25,[Enum.Material.Mud]=0.25,[Enum.Material.Pavement]=0.25,[Enum.Material.Rock]=0.25,[Enum.Material.Salt]=0.25,[Enum.Material.Sand]=0.25,[Enum.Material.Sandstone]=0.25,[Enum.Material.Slate]=0.25,[Enum.Material.Snow]=0.25,[Enum.Material.ForceField]=0.25,[Enum.Material.Neon]=0.25,[Enum.Material.CorrodedMetal]=0.25,[Enum.Material.Pebble]=0.25,[Enum.Material.CeramicTiles]=0.25,[Enum.Material.Plaster]=0.25,[Enum.Material.Plastic]=5 + 2,[Enum.Material.SmoothPlastic]=2 + 5,[Enum.Material.Wood]=6 + 1,[Enum.Material.WoodPlanks]=8 + 14 - 15,[Enum.Material.Cardboard]=18 + 3 - 14,[Enum.Material.Glass]=4 + 96,[Enum.Material.Fabric]=65 + 48 - 13};_0xae0=3725 elseif _0xae0 == 1562 then _0x147.Parent=_0x25;_0xae0=1570 elseif _0xae0 == 1216 then function applyXCGloves() local _0x4ea,_0x88,_0x11c,_0x11d,_0x11e,_0x11f,_0x120,_0x121,_0x112,_0x113,_0x114;local _0xa4e=3;while true do if _0xa4e == 114 then _0x120=_0x11e and _0x11e:FindFirstChild(__0xae1d(2045));_0xa4e=122 elseif _0xa4e == 19 then refreshXCSkinData();_0xa4e=26 elseif _0xa4e == 60 then _0x11c=nil;_0xa4e=65 elseif _0xa4e == 89 then _0x11e=_0x11c:FindFirstChild(__0xae1d(2046));_0xa4e=92 elseif _0xa4e == 122 then if not _0x11f or not _0x120 then if 1 > 2 then local _0x4e8=nil end;return end;_0xa4e=129 elseif _0xa4e == 148 then if 1 > 2 then local _0x4ef=nil end;_0xa4e=159 elseif _0xa4e == 3 then _0x4ea=(49 + 0) * 1;_0xa4e=12 elseif _0xa4e == 12 then if not _0x8.gloveChangerEnabled then return end;_0xa4e=19 elseif _0xa4e == 26 then if not _0xf1.SkinsRoot then local _0x4e5=(34 + 0) * 1;return end;_0xa4e=31 elseif _0xa4e == 170 then if 1 > 2 then local _0x4f0=nil end;_0xa4e=178 elseif _0xa4e == 108 then if false then local _0x4ee=nil end;_0xa4e=114 elseif _0xa4e == 92 then if false then local _0x4ed=nil end;_0xa4e=100 elseif _0xa4e == 37 then _0x88=_0x1c.CurrentCamera or _0x22;_0xa4e=45 elseif _0xa4e == 164 then if not _0x114 then return end;_0xa4e=170 elseif _0xa4e == 31 then if false then local _0x4eb=nil end;_0xa4e=37 elseif _0xa4e == 65 then for _0x63,_0x10f in ipairs(_0x88:GetChildren()) do if _0x10f:IsA(__0xae1d(2047)) and (_0x10f.Name:match(__0xae1d(2048)) or _0x10f:FindFirstChild(__0xae1d(2049))) then if false then local _0x4e7=nil end;_0x11c=_0x10f;break end end;_0xa4e=73 elseif _0xa4e == 73 then if not _0x11c then return end;_0xa4e=82 elseif _0xa4e == 143 then _0x113=_0x112 and _0x112:FindFirstChild(__0xae1d(2050));_0xa4e=148 elseif _0xa4e == 100 then _0x11f=_0x11d and _0x11d:FindFirstChild(__0xae1d(2051));_0xa4e=108 elseif _0xa4e == 50 then do local _0x4ec=850 end;_0xa4e=60 elseif _0xa4e == 82 then _0x11d=_0x11c:FindFirstChild(__0xae1d(2052));_0xa4e=89 elseif _0xa4e == 129 then _0x121=_0xf1.SkinsRoot:FindFirstChild(_0x8.selectedGloveModel);_0xa4e=136 elseif _0xa4e == 178 then for _0x63,_0x122 in ipairs({leftGlove,rightGlove}) do for _0x63,_0x3c in ipairs(_0x122:GetChildren()) do if _0x3c:IsA(__0xae1d(2053)) then _0x3c:Destroy() end end;do local _0x4e9=195 end;for _0x63,_0x115 in ipairs(_0x114:GetChildren()) do if _0x115:IsA(__0xae1d(2054)) then _0x115:Clone().Parent=_0x122 end end end;_0xa4e=201 elseif _0xa4e == 45 then if not _0x88 then do local _0x4e6=350 end;return end;_0xa4e=50 elseif _0xa4e == 159 then _0x114=_0x113 and _0x113:FindFirstChild(__0xae1d(2055));_0xa4e=164 elseif _0xa4e == 136 then _0x112=_0x121 and _0x121:FindFirstChild(_0x8.selectedGloveSkin);_0xa4e=143 else break end end end;_0xae0=1223 elseif _0xae0 == 604 then _0x4e=nil;_0xae0=614 elseif _0xae0 == 1331 then function stopXCAnimation() local _0x4f8;local _0xa50=3;while true do if _0xa50 == 18 then _0x4f8=math.random() * 0;_0xa50=24 elseif _0xa50 == 24 then if _0x125 then if 1 > 2 then local _0x4f4=nil end;pcall(function() _0x125:Destroy() end);if false then local _0x4f5=nil end;_0x125=nil;local _0x4f6=math.random() * 0 end;_0xa50=42 elseif _0xa50 == 8 then if _0x124 then pcall(function() _0x124:Stop(0.12) end);if false then local _0x4f2=nil end;_0x124=nil;if false then local _0x4f3=nil end end;_0xa50=18 elseif _0xa50 == 3 then if false then local _0x4f7=nil end;_0xa50=8 else break end end end;_0xae0=1342 elseif _0xae0 == 863 then table.insert(_0x26,_0x99);_0xae0=873 elseif _0xae0 == 186 then _0x19=game:GetService(__0xae1d(2056));_0xae0=191 elseif _0xae0 == 2000 then _0x15d=false;_0xae0=2003 elseif _0xae0 == 1653 then _0x14e=setmetatable({},{__mode=__0xae1d(2057)});_0xae0=1660 elseif _0xae0 == 2724 then _0x1e1.Position=UDim2.new(0.5,1 - 1,0.5,1 - 1);_0xae0=2733 elseif _0xae0 == 3221 then if 1 > 2 then local _0x9f9=nil end;_0xae0=3232 elseif _0xae0 == 332 then if not _0x25 then warn(__0xae1d(2058));return end;_0xae0=340 elseif _0xae0 == 3055 then if false then local _0x9f3=nil end;_0xae0=3063 elseif _0xae0 == 516 then do local _0x9a6=952 end;_0xae0=519 elseif _0xae0 == 723 then _0x5d=false;_0xae0=733 elseif _0xae0 == 801 then _0x7c=function(_0x62) local _0x7d,_0x476;local _0xa34=5;while true do if _0xa34 == 23 then return _0x7d(_0x62) elseif _0xa34 == 17 then _0x476=(26 + 0) * 1;_0xa34=23 elseif _0xa34 == 9 then if type(_0x7d) ~= __0xae1d(2059) then do local _0x475=951 end;return _0x62,false end;_0xa34=17 elseif _0xa34 == 5 then _0x7d=_0xe and _0xe.XCPrepareSilentShotPayloadV23 or _0x69;_0xa34=9 else break end end end;_0xae0=810 elseif _0xae0 == 46 then _0x993=(75 + 0) * 1;_0xae0=51 elseif _0xae0 == 4666 then _0xa25=math.random() * 0;_0xae0=4670 elseif _0xae0 == 4252 then _0xa18=(36 + 0) * 1;_0xae0=4258 elseif _0xae0 == 3522 then function createXCSoundPulse(_0x1a8,_0x23c) local _0xa5,_0x687,_0x23d,_0x46,_0x182,_0x6,_0x68c,_0x68d,_0x68f;local _0xa83=3;while true do if _0xa83 == 309 then do local _0x68e=464 end;_0xa83=318 elseif _0xa83 == 337 then Instance.new(__0xae1d(2060),_0x6).CornerRadius=UDim.new(1 - 1,1 + 2);_0xa83=346 elseif _0xa83 == 173 then _0x182.Position=UDim2.fromScale(0.5,0.5);_0xa83=180 elseif _0xa83 == 346 then _0x68f=math.random() * 0;_0xa83=352 elseif _0xa83 == 221 then Instance.new(__0xae1d(2061),_0x182).CornerRadius=UDim.new(2 - 1,1 - 1);_0xa83=228 elseif _0xa83 == 253 then _0x6.Size=UDim2.fromOffset(78 + 10 - 30,1 * 10 + 4);_0xa83=260 elseif _0xa83 == 80 then _0x23d.AnchorPoint=Vector2.new(0.5,0.5);_0xa83=89 elseif _0xa83 == 102 then _0x23d.BorderSizePixel=1 - 1;_0xa83=106 elseif _0xa83 == 145 then _0x46.Thickness=2 + 0;_0xa83=150 elseif _0xa83 == 270 then _0x6.BackgroundColor3=Color3.fromRGB(9 + 50 - 49,19 + 38 - 46,13 + 0);_0xa83=278 elseif _0xa83 == 288 then _0x6.Font=Enum.Font.GothamBold;_0xa83=296 elseif _0xa83 == 59 then _0xa5.Visible=false;_0xa83=65 elseif _0xa83 == 240 then _0x6.Position=UDim2.fromOffset(1 - 1,33 + 28 - 50);_0xa83=247 elseif _0xa83 == 318 then _0x6.Text=_0x23c;_0xa83=323 elseif _0xa83 == 123 then Instance.new(__0xae1d(2062),_0x23d).CornerRadius=UDim.new(2 - 1,1 - 1);_0xa83=128 elseif _0xa83 == 296 then _0x68d=math.random() * 0;_0xa83=305 elseif _0xa83 == 18 then _0xa5=Instance.new(__0xae1d(2063),_0x148);_0xa83=24 elseif _0xa83 == 334 then _0x6.ZIndex=16 + 5;_0xa83=337 elseif _0xa83 == 137 then _0x46.Color=_0x38.Accent;_0xa83=145 elseif _0xa83 == 284 then _0x6.BorderSizePixel=1 - 1;_0xa83=288 elseif _0xa83 == 247 then do local _0x68b=604 end;_0xa83=253 elseif _0xa83 == 106 then if 1 > 2 then local _0x688=nil end;_0xa83=114 elseif _0xa83 == 207 then _0x182.ZIndex=15 + 6;_0xa83=215 elseif _0xa83 == 305 then _0x6.TextSize=2 * 4 + 0;_0xa83=309 elseif _0xa83 == 37 then _0xa5.Size=UDim2.fromOffset(2 - 1,2 - 1);_0xa83=44 elseif _0xa83 == 114 then _0x23d.ZIndex=2 * 7 + 6;_0xa83=123 elseif _0xa83 == 150 then _0x46.Transparency=1 - 1;_0xa83=157 elseif _0xa83 == 3 then if #_0x14f >= 23 + 1 then local _0x685=math.random() * 0;destroyXCSoundPulse(table.remove(_0x14f,2 - 1)) end;_0xa83=8 elseif _0xa83 == 260 then _0x68c=math.random() * 0;_0xa83=270 elseif _0xa83 == 193 then _0x182.BackgroundColor3=_0x38.Accent;_0xa83=199 elseif _0xa83 == 323 then _0x6.TextColor3=_0x38.Accent;_0xa83=334 elseif _0xa83 == 199 then _0x182.BorderSizePixel=1 - 1;_0xa83=207 elseif _0xa83 == 8 then do local _0x686=108 end;_0xa83=18 elseif _0xa83 == 93 then _0x23d.BackgroundTransparency=2 - 1;_0xa83=102 elseif _0xa83 == 75 then _0x23d=Instance.new(__0xae1d(2064),_0xa5);_0xa83=80 elseif _0xa83 == 89 then _0x23d.Position=UDim2.fromScale(0.5,0.5);_0xa83=93 elseif _0xa83 == 163 then _0x182.AnchorPoint=Vector2.new(0.5,0.5);_0xa83=173 elseif _0xa83 == 157 then _0x182=Instance.new(__0xae1d(2065),_0xa5);_0xa83=163 elseif _0xa83 == 44 then _0x687=math.random() * 0;_0xa83=53 elseif _0xa83 == 186 then if false then local _0x689=nil end;_0xa83=193 elseif _0xa83 == 352 then table.insert(_0x14f,{Root=_0xa5,Ring=_0x23d,Stroke=_0x46,Dot=_0x182,Label=_0x6,Position=_0x1a8,Created=os.clock(),Duration=math.clamp(tonumber(_0x8.soundEspDuration) or 1.15,0.35,3 + 0)});_0xa83=372 elseif _0xa83 == 65 then _0xa5.ZIndex=3 * 6 + 2;_0xa83=75 elseif _0xa83 == 128 then _0x46=Instance.new(__0xae1d(2066),_0x23d);_0xa83=137 elseif _0xa83 == 278 then _0x6.BackgroundTransparency=0.28;_0xa83=284 elseif _0xa83 == 53 then _0xa5.BackgroundTransparency=2 - 1;_0xa83=59 elseif _0xa83 == 215 then if false then local _0x68a=nil end;_0xa83=221 elseif _0xa83 == 180 then _0x182.Size=UDim2.fromOffset(12 + 26 - 33,4 + 1);_0xa83=186 elseif _0xa83 == 30 then _0xa5.AnchorPoint=Vector2.new(0.5,0.5);_0xa83=37 elseif _0xa83 == 24 then _0xa5.Name=__0xae1d(2067) .. _0x23c;_0xa83=30 elseif _0xa83 == 232 then _0x6.AnchorPoint=Vector2.new(0.5,1 - 1);_0xa83=240 elseif _0xa83 == 228 then _0x6=Instance.new(__0xae1d(2068),_0xa5);_0xa83=232 else break end end end;_0xae0=3530 elseif _0xae0 == 2200 then do local _0x9d6=988 end;_0xae0=2207 elseif _0xae0 == 4236 then _0x3eb=nil;_0xae0=4244 elseif _0xae0 == 3071 then _0x1eb=Instance.new(__0xae1d(2069),_0x1e8);_0xae0=3077 elseif _0xae0 == 3671 then function getKinematicAimPosition(_0x6c) local _0x6a9,_0x243,_0x241,_0x244,_0x245,_0xa9,_0x246,_0x6ac,_0x247,_0x248,_0x6ad;local _0xa8b=5;while true do if _0xa8b == 58 then _0xa9=_0x20.Character;_0xa8b=66 elseif _0xa8b == 66 then _0x246=_0xa9 and _0xa9:FindFirstChild(__0xae1d(2070));_0xa8b=75 elseif _0xa8b == 30 then _0x241=getPingLatency();_0xa8b=39 elseif _0xa8b == 75 then _0x6ac=(8 + 0) * 1;_0xa8b=79 elseif _0xa8b == 79 then _0x247=_0x246 and _0x246.AssemblyLinearVelocity or Vector3.zero;_0xa8b=86 elseif _0xa8b == 99 then return _0x243 + _0x248 * _0x244 elseif _0xa8b == 11 then _0x243=_0x6c.Position;_0xa8b=16 elseif _0xa8b == 86 then _0x248=_0x245 - _0x247 * 0.15;_0xa8b=96 elseif _0xa8b == 51 then if 1 > 2 then local _0x6ab=nil end;_0xa8b=58 elseif _0xa8b == 46 then _0x245=_0x6c.AssemblyLinearVelocity or Vector3.zero;_0xa8b=51 elseif _0xa8b == 96 then _0x6ad=math.random() * 0;_0xa8b=99 elseif _0xa8b == 16 then if not _0x8.predictionEnabled then local _0x6a8=(91 + 0) * 1;return _0x243 end;_0xa8b=23 elseif _0xa8b == 23 then if false then local _0x6aa=nil end;_0xa8b=30 elseif _0xa8b == 39 then _0x244=_0x8.predictionFactor * 0.5 + _0x241;_0xa8b=46 elseif _0xa8b == 5 then _0x6a9=(77 + 0) * 1;_0xa8b=11 else break end end end;_0xae0=3679 elseif _0xae0 == 582 then function XCNotify(_0x3e,_0x3f,_0x40,_0x41) local _0x438,_0x43a,_0x42,_0x43b,_0x43,_0x44,_0x45,_0x46,_0x43f,_0x440,_0x47,_0x442,_0x48,_0x443,_0x49,_0x4a,_0x4b,_0x4c,_0x452;local _0xa31=3;while true do if _0xa31 == 689 then _0x4c.BorderSizePixel=1 - 1;_0xa31=695 elseif _0xa31 == 179 then _0x45.CornerRadius=UDim.new(1 - 1,5 + 5 - 2);_0xa31=186 elseif _0xa31 == 730 then _0x49.TextTransparency=2 - 1;_0xa31=739 elseif _0xa31 == 191 then _0x45.Parent=_0x44;_0xa31=198 elseif _0xa31 == 802 then _0x17:Create(_0x4c,TweenInfo.new(_0x41,Enum.EasingStyle.Linear),{Size=UDim2.new(1 - 1,1 - 1,2 - 1,1 - 1)}):Play();_0xa31=806 elseif _0xa31 == 425 then _0x49.Size=UDim2.new(2 - 1,-(31 * 2 + 0),1 - 1,9 * 2 + 1);_0xa31=430 elseif _0xa31 == 131 then do local _0x43c=290 end;_0xa31=136 elseif _0xa31 == 590 then _0x4a.TextXAlignment=Enum.TextXAlignment.Left;_0xa31=597 elseif _0xa31 == 52 then _0x3e=tostring(_0x3e or __0xae1d(2071));_0xa31=61 elseif _0xa31 == 684 then _0x4c.BackgroundColor3=_0x43;_0xa31=689 elseif _0xa31 == 628 then _0x4b.Position=UDim2.new(1 - 1,4 + 3,2 - 1,-(2 + 3));_0xa31=633 elseif _0xa31 == 274 then _0x47.Position=UDim2.new(1 - 1,6 + 1,1 - 1,3 * 2 + 1);_0xa31=284 elseif _0xa31 == 88 then if _0x40 == __0xae1d(2072) then _0x43=Color3.fromRGB(98 + 11 - 34,65 + 125,114 + 5 - 14) elseif _0x40 == __0xae1d(2073) then _0x43=Color3.fromRGB(133 + 120 - 28,67 + 98,37 + 18);if 1 > 2 then local _0x437=nil end elseif _0x40 == __0xae1d(2074) then _0x43=Color3.fromRGB(75 * 3 + 0,32 * 2 + 1,27 + 43) end;_0xa31=93 elseif _0xa31 == 515 then _0x49.Parent=_0x44;_0xa31=520 elseif _0xa31 == 326 then _0x48.Size=UDim2.new(1 - 1,27 + 39 - 38,1 - 1,15 + 13);_0xa31=332 elseif _0xa31 == 662 then do local _0x44e=241 end;_0xa31=666 elseif _0xa31 == 778 then _0x17:Create(_0x48,TweenInfo.new(0.2),{TextTransparency=1 - 1}):Play();_0xa31=785 elseif _0xa31 == 249 then _0x46.Parent=_0x44;_0xa31=254 elseif _0xa31 == 33 then _0x3b=_0x3b + (2 - 1);_0xa31=38 elseif _0xa31 == 158 then _0x44.LayoutOrder=_0x42;_0xa31=165 elseif _0xa31 == 487 then _0x49.TextSize=1 + 8;_0xa31=492 elseif _0xa31 == 299 then _0x47.Parent=_0x44;_0xa31=303 elseif _0xa31 == 633 then if false then local _0x44d=nil end;_0xa31=638 elseif _0xa31 == 541 then _0x4a.Position=UDim2.new(1 - 1,52 + 1,1 - 1,15 + 12);_0xa31=547 elseif _0xa31 == 766 then _0x17:Create(_0x49,TweenInfo.new(0.2),{TextTransparency=1 - 1}):Play();_0xa31=774 elseif _0xa31 == 564 then _0x4a.TextColor3=_0x38.TextSecondary;_0xa31=572 elseif _0xa31 == 408 then Instance.new(__0xae1d(2075),_0x48).CornerRadius=UDim.new(2 - 1,1 - 1);_0xa31=415 elseif _0xa31 == 136 then _0x44.BorderSizePixel=1 - 1;_0xa31=143 elseif _0xa31 == 492 then _0x49.Font=Enum.Font.GothamBold;_0xa31=499 elseif _0xa31 == 481 then do local _0x44a=594 end;_0xa31=487 elseif _0xa31 == 394 then _0x48.Parent=_0x44;_0xa31=401 elseif _0xa31 == 793 then do local _0x451=889 end;_0xa31=802 elseif _0xa31 == 415 then _0x49=Instance.new(__0xae1d(2076));_0xa31=425 elseif _0xa31 == 226 then _0x440=(100 + 0) * 1;_0xa31=234 elseif _0xa31 == 8 then if _0x8.settingsShowNotifications == false then return end;_0xa31=17 elseif _0xa31 == 215 then _0x43f=math.random() * 0;_0xa31=222 elseif _0xa31 == 739 then _0x4a.TextTransparency=2 - 1;_0xa31=747 elseif _0xa31 == 198 then _0x46=Instance.new(__0xae1d(2077));_0xa31=206 elseif _0xa31 == 234 then _0x46.Transparency=0.05;_0xa31=243 elseif _0xa31 == 374 then if false then local _0x445=nil end;_0xa31=381 elseif _0xa31 == 676 then _0x4c.Size=UDim2.new(2 - 1,1 - 1,2 - 1,1 - 1);_0xa31=684 elseif _0xa31 == 123 then _0x44.BackgroundTransparency=0.04;_0xa31=131 elseif _0xa31 == 254 then _0x47=Instance.new(__0xae1d(2078));_0xa31=264 elseif _0xa31 == 499 then if 1 > 2 then local _0x44b=nil end;_0xa31=506 elseif _0xa31 == 243 then if 1 > 2 then local _0x441=nil end;_0xa31=249 elseif _0xa31 == 618 then _0x4b.Size=UDim2.new(2 - 1,-(13 + 1),1 - 1,2 + 0);_0xa31=628 elseif _0xa31 == 390 then _0x48.Font=Enum.Font.GothamBold;_0xa31=394 elseif _0xa31 == 22 then if 1 > 2 then local _0x439=nil end;_0xa31=33 elseif _0xa31 == 666 then _0x4c=Instance.new(__0xae1d(2079));_0xa31=676 elseif _0xa31 == 527 then if false then local _0x44c=nil end;_0xa31=534 elseif _0xa31 == 38 then _0x43a=math.random() * 0;_0xa31=44 elseif _0xa31 == 365 then _0x48.TextColor3=_0x43;_0xa31=374 elseif _0xa31 == 352 then _0x48.BackgroundTransparency=0.1;_0xa31=360 elseif _0xa31 == 222 then _0x46.Thickness=2 - 1;_0xa31=226 elseif _0xa31 == 520 then _0x4a=Instance.new(__0xae1d(2080));_0xa31=527 elseif _0xa31 == 506 then _0x49.TextXAlignment=Enum.TextXAlignment.Left;_0xa31=515 elseif _0xa31 == 814 then task.delay(_0x41,function() if not _0x44 or not _0x44.Parent then return end;local _0xa=_0x17:Create(_0x44,TweenInfo.new(0.24,Enum.EasingStyle.Quint,Enum.EasingDirection.In),{Position=UDim2.new(2 - 1,12 + 26 - 14,1 - 1,1 - 1),BackgroundTransparency=2 - 1});_0xa:Play();_0x17:Create(_0x49,TweenInfo.new(0.18),{TextTransparency=2 - 1}):Play();_0x17:Create(_0x4a,TweenInfo.new(0.18),{TextTransparency=2 - 1}):Play();_0x17:Create(_0x48,TweenInfo.new(0.18),{TextTransparency=2 - 1}):Play();_0x17:Create(_0x47,TweenInfo.new(0.18),{BackgroundTransparency=2 - 1}):Play();_0xa.Completed:Wait();if _0x44 then _0x44:Destroy() end end);_0xa31=821 elseif _0xa31 == 17 then if not ensureXCNotifications() then return end;_0xa31=22 elseif _0xa31 == 785 then _0x17:Create(_0x47,TweenInfo.new(0.2),{BackgroundTransparency=1 - 1}):Play();_0xa31=793 elseif _0xa31 == 108 then _0x44.Size=UDim2.new(2 - 1,1 - 1,1 - 1,4 + 60);_0xa31=116 elseif _0xa31 == 340 then if false then local _0x444=nil end;_0xa31=345 elseif _0xa31 == 66 then _0x41=tonumber(_0x41) or 2.5;_0xa31=73 elseif _0xa31 == 268 then _0x442=(21 + 0) * 1;_0xa31=274 elseif _0xa31 == 443 then if 1 > 2 then local _0x448=nil end;_0xa31=452 elseif _0xa31 == 638 then _0x4b.BackgroundColor3=_0x38.Sidebar;_0xa31=647 elseif _0xa31 == 534 then _0x4a.Size=UDim2.new(2 - 1,-(70 + 23 - 31),1 - 1,21 + 6 - 2);_0xa31=541 elseif _0xa31 == 452 then _0x49.BackgroundTransparency=2 - 1;_0xa31=459 elseif _0xa31 == 575 then _0x4a.Font=Enum.Font.Gotham;_0xa31=586 elseif _0xa31 == 715 then _0x44.BackgroundTransparency=2 - 1;_0xa31=723 elseif _0xa31 == 611 then _0x4b=Instance.new(__0xae1d(2081));_0xa31=618 elseif _0xa31 == 345 then _0x48.BackgroundColor3=_0x38.Sidebar;_0xa31=352 elseif _0xa31 == 711 then _0x44.Position=UDim2.new(2 - 1,2 * 10 + 4,1 - 1,1 - 1);_0xa31=715 elseif _0xa31 == 311 then _0x48=Instance.new(__0xae1d(2082));_0xa31=316 elseif _0xa31 == 747 then _0x48.TextTransparency=2 - 1;_0xa31=751 elseif _0xa31 == 459 then if 1 > 2 then local _0x449=nil end;_0xa31=463 elseif _0xa31 == 116 then _0x44.BackgroundColor3=_0x38.Background;_0xa31=123 elseif _0xa31 == 547 then _0x4a.BackgroundTransparency=2 - 1;_0xa31=554 elseif _0xa31 == 288 then _0x47.BorderSizePixel=1 - 1;_0xa31=299 elseif _0xa31 == 463 then _0x49.Text=_0x3e;_0xa31=471 elseif _0xa31 == 73 then _0x43b=(64 + 0) * 1;_0xa31=78 elseif _0xa31 == 61 then _0x3f=tostring(_0x3f or "");_0xa31=66 elseif _0xa31 == 284 then _0x47.BackgroundColor3=_0x43;_0xa31=288 elseif _0xa31 == 152 then if 1 > 2 then local _0x43d=nil end;_0xa31=158 elseif _0xa31 == 761 then _0x17:Create(_0x44,TweenInfo.new(0.28,Enum.EasingStyle.Quint,Enum.EasingDirection.Out),{Position=UDim2.new(1 - 1,1 - 1,1 - 1,1 - 1),BackgroundTransparency=0.04}):Play();_0xa31=766 elseif _0xa31 == 430 then if false then local _0x447=nil end;_0xa31=435 elseif _0xa31 == 723 then if 1 > 2 then local _0x450=nil end;_0xa31=730 elseif _0xa31 == 471 then _0x49.TextColor3=_0x38.TextPrimary;_0xa31=481 elseif _0xa31 == 695 then _0x4c.Parent=_0x4b;_0xa31=701 elseif _0xa31 == 806 then _0x452=(4 + 0) * 1;_0xa31=814 elseif _0xa31 == 332 then _0x48.Position=UDim2.new(1 - 1,1 * 10 + 7,1 - 1,25 + 9 - 24);_0xa31=340 elseif _0xa31 == 751 then _0x47.BackgroundTransparency=2 - 1;_0xa31=761 elseif _0xa31 == 360 then _0x48.Text=_0x40 == __0xae1d(2083) and __0xae1d(2084) or _0x40 == __0xae1d(2085) and __0xae1d(2086) or __0xae1d(2087);_0xa31=365 elseif _0xa31 == 165 then _0x44.Parent=_0x3a;_0xa31=171 elseif _0xa31 == 554 then _0x4a.Text=_0x3f;_0xa31=564 elseif _0xa31 == 99 then _0x44.Name=__0xae1d(2088) .. _0x42;_0xa31=108 elseif _0xa31 == 647 then _0x4b.BorderSizePixel=1 - 1;_0xa31=654 elseif _0xa31 == 206 then _0x46.Color=_0x38.Border;_0xa31=215 elseif _0xa31 == 401 then if 1 > 2 then local _0x446=nil end;_0xa31=408 elseif _0xa31 == 93 then _0x44=Instance.new(__0xae1d(2089));_0xa31=99 elseif _0xa31 == 3 then _0x438=math.random() * 0;_0xa31=8 elseif _0xa31 == 597 then _0x4a.TextYAlignment=Enum.TextYAlignment.Top;_0xa31=605 elseif _0xa31 == 143 then _0x44.ClipsDescendants=true;_0xa31=152 elseif _0xa31 == 605 then _0x4a.Parent=_0x44;_0xa31=611 elseif _0xa31 == 303 then Instance.new(__0xae1d(2090),_0x47).CornerRadius=UDim.new(1 - 1,1 * 2 + 0);_0xa31=311 elseif _0xa31 == 316 then _0x443=math.random() * 0;_0xa31=326 elseif _0xa31 == 774 then _0x17:Create(_0x4a,TweenInfo.new(0.2),{TextTransparency=1 - 1}):Play();_0xa31=778 elseif _0xa31 == 435 then _0x49.Position=UDim2.new(1 - 1,17 * 3 + 2,1 - 1,5 + 3);_0xa31=443 elseif _0xa31 == 78 then _0x43=_0x38.Accent;_0xa31=88 elseif _0xa31 == 572 then _0x4a.TextSize=3 + 5;_0xa31=575 elseif _0xa31 == 381 then _0x48.TextSize=4 * 3 + 2;_0xa31=390 elseif _0xa31 == 701 then if false then local _0x44f=nil end;_0xa31=711 elseif _0xa31 == 586 then _0x4a.TextWrapped=true;_0xa31=590 elseif _0xa31 == 171 then _0x45=Instance.new(__0xae1d(2091));_0xa31=179 elseif _0xa31 == 264 then _0x47.Size=UDim2.new(1 - 1,13 + 7 - 17,2 - 1,-(7 + 7));_0xa31=268 elseif _0xa31 == 44 then _0x42=_0x3b;_0xa31=52 elseif _0xa31 == 654 then _0x4b.Parent=_0x44;_0xa31=662 elseif _0xa31 == 186 then if 1 > 2 then local _0x43e=nil end;_0xa31=191 elseif _0xa31 == 821 then if false then local _0x453=nil end;_0xa31=836 else break end end end;_0xae0=589 elseif _0xae0 == 3909 then _0xa10=(24 + 0) * 1;_0xae0=3915 elseif _0xae0 == 975 then _0x9b3=(54 + 0) * 1;_0xae0=981 elseif _0xae0 == 348 then _0x27={};_0xae0=351 elseif _0xae0 == 3960 then function restoreXCCharacterInputHook() local _0xa4;local _0xa9f=5;while true do if _0xa9f == 8 then if _0xa4.Module and _0xa4.Wrapper and _0xa4.Module.SampleInput == _0xa4.Wrapper and _0xa4.Original then pcall(function() _0xa4.Module.SampleInput=_0xa4.Original end);local _0x7a8=math.random() * 0 end;_0xa9f=18 elseif _0xa9f == 31 then _0xa4.Ready=false;_0xa9f=37 elseif _0xa9f == 18 then if _0xa4.Module and rawget(_0xa4.Module,__0xae1d(2092)) == _0x35 then pcall(function() rawset(_0xa4.Module,__0xae1d(2093),nil) end);local _0x7a9=math.random() * 0 end;_0xa9f=23 elseif _0xa9f == 37 then resetXCCharacterInputState();_0xa9f=53 elseif _0xa9f == 5 then _0xa4=_0x13f;_0xa9f=8 elseif _0xa9f == 23 then do local _0x7aa=45 end;_0xa9f=31 else break end end end;_0xae0=3963 elseif _0xae0 == 2084 then if 1 > 2 then local _0x9d2=nil end;_0xae0=2087 else break end end
+-- XC cleaned UI build
+-- Unified XC lime/dark interface
+pcall(function()
+    if type(getgenv) == "function" then
+        local env = getgenv()
+        if env and type(env.XCRunning) == "function" then
+            env.XCRunning()
+        end
+    end
+end)
+
+-- ==========================================
+-- XC UI layer
+-- ==========================================
+local XCIcons = {
+    Combat = "⌁",
+    Visuals = "◉",
+    Players = "♙",
+    World = "◈",
+    Movement = "↯",
+    Misc = "⚙",
+    Config = "▣",
+    Scripts = "⌘",
+    Search = "⌕",
+    Settings = "⚙",
+    Info = "ⓘ",
+}
+
+function XCIcon(parent, glyph, size, color)
+    local label = Instance.new("TextLabel")
+    label.Name = "XCIcon"
+    label.BackgroundTransparency = 1
+    label.Size = UDim2.new(0, size or 18, 0, size or 18)
+    label.Text = glyph or "•"
+    label.Font = Enum.Font.GothamBold
+    label.TextSize = math.max(12, math.floor((size or 18) * 0.78))
+    label.TextColor3 = color or Color3.fromRGB(152, 204, 0)
+    label.TextXAlignment = Enum.TextXAlignment.Center
+    label.TextYAlignment = Enum.TextYAlignment.Center
+    label.Parent = parent
+    return label
+end
+
+-- ==========================================
+-- CENTRAL CONFIGURATION SYSTEM
+-- ==========================================
+local HttpService = game:GetService("HttpService")
+
+local XCConfig = {
+    -- Toggles
+    antiAfkEnabled = false,
+    noFallDamageEnabled = false,
+    spectatorListEnabled = false,
+    spectatorCounterEnabled = true,
+    spectatorHideEmpty = false,
+    spectatorNameMode = "Display name",
+    animationsEnabled = false,
+    animationLoop = true,
+    animationSpeed = 1.0,
+    animationId = "73593666217037",
+    customHandsEnabled = false,
+    customHandsX = 0,
+    customHandsY = 0,
+    customHandsZ = 0,
+    customHandsPitch = 0,
+    customHandsYaw = 0,
+    customHandsRoll = 0,
+    uiScale = 1.0,
+    watermarkEnabled = true,
+    watermarkShowFPS = true,
+    watermarkShowPing = true,
+    watermarkShowName = false,
+    watermarkText = "XC",
+    aimbotEnabled = false,
+    predictionEnabled = true,
+    silentAimEnabled = false,
+    rcsEnabled = false,
+    chamsEnabled = false,
+    hitmarkerEnabled = false,
+    hitSoundEnabled = false,
+    thirdPersonEnabled = false,
+    skinChangerEnabled = false,
+    triggerbotEnabled = false,
+    antiAimEnabled = false,
+    antiAimMode = "Spin",
+    bunnyHopEnabled = false,
+    slideEnabled = false,
+    speedEnabled = false,
+    flightEnabled = false,
+    nametagsEnabled = false,
+    boxEspEnabled = false,
+    cornerBoxEnabled = false,
+    healthBarEnabled = false,
+    skeletonEspEnabled = false,
+    skeletonDistanceFade = true,
+    headDotEnabled = false,
+    tracersEnabled = false,
+    grenadeEspEnabled = false,
+    grenadeDangerZonesEnabled = false,
+    soundPositionEspEnabled = false,
+    weaponEspEnabled = false,
+    jumpCircleEnabled = false,
+    antiFlashEnabled = false,
+    noSmokeEnabled = false,
+    fullBrightEnabled = false,
+    removeFogEnabled = true,
+    nightModeEnabled = false,
+    rageBotEnabled = false,
+    rageAutoFire = true,
+    bulletTrailEnabled = true,
+    bulletFlashEnabled = true,
+    weaponChamsEnabled = false,
+    customScopeEnabled = false,
+    scopeRemoveOriginal = false,
+    scopeCrosshairEnabled = true,
+    scopeDynamicGap = false,
+    scopeCrosshairStyle = "Cross",
+    scopeCrosshairLeft = true,
+    scopeCrosshairRight = true,
+    scopeCrosshairTop = true,
+    scopeCrosshairBottom = true,
+    scopeCrosshairDot = true,
+    scopeCrosshairOpacity = 0,
+    scopeCrosshairOutline = false,
+    scopeCrosshairOutlineThickness = 1,
+    scopeCrosshairOutlineR = 0,
+    scopeCrosshairOutlineG = 0,
+    scopeCrosshairOutlineB = 0,
+    worldSkyboxEnabled = false,
+    worldPostFXEnabled = false,
+    weatherEnabled = false,
+    weatherMode = "Rain",
+    weatherIntensity = 45,
+    weatherWind = 8,
+    freecamEnabled = false,
+    freecamSpeed = 55,
+    freecamSensitivity = 0.18,
+    freecamKey = "F4",
+    freelookEnabled = false,
+    freelookSensitivity = 0.16,
+    freelookKey = "LeftAlt",
+    streamerModeEnabled = false,
+    streamerKey = "F8",
+    settingsShowNotifications = true,
+    settingsCompactMode = false,
+    settingsAutoSave = false,
+    menuKey = "RightShift",
+
+    -- Sliders & Values
+    rageFov = 360,
+    rageTargetMode = "Distance",
+    priorityPlayerName = "None",
+    aimFov = 160,
+    triggerbotFov = 160,
+    triggerbotDelay = 0.075,
+    triggerbotScopedOnly = false,
+    triggerbotHeadOnly = false,
+    aimbotSpeed = 35.0,
+    aimbotSmoothness = 0.15,
+    predictionFactor = 0.165,
+    bodyAimOnly = false,
+    snapAimMode = false,
+    showFovCircle = true,
+    visibleCheck = false,
+    
+    silentAimFov = 150,
+    silentAimHitChance = 100,
+    silentAimTeamCheck = true,
+    silentAimVisibleCheck = false,
+    silentAimAimHead = true,
+    pSilentEnabled = false,
+    wallbangEnabled = false,
+    showSilentFovCircle = true,
+
+    chamsFillTransparency = 0.45,
+    chamsOutlineTransparency = 0.10,
+    chamsTeamCheck = true,
+    chamsShowTeammates = false,
+    chamsOcclusion = true,
+
+    recoilStrength = 0.85,
+    noRecoilEnabled = false,
+    noSpreadEnabled = false,
+    fireRateEnabled = false,
+    fireRate = 0.01,
+    rcsStrength = 60,
+    rcsPitchFactor = 1.0,
+    rcsYawFactor = 1.0,
+
+    thirdPersonDistance = 12,
+    thirdPersonHeight = 1.5,
+    thirdPersonOffset = 2.5,
+
+    hitmarkerDuration = 0.28,
+    hitmarkerSize = 13,
+    hitmarkerThickness = 2,
+    hitmarkerGlow = true,
+    hitSoundPreset = "Skeet",
+    hitSoundVolume = 1,
+
+    spinSpeed = 50,
+    antiAimYaw = 180,
+    antiAimJitter = 60,
+    antiAimInterval = 0.15,
+    skeletonThickness = 1.5,
+    bhopJumpPower = 52,
+    bhopSpeedBoost = 1.35,
+    bhopAutoJump = false,
+    bhopAirStrafe = true,
+    bhopMode = "Hold",
+    bhopMovingOnly = true,
+    bhopPauseWithMenu = true,
+    bhopGroundDelay = 0,
+    bhopAcceleration = 12,
+    walkMultiplier = 2.0,
+    flightSpeed = 50,
+
+    slideSpeedBoost = 1.8,
+    slideFriction = 0.94,
+    slideMinSpeed = 16,
+
+    jumpCircleRadius = 3.5,
+    jumpCircleSegmentCount = 48,
+    jumpCircleStyle = "GradientWave",
+
+    grenadeMaxDist = 1500,
+    showGrenadePath = true,
+    showMolotovRadius = true,
+    showSmokeRadius = true,
+    grenadeDangerOpacity = 0.82,
+    soundEspDuration = 1.15,
+    soundEspMaxDist = 1200,
+
+    espMaxDist = 3000,
+    espTextSize = 8.5,
+    tagTransparency = 0.25,
+    espShowDistance = true,
+    espShowHealth = true,
+    tagShowWeapon = true,
+    boxThickness = 1.0,
+    espBoxSmoothing = 0.42,
+    espFixedScale = true,
+    espFixedBoxHeight = 36,
+    espPerspectiveScale = 1.0,
+    espBoxAspect = 0.52,
+    espBoxOutline = true,
+
+    nightPreset = "Midnight",
+    nightBrightness = 0.2,
+    nightClockTime = 0.0,
+    worldSkyboxPreset = "Night",
+    worldSkyRotation = 0,
+    worldSkyStars = 0,
+    worldSkyCelestial = false,
+    worldFogStart = 0,
+    worldFogEnd = 100000,
+    worldExposure = 0,
+    worldSaturation = 0,
+    worldContrast = 0,
+    worldTonePreset = "Neutral",
+    worldAtmosphereEnabled = false,
+    worldAtmosphereDensity = 0.3,
+    worldAtmosphereHaze = 0,
+    worldAtmosphereGlare = 0,
+    worldBloomEnabled = false,
+    worldBloomIntensity = 0.35,
+    worldBloomSize = 24,
+    worldBloomThreshold = 1,
+    worldColorR = 255,
+    worldColorG = 255,
+    worldColorB = 255,
+    bulletTracerStyle = "Block",
+    bulletTracerDuration = 0.65,
+    bulletTracerWidth = 0.08,
+    bulletTracerRainbow = false,
+    bulletImpactEnabled = false,
+    bulletImpactSize = 0.35,
+    cubeCheckerEnabled = false,
+    cubeCheckerRainbow = false,
+    cubeCheckerSize = 1.5,
+    cubeCheckerDistance = 20,
+    cubeCheckerLineThickness = 0.04,
+    cubeCheckerTransparency = 0.2,
+    bulletTracerColorR = 255,
+    bulletTracerColorG = 25,
+    bulletTracerColorB = 35,
+    weaponChamsMode = "Crystal",
+    weaponChamsTransparency = 0.22,
+    weaponChamsReflectance = 0.75,
+    weaponChamsColorR = 210,
+    weaponChamsColorG = 45,
+    weaponChamsColorB = 55,
+    scopeFovEnabled = false,
+    scopeFov = 70,
+    customFovEnabled = false,
+    customFov = 90,
+    scopeCrosshairLength = 85,
+    scopeCrosshairThickness = 2,
+    scopeCrosshairGap = 8,
+    scopeCrosshairColorR = 255,
+    scopeCrosshairColorG = 255,
+    scopeCrosshairColorB = 255,
+    selectedKnifeType = "Butterfly Knife",
+    selectedSkin = "Fade",
+    gloveChangerEnabled = false,
+    selectedGloveModel = "Sports Gloves",
+    selectedGloveSkin = "Default",
+    weaponSkinSelections = {}
+}
+
+-- Immutable startup snapshot used by Settings > Config Manager > RESET.
+function deepCopyConfigValue(v)
+    if type(v) ~= "table" then return v end
+    local out = {}
+    for k,val in pairs(v) do out[k] = deepCopyConfigValue(val) end
+    return out
+end
+local XCConfigDefaults = deepCopyConfigValue(XCConfig)
+
+-- Reuse one configuration table between reinjections. Persistent hooks from a
+-- previous run then continue to read the values controlled by the new menu.
+local sharedXCEnv = (type(getgenv) == "function") and getgenv() or nil
+if sharedXCEnv then
+    if type(sharedXCEnv.XCSharedConfig) == "table" then
+        local existing = sharedXCEnv.XCSharedConfig
+        for key, value in pairs(XCConfig) do
+            if existing[key] == nil then existing[key] = deepCopyConfigValue(value) end
+        end
+        XCConfig = existing
+    else
+        sharedXCEnv.XCSharedConfig = XCConfig
+    end
+end
+
+-- A reinjection must start from safe toggle defaults. Numeric/user settings
+-- remain shared, but an old session cannot silently reactivate expensive
+-- scanners or render modules before the user opens the new menu.
+for key, defaultValue in pairs(XCConfigDefaults) do
+    if type(defaultValue) == "boolean" then XCConfig[key] = defaultValue end
+end
+-- Keep legacy values valid while the v20 renderer uses perspective scale.
+if tonumber(XCConfig.espFixedBoxHeight) == 64 or tonumber(XCConfig.espFixedBoxHeight) == 42 then
+    XCConfig.espFixedBoxHeight = 36
+end
+XCConfig.espPerspectiveScale = math.clamp(tonumber(XCConfig.espPerspectiveScale) or 1, 0.65, 1.5)
+
+local UI_Bind_Registry = {}
+-- Expensive executor scans are opt-in for the current session. Persisted
+-- config values never trigger getgc work merely by injecting the script.
+local lazyFeatureRequests = {
+    fireRate = false,
+    recoilSpread = false,
+    silentFallback = false,
+}
+
+-- ==========================================
+-- SYSTEM SERVICES IMPORT
+-- ==========================================
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
+local GuiService = game:GetService("GuiService")
+local Lighting = game:GetService("Lighting")
+local Workspace = game:GetService("Workspace")
+local Stats = game:GetService("Stats")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local VirtualInputManager = nil
+-- A synthetic mouse event changes Roblox's preferred input to desktop and
+-- makes Blox Strike remove its mobile buttons. Never create that path on a
+-- touch device; mobile combat uses native weapon methods instead.
+if not UserInputService.TouchEnabled then
+    pcall(function()
+        VirtualInputManager = game:GetService("VirtualInputManager")
+    end)
+end
+
+-- ==========================================
+-- CLIENT ENVIRONMENT VALIDATION XC
+-- ==========================================
+local player = Players.LocalPlayer
+if not player then
+    local startWait = tick()
+    while not player and (tick() - startWait) < 5 do
+        player = Players.LocalPlayer
+        task.wait(0.1)
+    end
+    if not player then
+        player = Players:GetPlayers()[1]
+    end
+end
+
+local camera = Workspace.CurrentCamera or Workspace:FindFirstChildOfClass("Camera")
+
+function getSafeGui()
+    local success, result = pcall(function()
+        if gethui then
+            return gethui()
+        end
+    end)
+    if success and result then return result end
+    
+    success, result = pcall(function()
+        return CoreGui
+    end)
+    if success and result then return result end
+    
+    if player then
+        return player:WaitForChild("PlayerGui", 5) or player:FindFirstChildOfClass("PlayerGui")
+    end
+    return nil
+end
+
+local targetGui = getSafeGui()
+if not targetGui and player then
+    pcall(function() targetGui = player:WaitForChild("PlayerGui", 5) end)
+end
+if not targetGui then
+    warn("[XC] GUI initialization failed: no valid GUI parent")
+    return
+end
+
+local connections = {}
+local activeEspHolders = {}
+local screenEspCache = {}
+local activeTracersCache = {}
+local activeHeadDotsCache = {}
+local mobileSlideInputActive = false
+local mobileSlideInput = nil
+local mobileJumpHookedButton = nil
+local mobileJumpConnections = {}
+local skinScanAccumulator = 0
+local savedAutoRotate = nil
+local hitmarkerSerial = 0
+local antiAfkConnection = nil
+local activeJumpCircleData = nil
+
+local genv = (type(getgenv) == "function") and getgenv() or nil
+local xcSessionToken = {}
+if genv then genv.XCSessionToken = xcSessionToken end
+function xcSessionActive()
+    return not genv or genv.XCSessionToken == xcSessionToken
+end
+if genv and not genv.XCSavedPos then
+    genv.XCSavedPos = {
+        OpenBtn = UDim2.new(0.5, -45, 0, 15),
+        MainFrame = UDim2.new(0.5, 0, 0.5, 0)
+    }
+end
+local savedPos = (genv and genv.XCSavedPos) or {
+    OpenBtn = UDim2.new(0.5, -45, 0, 15),
+    MainFrame = UDim2.new(0.5, 0, 0.5, 0)
+}
+
+-- ==========================================
+-- EXTENDED THEME & PALETTE SYSTEM
+-- ==========================================
+local themeLibrary = {
+    ["XC Lime"] = {
+        Name = "XC Lime",
+        Background = Color3.fromRGB(18, 18, 22),
+        Sidebar = Color3.fromRGB(22, 22, 27),
+        CardBg = Color3.fromRGB(28, 28, 34),
+        Accent = Color3.fromRGB(152, 204, 0),
+        AccentHover = Color3.fromRGB(180, 225, 25),
+        TextPrimary = Color3.fromRGB(240, 240, 245),
+        TextSecondary = Color3.fromRGB(150, 150, 160),
+        Border = Color3.fromRGB(45, 45, 55),
+        GridSquare = Color3.fromRGB(25, 25, 30),
+        -- Unified XC palette: lime means line-of-sight, neutral grey means
+        -- occluded. This mapping is shared by every player ESP component.
+        Enemy_Accent = Color3.fromRGB(152, 204, 0),
+        Enemy_Fill = Color3.fromRGB(112, 151, 0),
+        Enemy_Hidden = Color3.fromRGB(112, 116, 122),
+        NametagTextColor = Color3.fromRGB(235, 235, 235),
+        HealthHigh = Color3.fromRGB(152, 204, 0),
+        HealthMid = Color3.fromRGB(205, 170, 42),
+        HealthLow = Color3.fromRGB(205, 72, 72),
+        MolotovColor = Color3.fromRGB(255,95,35),
+        SmokeColor = Color3.fromRGB(180,185,195),
+        HEColor = Color3.fromRGB(255,45,55)
+    }
+}
+
+local currentTheme = themeLibrary["XC Lime"]
+
+-- ==========================================
+-- XC NOTIFICATION CENTER
+-- ==========================================
+local XCNotificationGui = nil
+local XCNotificationHolder = nil
+local XCNotificationSerial = 0
+
+function ensureXCNotifications()
+    if XCNotificationGui and XCNotificationGui.Parent and XCNotificationHolder and XCNotificationHolder.Parent then
+        return true
+    end
+
+    pcall(function()
+        local old = targetGui:FindFirstChild("XCNotificationsGui")
+        if old then old:Destroy() end
+    end)
+
+    XCNotificationGui = Instance.new("ScreenGui")
+    XCNotificationGui.Name = "XCNotificationsGui"
+    XCNotificationGui.ResetOnSpawn = false
+    XCNotificationGui.IgnoreGuiInset = true
+    XCNotificationGui.DisplayOrder = 250
+    XCNotificationGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    XCNotificationGui.Parent = targetGui
+
+    XCNotificationHolder = Instance.new("Frame")
+    XCNotificationHolder.Name = "NotificationHolder"
+    XCNotificationHolder.AnchorPoint = Vector2.new(1, 1)
+    XCNotificationHolder.Position = UDim2.new(1, -18, 1, -18)
+    XCNotificationHolder.Size = UDim2.new(0, 300, 1, -36)
+    XCNotificationHolder.BackgroundTransparency = 1
+    XCNotificationHolder.Parent = XCNotificationGui
+
+    local layout = Instance.new("UIListLayout")
+    layout.FillDirection = Enum.FillDirection.Vertical
+    layout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+    layout.VerticalAlignment = Enum.VerticalAlignment.Bottom
+    layout.Padding = UDim.new(0, 8)
+    layout.Parent = XCNotificationHolder
+
+    return true
+end
+
+function XCNotify(title, message, kind, duration)
+    if XCConfig.settingsShowNotifications == false then return end
+    if not ensureXCNotifications() then return end
+
+    XCNotificationSerial = XCNotificationSerial + 1
+    local serial = XCNotificationSerial
+    title = tostring(title or "XC")
+    message = tostring(message or "")
+    duration = tonumber(duration) or 2.5
+
+    local accent = currentTheme.Accent
+    if kind == "success" then
+        accent = Color3.fromRGB(75, 190, 105)
+    elseif kind == "warning" then
+        accent = Color3.fromRGB(225, 165, 55)
+    elseif kind == "error" then
+        accent = Color3.fromRGB(225, 65, 70)
+    end
+
+    local card = Instance.new("Frame")
+    card.Name = "Toast_" .. serial
+    card.Size = UDim2.new(1, 0, 0, 64)
+    card.BackgroundColor3 = currentTheme.Background
+    card.BackgroundTransparency = 0.04
+    card.BorderSizePixel = 0
+    card.ClipsDescendants = true
+    card.LayoutOrder = serial
+    card.Parent = XCNotificationHolder
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = card
+
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = currentTheme.Border
+    stroke.Thickness = 1
+    stroke.Transparency = 0.05
+    stroke.Parent = card
+
+    local accentBar = Instance.new("Frame")
+    accentBar.Size = UDim2.new(0, 3, 1, -14)
+    accentBar.Position = UDim2.new(0, 7, 0, 7)
+    accentBar.BackgroundColor3 = accent
+    accentBar.BorderSizePixel = 0
+    accentBar.Parent = card
+    Instance.new("UICorner", accentBar).CornerRadius = UDim.new(0, 2)
+
+    local icon = Instance.new("TextLabel")
+    icon.Size = UDim2.new(0, 28, 0, 28)
+    icon.Position = UDim2.new(0, 17, 0, 10)
+    icon.BackgroundColor3 = currentTheme.Sidebar
+    icon.BackgroundTransparency = 0.1
+    icon.Text = kind == "error" and "!" or kind == "warning" and "!" or "✓"
+    icon.TextColor3 = accent
+    icon.TextSize = 14
+    icon.Font = Enum.Font.GothamBold
+    icon.Parent = card
+    Instance.new("UICorner", icon).CornerRadius = UDim.new(1, 0)
+
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.Size = UDim2.new(1, -62, 0, 19)
+    titleLabel.Position = UDim2.new(0, 53, 0, 8)
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.Text = title
+    titleLabel.TextColor3 = currentTheme.TextPrimary
+    titleLabel.TextSize = 9
+    titleLabel.Font = Enum.Font.GothamBold
+    titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    titleLabel.Parent = card
+
+    local msgLabel = Instance.new("TextLabel")
+    msgLabel.Size = UDim2.new(1, -62, 0, 25)
+    msgLabel.Position = UDim2.new(0, 53, 0, 27)
+    msgLabel.BackgroundTransparency = 1
+    msgLabel.Text = message
+    msgLabel.TextColor3 = currentTheme.TextSecondary
+    msgLabel.TextSize = 8
+    msgLabel.Font = Enum.Font.Gotham
+    msgLabel.TextWrapped = true
+    msgLabel.TextXAlignment = Enum.TextXAlignment.Left
+    msgLabel.TextYAlignment = Enum.TextYAlignment.Top
+    msgLabel.Parent = card
+
+    local progress = Instance.new("Frame")
+    progress.Size = UDim2.new(1, -14, 0, 2)
+    progress.Position = UDim2.new(0, 7, 1, -5)
+    progress.BackgroundColor3 = currentTheme.Sidebar
+    progress.BorderSizePixel = 0
+    progress.Parent = card
+
+    local fill = Instance.new("Frame")
+    fill.Size = UDim2.new(1, 0, 1, 0)
+    fill.BackgroundColor3 = accent
+    fill.BorderSizePixel = 0
+    fill.Parent = progress
+
+    card.Position = UDim2.new(1, 24, 0, 0)
+    card.BackgroundTransparency = 1
+    titleLabel.TextTransparency = 1
+    msgLabel.TextTransparency = 1
+    icon.TextTransparency = 1
+    accentBar.BackgroundTransparency = 1
+
+    TweenService:Create(card, TweenInfo.new(0.28, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+        Position = UDim2.new(0, 0, 0, 0), BackgroundTransparency = 0.04
+    }):Play()
+    TweenService:Create(titleLabel, TweenInfo.new(0.2), {TextTransparency = 0}):Play()
+    TweenService:Create(msgLabel, TweenInfo.new(0.2), {TextTransparency = 0}):Play()
+    TweenService:Create(icon, TweenInfo.new(0.2), {TextTransparency = 0}):Play()
+    TweenService:Create(accentBar, TweenInfo.new(0.2), {BackgroundTransparency = 0}):Play()
+    TweenService:Create(fill, TweenInfo.new(duration, Enum.EasingStyle.Linear), {Size = UDim2.new(0, 0, 1, 0)}):Play()
+
+    task.delay(duration, function()
+        if not card or not card.Parent then return end
+        local out = TweenService:Create(card, TweenInfo.new(0.24, Enum.EasingStyle.Quint, Enum.EasingDirection.In), {
+            Position = UDim2.new(1, 24, 0, 0), BackgroundTransparency = 1
+        })
+        out:Play()
+        TweenService:Create(titleLabel, TweenInfo.new(0.18), {TextTransparency = 1}):Play()
+        TweenService:Create(msgLabel, TweenInfo.new(0.18), {TextTransparency = 1}):Play()
+        TweenService:Create(icon, TweenInfo.new(0.18), {TextTransparency = 1}):Play()
+        TweenService:Create(accentBar, TweenInfo.new(0.18), {BackgroundTransparency = 1}):Play()
+        out.Completed:Wait()
+        if card then card:Destroy() end
+    end)
+end
+
+-- ==========================================
+-- COMBAT ENGINE STATE VARIABLES
+-- ==========================================
+local isAiming = false
+local currentAimTarget = nil
+local lastTargetSwitchTick = 0
+local TARGET_HYSTERESIS_TIME = 0.12
+local aimboneIndex = 1
+
+function rgb(r,g,b)
+    return Color3.fromRGB(
+        math.clamp(math.floor(tonumber(r) or 255), 0, 255),
+        math.clamp(math.floor(tonumber(g) or 255), 0, 255),
+        math.clamp(math.floor(tonumber(b) or 255), 0, 255)
+    )
+end
+
+local silentAimResolved = nil
+-- Forward declarations: the shoot hook is defined before the Silent Aim helpers.
+local getSilentAimTarget
+local silentAimCamPosAim
+local registerXCLocalHitCandidate
+local hitmarkerPendingHits = {}
+local silentAimHooked = false
+local silentAimCamHooked = false
+local bloxStrikeShootHooked = false
+local xcNativeSilentHooked = false
+local xcBulletInterceptHooked = false
+local xcMobileCameraSilentHooked = false
+
+local function setXCSilentAimRequested(value)
+    if sharedXCEnv then sharedXCEnv.XCSilentAimRequestedV25 = value == true end
+end
+
+local function isXCSilentAimRequested()
+    if sharedXCEnv and sharedXCEnv.XCSilentAimRequestedV25 ~= nil then
+        return sharedXCEnv.XCSilentAimRequestedV25 == true
+    end
+    return XCConfig.silentAimEnabled == true
+end
+setXCSilentAimRequested(XCConfig.silentAimEnabled)
+
+-- The InventoryController hook can survive reinjection. Keep its callback in
+-- getgenv so a persistent wrapper always forwards shots to the current XC
+-- session instead of retaining a stale pending-hit table.
+local function recordXCLocalHitPayload(data)
+    if not registerXCLocalHitCandidate or type(data) ~= "table" or type(data.Bullets) ~= "table" then
+        return
+    end
+    for _, bullet in pairs(data.Bullets) do
+        if type(bullet) == "table" and type(bullet.Hits) == "table" then
+            for _, hitData in pairs(bullet.Hits) do
+                if type(hitData) == "table" then
+                    local hitInstance = hitData.Instance or hitData.instance
+                    if typeof(hitInstance) == "Instance" then
+                        registerXCLocalHitCandidate(hitInstance)
+                    end
+                end
+            end
+        end
+    end
+end
+
+if sharedXCEnv then
+    sharedXCEnv.XCRecordLocalHitPayload = recordXCLocalHitPayload
+end
+
+local function dispatchXCLocalHitPayload(data)
+    local recorder = sharedXCEnv and sharedXCEnv.XCRecordLocalHitPayload or recordXCLocalHitPayload
+    if type(recorder) == "function" then recorder(data) end
+end
+
+-- Build a per-shot payload for Silent Aim. InventoryController reuses parts of
+-- its shot table for automatic fire, so editing Bullets/Hits in place poisons
+-- the following rounds and can make the weapon stop after a short burst.
+-- XC therefore copies only the mutable path and leaves the game's source table
+-- completely untouched.
+local function prepareXCSilentShotPayload(data, forceSendStage)
+    -- When the native bullet ray hook is available, the shot has already been
+    -- redirected before Fire Rate / InventoryController serialize it. Do not
+    -- perform a second target roll or payload rewrite here.
+    if not forceSendStage and (xcNativeSilentHooked or UserInputService.TouchEnabled) then
+        return data, false
+    end
+    local silentEnabled = forceSendStage and isXCSilentAimRequested() or XCConfig.silentAimEnabled
+    if not silentEnabled
+        or type(data) ~= "table"
+        or type(data.Bullets) ~= "table" then
+        return data, false
+    end
+
+    local targetPart = getSilentAimTarget and getSilentAimTarget() or silentAimResolved
+    if not targetPart or not targetPart.Parent then return data, false end
+
+    local chance = math.clamp(tonumber(XCConfig.silentAimHitChance) or 100, 0, 100)
+    if chance < 100 and math.random(1, 100) > chance then return data, false end
+
+    local camPos, aimPos = nil, nil
+    if forceSendStage then
+        local activeCamera = Workspace.CurrentCamera or camera
+        if activeCamera then
+            camPos = activeCamera.CFrame.Position
+            aimPos = getKinematicAimPosition(targetPart)
+        end
+    elseif silentAimCamPosAim then
+        camPos, aimPos = silentAimCamPosAim(targetPart)
+    end
+    if not camPos or not aimPos then return data, false end
+
+    local shotData = {}
+    for key, value in pairs(data) do shotData[key] = value end
+    local shotBullets = {}
+    shotData.Bullets = shotBullets
+
+    for key, bullet in pairs(data.Bullets) do
+        if type(bullet) ~= "table" then
+            shotBullets[key] = bullet
+        else
+            local shotBullet = {}
+            for bulletKey, value in pairs(bullet) do shotBullet[bulletKey] = value end
+            shotBullets[key] = shotBullet
+
+            local origin = bullet.Origin or bullet.StartingPoint or bullet.Position or camPos
+            if typeof(origin) == "CFrame" then origin = origin.Position end
+            if typeof(origin) ~= "Vector3" then origin = camPos end
+
+            local delta = aimPos - origin
+            if delta.Magnitude > 0.001 then
+                -- Preserve the direction magnitude expected by the weapon. Some
+                -- guns use a unit vector while others store ray distance here.
+                if typeof(bullet.Direction) == "Vector3" then
+                    local magnitude = bullet.Direction.Magnitude
+                    shotBullet.Direction = delta.Unit * (magnitude > 0.001 and magnitude or 1)
+                end
+                if typeof(bullet.Ray) == "Ray" then
+                    local magnitude = bullet.Ray.Direction.Magnitude
+                    shotBullet.Ray = Ray.new(bullet.Ray.Origin, delta.Unit * magnitude)
+                end
+            end
+
+            if type(bullet.Hits) == "table" then
+                local shotHits = {}
+                shotBullet.Hits = shotHits
+                for hitKey, hitData in pairs(bullet.Hits) do
+                    if type(hitData) == "table" then
+                        local shotHit = {}
+                        for field, value in pairs(hitData) do shotHit[field] = value end
+                        shotHit.Instance = targetPart
+                        shotHit.Position = targetPart.Position
+                        shotHits[hitKey] = shotHit
+                    else
+                        shotHits[hitKey] = hitData
+                    end
+                end
+            end
+
+            if XCConfig.wallbangEnabled then
+                shotBullet.Penetration = 9999
+                shotBullet.Wallbang = true
+                shotBullet.IgnoreEnvironment = true
+            end
+        end
+    end
+
+    silentAimResolved = targetPart
+    if registerXCLocalHitCandidate then registerXCLocalHitCandidate(targetPart) end
+    return shotData, true
+end
+
+if sharedXCEnv then
+    sharedXCEnv.XCPrepareSilentShotPayloadV23 = prepareXCSilentShotPayload
+    sharedXCEnv.XCPrepareSilentSendPayloadV28 = function(data)
+        if xcBulletInterceptHooked or xcMobileCameraSilentHooked then return data, false end
+        return prepareXCSilentShotPayload(data, true)
+    end
+end
+
+local function dispatchXCPrepareSilentShotPayload(data)
+    local prepare = sharedXCEnv and sharedXCEnv.XCPrepareSilentShotPayloadV23 or prepareXCSilentShotPayload
+    if type(prepare) ~= "function" then return data, false end
+    return prepare(data)
+end
+
+-- Legacy XC hooks remain alive after reinjection. Disable their old in-place
+-- rewriter only for the synchronous original call, then restore the UI toggle.
+local function callXCShotWithoutLegacyRewrite(callback, self, data, ...)
+    local silentWasEnabled = XCConfig.silentAimEnabled
+    XCConfig.silentAimEnabled = false
+    local results = table.pack(pcall(callback, self, data, ...))
+    XCConfig.silentAimEnabled = silentWasEnabled
+    if not results[1] then error(results[2], 0) end
+    return table.unpack(results, 2, results.n)
+end
+
+function setupBloxStrikeShootHook()
+    if bloxStrikeShootHooked then return end
+    
+    pcall(function()
+        local visualInputConnection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
+            if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
+                local char = player.Character
+                local tool = char and char:FindFirstChildOfClass("Tool")
+                
+                if (XCConfig.bulletTrailEnabled or XCConfig.bulletFlashEnabled) and tool then
+                    local cam = Workspace.CurrentCamera or camera
+                    if not cam then return end
+                    
+                    local origin = cam.CFrame.Position
+                    local muzzle = tool:FindFirstChild("Muzzle") or tool:FindFirstChild("Handle")
+                    if muzzle and muzzle:IsA("BasePart") then
+                        origin = muzzle.Position
+                    end
+
+                    local rayParams = RaycastParams.new()
+                    rayParams.FilterType = Enum.RaycastFilterType.Exclude
+                    rayParams.FilterDescendantsInstances = {player.Character, camera}
+                    rayParams.IgnoreWater = true
+                    
+                    local hit = Workspace:Raycast(origin, cam.CFrame.LookVector * 500, rayParams)
+                    local bulletEnd = hit and hit.Position or (origin + cam.CFrame.LookVector * 500)
+                    local dist = (origin - bulletEnd).Magnitude
+
+                    if XCConfig.bulletTrailEnabled then
+                        local trail = Instance.new("Part")
+                        trail.Anchored = true
+                        trail.CanCollide = false
+                        trail.CanTouch = false
+                        trail.CanQuery = false
+                        trail.CastShadow = false
+                        trail.Material = (XCConfig.bulletTracerStyle == "Cylinder") and Enum.Material.Neon or Enum.Material.Neon
+                        trail.Color = XCConfig.bulletTracerRainbow and Color3.fromHSV((os.clock()*0.35)%1,0.9,1) or rgb(XCConfig.bulletTracerColorR,XCConfig.bulletTracerColorG,XCConfig.bulletTracerColorB)
+                        local width = math.clamp(tonumber(XCConfig.bulletTracerWidth) or 0.08, 0.02, 0.5)
+                        if XCConfig.bulletTracerStyle == "Cylinder" then
+                            trail.Shape = Enum.PartType.Cylinder
+                            trail.Size = Vector3.new(dist, width, width)
+                            trail.CFrame = CFrame.lookAt(origin, bulletEnd) * CFrame.Angles(0, math.rad(90), 0) * CFrame.new(-dist/2,0,0)
+                        else
+                            trail.Size = Vector3.new(width, width, dist)
+                            trail.CFrame = CFrame.lookAt(origin, bulletEnd) * CFrame.new(0, 0, -dist / 2)
+                        end
+                        trail.Parent = Workspace
+                        local duration = math.clamp(tonumber(XCConfig.bulletTracerDuration) or 0.65, 0.05, 10)
+                        TweenService:Create(trail, TweenInfo.new(duration, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Transparency = 1}):Play()
+                        task.delay(duration + 0.05, function() pcall(function() trail:Destroy() end) end)
+                    end
+
+                    if XCConfig.bulletImpactEnabled then
+                        local impact = Instance.new("Part")
+                        impact.Anchored = true; impact.CanCollide = false; impact.CanTouch = false; impact.CanQuery = false; impact.CastShadow = false
+                        impact.Shape = Enum.PartType.Ball
+                        impact.Material = Enum.Material.Neon
+                        impact.Color = XCConfig.bulletTracerRainbow and Color3.fromHSV((os.clock()*0.35)%1,0.9,1) or rgb(XCConfig.bulletTracerColorR,XCConfig.bulletTracerColorG,XCConfig.bulletTracerColorB)
+                        local sz = math.clamp(tonumber(XCConfig.bulletImpactSize) or 0.35, 0.05, 2)
+                        impact.Size = Vector3.new(sz,sz,sz)
+                        impact.CFrame = CFrame.new(bulletEnd)
+                        impact.Parent = Workspace
+                        TweenService:Create(impact, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size=Vector3.zero, Transparency=1}):Play()
+                        task.delay(0.4, function() pcall(function() impact:Destroy() end) end)
+                    end
+
+                    if XCConfig.bulletFlashEnabled then
+                        local flash = Instance.new("Part")
+                        flash.Anchored = true; flash.CanCollide = false; flash.CanTouch = false; flash.CanQuery = false; flash.CastShadow = false
+                        flash.Material = Enum.Material.Neon
+                        flash.Color = rgb(255,80,80)
+                        flash.Shape = Enum.PartType.Ball
+                        flash.Size = Vector3.new(0.6,0.6,0.6)
+                        flash.CFrame = CFrame.new(origin)
+                        flash.Parent = Workspace
+                        TweenService:Create(flash, TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size=Vector3.zero, Transparency=1}):Play()
+                        task.delay(0.15, function() pcall(function() flash:Destroy() end) end)
+                    end
+                end
+            end
+        end)
+        table.insert(connections, visualInputConnection)
+    end)
+
+    pcall(function()
+        local controllers = ReplicatedStorage:FindFirstChild("Controllers")
+        local moduleScript = controllers and controllers:FindFirstChild("InventoryController")
+        if not moduleScript then return end
+
+        local inventoryController = require(moduleScript)
+        if type(inventoryController) ~= "table" then return end
+        if type(inventoryController.ShootWeapon) ~= "function" then return end
+        if rawget(inventoryController, "__XCSilentAimSafeHookV25") then
+            bloxStrikeShootHooked = true
+            return
+        end
+
+        -- This also upgrades a persistent pre-v23 wrapper. The old wrapper is
+        -- called with Silent Aim temporarily disabled, so it cannot mutate the
+        -- fresh payload a second time.
+        local originalShootWeapon = inventoryController.ShootWeapon
+        inventoryController.ShootWeapon = function(self, data, ...)
+            -- Capture the user's real toggle before a persistent inner wrapper
+            -- masks XCConfig to suppress its obsolete payload mutation.
+            setXCSilentAimRequested(XCConfig.silentAimEnabled)
+            local shotData = dispatchXCPrepareSilentShotPayload(data)
+
+            -- The payload belongs to the local InventoryController. Record only
+            -- enemy parts predicted by this exact shot; health changes from other
+            -- players are ignored by the hit feedback system below.
+            dispatchXCLocalHitPayload(shotData)
+
+            return callXCShotWithoutLegacyRewrite(originalShootWeapon, self, shotData, ...)
+        end
+
+        rawset(inventoryController, "__XCShootHooked", true)
+        rawset(inventoryController, "__XCHitConfirmHookV18", true)
+        rawset(inventoryController, "__XCSilentAimSafeHookV23", true)
+        rawset(inventoryController, "__XCSilentAimSafeHookV25", true)
+        bloxStrikeShootHooked = true
+    end)
+end
+
+-- ==========================================
+-- STABLE RCS & RECOIL
+-- ==========================================
+local noRecoil = {
+    isShooting = false
+}
+
+local fireStartConn = UserInputService.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        noRecoil.isShooting = true
+    end
+end)
+table.insert(connections, fireStartConn)
+
+local fireEndConn = UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        noRecoil.isShooting = false
+    end
+end)
+table.insert(connections, fireEndConn)
+
+-- ==========================================
+-- FACTION CHECK & HEALTH CHECK LOGIC -+WORK
+-- ==========================================
+function isAlly(plr)
+    if not plr or plr == player then return true end
+    if not XCConfig.chamsTeamCheck then return false end
+    
+    if plr.Team and player.Team then
+        return plr.Team == player.Team
+    end
+    if plr:GetAttribute("Team") and player:GetAttribute("Team") then
+        return plr:GetAttribute("Team") == player:GetAttribute("Team")
+    end
+    if plr.TeamColor and player.TeamColor and plr.TeamColor ~= BrickColor.new("White") then
+        return plr.TeamColor == player.TeamColor
+    end
+    return false
+end
+
+function isTargetEnemy(plr, char)
+    if not plr or plr == player then return false end
+    if char and char == player.Character then return false end
+    return not isAlly(plr)
+end
+
+function getXCHealth(char, plr, hum)
+    local health, maximum
+    if char then
+        health = char:GetAttribute("Health")
+        maximum = char:GetAttribute("MaxHealth")
+    end
+    if type(health) ~= "number" and plr then health = plr:GetAttribute("Health") end
+    if type(maximum) ~= "number" and plr then maximum = plr:GetAttribute("MaxHealth") end
+    if type(health) ~= "number" and hum then health = hum.Health end
+    if type(maximum) ~= "number" and hum then maximum = hum.MaxHealth end
+    if type(health) ~= "number" or health ~= health then return nil, nil end
+    if type(maximum) ~= "number" or maximum ~= maximum or maximum <= 0 then maximum = 100 end
+    return math.clamp(health, 0, maximum), maximum
+end
+
+registerXCLocalHitCandidate = function(hitInstance)
+    local cursor = hitInstance
+    local targetPlayer, targetCharacter
+    while cursor and cursor ~= Workspace do
+        if cursor:IsA("Model") then
+            local candidate = Players:GetPlayerFromCharacter(cursor)
+            if candidate then
+                targetPlayer, targetCharacter = candidate, cursor
+                break
+            end
+        end
+        cursor = cursor.Parent
+    end
+    if not targetPlayer or not isTargetEnemy(targetPlayer, targetCharacter) then return end
+    local hum = targetCharacter:FindFirstChildOfClass("Humanoid")
+    local health = getXCHealth(targetCharacter, targetPlayer, hum)
+    if health == nil then return end
+    local healthKey = hum or targetCharacter
+    local pending = hitmarkerPendingHits[healthKey]
+    if pending and pending.Expires > os.clock() then
+        pending.Expires = os.clock() + 0.8
+        pending.HitCount += 1
+        return
+    end
+    hitmarkerPendingHits[healthKey] = {
+        Character = targetCharacter,
+        Player = targetPlayer,
+        Health = health,
+        Expires = os.clock() + 0.8,
+        HitCount = 1,
+    }
+end
+
+function getTargetHitbox(char)
+    if not char then return nil end
+    if XCConfig.bodyAimOnly then
+        return char:FindFirstChild("UpperTorso") or char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso")
+    end
+    if aimboneIndex == 1 then
+        return char:FindFirstChild("Head") or char:FindFirstChild("UpperTorso")
+    elseif aimboneIndex == 2 then
+        return char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso") or char:FindFirstChild("Head")
+    else
+        return char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("UpperTorso") or char:FindFirstChild("Head")
+    end
+end
+
+function isEntityAlive(char, hum)
+    if not char or not char.Parent or not char:IsDescendantOf(Workspace) then 
+        return false 
+    end
+    
+    local health = getXCHealth(char, Players:GetPlayerFromCharacter(char), hum)
+    if health ~= nil and health <= 0 then return false end
+    if hum and hum.Parent then
+        local health = 100
+        pcall(function() health = hum.Health end)
+        if health <= 0 then 
+            return false 
+        end
+        
+        local state = nil
+        pcall(function() state = hum:GetState() end)
+        if state == Enum.HumanoidStateType.Dead then 
+            return false 
+        end
+    end
+
+    local root = char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso")
+    local head = char:FindFirstChild("Head")
+    if not root and not head then
+        return false
+    end
+
+    return true
+end
+
+-- ==========================================
+-- VISIBILITY CHECK SYSTEM WORK
+-- ==========================================
+local wallRayParams = RaycastParams.new()
+wallRayParams.FilterType = Enum.RaycastFilterType.Exclude
+wallRayParams.IgnoreWater = true
+
+function isVisibleThroughWalls(targetPart, targetChar)
+    if not camera or not targetPart or not targetChar then return false end
+    local myChar = player.Character
+    wallRayParams.FilterDescendantsInstances = {myChar, camera}
+    local origin = camera.CFrame.Position
+    local dir = targetPart.Position - origin
+    
+    local hit = Workspace:Raycast(origin, dir, wallRayParams)
+    if hit then
+        if hit.Instance:IsDescendantOf(targetChar) or hit.Instance == targetPart then
+            return true
+        end
+    end
+    return false
+end
+
+-- ==========================================
+-- ZERO-LAG SILENT AIM -+WORK
+-- ==========================================
+getSilentAimTarget = function()
+    local cam = Workspace.CurrentCamera or camera
+    if not cam then return nil end
+    local camPos = cam.CFrame.Position
+    local camLook = cam.CFrame.LookVector
+    local maxAngle = math.rad(XCConfig.silentAimFov)
+    local best, bestAngle = nil, maxAngle
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr == player then continue end
+        if XCConfig.silentAimTeamCheck and isAlly(plr) then continue end
+        local char = plr.Character
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        if not isEntityAlive(char, hum) then continue end
+        local part = char:FindFirstChild(XCConfig.silentAimAimHead and "Head" or "HumanoidRootPart")
+            or char:FindFirstChild("Torso")
+        if not part or not part:IsA("BasePart") then continue end
+        if XCConfig.silentAimVisibleCheck and not isVisibleThroughWalls(part, char) then
+            continue
+        end
+        local predictedPos = getKinematicAimPosition(part)
+        local dir = (predictedPos - camPos).Unit
+        local angle = math.acos(math.clamp(camLook:Dot(dir), -1, 1))
+        if angle < bestAngle then
+            bestAngle = angle
+            best = part
+        end
+    end
+    return best
+end
+
+silentAimCamPosAim = function(targetPart)
+    targetPart = targetPart or silentAimResolved
+    if not (XCConfig.silentAimEnabled and targetPart) then return nil end
+    local cam = Workspace.CurrentCamera or camera
+    if not cam then return nil end
+    local camPos = cam.CFrame.Position
+    local aimPos = getKinematicAimPosition(targetPart)
+
+    -- getKinematicAimPosition() is the single source of prediction.
+    -- Do not apply a second lateral lead here.
+    return camPos, aimPos
+end
+
+local xcMobileSilentGateUntil = 0
+local xcMobileSilentGateAllowed = false
+local xcMobileSilentGateTarget = nil
+
+local function getXCMobileSilentRayTarget()
+    local now = os.clock()
+    if now >= xcMobileSilentGateUntil
+        or not xcMobileSilentGateTarget
+        or not xcMobileSilentGateTarget.Parent then
+        xcMobileSilentGateUntil = now + 0.035
+        xcMobileSilentGateTarget = getSilentAimTarget and getSilentAimTarget() or silentAimResolved
+        local chance = math.clamp(tonumber(XCConfig.silentAimHitChance) or 100, 0, 100)
+        xcMobileSilentGateAllowed = xcMobileSilentGateTarget ~= nil
+            and (chance >= 100 or math.random(1, 100) <= chance)
+    end
+    return xcMobileSilentGateAllowed and xcMobileSilentGateTarget or nil
+end
+
+function setupSilentAimHooks()
+    if silentAimHooked and silentAimCamHooked then return end
+
+    if not silentAimHooked and UserInputService.TouchEnabled then
+        -- Native bullet redirection is used on mobile. Do not create/access a
+        -- Mouse object because some mobile executors report it as desktop input.
+        silentAimHooked = true
+    elseif not silentAimHooked and hookmetamethod then
+        pcall(function()
+            local mouse = player:GetMouse()
+            local oldIndex
+            oldIndex = hookmetamethod(mouse, "__index", function(self, key)
+                if XCConfig.silentAimEnabled and silentAimResolved and (key == "Hit" or key == "UnitRay") then
+                    local camPos, aimPos = silentAimCamPosAim()
+                    if camPos then
+                        if key == "Hit" then
+                            return CFrame.new(camPos, aimPos)
+                        else
+                            return Ray.new(camPos, (aimPos - camPos).Unit)
+                        end
+                    end
+                end
+                return oldIndex(self, key)
+            end)
+        end)
+        silentAimHooked = true
+    end
+
+    if not silentAimCamHooked and hookmetamethod and getnamecallmethod then
+        local cameraHookInstalled = pcall(function()
+            local oldNamecall
+            oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
+                local method = getnamecallmethod()
+                local args = {...}
+
+                local activeCamera = Workspace.CurrentCamera or camera
+                if isXCSilentAimRequested() and noRecoil.isShooting
+                    and self == activeCamera
+                    and (method == "ViewportPointToRay" or method == "ScreenPointToRay") then
+                    local targetPart = UserInputService.TouchEnabled
+                        and getXCMobileSilentRayTarget() or silentAimResolved
+                    if targetPart and targetPart.Parent then
+                        local originalRay = oldNamecall(self, ...)
+                        if typeof(originalRay) == "Ray" then
+                            local aimPos = getKinematicAimPosition(targetPart)
+                            local delta = aimPos - originalRay.Origin
+                            if delta.Magnitude > 0.001 then
+                                local magnitude = originalRay.Direction.Magnitude
+                                return Ray.new(originalRay.Origin, delta.Unit * (magnitude > 0.001 and magnitude or 1))
+                            end
+                        end
+                    end
+                end
+
+                if XCConfig.pSilentEnabled and silentAimResolved and self == Workspace then
+                    local camPos, aimPos = silentAimCamPosAim()
+                    if aimPos then
+                        if method == "Raycast" then
+                            local origin = args[1]
+                            local originalDirection = args[2]
+                            if typeof(origin) == "Vector3" and typeof(originalDirection) == "Vector3" then
+                                local magnitude = originalDirection.Magnitude
+                                local delta = aimPos - origin
+                                if magnitude > 0 and delta.Magnitude > 0.001 then
+                                    args[2] = delta.Unit * magnitude
+                                    if XCConfig.wallbangEnabled then
+                                        local wbParams = RaycastParams.new()
+                                        wbParams.FilterType = Enum.RaycastFilterType.Include
+                                        local charList = {}
+                                        for _, plr in ipairs(Players:GetPlayers()) do
+                                            if plr.Character then
+                                                table.insert(charList, plr.Character)
+                                            end
+                                        end
+                                        wbParams.FilterDescendantsInstances = charList
+                                        wbParams.IgnoreWater = true
+                                        args[3] = wbParams
+                                    end
+                                    return oldNamecall(self, unpack(args))
+                                end
+                            end
+                        elseif method == "FindPartOnRay"
+                            or method == "FindPartOnRayWithIgnoreList"
+                            or method == "FindPartOnRayWithWhitelist" then
+                            local oldRay = args[1]
+                            if typeof(oldRay) == "Ray" then
+                                local delta = aimPos - oldRay.Origin
+                                if delta.Magnitude > 0.001 then
+                                    args[1] = Ray.new(oldRay.Origin, delta.Unit * oldRay.Direction.Magnitude)
+                                    return oldNamecall(self, unpack(args))
+                                end
+                            end
+                        end
+                    end
+                end
+
+                return oldNamecall(self, ...)
+            end)
+        end)
+        silentAimCamHooked = cameraHookInstalled
+        if UserInputService.TouchEnabled and cameraHookInstalled then
+            xcMobileCameraSilentHooked = true
+        end
+    end
+end
+
+-- Native Blox Strike Silent Aim path. Redirecting Bullet._performRaycast keeps
+-- Silent Aim independent from character LookYaw (Spin/Jitter anti-aim) and
+-- from the weapon's FireRate. The InventoryController payload hook below is
+-- retained only for game versions where these weapon modules are unavailable.
+local xcNativeRaycast = nil
+local xcNativeGetRayIgnore = nil
+
+local function castXCNativeSilentShot(origin, direction, properties)
+    if not xcNativeRaycast or type(xcNativeRaycast.cast) ~= "function"
+        or type(xcNativeRaycast.castThrough) ~= "function"
+        or type(xcNativeGetRayIgnore) ~= "function" then
+        return nil
+    end
+
+    local range = math.max(1, tonumber(properties and properties.Range) or 500)
+    local penetration = math.max(0, tonumber(properties and properties.Penetration) or 0)
+    local maxSurfaces = 24
+    if XCConfig.wallbangEnabled then
+        penetration = math.max(penetration, range)
+        maxSurfaces = 100
+    end
+
+    local ignore = xcNativeGetRayIgnore()
+    local result = {Origin = origin, Direction = direction, Distance = range, Hits = {}}
+    local first = xcNativeRaycast.cast(origin, direction * range, nil, ignore)
+    if type(first) ~= "table" or not first.instance then return result end
+    if typeof(first.position) == "Vector3" then
+        result.Distance = (first.position - origin).Magnitude
+    end
+
+    local throughDistance = math.max(penetration, 0.001)
+    local hits = xcNativeRaycast.castThrough(
+        first.position - direction * 0.001,
+        direction * (throughDistance + 0.001),
+        penetration,
+        ignore
+    )
+    if type(hits) ~= "table" then return result end
+    for index, hit in ipairs(hits) do
+        if index > maxSurfaces * 2 then break end
+        if type(hit) == "table" and hit.instance and hit.material and typeof(hit.position) == "Vector3" then
+            if (hit.position - origin).Magnitude > range + 0.01 then break end
+            table.insert(result.Hits, {
+                Position = hit.position,
+                Instance = hit.instance,
+                Material = hit.material.Name,
+                Normal = hit.normal or Vector3.zero,
+                Exit = index % 2 == 0,
+            })
+        end
+    end
+    return result
+end
+
+local function redirectXCNativeSilentShot(bullet, shot)
+    -- Use a dedicated request flag: persistent v23/v24 payload wrappers may
+    -- temporarily mask XCConfig.silentAimEnabled while calling the game.
+    if UserInputService.TouchEnabled then return shot end
+    if not isXCSilentAimRequested() or type(shot) ~= "table"
+        or typeof(shot.Origin) ~= "Vector3" then return shot end
+    if type(bullet) ~= "table" or bullet.IsDestroyed or bullet.IsActive == false then return shot end
+    local weapon = bullet.Weapon
+    if weapon and weapon.Player and weapon.Player ~= player then return shot end
+
+    local targetPart = getSilentAimTarget and getSilentAimTarget() or silentAimResolved
+    if not targetPart or not targetPart.Parent then return shot end
+    local chance = math.clamp(tonumber(XCConfig.silentAimHitChance) or 100, 0, 100)
+    if chance < 100 and math.random(1, 100) > chance then return shot end
+
+    local aimPosition = getKinematicAimPosition(targetPart)
+    local offset = aimPosition - shot.Origin
+    if offset.Magnitude < 0.05 then return shot end
+
+    local redirected = castXCNativeSilentShot(shot.Origin, offset.Unit, bullet.Properties or {})
+    if not redirected then return shot end
+    silentAimResolved = targetPart
+    if registerXCLocalHitCandidate then registerXCLocalHitCandidate(targetPart) end
+    return redirected
+end
+
+if sharedXCEnv then sharedXCEnv.XCNativeSilentRedirectV24 = redirectXCNativeSilentShot end
+
+function setupXCNativeSilentHook()
+    if xcNativeSilentHooked then return true end
+    -- Mobile weapon controllers reject a replacement _performRaycast result.
+    -- Phones use the argument-level bullet interceptor v29 instead.
+    if UserInputService.TouchEnabled then return false end
+    local installed = false
+    pcall(function()
+        local components = ReplicatedStorage:FindFirstChild("Components")
+        local weaponFolder = components and components:FindFirstChild("Weapon")
+        local classes = weaponFolder and weaponFolder:FindFirstChild("Classes")
+        local bulletScript = classes and classes:FindFirstChild("Bullet")
+        local common = components and components:FindFirstChild("Common")
+        local ignoreScript = common and common:FindFirstChild("GetRayIgnore")
+        local sharedFolder = ReplicatedStorage:FindFirstChild("Shared")
+        local raycastScript = sharedFolder and sharedFolder:FindFirstChild("Raycast")
+        if not bulletScript or not ignoreScript or not raycastScript then return end
+
+        local bulletModule = require(bulletScript)
+        local raycastModule = require(raycastScript)
+        local getRayIgnore = require(ignoreScript)
+        if type(bulletModule) ~= "table" or type(bulletModule._performRaycast) ~= "function"
+            or type(raycastModule) ~= "table" or type(raycastModule.cast) ~= "function"
+            or type(raycastModule.castThrough) ~= "function" or type(getRayIgnore) ~= "function" then return end
+
+        xcNativeRaycast = raycastModule
+        xcNativeGetRayIgnore = getRayIgnore
+        if rawget(bulletModule, "__XCSilentRayHookV24") then
+            installed = true
+            return
+        end
+
+        local originalRaycast = bulletModule._performRaycast
+        bulletModule._performRaycast = function(self, spread, ...)
+            local shot = originalRaycast(self, spread, ...)
+            local redirect = sharedXCEnv and sharedXCEnv.XCNativeSilentRedirectV24 or redirectXCNativeSilentShot
+            if type(redirect) ~= "function" then return shot end
+            local ok, redirected = pcall(redirect, self, shot)
+            return ok and redirected or shot
+        end
+        rawset(bulletModule, "__XCSilentRayHookV24", true)
+        installed = bulletModule._performRaycast ~= originalRaycast
+    end)
+    xcNativeSilentHooked = installed
+    return installed
+end
+
+-- Mobile bullet interception v29. The game still executes its original
+-- Bullet._performRaycast and builds the canonical shot/Hits payload. XC only
+-- redirects the ray arguments while that exact local bullet is being cast.
+local function beginXCBulletInterceptV29(bullet)
+    if xcMobileCameraSilentHooked then return nil end
+    if not isXCSilentAimRequested() or type(bullet) ~= "table"
+        or bullet.IsDestroyed or bullet.IsActive == false then return nil end
+    local weapon = bullet.Weapon
+    if not weapon or (weapon.Player and weapon.Player ~= player) then return nil end
+
+    local targetPart = getSilentAimTarget and getSilentAimTarget() or silentAimResolved
+    if not targetPart or not targetPart.Parent then return nil end
+    local chance = math.clamp(tonumber(XCConfig.silentAimHitChance) or 100, 0, 100)
+    if chance < 100 and math.random(1, 100) > chance then return nil end
+
+    return {
+        Thread = coroutine.running(),
+        Target = targetPart,
+        AimPosition = targetPart.Position,
+        Direction = nil,
+        Used = false,
+    }
+end
+
+if sharedXCEnv then sharedXCEnv.XCBeginBulletInterceptV29 = beginXCBulletInterceptV29 end
+
+local xcBulletInterceptContextV29 = nil
+local function getXCActiveBulletInterceptV29()
+    local context = sharedXCEnv and sharedXCEnv.XCBulletInterceptContextV29 or xcBulletInterceptContextV29
+    if not context then return nil end
+    local thread = coroutine.running()
+    if context.Thread and context.Thread ~= thread then return nil end
+    return context
+end
+
+local function redirectXCRaycastArgumentsV29(origin, direction, firstCast)
+    local context = getXCActiveBulletInterceptV29()
+    if not context or typeof(origin) ~= "Vector3" or typeof(direction) ~= "Vector3"
+        or direction.Magnitude <= 0.001 then return direction end
+    if firstCast and context.Used then return direction end
+
+    local delta = context.AimPosition - origin
+    if delta.Magnitude <= 0.05 then return direction end
+    local redirectedUnit = delta.Unit
+    if firstCast then
+        context.Used = true
+        context.Direction = redirectedUnit
+    elseif context.Direction then
+        redirectedUnit = context.Direction
+    end
+    return redirectedUnit * direction.Magnitude
+end
+
+function setupXCBulletInterceptHookV29()
+    if xcBulletInterceptHooked then return true end
+    if xcMobileCameraSilentHooked then return false end
+    if not UserInputService.TouchEnabled or type(hookfunction) ~= "function" then return false end
+    local installed = false
+    pcall(function()
+        local components = ReplicatedStorage:FindFirstChild("Components")
+        local weaponFolder = components and components:FindFirstChild("Weapon")
+        local classes = weaponFolder and weaponFolder:FindFirstChild("Classes")
+        local bulletScript = classes and classes:FindFirstChild("Bullet")
+        local sharedFolder = ReplicatedStorage:FindFirstChild("Shared")
+        local raycastScript = sharedFolder and sharedFolder:FindFirstChild("Raycast")
+        if not bulletScript or not raycastScript then return end
+
+        local bulletModule = require(bulletScript)
+        local raycastModule = require(raycastScript)
+        if type(bulletModule) ~= "table" or type(bulletModule._performRaycast) ~= "function"
+            or type(raycastModule) ~= "table" or type(raycastModule.cast) ~= "function"
+            or type(raycastModule.castThrough) ~= "function" then return end
+
+        if not (sharedXCEnv and sharedXCEnv.XCRaycastArgumentHooksV29) then
+            local oldCast
+            oldCast = hookfunction(raycastModule.cast, function(origin, direction, ...)
+                direction = redirectXCRaycastArgumentsV29(origin, direction, true)
+                return oldCast(origin, direction, ...)
+            end)
+
+            local oldCastThrough
+            oldCastThrough = hookfunction(raycastModule.castThrough, function(origin, direction, ...)
+                direction = redirectXCRaycastArgumentsV29(origin, direction, false)
+                return oldCastThrough(origin, direction, ...)
+            end)
+            if sharedXCEnv then sharedXCEnv.XCRaycastArgumentHooksV29 = true end
+        end
+
+        if rawget(bulletModule, "__XCBulletInterceptV29") then
+            installed = true
+            return
+        end
+
+        local originalPerformRaycast = bulletModule._performRaycast
+        bulletModule._performRaycast = function(self, spread, ...)
+            local begin = sharedXCEnv and sharedXCEnv.XCBeginBulletInterceptV29 or beginXCBulletInterceptV29
+            local okContext, context = pcall(begin, self)
+            if not okContext then context = nil end
+            local previous = sharedXCEnv and sharedXCEnv.XCBulletInterceptContextV29 or xcBulletInterceptContextV29
+            xcBulletInterceptContextV29 = context
+            if sharedXCEnv then sharedXCEnv.XCBulletInterceptContextV29 = context end
+
+            local results = table.pack(pcall(originalPerformRaycast, self, spread, ...))
+            xcBulletInterceptContextV29 = previous
+            if sharedXCEnv then sharedXCEnv.XCBulletInterceptContextV29 = previous end
+            if not results[1] then error(results[2], 0) end
+
+            local shot = results[2]
+            if context and context.Used and context.Direction and type(shot) == "table" then
+                local redirectedShot = table.clone(shot)
+                redirectedShot.Direction = context.Direction
+                results[2] = redirectedShot
+                silentAimResolved = context.Target
+                if registerXCLocalHitCandidate then registerXCLocalHitCandidate(context.Target) end
+            end
+            return table.unpack(results, 2, results.n)
+        end
+        rawset(bulletModule, "__XCBulletInterceptV29", true)
+        installed = true
+    end)
+    xcBulletInterceptHooked = installed
+    return installed
+end
+
+-- ==========================================
+-- CHAMS COLORS NO WORK & HITMARKER VARS NO WORK
+-- ==========================================
+local chamsColorVisible = Color3.fromRGB(152, 204, 0)
+local chamsColorHidden = Color3.fromRGB(112, 116, 122)
+local chamsColorAlly = Color3.fromRGB(194, 220, 112)
+local chamsOutlineColor = Color3.fromRGB(235, 235, 235)
+
+-- ==========================================
+-- XC SKINCHANGER
+-- ==========================================
+local skinData = {
+    SkinsRoot = nil,
+    WeaponAssets = nil,
+    SkinLibrary = nil,
+    GetWeapon = nil,
+    KnifeSet = {},
+    KnifeChoices = {},
+    SkinSelections = {},
+    GloveSelections = {},
+    GloveFolders = {},
+    ModifiedKnife = nil,
+    Ready = false,
+    LastRefresh = 0,
+    LastError = nil
+}
+
+function refreshXCSkinData()
+    if skinData.Ready and skinData.SkinsRoot and skinData.SkinsRoot.Parent and skinData.GetWeapon then return true end
+    if skinData.LastRefresh > 0 and os.clock() - skinData.LastRefresh < 1 then return skinData.Ready end
+    skinData.LastRefresh = os.clock()
+
+    local assets = ReplicatedStorage:FindFirstChild("Assets")
+    skinData.SkinsRoot = assets and assets:FindFirstChild("Skins")
+    skinData.WeaponAssets = assets and assets:FindFirstChild("Weapons")
+    if not skinData.SkinsRoot then return false end
+
+    pcall(function()
+        local database = ReplicatedStorage:FindFirstChild("Database")
+        local components = database and database:FindFirstChild("Components")
+        local libraries = components and components:FindFirstChild("Libraries")
+        local module = libraries and libraries:FindFirstChild("Skins")
+        if module then skinData.SkinLibrary = require(module) end
+    end)
+    pcall(function()
+        local controllers = ReplicatedStorage:FindFirstChild("Controllers")
+        local module = controllers and controllers:FindFirstChild("InventoryController")
+        local inventory = module and require(module)
+        if inventory and type(inventory.peekCurrentEquippedForMovement) == "function" then
+            skinData.GetWeapon = inventory.peekCurrentEquippedForMovement
+        end
+    end)
+
+    skinData.SkinSelections = {}
+    skinData.GloveSelections = {}
+    skinData.GloveFolders = {}
+    skinData.KnifeSet = {
+        ["CT Knife"] = true,
+        ["T Knife"] = true,
+        ["Knife"] = true
+    }
+
+    for _, weaponFolder in ipairs(skinData.SkinsRoot:GetChildren()) do
+        local skins = {}
+        for _, skin in ipairs(weaponFolder:GetChildren()) do
+            skins[#skins + 1] = skin.Name
+        end
+        table.sort(skins)
+        skinData.SkinSelections[weaponFolder.Name] = skins
+
+        local lowerName = weaponFolder.Name:lower()
+        if lowerName:find("knife", 1, true) or lowerName:find("karambit", 1, true)
+            or lowerName:find("bayonet", 1, true) or lowerName:find("butterfly", 1, true) then
+            skinData.KnifeSet[weaponFolder.Name] = true
+        end
+
+        if skinData.SkinLibrary and type(skinData.SkinLibrary.GetAllSkinsForWeapon) == "function" then
+            pcall(function()
+                local entries = skinData.SkinLibrary.GetAllSkinsForWeapon(weaponFolder.Name)
+                local sample = type(entries) == "table" and entries[1]
+                if type(sample) == "table" and sample.type == "Melee" then
+                    skinData.KnifeSet[weaponFolder.Name] = true
+                end
+            end)
+        end
+
+        if weaponFolder.Name:match("Glove") or weaponFolder.Name:match("Gloves") or weaponFolder.Name == "Hand Wraps" then
+            skinData.GloveFolders[#skinData.GloveFolders + 1] = weaponFolder
+            local gloveSkins = {"Default"}
+            for _, skin in ipairs(weaponFolder:GetChildren()) do
+                gloveSkins[#gloveSkins + 1] = skin.Name
+            end
+            skinData.GloveSelections[weaponFolder.Name] = gloveSkins
+        end
+    end
+
+    for weaponName, skins in pairs(skinData.SkinSelections) do
+        if XCConfig.weaponSkinSelections[weaponName] == nil then
+            XCConfig.weaponSkinSelections[weaponName] = skins[1] or "Default"
+        end
+    end
+
+    skinData.KnifeChoices = {}
+    for knifeName in pairs(skinData.KnifeSet) do
+        local baseKnife = knifeName == "CT Knife" or knifeName == "T Knife" or knifeName == "Knife"
+        if not baseKnife then
+            if not skinData.WeaponAssets or skinData.WeaponAssets:FindFirstChild(knifeName) then
+                skinData.KnifeChoices[#skinData.KnifeChoices + 1] = knifeName
+            end
+        end
+    end
+    table.sort(skinData.KnifeChoices)
+    if XCConfig.selectedKnifeType ~= "Default" and skinData.WeaponAssets
+        and not skinData.WeaponAssets:FindFirstChild(XCConfig.selectedKnifeType)
+        and skinData.KnifeChoices[1] then
+        XCConfig.selectedKnifeType = skinData.KnifeChoices[1]
+    end
+
+    skinData.Ready = skinData.GetWeapon ~= nil
+    return skinData.Ready
+end
+
+refreshXCSkinData()
+
+function isBaseKnife(name)
+    return name == "CT Knife" or name == "T Knife" or name == "Knife"
+end
+
+function getXCKnifeChoices()
+    refreshXCSkinData()
+    local choices = {}
+    for _, name in ipairs(skinData.KnifeChoices or {}) do choices[#choices + 1] = name end
+    if #choices == 0 then
+        choices = {"Butterfly Knife", "Karambit", "Bayonet"}
+    end
+    choices[#choices + 1] = "Default"
+    return choices
+end
+
+function constructXCKnifeView(view, character, weapon)
+    if not view or type(view.construct) ~= "function" or not character or not character.Parent then return false end
+    local readIdentity = getthreadidentity or getidentity
+    local writeIdentity = setthreadidentity or setidentity
+    local identity = readIdentity and writeIdentity and readIdentity()
+    local success, failure = pcall(function()
+        if identity then writeIdentity(2) end
+        local components = ReplicatedStorage:FindFirstChild("Components")
+        local common = components and components:FindFirstChild("Common")
+        local module = common and common:FindFirstChild("GetWeaponProperties")
+        if module then
+            local getProperties = require(module)
+            assert(getProperties(view.CameraModelWeapon or view.Weapon or weapon.Name), "knife properties unavailable")
+        end
+        view:construct(character, weapon)
+    end)
+    if identity then pcall(writeIdentity, identity) end
+    if success then skinData.LastError = nil else skinData.LastError = tostring(failure) end
+    return success
+end
+
+function restoreXCKnifeModel()
+    local record = skinData.ModifiedKnife
+    skinData.ModifiedKnife = nil
+    if not record then return end
+    local view, weapon = record.View, record.Weapon
+    if not view or not weapon or view.IsDestroyed or weapon.IsDestroyed then return end
+    view.CameraModelWeapon = record.CameraModelWeapon
+    view.Skin = record.Skin
+    view.Float = record.Float
+    constructXCKnifeView(view, weapon.Character or player.Character, weapon)
+end
+
+function applyXCKnifeChanger()
+    if not XCConfig.skinChangerEnabled then
+        restoreXCKnifeModel()
+        return false
+    end
+    if not refreshXCSkinData() or type(skinData.GetWeapon) ~= "function" then return false end
+
+    local ok, weapon = pcall(skinData.GetWeapon)
+    if not ok or not weapon or weapon.IsDestroyed then return false end
+    local view = weapon.Viewmodel
+    local properties = weapon.Properties
+    local melee = skinData.KnifeSet[weapon.Name]
+        or (type(properties) == "table" and properties.Class == "Melee")
+    if not view or not melee then
+        restoreXCKnifeModel()
+        return false
+    end
+
+    local selectedKnife = XCConfig.selectedKnifeType
+    if not selectedKnife or selectedKnife == "Default" then
+        restoreXCKnifeModel()
+        return true
+    end
+    if skinData.WeaponAssets and not skinData.WeaponAssets:FindFirstChild(selectedKnife) then
+        skinData.LastError = "knife asset unavailable: " .. tostring(selectedKnife)
+        return false
+    end
+    if skinData.ModifiedKnife and skinData.ModifiedKnife.View ~= view then restoreXCKnifeModel() end
+    if not skinData.ModifiedKnife then
+        skinData.ModifiedKnife = {
+            View = view,
+            Weapon = weapon,
+            CameraModelWeapon = view.CameraModelWeapon,
+            Skin = view.Skin,
+            Float = view.Float
+        }
+    end
+
+    local selectedSkin = XCConfig.selectedSkin or "Default"
+    local availableSkins = skinData.SkinSelections[selectedKnife]
+    if selectedSkin ~= "Default" and type(availableSkins) == "table"
+        and not table.find(availableSkins, selectedSkin) then
+        selectedSkin = "Default"
+    end
+    local modelChanged = view.CameraModelWeapon ~= selectedKnife
+    view.CameraModelWeapon = selectedKnife
+    view.Skin = selectedSkin ~= "Default" and selectedSkin or nil
+    view.Float = 0
+    if modelChanged or not view.Model or not view.Model.Parent then
+        if not constructXCKnifeView(view, weapon.Character or player.Character, weapon) then return false end
+    end
+    if view.Model and view.Model.Parent then
+        applySurfaceAppearanceSkin(view.Model, selectedKnife, selectedSkin)
+    end
+    skinData.LastError = nil
+    return true
+end
+
+function getCurrentWeaponModel()
+    local cam = Workspace.CurrentCamera or camera
+    if not cam then return nil end
+    for _, child in ipairs(cam:GetChildren()) do
+        if child:IsA("Model") and child.Name ~= "Viewmodel" and not child.Name:lower():find("light") then
+            return child
+        end
+    end
+    return nil
+end
+
+function applySurfaceAppearanceSkin(model, weaponName, skinName)
+    if not model or not skinData.SkinsRoot then return end
+    if not weaponName or not skinName or skinName == "Default" then return end
+
+    local weaponFolder = skinData.SkinsRoot:FindFirstChild(weaponName)
+    local skinFolder = weaponFolder and weaponFolder:FindFirstChild(skinName)
+    local cameraFolder = skinFolder and skinFolder:FindFirstChild("Camera")
+    local factoryNew = cameraFolder and cameraFolder:FindFirstChild("Factory New")
+    if not factoryNew then return end
+
+    for _, appearance in ipairs(factoryNew:GetChildren()) do
+        if appearance:IsA("SurfaceAppearance") then
+            local targetPart = model:FindFirstChild(appearance.Name, true)
+            if targetPart and targetPart:IsA("BasePart") then
+                for _, old in ipairs(targetPart:GetChildren()) do
+                    if old:IsA("SurfaceAppearance") then old:Destroy() end
+                end
+                appearance:Clone().Parent = targetPart
+            end
+        end
+    end
+end
+
+local lastBloxModuleScan = 0
+function hookBloxStrikeModules(forceScan)
+    local now = os.clock()
+    if not forceScan and lastBloxModuleScan > 0 and (now - lastBloxModuleScan) < 5 then return end
+    lastBloxModuleScan = now
+    refreshXCSkinData()
+    pcall(function()
+        if type(getgc) ~= "function" then return end
+        for _, obj in ipairs(getgc(true)) do
+            if type(obj) == "table" then
+                if rawget(obj, "EquippedMelee") ~= nil and XCConfig.skinChangerEnabled
+                    and XCConfig.selectedKnifeType ~= "Default" then
+                    obj.EquippedMelee = XCConfig.selectedKnifeType
+                end
+                if rawget(obj, "MeleeSkin") ~= nil and XCConfig.skinChangerEnabled
+                    and XCConfig.selectedKnifeType ~= "Default" then
+                    obj.MeleeSkin = XCConfig.selectedSkin
+                end
+                if rawget(obj, "Knife") ~= nil and type(obj.Knife) == "table" and XCConfig.skinChangerEnabled
+                    and XCConfig.selectedKnifeType ~= "Default" then
+                    obj.Knife.Name = XCConfig.selectedKnifeType
+                    obj.Knife.Skin = XCConfig.selectedSkin
+                end
+            end
+        end
+    end)
+end
+
+function scanAndMorphKnives(root)
+    if not XCConfig.skinChangerEnabled or not root then return end
+    if applyXCKnifeChanger() then return end
+    refreshXCSkinData()
+    if not skinData.SkinsRoot then return end
+
+    local weaponModel = getCurrentWeaponModel()
+    if weaponModel then
+        local selectedWeapon = weaponModel.Name
+        if isBaseKnife(selectedWeapon) then
+            selectedWeapon = XCConfig.selectedKnifeType
+        end
+        local selectedSkin = XCConfig.weaponSkinSelections[selectedWeapon]
+            or (selectedWeapon == XCConfig.selectedKnifeType and XCConfig.selectedSkin)
+            or "Default"
+        applySurfaceAppearanceSkin(weaponModel, selectedWeapon, selectedSkin)
+    end
+end
+
+function applyXCGloves()
+    if not XCConfig.gloveChangerEnabled then return end
+    refreshXCSkinData()
+    if not skinData.SkinsRoot then return end
+
+    local cam = Workspace.CurrentCamera or camera
+    if not cam then return end
+    local arms
+    for _, child in ipairs(cam:GetChildren()) do
+        if child:IsA("Model") and (child.Name:match("Arms") or child:FindFirstChild("Right Arm")) then
+            arms = child
+            break
+        end
+    end
+    if not arms then return end
+
+    local leftArm = arms:FindFirstChild("Left Arm")
+    local rightArm = arms:FindFirstChild("Right Arm")
+    local leftGlove = leftArm and leftArm:FindFirstChild("Glove")
+    local rightGlove = rightArm and rightArm:FindFirstChild("Glove")
+    if not leftGlove or not rightGlove then return end
+
+    local gloveFolder = skinData.SkinsRoot:FindFirstChild(XCConfig.selectedGloveModel)
+    local skinFolder = gloveFolder and gloveFolder:FindFirstChild(XCConfig.selectedGloveSkin)
+    local cameraFolder = skinFolder and skinFolder:FindFirstChild("Camera")
+    local factoryNew = cameraFolder and cameraFolder:FindFirstChild("Factory New")
+    if not factoryNew then return end
+
+    for _, glove in ipairs({leftGlove, rightGlove}) do
+        for _, old in ipairs(glove:GetChildren()) do
+            if old:IsA("SurfaceAppearance") then old:Destroy() end
+        end
+        for _, appearance in ipairs(factoryNew:GetChildren()) do
+            if appearance:IsA("SurfaceAppearance") then
+                appearance:Clone().Parent = glove
+            end
+        end
+    end
+end
+
+-- Compatibility with the existing XC render scanner.
+task.spawn(function()
+    while xcSessionActive() do
+        task.wait(0.25)
+        pcall(function()
+            if XCConfig.skinChangerEnabled then
+                applyXCKnifeChanger()
+            end
+            if XCConfig.gloveChangerEnabled then
+                applyXCGloves()
+            end
+        end)
+    end
+end)
+
+-- ==========================================
+-- EXTRA XC MODULES
+-- Skin/knife/gloves are already handled above.
+-- These modules are intentionally self-contained so they do not
+-- interfere with the existing aim/ESP/render engines.
+-- ==========================================
+
+local noFallLastCharacter = nil
+local animationTrack = nil
+local animationObject = nil
+local spectatorGui = nil
+local spectatorFrame = nil
+local spectatorListLabel = nil
+local spectatorCounterLabel = nil
+local handsLastModel = nil
+local handsLastPivot = nil
+
+function setNoFallDamage(enabled)
+    if not enabled then return end
+    local char = player and player.Character
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    if not hum then return end
+    pcall(function()
+        hum:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+        hum:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
+    end)
+end
+
+function stopXCAnimation()
+    if animationTrack then
+        pcall(function() animationTrack:Stop(0.12) end)
+        animationTrack = nil
+    end
+    if animationObject then
+        pcall(function() animationObject:Destroy() end)
+        animationObject = nil
+    end
+end
+
+function playXCAnimation()
+    stopXCAnimation()
+    if not XCConfig.animationsEnabled then return end
+    local char = player and player.Character
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    local controller = char and char:FindFirstChildOfClass("AnimationController")
+    local animationHost = controller or hum
+    if not char or not animationHost then return end
+    local animator = animationHost:FindFirstChildOfClass("Animator")
+        or char:FindFirstChildWhichIsA("Animator", true)
+    if not animator and hum then
+        animator = Instance.new("Animator")
+        animator.Parent = hum
+    end
+    if not animator then return end
+    local id = tostring(XCConfig.animationId or ""):match("%d+")
+    if not id then return end
+    animationObject = Instance.new("Animation")
+    animationObject.Name = "XCAnimation"
+    animationObject.AnimationId = "rbxassetid://" .. id
+    local ok, track = pcall(function() return animator:LoadAnimation(animationObject) end)
+    if not ok or not track then
+        stopXCAnimation()
+        return
+    end
+    animationTrack = track
+    animationTrack.Priority = Enum.AnimationPriority.Action4
+    animationTrack.Looped = XCConfig.animationLoop
+    animationTrack:Play(0.15, 1, math.clamp(XCConfig.animationSpeed, 0.1, 3))
+end
+
+function getSpectatorNames()
+    local names = {}
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= player and plr:GetAttribute("IsSpectating") == true then
+            names[#names + 1] = plr
+        end
+    end
+    table.sort(names, function(a,b) return a.Name:lower() < b.Name:lower() end)
+    return names
+end
+
+function buildSpectatorGui()
+    if spectatorGui and spectatorGui.Parent then return end
+    spectatorGui = Instance.new("ScreenGui")
+    spectatorGui.Name = "XCSpectatorGui"
+    spectatorGui.ResetOnSpawn = false
+    spectatorGui.IgnoreGuiInset = true
+    spectatorGui.DisplayOrder = 21
+    spectatorGui.Parent = targetGui
+
+    spectatorFrame = Instance.new("Frame", spectatorGui)
+    spectatorFrame.Size = UDim2.new(0, 210, 0, 120)
+    spectatorFrame.Position = UDim2.new(1, -224, 0, 92)
+    spectatorFrame.BackgroundColor3 = currentTheme.Background
+    spectatorFrame.BorderSizePixel = 0
+    spectatorFrame.Visible = false
+    Instance.new("UICorner", spectatorFrame).CornerRadius = UDim.new(0, 6)
+    local stroke = Instance.new("UIStroke", spectatorFrame)
+    stroke.Color = currentTheme.Border
+    stroke.Thickness = 1
+
+    local title = Instance.new("TextLabel", spectatorFrame)
+    title.Size = UDim2.new(1, -12, 0, 22)
+    title.Position = UDim2.new(0, 6, 0, 4)
+    title.BackgroundTransparency = 1
+    title.Text = "SPECTATORS"
+    title.TextColor3 = currentTheme.Accent
+    title.TextSize = 9
+    title.Font = Enum.Font.GothamBold
+    title.TextXAlignment = Enum.TextXAlignment.Left
+
+    spectatorCounterLabel = Instance.new("TextLabel", spectatorFrame)
+    spectatorCounterLabel.Size = UDim2.new(1, -12, 0, 18)
+    spectatorCounterLabel.Position = UDim2.new(0, 6, 0, 24)
+    spectatorCounterLabel.BackgroundTransparency = 1
+    spectatorCounterLabel.TextColor3 = currentTheme.TextSecondary
+    spectatorCounterLabel.TextSize = 8
+    spectatorCounterLabel.Font = Enum.Font.GothamBold
+    spectatorCounterLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+    spectatorListLabel = Instance.new("TextLabel", spectatorFrame)
+    spectatorListLabel.Size = UDim2.new(1, -12, 1, -48)
+    spectatorListLabel.Position = UDim2.new(0, 6, 0, 44)
+    spectatorListLabel.BackgroundTransparency = 1
+    spectatorListLabel.TextColor3 = currentTheme.TextPrimary
+    spectatorListLabel.TextSize = 8
+    spectatorListLabel.Font = Enum.Font.Gotham
+    spectatorListLabel.TextWrapped = true
+    spectatorListLabel.TextXAlignment = Enum.TextXAlignment.Left
+    spectatorListLabel.TextYAlignment = Enum.TextYAlignment.Top
+end
+
+function updateSpectatorGui()
+    buildSpectatorGui()
+    local names = getSpectatorNames()
+    local watching = player and player:GetAttribute("Spectators")
+    if type(watching) ~= "number" then watching = nil end
+    spectatorFrame.Visible = XCConfig.spectatorListEnabled and not (XCConfig.spectatorHideEmpty and #names == 0 and not watching)
+    spectatorCounterLabel.Visible = XCConfig.spectatorCounterEnabled
+    spectatorCounterLabel.Text = "Watching you: " .. (watching and tostring(math.floor(watching)) or "?")
+    local lines = {}
+    for _, plr in ipairs(names) do
+        if XCConfig.spectatorNameMode == "Username" then
+            lines[#lines+1] = plr.Name
+        elseif XCConfig.spectatorNameMode == "Both" and plr.DisplayName ~= plr.Name then
+            lines[#lines+1] = plr.DisplayName .. "  @" .. plr.Name
+        else
+            lines[#lines+1] = plr.DisplayName
+        end
+    end
+    spectatorListLabel.Text = #lines > 0 and table.concat(lines, "\n") or "No active spectators"
+    spectatorFrame.Size = UDim2.new(0, 210, 0, math.max(88, 64 + math.min(#lines, 8) * 14))
+end
+
+function applyXCHandsOffset()
+    if not XCConfig.customHandsEnabled then
+        handsLastModel = nil
+        handsLastPivot = nil
+        return
+    end
+    local cam = Workspace.CurrentCamera or camera
+    if not cam then return end
+    local model = getCurrentWeaponModel()
+    if not model or not model:IsA("Model") then return end
+    if handsLastModel ~= model then
+        handsLastModel = model
+        handsLastPivot = model:GetPivot()
+    end
+    local original = model:GetPivot()
+    local offset = CFrame.new(XCConfig.customHandsX, XCConfig.customHandsY, XCConfig.customHandsZ)
+        * CFrame.Angles(math.rad(XCConfig.customHandsPitch), math.rad(XCConfig.customHandsYaw), math.rad(XCConfig.customHandsRoll))
+    pcall(function()
+        model:PivotTo(cam.CFrame * offset * cam.CFrame:ToObjectSpace(original))
+    end)
+end
+
+-- Lightweight background update for the extra modules.
+local spectatorUpdateAccumulator = 0
+local animationUpdateAccumulator = 0
+table.insert(connections, RunService.RenderStepped:Connect(function(dt)
+    if not XCConfig.noFallDamageEnabled
+        and not XCConfig.spectatorListEnabled
+        and not XCConfig.customHandsEnabled
+        and not animationTrack then
+        if spectatorFrame then spectatorFrame.Visible = false end
+        return
+    end
+    if XCConfig.noFallDamageEnabled then
+        local char = player and player.Character
+        if char ~= noFallLastCharacter then
+            noFallLastCharacter = char
+            setNoFallDamage(true)
+        end
+    end
+    if XCConfig.spectatorListEnabled then
+        spectatorUpdateAccumulator += dt
+        if spectatorUpdateAccumulator >= 0.5 then
+            spectatorUpdateAccumulator = 0
+            updateSpectatorGui()
+        end
+    elseif spectatorFrame then
+        spectatorFrame.Visible = false
+    end
+    if XCConfig.customHandsEnabled then
+        applyXCHandsOffset()
+    end
+    if animationTrack and animationTrack.IsPlaying then
+        animationUpdateAccumulator += dt
+        if animationUpdateAccumulator >= 0.25 then
+            animationUpdateAccumulator = 0
+            animationTrack.Looped = XCConfig.animationLoop
+            pcall(function() animationTrack:AdjustSpeed(math.clamp(XCConfig.animationSpeed, 0.1, 3)) end)
+        end
+    end
+end))
+
+-- ==========================================
+-- TRIGGERBOT NO WORK & MOVEMENT STATE NO WORK
+-- ==========================================
+local triggerbotMobileAutoFire = true
+local lastTriggerTick = 0
+
+local currentSpinAngle = 0
+local isMobileJumpHeld = false
+local lastMoveDirection = Vector3.zero
+local xcCharacterInputHook = {
+    Ready = false,
+    Module = nil,
+    Original = nil,
+    Wrapper = nil,
+    Buttons = nil,
+    Character = nil,
+    GroundSince = nil,
+    LastJumpDown = false,
+    AntiCharacter = nil,
+    AntiStarted = nil,
+    AntiLastStep = nil,
+    RandomYaw = nil,
+    AntiFireUntil = 0,
+    LastError = nil,
+}
+
+local isSliding = false
+local currentSlideVel = Vector3.zero
+local defaultHipHeight = 2.0
+local defaultHipHeightCaptured = false
+
+-- ==========================================
+-- ENVIRONMENT PRESETS & FOG LIBRARY FULL WORK
+-- ==========================================
+local nightPresets = {
+    ["Midnight"] = {
+        ClockTime = 0.0,
+        Brightness = 0.2,
+        OutdoorAmbient = Color3.fromRGB(25, 25, 40),
+        Ambient = Color3.fromRGB(15, 15, 25),
+        FogColor = Color3.fromRGB(10, 10, 20)
+    },
+    ["Nebula"] = {
+        ClockTime = 23.8,
+        Brightness = 0.3,
+        OutdoorAmbient = Color3.fromRGB(70, 25, 85),
+        Ambient = Color3.fromRGB(45, 15, 60),
+        FogColor = Color3.fromRGB(90, 30, 110)
+    },
+    ["DeepBlood"] = {
+        ClockTime = 0.0,
+        Brightness = 0.35,
+        OutdoorAmbient = Color3.fromRGB(75, 10, 15),
+        Ambient = Color3.fromRGB(45, 5, 10),
+        FogColor = Color3.fromRGB(35, 5, 8)
+    },
+    ["CyberPurple"] = {
+        ClockTime = 23.5,
+        Brightness = 0.3,
+        OutdoorAmbient = Color3.fromRGB(65, 15, 95),
+        Ambient = Color3.fromRGB(40, 10, 60),
+        FogColor = Color3.fromRGB(30, 8, 45)
+    },
+    ["EmeraldNight"] = {
+        ClockTime = 1.0,
+        Brightness = 0.25,
+        OutdoorAmbient = Color3.fromRGB(10, 55, 30),
+        Ambient = Color3.fromRGB(5, 35, 20),
+        FogColor = Color3.fromRGB(5, 25, 15)
+    },
+    ["PitchBlack"] = {
+        ClockTime = 0.0,
+        Brightness = 0.0,
+        OutdoorAmbient = Color3.fromRGB(0, 0, 0),
+        Ambient = Color3.fromRGB(0, 0, 0),
+        FogColor = Color3.fromRGB(0, 0, 0)
+    }
+}
+
+local fogLibrary = {
+    ["Nebula"] = Color3.fromRGB(90, 30, 110),
+    ["nebula"] = Color3.fromRGB(90, 30, 110),
+    ["Midnight"] = Color3.fromRGB(10, 10, 20),
+    ["DeepBlood"] = Color3.fromRGB(35, 5, 8),
+    ["CyberPurple"] = Color3.fromRGB(30, 8, 45),
+    ["EmeraldNight"] = Color3.fromRGB(5, 25, 15),
+    ["PitchBlack"] = Color3.fromRGB(0, 0, 0)
+}
+
+local defaultLighting = {
+    Brightness = Lighting.Brightness,
+    ClockTime = Lighting.ClockTime,
+    GlobalShadows = Lighting.GlobalShadows,
+    Ambient = Lighting.Ambient,
+    OutdoorAmbient = Lighting.OutdoorAmbient,
+    ExposureCompensation = Lighting.ExposureCompensation,
+    FogStart = Lighting.FogStart,
+    FogEnd = Lighting.FogEnd,
+    FogColor = Lighting.FogColor
+}
+
+-- ==========================================
+-- DISPLAY CONTAINERS SETUP
+-- ==========================================
+local mainContainer = Instance.new("ScreenGui")
+mainContainer.Name = "XCMainContainer"
+mainContainer.ResetOnSpawn = false
+mainContainer.DisplayOrder = 10
+mainContainer.IgnoreGuiInset = true
+mainContainer.Parent = targetGui
+
+local overlayContainer = Instance.new("Folder", mainContainer)
+overlayContainer.Name = "XC_2DOverlay"
+
+local grenadeContainer = Instance.new("Folder", mainContainer)
+grenadeContainer.Name = "XC_GrenadeOverlay"
+
+local jumpCircleFolder = Instance.new("Folder", Workspace)
+jumpCircleFolder.Name = "XC_JumpCircleWorld"
+
+local grenadePool = {}
+local grenadeDangerPool = setmetatable({}, {__mode = "k"})
+local grenadeDangerScanStarted = false
+local soundEspTracked = setmetatable({}, {__mode = "k"})
+local soundEspPulses = {}
+local mobileSlideBtn = nil
+
+-- ==========================================
+-- HITMARKER & DAMAGE FEEDBACK
+-- ==========================================
+local hitmarkerGui = Instance.new("ScreenGui")
+hitmarkerGui.Name = "XCHitmarkerGui"
+hitmarkerGui.ResetOnSpawn = false
+hitmarkerGui.IgnoreGuiInset = true
+hitmarkerGui.DisplayOrder = 60
+hitmarkerGui.Parent = mainContainer
+
+local hitmarkerCenter = Instance.new("Frame")
+hitmarkerCenter.Name = "Center"
+hitmarkerCenter.AnchorPoint = Vector2.new(0.5, 0.5)
+hitmarkerCenter.Position = UDim2.new(0.5, 0, 0.5, 0)
+hitmarkerCenter.Size = UDim2.new(0, 0, 0, 0)
+hitmarkerCenter.BackgroundTransparency = 1
+hitmarkerCenter.Visible = false
+hitmarkerCenter.Parent = hitmarkerGui
+
+local hitmarkerLines = {}
+for i, rotation in ipairs({45, -45, 135, -135}) do
+    local line = Instance.new("Frame")
+    line.Name = "Line" .. i
+    line.AnchorPoint = Vector2.new(0.5, 0.5)
+    line.Size = UDim2.new(0, XCConfig.hitmarkerThickness, 0, XCConfig.hitmarkerSize)
+    line.BackgroundColor3 = currentTheme.Accent
+    line.BorderSizePixel = 0
+    line.BackgroundTransparency = 1
+    line.Rotation = rotation
+    line.Parent = hitmarkerCenter
+
+    local glow = Instance.new("UIStroke")
+    glow.Name = "NeonGlow"
+    glow.Color = currentTheme.Accent
+    glow.Thickness = XCConfig.hitmarkerGlow and 2.5 or 0
+    glow.Transparency = 1
+    glow.Parent = line
+
+    hitmarkerLines[i] = line
+end
+
+local hitmarkerDamage = Instance.new("TextLabel")
+hitmarkerDamage.Name = "Damage"
+hitmarkerDamage.AnchorPoint = Vector2.new(0.5, 0)
+hitmarkerDamage.Position = UDim2.fromOffset(0, XCConfig.hitmarkerSize + 7)
+hitmarkerDamage.Size = UDim2.fromOffset(92, 18)
+hitmarkerDamage.BackgroundTransparency = 1
+hitmarkerDamage.Text = ""
+hitmarkerDamage.TextColor3 = Color3.fromRGB(152, 204, 0)
+hitmarkerDamage.TextStrokeColor3 = Color3.fromRGB(8, 8, 8)
+hitmarkerDamage.TextStrokeTransparency = 0.15
+hitmarkerDamage.TextTransparency = 1
+hitmarkerDamage.Font = Enum.Font.Code
+hitmarkerDamage.TextSize = 13
+hitmarkerDamage.TextXAlignment = Enum.TextXAlignment.Center
+hitmarkerDamage.Visible = false
+hitmarkerDamage.Parent = hitmarkerCenter
+
+function refreshHitmarkerTheme()
+    for _, line in ipairs(hitmarkerLines) do
+        line.BackgroundColor3 = currentTheme.Accent
+        local glow = line:FindFirstChild("NeonGlow")
+        if glow then
+            glow.Color = currentTheme.Accent
+            glow.Thickness = XCConfig.hitmarkerGlow and 2.5 or 0
+        end
+    end
+end
+
+function showHitmarker(damage)
+    if type(playXCHitSound) == "function" then playXCHitSound() end
+    if not XCConfig.hitmarkerEnabled then return end
+
+    hitmarkerSerial += 1
+    local serial = hitmarkerSerial
+    hitmarkerCenter.Visible = true
+
+    local size = math.clamp(tonumber(XCConfig.hitmarkerSize) or 13, 5, 30)
+    local thickness = math.clamp(tonumber(XCConfig.hitmarkerThickness) or 2, 1, 6)
+
+    for _, line in ipairs(hitmarkerLines) do
+        line.Size = UDim2.fromOffset(thickness, size)
+        line.BackgroundTransparency = 0
+        local glow = line:FindFirstChild("NeonGlow")
+        if glow then glow.Transparency = 0.05 end
+    end
+
+    local shownDamage = tonumber(damage)
+    if shownDamage and shownDamage > 0 then
+        hitmarkerDamage.Position = UDim2.fromOffset(0, size + 7)
+        hitmarkerDamage.Text = string.format("-%d HP", math.max(1, math.floor(shownDamage + 0.5)))
+        hitmarkerDamage.TextTransparency = 0
+        hitmarkerDamage.TextStrokeTransparency = 0.15
+        hitmarkerDamage.Visible = true
+    else
+        hitmarkerDamage.Visible = false
+    end
+
+    local fadeInfo = TweenInfo.new(
+        math.max(0.05, XCConfig.hitmarkerDuration),
+        Enum.EasingStyle.Quad,
+        Enum.EasingDirection.Out
+    )
+
+    for _, line in ipairs(hitmarkerLines) do
+        TweenService:Create(line, fadeInfo, {
+            BackgroundTransparency = 1
+        }):Play()
+
+        local glow = line:FindFirstChild("NeonGlow")
+        if glow then
+            TweenService:Create(glow, fadeInfo, {Transparency = 1}):Play()
+        end
+    end
+    if hitmarkerDamage.Visible then
+        TweenService:Create(hitmarkerDamage, fadeInfo, {TextTransparency = 1, TextStrokeTransparency = 1}):Play()
+    end
+
+    task.delay(math.max(0.05, XCConfig.hitmarkerDuration), function()
+        if serial == hitmarkerSerial then
+            hitmarkerCenter.Visible = false
+            hitmarkerDamage.Visible = false
+        end
+    end)
+end
+
+if genv then
+    genv.XCShowHitmarker = showHitmarker
+end
+
+-- ==========================================
+-- THIRD PERSON WORK
+-- ==========================================
+local isThirdPersonActive = false
+local thirdPersonSaved = nil
+
+function getThirdPersonTarget()
+    local char = player.Character
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    if not char or not hum or hum.Health <= 0 then return nil, nil end
+    return char, hum
+end
+
+function restoreThirdPerson()
+    isThirdPersonActive = false
+
+    local char = player.Character
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+
+    if camera and thirdPersonSaved then
+        camera.CameraMinZoomDistance = thirdPersonSaved.minZoom
+        camera.CameraMaxZoomDistance = thirdPersonSaved.maxZoom
+    end
+
+    if player and thirdPersonSaved then
+        pcall(function()
+            player.CameraMode = thirdPersonSaved.cameraMode
+        end)
+    end
+
+    if camera then
+        camera.CameraType = Enum.CameraType.Custom
+        if hum then
+            camera.CameraSubject = hum
+        end
+    end
+
+    thirdPersonSaved = nil
+end
+
+function applyThirdPerson()
+    if not XCConfig.thirdPersonEnabled then
+        if isThirdPersonActive then
+            restoreThirdPerson()
+        end
+        return
+    end
+
+    camera = Workspace.CurrentCamera or camera
+    if not camera then return end
+
+    local char, hum = getThirdPersonTarget()
+    if not char then
+        if isThirdPersonActive then
+            restoreThirdPerson()
+        end
+        return
+    end
+
+    if not isThirdPersonActive then
+        thirdPersonSaved = {
+            cameraMode = player.CameraMode,
+            minZoom = camera.CameraMinZoomDistance,
+            maxZoom = camera.CameraMaxZoomDistance
+        }
+        isThirdPersonActive = true
+    end
+
+    -- XC behavior:
+    -- use Roblox's native third-person camera instead of forcing
+    -- a Scriptable camera. This preserves touch-look, joystick and
+    -- the game's normal camera pipeline on both mobile and PC.
+    pcall(function()
+        player.CameraMode = Enum.CameraMode.Classic
+    end)
+
+    local distance = math.clamp(
+        tonumber(XCConfig.thirdPersonDistance) or 12,
+        5,
+        50
+    )
+
+    camera.CameraMinZoomDistance = distance
+    camera.CameraMaxZoomDistance = distance
+    camera.CameraType = Enum.CameraType.Custom
+    camera.CameraSubject = hum
+end
+
+function setThirdPersonEnabled(enabled)
+    XCConfig.thirdPersonEnabled = enabled and true or false
+
+    if not enabled then
+        restoreThirdPerson()
+    else
+        isThirdPersonActive = false
+        thirdPersonSaved = nil
+    end
+end
+
+function refreshThirdPerson()
+    if XCConfig.thirdPersonEnabled then
+        applyThirdPerson()
+    end
+end
+
+-- ==========================================
+-- LIGHTING & ATMOSPHERE FUNCTIONS WORK
+-- ==========================================
+function applyNightPreset(presetName)
+    local cfg = nightPresets[presetName]
+    if not cfg then return end
+    XCConfig.nightPreset = presetName
+    XCConfig.nightClockTime = cfg.ClockTime
+    XCConfig.nightBrightness = cfg.Brightness
+    
+    if XCConfig.nightModeEnabled then
+        Lighting.ClockTime = cfg.ClockTime
+        Lighting.Brightness = cfg.Brightness
+        Lighting.OutdoorAmbient = cfg.OutdoorAmbient
+        Lighting.Ambient = cfg.Ambient
+        Lighting.GlobalShadows = true
+        if not XCConfig.removeFogEnabled then
+            Lighting.FogColor = fogLibrary[presetName] or cfg.FogColor
+        end
+        updateWorldChanger()
+    end
+end
+
+function restoreLightingState()
+    pcall(function()
+        Lighting.Brightness = defaultLighting.Brightness
+        Lighting.ClockTime = defaultLighting.ClockTime
+        Lighting.GlobalShadows = defaultLighting.GlobalShadows
+        Lighting.Ambient = defaultLighting.Ambient
+        Lighting.OutdoorAmbient = defaultLighting.OutdoorAmbient
+        Lighting.FogEnd = defaultLighting.FogEnd
+        Lighting.FogStart = defaultLighting.FogStart or 0
+        Lighting.FogColor = defaultLighting.FogColor
+        Lighting.ExposureCompensation = defaultLighting.ExposureCompensation or 0
+        restoreWorldSkybox()
+        local fx = Lighting:FindFirstChild("XCWorldColorFX")
+        if fx then fx:Destroy() end
+        if XCFeatureState and XCFeatureState.worldAtmosphere then
+            XCFeatureState.worldAtmosphere:Destroy()
+            XCFeatureState.worldAtmosphere = nil
+        end
+        if XCFeatureState and XCFeatureState.worldOriginalAtmosphere then
+            XCFeatureState.worldOriginalAtmosphere.Parent = Lighting
+            XCFeatureState.worldOriginalAtmosphere = nil
+        end
+        if XCFeatureState and XCFeatureState.worldBloom then
+            XCFeatureState.worldBloom:Destroy()
+            XCFeatureState.worldBloom = nil
+        end
+    end)
+end
+
+-- ==========================================
+--  WORLD VISUALS
+-- ==========================================
+local worldSkyboxData = {
+    ["Night"] = {"rbxassetid://1514717643","rbxassetid://1514716936","rbxassetid://1514715910","rbxassetid://1514714945","rbxassetid://1514714011","rbxassetid://1514713374"},
+    ["Ocean Sunset"] = {"rbxassetid://17525686840","rbxassetid://17525678473","rbxassetid://17525684686","rbxassetid://17525680663","rbxassetid://17525682665","rbxassetid://17525674545"},
+    ["My Summer Car"] = {"rbxassetid://16648590964","rbxassetid://16648617436","rbxassetid://16648595424","rbxassetid://16648566370","rbxassetid://16648577071","rbxassetid://16648598180"},
+    ["Standard"] = {"rbxassetid://91458024","rbxassetid://91457980","rbxassetid://91458024","rbxassetid://91458024","rbxassetid://91458024","rbxassetid://91458002"},
+    ["Minecraft"] = {"http://www.roblox.com/asset/?id=8735166756","http://www.roblox.com/asset/?id=8735166707","http://www.roblox.com/asset/?id=8735231668","http://www.roblox.com/asset/?id=8735166755","http://www.roblox.com/asset/?id=8735166751","http://www.roblox.com/asset/?id=8735166729"},
+    ["Spongebob"] = {"rbxassetid://277099484","rbxassetid://277099500","rbxassetid://277099554","rbxassetid://277099531","rbxassetid://277099589","rbxassetid://277101591"},
+    ["Deep Space"] = {"http://www.roblox.com/asset/?id=159248188","http://www.roblox.com/asset/?id=159248183","http://www.roblox.com/asset/?id=159248187","http://www.roblox.com/asset/?id=159248173","http://www.roblox.com/asset/?id=159248192","http://www.roblox.com/asset/?id=159248176"},
+    ["Clouded Sky"] = {"http://www.roblox.com/asset/?id=252760981","http://www.roblox.com/asset/?id=252763035","http://www.roblox.com/asset/?id=252761439","http://www.roblox.com/asset/?id=252760980","http://www.roblox.com/asset/?id=252760986","http://www.roblox.com/asset/?id=252762652"},
+    ["Retro"] = {"rbxasset://sky/null_plainsky512_bk.jpg","rbxasset://sky/null_plainsky512_dn.jpg","rbxasset://sky/null_plainsky512_ft.jpg","rbxasset://sky/null_plainsky512_lf.jpg","rbxasset://sky/null_plainsky512_rt.jpg","rbxasset://sky/null_plainsky512_up.jpg"},
+    ["City"] = {"http://www.roblox.com/asset/?id=9134792889","http://www.roblox.com/asset/?id=9134791975","http://www.roblox.com/asset/?id=9134793457","http://www.roblox.com/asset/?id=9134791234","http://www.roblox.com/asset/?id=9134790419","http://www.roblox.com/asset/?id=9134791633"},
+    ["Purple Nebula"] = {"rbxassetid://15983968922","rbxassetid://15983966825","rbxassetid://15983965025","rbxassetid://15983967420","rbxassetid://15983966246","rbxassetid://15983964246"},
+    ["Pink Sky"] = {"rbxassetid://7890140060","rbxassetid://7890140060","rbxassetid://7890140060","rbxassetid://7890140060","rbxassetid://7890140060","rbxassetid://7890140060"}
+}
+
+local originalSkybox = nil
+local originalPostFX = nil
+local weaponVisualState = setmetatable({}, {__mode = "k"})
+local weaponGlowObjects = setmetatable({}, {__mode = "k"})
+
+-- Weapon visual engine.
+-- Supports the five visual variants used by the reference implementation,
+-- while keeping XC's own configuration/state system and restoring every
+-- property that was changed when the module is disabled or the weapon changes.
+if XCConfig.weaponChamsMode == "Crystal" then XCConfig.weaponChamsMode = "Glass" end
+if XCConfig.weaponChamsMode == "Field" then XCConfig.weaponChamsMode = "ForceField" end
+if XCConfig.weaponChamsMode == "Chrome" then XCConfig.weaponChamsMode = "Metal" end
+if XCConfig.weaponChamsMode == "Glow" then XCConfig.weaponChamsMode = "Highlight" end
+
+function resolveWeaponModel()
+    local cam = Workspace.CurrentCamera or camera
+    if not cam then return nil end
+
+    local directCandidates = {}
+    for _, child in ipairs(cam:GetChildren()) do
+        if child:IsA("Model") then
+            local lower = child.Name:lower()
+            if not lower:find("light") and lower ~= "arms" and lower ~= "arms1" and lower ~= "arms2" then
+                local weapon = child:FindFirstChild("Weapon")
+                if weapon and weapon:IsA("Model") then
+                    return weapon
+                end
+                table.insert(directCandidates, child)
+            end
+        end
+    end
+
+    -- Some Blox Strike builds put the weapon one level deeper in the
+    -- viewmodel. Prefer an explicit Weapon model before falling back.
+    for _, root in ipairs(directCandidates) do
+        for _, node in ipairs(root:GetDescendants()) do
+            if node:IsA("Model") and node.Name == "Weapon" then
+                return node
+            end
+        end
+    end
+
+    -- Fallback: use a camera child that actually contains renderable parts,
+    -- but do not mistake the arms/light containers for the weapon.
+    for _, root in ipairs(directCandidates) do
+        local lower = root.Name:lower()
+        if lower ~= "viewmodel" and not lower:find("viewmodel") then
+            if root:FindFirstChildWhichIsA("BasePart", true) then
+                return root
+            end
+        end
+    end
+
+    return nil
+end
+
+function saveWeaponPartState(part)
+    if weaponVisualState[part] then return end
+    local state = {
+        material = part.Material,
+        color = part.Color,
+        transparency = part.Transparency,
+        reflectance = part.Reflectance,
+        children = {}
+    }
+
+    -- The reference removes SurfaceAppearance/Texture/Decal for most modes.
+    -- XC keeps backups so switching the module off never permanently
+    -- destroys the weapon's original appearance.
+    for _, child in ipairs(part:GetChildren()) do
+        if child:IsA("SurfaceAppearance") or child:IsA("Texture") or child:IsA("Decal") then
+            local ok, clone = pcall(function() return child:Clone() end)
+            if ok and clone then
+                table.insert(state.children, clone)
+            end
+        end
+    end
+    weaponVisualState[part] = state
+end
+
+function restoreWeaponPart(part, state)
+    if not part or not state then return end
+    pcall(function()
+        part.Material = state.material
+        part.Color = state.color
+        part.Transparency = state.transparency
+        part.Reflectance = state.reflectance
+    end)
+
+    pcall(function()
+        for _, child in ipairs(part:GetChildren()) do
+            if child:IsA("SurfaceAppearance") or child:IsA("Texture") or child:IsA("Decal") then
+                child:Destroy()
+            end
+        end
+        for _, clone in ipairs(state.children or {}) do
+            if clone then clone:Clone().Parent = part end
+        end
+    end)
+end
+
+function clearWeaponVisuals()
+    for part, state in pairs(weaponVisualState) do
+        if part and part.Parent then
+            restoreWeaponPart(part, state)
+        end
+        weaponVisualState[part] = nil
+    end
+    for part, obj in pairs(weaponGlowObjects) do
+        if obj and obj.Parent then pcall(function() obj:Destroy() end) end
+        weaponGlowObjects[part] = nil
+    end
+end
+
+function clearWeaponGlow(part)
+    local glow = weaponGlowObjects[part]
+    if glow then
+        pcall(function() glow:Destroy() end)
+        weaponGlowObjects[part] = nil
+    end
+end
+
+function setWeaponVisuals()
+    if not XCConfig.weaponChamsEnabled then
+        clearWeaponVisuals()
+        return
+    end
+
+    local model = resolveWeaponModel()
+    if not model then
+        clearWeaponVisuals()
+        return
+    end
+
+    local style = XCConfig.weaponChamsMode or "Glass"
+    local validStyles = {
+        Glass = true,
+        ForceField = true,
+        Metal = true,
+        Highlight = true,
+        Neon = true,
+    }
+    if not validStyles[style] then style = "Glass" end
+
+    local tint = rgb(
+        XCConfig.weaponChamsColorR,
+        XCConfig.weaponChamsColorG,
+        XCConfig.weaponChamsColorB
+    )
+    local activeParts = {}
+
+    for _, part in ipairs(model:GetDescendants()) do
+        if part:IsA("BasePart")
+            and part.Name ~= "Hitbox"
+            and part.Name ~= "HumanoidRootPart"
+            and part.Name ~= "ViewmodelLight"
+            and not part:FindFirstAncestor("ViewmodelLight")
+        then
+            activeParts[part] = true
+            saveWeaponPartState(part)
+
+            pcall(function()
+                if style == "Highlight" then
+                    local h = weaponGlowObjects[part]
+                    if not h or not h.Parent then
+                        h = Instance.new("Highlight")
+                        h.Name = "XCWeaponChams"
+                        h.Adornee = part
+                        h.FillTransparency = 0
+                        h.OutlineTransparency = 1
+                        h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                        h.Parent = part
+                        weaponGlowObjects[part] = h
+                    end
+                    h.FillColor = tint
+                else
+                    clearWeaponGlow(part)
+
+                    -- Match the reference behavior: remove surface overlays for
+                    -- material-based variants so the selected material is visible.
+                    for _, child in ipairs(part:GetChildren()) do
+                        if child:IsA("SurfaceAppearance") or child:IsA("Texture") or child:IsA("Decal") then
+                            child:Destroy()
+                        end
+                    end
+
+                    if style == "Glass" then
+                        part.Material = Enum.Material.Glass
+                        part.Color = tint
+                        part.Transparency = math.clamp(
+                            tonumber(XCConfig.weaponChamsTransparency) or 0.4, 0, 1
+                        )
+                        part.Reflectance = 0
+                    elseif style == "ForceField" then
+                        part.Material = Enum.Material.ForceField
+                        part.Color = tint
+                        part.Transparency = 0
+                        part.Reflectance = 0
+                    elseif style == "Metal" then
+                        part.Material = Enum.Material.Metal
+                        part.Color = tint
+                        part.Reflectance = math.clamp(
+                            tonumber(XCConfig.weaponChamsReflectance) or 1.0, 0, 1
+                        )
+                        part.Transparency = 0
+                    elseif style == "Neon" then
+                        part.Material = Enum.Material.Neon
+                        part.Color = tint
+                        part.Transparency = 0
+                        part.Reflectance = 0
+                    end
+                end
+            end)
+        end
+    end
+
+    -- Restore parts belonging to the previous weapon/model and remove stale
+    -- Highlight instances when the weapon is switched or rebuilt.
+    for part, state in pairs(weaponVisualState) do
+        if not activeParts[part] then
+            if part and part.Parent then restoreWeaponPart(part, state) end
+            weaponVisualState[part] = nil
+            clearWeaponGlow(part)
+        end
+    end
+end
+
+function applyWorldSkybox()
+    local data = worldSkyboxData[XCConfig.worldSkyboxPreset]
+    if not data or not XCConfig.worldSkyboxEnabled then return end
+    pcall(function()
+        if not originalSkybox then
+            local existing = Lighting:FindFirstChildOfClass("Sky")
+            if existing and existing.Name ~= "XCWorldSky" then
+                originalSkybox = existing:Clone()
+                existing:Destroy()
+            end
+        end
+        local sky = Lighting:FindFirstChild("XCWorldSky")
+        if not sky then
+            sky = Instance.new("Sky")
+            sky.Name = "XCWorldSky"
+            sky.Parent = Lighting
+        end
+        sky.SkyboxBk, sky.SkyboxDn, sky.SkyboxFt = data[1], data[2], data[3]
+        sky.SkyboxLf, sky.SkyboxRt, sky.SkyboxUp = data[4], data[5], data[6]
+        pcall(function()
+            sky.SkyboxOrientation = Vector3.new(0, tonumber(XCConfig.worldSkyRotation) or 0, 0)
+            sky.StarCount = math.clamp(tonumber(XCConfig.worldSkyStars) or 0, 0, 5000)
+            sky.CelestialBodiesShown = XCConfig.worldSkyCelestial == true
+        end)
+    end)
+end
+
+function restoreWorldSkybox()
+    pcall(function()
+        local sky = Lighting:FindFirstChild("XCWorldSky")
+        if sky then sky:Destroy() end
+        if originalSkybox then
+            originalSkybox.Parent = Lighting
+            originalSkybox = nil
+        end
+    end)
+end
+
+function updateWorldPostFX()
+    if not XCConfig.worldPostFXEnabled then
+        local fx = Lighting:FindFirstChild("XCWorldColorFX")
+        if fx then fx:Destroy() end
+        Lighting.ExposureCompensation = defaultLighting.ExposureCompensation or 0
+        return
+    end
+    local fx = Lighting:FindFirstChild("XCWorldColorFX")
+    if not fx then
+        fx = Instance.new("ColorCorrectionEffect")
+        fx.Name = "XCWorldColorFX"
+        fx.Parent = Lighting
+    end
+    fx.Saturation = math.clamp(XCConfig.worldSaturation or 0, -1, 1)
+    fx.Contrast = math.clamp(XCConfig.worldContrast or 0, -1, 1)
+    fx.TintColor = XCFeatureState.worldTonePresets[XCConfig.worldTonePreset]
+        or rgb(XCConfig.worldColorR, XCConfig.worldColorG, XCConfig.worldColorB)
+    Lighting.ExposureCompensation = math.clamp(XCConfig.worldExposure or 0, -5, 5)
+end
+
+function updateXCWorldAtmosphere()
+    local weatherOwnsFog = XCConfig.weatherEnabled and XCConfig.weatherMode == "Fog"
+    if not XCConfig.worldAtmosphereEnabled or weatherOwnsFog then
+        if XCFeatureState.worldAtmosphere then XCFeatureState.worldAtmosphere:Destroy() end
+        XCFeatureState.worldAtmosphere = nil
+        if XCFeatureState.worldOriginalAtmosphere and not weatherOwnsFog then
+            XCFeatureState.worldOriginalAtmosphere.Parent = Lighting
+            XCFeatureState.worldOriginalAtmosphere = nil
+        end
+        return
+    end
+    if not XCFeatureState.worldAtmosphere or not XCFeatureState.worldAtmosphere.Parent then
+        if not XCFeatureState.worldOriginalAtmosphere then
+            for _, object in ipairs(Lighting:GetChildren()) do
+                if object:IsA("Atmosphere") and object.Name ~= "XCWeatherAtmosphere" then
+                    XCFeatureState.worldOriginalAtmosphere = object:Clone()
+                    object:Destroy()
+                    break
+                end
+            end
+        end
+        XCFeatureState.worldAtmosphere = Instance.new("Atmosphere")
+        XCFeatureState.worldAtmosphere.Name = "XCWorldAtmosphere"
+        XCFeatureState.worldAtmosphere.Parent = Lighting
+    end
+    local atmosphere = XCFeatureState.worldAtmosphere
+    atmosphere.Density = math.clamp(tonumber(XCConfig.worldAtmosphereDensity) or 0.3, 0, 1)
+    atmosphere.Haze = math.clamp(tonumber(XCConfig.worldAtmosphereHaze) or 0, 0, 10)
+    atmosphere.Glare = math.clamp(tonumber(XCConfig.worldAtmosphereGlare) or 0, 0, 10)
+    atmosphere.Color = XCFeatureState.worldTonePresets[XCConfig.worldTonePreset] or Color3.fromRGB(220, 230, 210)
+    atmosphere.Decay = Color3.fromRGB(92, 102, 82)
+end
+
+function updateXCWorldBloom()
+    if not XCConfig.worldBloomEnabled then
+        if XCFeatureState.worldBloom then XCFeatureState.worldBloom:Destroy() end
+        XCFeatureState.worldBloom = nil
+        return
+    end
+    if not XCFeatureState.worldBloom or not XCFeatureState.worldBloom.Parent then
+        XCFeatureState.worldBloom = Instance.new("BloomEffect")
+        XCFeatureState.worldBloom.Name = "XCWorldBloom"
+        XCFeatureState.worldBloom.Parent = Lighting
+    end
+    XCFeatureState.worldBloom.Intensity = math.clamp(tonumber(XCConfig.worldBloomIntensity) or 0.35, 0, 3)
+    XCFeatureState.worldBloom.Size = math.clamp(tonumber(XCConfig.worldBloomSize) or 24, 0, 56)
+    XCFeatureState.worldBloom.Threshold = math.clamp(tonumber(XCConfig.worldBloomThreshold) or 1, 0, 5)
+end
+
+function updateWorldChanger()
+    if XCConfig.worldSkyboxEnabled then applyWorldSkybox() else restoreWorldSkybox() end
+    updateWorldPostFX()
+    updateXCWorldAtmosphere()
+    updateXCWorldBloom()
+    if XCConfig.worldFogEnd and XCConfig.worldFogEnd > 0 then
+        Lighting.FogStart = math.max(0, XCConfig.worldFogStart or 0)
+        Lighting.FogEnd = math.max(Lighting.FogStart + 1, XCConfig.worldFogEnd)
+    end
+end
+
+-- ==========================================================================
+-- [ CUBE CHECKER ]
+-- camera-ray surface marker.
+-- ==========================================================================
+do
+    local cubePart = Instance.new("Part")
+    cubePart.Name = "XC_CubeChecker"
+    cubePart.Anchored = true
+    cubePart.CanCollide = false
+    cubePart.CanTouch = false
+    cubePart.CanQuery = false
+    cubePart.CastShadow = false
+    cubePart.Material = Enum.Material.Neon
+    cubePart.Transparency = 0.98
+    cubePart.Size = Vector3.new(1.5, 1.5, 0.01)
+
+    local cubeOutline = Instance.new("SelectionBox")
+    cubeOutline.Name = "CubeCheckerOutline"
+    cubeOutline.Adornee = cubePart
+    cubeOutline.Color3 = Color3.fromRGB(210, 45, 55)
+    cubeOutline.LineThickness = 0.04
+    cubeOutline.Transparency = 0.2
+    cubeOutline.Parent = cubePart
+
+    local cubeRayParams = RaycastParams.new()
+    cubeRayParams.FilterType = Enum.RaycastFilterType.Exclude
+    cubeRayParams.IgnoreWater = true
+
+    local cubeRenderConnection = RunService.RenderStepped:Connect(function()
+        pcall(function()
+            if not XCConfig.cubeCheckerEnabled then
+                cubePart.Parent = nil
+                return
+            end
+
+            local cam = Workspace.CurrentCamera
+            if not cam then
+                cubePart.Parent = nil
+                return
+            end
+
+            local distance = math.clamp(tonumber(XCConfig.cubeCheckerDistance) or 20, 1, 200)
+            local size = math.clamp(tonumber(XCConfig.cubeCheckerSize) or 1.5, 0.1, 10)
+            local lineThickness = math.clamp(tonumber(XCConfig.cubeCheckerLineThickness) or 0.04, 0.01, 0.2)
+            local outlineTransparency = math.clamp(tonumber(XCConfig.cubeCheckerTransparency) or 0.2, 0, 1)
+            local col = XCConfig.cubeCheckerRainbow
+                and Color3.fromHSV((os.clock() * 0.2) % 1, 1, 1)
+                or rgb(XCConfig.bulletTracerColorR, XCConfig.bulletTracerColorG, XCConfig.bulletTracerColorB)
+
+            cubeRayParams.FilterDescendantsInstances = {player.Character, cubePart}
+            local origin = cam.CFrame.Position
+            local result = Workspace:Raycast(origin, cam.CFrame.LookVector * distance, cubeRayParams)
+
+            if not result then
+                cubePart.Parent = nil
+                return
+            end
+
+            cubePart.Size = Vector3.new(size, size, 0.01)
+            cubePart.Color = col
+            cubePart.CFrame = CFrame.lookAt(result.Position + result.Normal * 0.02, result.Position + result.Normal)
+            cubeOutline.Color3 = col
+            cubeOutline.LineThickness = lineThickness
+            cubeOutline.Transparency = outlineTransparency
+            cubePart.Parent = Workspace
+        end)
+    end)
+    table.insert(connections, cubeRenderConnection)
+end
+
+-- Scope overlay adapted from XC: FOV override, removable scope and configurable crosshair.
+function findSniperScope()
+    local pg = player and player:FindFirstChildOfClass("PlayerGui")
+    if not pg then return nil end
+    local main = pg:FindFirstChild("MainGui")
+    local gameplay = main and main:FindFirstChild("Gameplay")
+    local middle = gameplay and gameplay:FindFirstChild("Middle")
+    return middle and middle:FindFirstChild("SniperScope") or nil
+end
+
+function ensureScopeGui()
+    if scopeGui and scopeGui.Parent then return end
+    scopeGui = Instance.new("ScreenGui")
+    scopeGui.Name = "XCCustomScope"
+    scopeGui.ResetOnSpawn = false
+    scopeGui.IgnoreGuiInset = true
+    pcall(function() scopeGui.Parent = targetGui end)
+    if not scopeGui.Parent then scopeGui.Parent = CoreGui end
+    scopeContainer = Instance.new("Frame")
+    scopeContainer.BackgroundTransparency = 1
+    scopeContainer.AnchorPoint = Vector2.new(0.5,0.5)
+    scopeContainer.Position = UDim2.fromScale(0.5,0.5)
+    scopeContainer.Size = UDim2.fromOffset(0,0)
+    scopeContainer.Parent = scopeGui
+    for name,anchor in pairs({Left=Vector2.new(1,.5),Right=Vector2.new(0,.5),Top=Vector2.new(.5,1),Bottom=Vector2.new(.5,0)}) do
+        local f=Instance.new("Frame")
+        f.Name=name; f.AnchorPoint=anchor; f.BorderSizePixel=0; f.Parent=scopeContainer
+    end
+    local dot=Instance.new("Frame")
+    dot.Name="Dot"; dot.AnchorPoint=Vector2.new(.5,.5); dot.BorderSizePixel=0; dot.Parent=scopeContainer
+end
+
+function updateCustomScope()
+    ensureScopeGui()
+    local scope = findSniperScope()
+    local scoped = scope and scope.Visible == true
+    if scope and scopeSavedSize == nil then scopeSavedSize = scope.Size end
+
+    -- Never permanently alter the game's original scope size.
+    if scope then
+        if XCConfig.scopeRemoveOriginal and scoped then
+            scope.Size = UDim2.fromOffset(0,0)
+        elseif scopeSavedSize then
+            scope.Size = scopeSavedSize
+        end
+    end
+
+    local cam = Workspace.CurrentCamera or camera
+    if XCConfig.customScopeEnabled and scoped then
+        if XCConfig.scopeFovEnabled and cam then
+            if scopeSavedFov == nil then scopeSavedFov = cam.FieldOfView end
+            cam.FieldOfView = math.clamp(tonumber(XCConfig.scopeFov) or 70, 10, 120)
+        end
+
+        local enabled = XCConfig.scopeCrosshairEnabled ~= false
+        scopeContainer.Visible = enabled
+        if not enabled then return end
+
+        local col = rgb(XCConfig.scopeCrosshairColorR, XCConfig.scopeCrosshairColorG, XCConfig.scopeCrosshairColorB)
+        local len = math.clamp(tonumber(XCConfig.scopeCrosshairLength) or 85, 2, 500)
+        local thick = math.clamp(tonumber(XCConfig.scopeCrosshairThickness) or 2, 1, 12)
+        local gap = math.clamp(tonumber(XCConfig.scopeCrosshairGap) or 8, 0, 150)
+        local dynamic = XCConfig.scopeDynamicGap and math.clamp((1/(cam and cam.FieldOfView or 70))*700, 2, 30) or 0
+        gap = gap + dynamic
+        local opacity = math.clamp(tonumber(XCConfig.scopeCrosshairOpacity) or 0, 0, 1)
+        local style = XCConfig.scopeCrosshairStyle or "Cross"
+
+        local l=scopeContainer.Left; local r=scopeContainer.Right
+        local t=scopeContainer.Top; local b=scopeContainer.Bottom; local d=scopeContainer.Dot
+        local arms = {l,r,t,b,d}
+
+        for _,f in ipairs(arms) do
+            f.BackgroundColor3 = col
+            f.BackgroundTransparency = opacity
+            f.BorderSizePixel = 0
+            f.Visible = false
+            local st = f:FindFirstChild("ScopeOutline")
+            if not st then
+                st = Instance.new("UIStroke")
+                st.Name = "ScopeOutline"
+                st.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+                st.Parent = f
+            end
+            st.Enabled = XCConfig.scopeCrosshairOutline == true
+            st.Thickness = math.clamp(tonumber(XCConfig.scopeCrosshairOutlineThickness) or 1, 1, 6)
+            st.Color = rgb(XCConfig.scopeCrosshairOutlineR,XCConfig.scopeCrosshairOutlineG,XCConfig.scopeCrosshairOutlineB)
+            st.Transparency = opacity
+        end
+
+        local function show(f, size, pos, rotation)
+            f.Size=size; f.Position=pos; f.Rotation=rotation or 0; f.Visible=true
+        end
+
+        -- Style presets: Cross, T, X and Dot. Individual arms still remain toggleable.
+        if style == "X" then
+            local xLen = math.max(2, len * 0.72)
+            if XCConfig.scopeCrosshairLeft ~= false then show(l,UDim2.fromOffset(xLen,thick),UDim2.fromOffset(-gap,-gap),45) end
+            if XCConfig.scopeCrosshairRight ~= false then show(r,UDim2.fromOffset(xLen,thick),UDim2.fromOffset(gap,-gap),-45) end
+            if XCConfig.scopeCrosshairTop ~= false then show(t,UDim2.fromOffset(xLen,thick),UDim2.fromOffset(-gap,gap),-45) end
+            if XCConfig.scopeCrosshairBottom ~= false then show(b,UDim2.fromOffset(xLen,thick),UDim2.fromOffset(gap,gap),45) end
+        elseif style == "T" then
+            if XCConfig.scopeCrosshairTop ~= false then show(t,UDim2.fromOffset(thick,len),UDim2.fromOffset(0,gap),0) end
+            if XCConfig.scopeCrosshairLeft ~= false then show(l,UDim2.fromOffset(len,thick),UDim2.fromOffset(-gap,0),0) end
+            if XCConfig.scopeCrosshairRight ~= false then show(r,UDim2.fromOffset(len,thick),UDim2.fromOffset(gap,0),0) end
+            -- Bottom can be independently disabled/enabled; enabled means a short lower arm.
+            if XCConfig.scopeCrosshairBottom ~= false then show(b,UDim2.fromOffset(thick,math.max(2,len*0.55)),UDim2.fromOffset(0,gap),0) end
+        elseif style == "Dot" then
+            -- Only the center dot is drawn for Dot style.
+        else -- Cross
+            if XCConfig.scopeCrosshairLeft ~= false then show(l,UDim2.fromOffset(len,thick),UDim2.fromOffset(-gap,0),0) end
+            if XCConfig.scopeCrosshairRight ~= false then show(r,UDim2.fromOffset(len,thick),UDim2.fromOffset(gap,0),0) end
+            if XCConfig.scopeCrosshairTop ~= false then show(t,UDim2.fromOffset(thick,len),UDim2.fromOffset(0,-gap),0) end
+            if XCConfig.scopeCrosshairBottom ~= false then show(b,UDim2.fromOffset(thick,len),UDim2.fromOffset(0,gap),0) end
+        end
+
+        d.Size=UDim2.fromOffset(math.max(1,thick*2),math.max(1,thick*2))
+        d.Position=UDim2.fromOffset(0,0)
+        d.Rotation=0
+        d.Visible = XCConfig.scopeCrosshairDot ~= false
+    else
+        scopeContainer.Visible=false
+        if scopeSavedFov and cam then cam.FieldOfView=scopeSavedFov end
+        scopeSavedFov=nil
+    end
+end
+
+table.insert(connections, RunService.RenderStepped:Connect(function(dt)
+    local worldVisualActive = XCConfig.nightModeEnabled or XCConfig.worldSkyboxEnabled
+        or XCConfig.worldPostFXEnabled or XCConfig.worldAtmosphereEnabled or XCConfig.worldBloomEnabled
+    if not XCConfig.weaponChamsEnabled
+        and not XCConfig.customScopeEnabled
+        and not XCConfig.customFovEnabled
+        and not worldVisualActive then
+        return
+    end
+    pcall(function()
+        if XCConfig.weaponChamsEnabled then setWeaponVisuals() end
+        if XCConfig.customScopeEnabled then updateCustomScope() end
+        -- XC Custom FOV: apply the camera FOV every render frame while enabled.
+        if XCConfig.customFovEnabled then
+            local cam = Workspace.CurrentCamera or camera
+            if cam then
+                cam.FieldOfView = math.clamp(tonumber(XCConfig.customFov) or 90, 70, 120)
+            end
+        end
+        if worldVisualActive then
+            XCFeatureState.worldUpdateAccumulator += dt
+            if XCFeatureState.worldUpdateAccumulator >= 0.2 then
+                XCFeatureState.worldUpdateAccumulator = 0
+                updateWorldChanger()
+            end
+        end
+    end)
+end))
+
+-- ==========================================
+-- JUMP CIRCLE NO WORK BLOXSTRIKE
+-- ==========================================
+local jumpRayParams = RaycastParams.new()
+jumpRayParams.FilterType = Enum.RaycastFilterType.Exclude
+jumpRayParams.IgnoreWater = true
+
+function getGroundY(originPos, char)
+    jumpRayParams.FilterDescendantsInstances = {char, jumpCircleFolder, camera}
+    local cast = Workspace:Raycast(originPos + Vector3.new(0, 2, 0), Vector3.new(0, -15, 0), jumpRayParams)
+    if cast then
+        return cast.Position.Y + 0.04
+    end
+    return originPos.Y - 2.8
+end
+
+function buildJumpRing(segmentCount, radius, thickness, height)
+    local container = Instance.new("Folder")
+    container.Name = "JumpCircleContainer"
+
+    local segments = {}
+    local angleStep = (math.pi * 2) / segmentCount
+    local chordLength = 2 * radius * math.sin(angleStep / 2) + 0.03
+    local lineH = height or 0.03
+    local lineThick = thickness or 0.06
+
+    for i = 1, segmentCount do
+        local angle = (i - 1) * angleStep
+        local part = Instance.new("Part")
+        part.Name = "Seg_" .. i
+        part.Size = Vector3.new(lineThick, lineH, chordLength)
+        part.Anchored = true
+        part.CanCollide = false
+        part.CanQuery = false
+        part.CanTouch = false
+        part.CastShadow = false
+        part.Material = Enum.Material.Neon
+        part.Color = currentTheme.Accent
+        part.Transparency = 0
+        part.Parent = container
+
+        segments[i] = {
+            Part = part,
+            Angle = angle,
+            BaseChord = chordLength,
+            BaseThick = lineThick,
+            BaseHeight = lineH
+        }
+    end
+
+    return container, segments
+end
+
+function updateJumpRingLayout(segments, centerPosition, radius, thicknessMult)
+    local n = #segments
+    local tMult = thicknessMult or 1.0
+    for i, seg in ipairs(segments) do
+        local angle = seg.Angle
+        local nextAngle = angle + (math.pi * 2 / n)
+        local p1 = centerPosition + Vector3.new(math.cos(angle) * radius, 0, math.sin(angle) * radius)
+        local p2 = centerPosition + Vector3.new(math.cos(nextAngle) * radius, 0, math.sin(nextAngle) * radius)
+        local mid = (p1 + p2) * 0.5
+        local length = (p2 - p1).Magnitude + 0.02
+
+        if seg.Part and seg.Part.Parent then
+            seg.Part.Size = Vector3.new(seg.BaseThick * tMult, seg.BaseHeight, length)
+            seg.Part.CFrame = CFrame.lookAt(mid, p2)
+        end
+    end
+end
+
+function spawnJumpRipple(position)
+    if not XCConfig.jumpCircleEnabled then return end
+    task.spawn(function()
+        local rippleFolder, segments = buildJumpRing(XCConfig.jumpCircleSegmentCount, XCConfig.jumpCircleRadius, 0.08, 0.04)
+        rippleFolder.Parent = jumpCircleFolder
+
+        local startT = os.clock()
+        local duration = 0.55
+        local maxR = XCConfig.jumpCircleRadius * 2.2
+        local col1 = currentTheme.Accent
+        local col2 = Color3.fromRGB(255, 255, 255)
+
+        local rippleConn
+        rippleConn = RunService.RenderStepped:Connect(function()
+            local elapsed = os.clock() - startT
+            local alpha = elapsed / duration
+            if alpha >= 1 or not XCConfig.jumpCircleEnabled then
+                if rippleConn then rippleConn:Disconnect() end
+                if rippleFolder then rippleFolder:Destroy() end
+                return
+            end
+
+            local eased = 1 - math.pow(1 - alpha, 3)
+            local curR = XCConfig.jumpCircleRadius + (maxR - XCConfig.jumpCircleRadius) * eased
+            updateJumpRingLayout(segments, position, curR, 1.0 - (alpha * 0.5))
+
+            for _, seg in ipairs(segments) do
+                if seg.Part and seg.Part.Parent then
+                    seg.Part.Transparency = alpha
+                    seg.Part.Color = col1:Lerp(col2, alpha)
+                end
+            end
+        end)
+    end)
+end
+
+function clearActiveJumpCircle()
+    if not activeJumpCircleData then return end
+    if activeJumpCircleData.Connections then
+        for _, conn in ipairs(activeJumpCircleData.Connections) do
+            pcall(function() conn:Disconnect() end)
+        end
+    end
+    if activeJumpCircleData.Container then
+        pcall(function() activeJumpCircleData.Container:Destroy() end)
+    end
+    activeJumpCircleData = nil
+end
+
+function initJumpCircleForCharacter(char)
+    clearActiveJumpCircle()
+    if not XCConfig.jumpCircleEnabled or not char then return end
+
+    local hrp = char:WaitForChild("HumanoidRootPart", 4)
+    local hum = char:WaitForChild("Humanoid", 4)
+    if not hrp or not hum then return end
+
+    local container, segments = buildJumpRing(XCConfig.jumpCircleSegmentCount, XCConfig.jumpCircleRadius, 0.06, 0.03)
+    container.Parent = jumpCircleFolder
+
+    local circleData = {
+        Container = container,
+        Segments = segments,
+        HRP = hrp,
+        Humanoid = hum,
+        Connections = {}
+    }
+    activeJumpCircleData = circleData
+
+    local startClock = os.clock()
+    local pulse = 0
+    local pulseDir = 1
+
+    local loopConn = RunService.RenderStepped:Connect(function(dt)
+        if not XCConfig.jumpCircleEnabled or not hrp or not hrp.Parent or not hum or not hum.Parent or hum.Health <= 0 then
+            clearActiveJumpCircle()
+            return
+        end
+
+        local elapsed = os.clock() - startClock
+
+        pulse = pulse + dt * 3.5 * pulseDir
+        if pulse > 1 then pulse = 1; pulseDir = -1 end
+        if pulse < 0 then pulse = 0; pulseDir = 1 end
+
+        local groundY = getGroundY(hrp.Position, char)
+        local groundCenter = Vector3.new(hrp.Position.X, groundY, hrp.Position.Z)
+
+        local pulseThickMult = 1.0 + (pulse * 0.45)
+        updateJumpRingLayout(segments, groundCenter, XCConfig.jumpCircleRadius, pulseThickMult)
+
+        if XCConfig.jumpCircleStyle == "GradientWave" then
+            local n = #segments
+            local spin = (elapsed * 3) % (math.pi * 2)
+            local c1 = currentTheme.Accent
+            local c2 = Color3.fromRGB(0, 230, 255)
+            for i, seg in ipairs(segments) do
+                local ratio = ((i / n) + spin) % 1
+                local wave = (math.sin(ratio * math.pi * 2) + 1) * 0.5
+                if seg.Part and seg.Part.Parent then
+                    seg.Part.Color = c1:Lerp(c2, wave)
+                    seg.Part.Transparency = 0.05 + (pulse * 0.25)
+                end
+            end
+        elseif XCConfig.jumpCircleStyle == "ChromaPulse" then
+            local hue = (elapsed * 0.35) % 1
+            local col = Color3.fromHSV(hue, 0.85, 1)
+            for _, seg in ipairs(segments) do
+                if seg.Part and seg.Part.Parent then
+                    seg.Part.Color = col
+                    seg.Part.Transparency = 0.1 + (pulse * 0.3)
+                end
+            end
+        elseif XCConfig.jumpCircleStyle == "StaticNeon" then
+            for _, seg in ipairs(segments) do
+                if seg.Part and seg.Part.Parent then
+                    seg.Part.Color = currentTheme.Accent
+                    seg.Part.Transparency = 0.05 + (pulse * 0.25)
+                end
+            end
+        end
+    end)
+    table.insert(circleData.Connections, loopConn)
+
+    local stateConn = hum.StateChanged:Connect(function(_, newState)
+        if newState == Enum.HumanoidStateType.Jumping then
+            local groundY = getGroundY(hrp.Position, char)
+            local footPos = Vector3.new(hrp.Position.X, groundY, hrp.Position.Z)
+            spawnJumpRipple(footPos)
+        end
+    end)
+    table.insert(circleData.Connections, stateConn)
+end
+
+table.insert(connections, player.CharacterAdded:Connect(initJumpCircleForCharacter))
+table.insert(connections, player.CharacterRemoving:Connect(clearActiveJumpCircle))
+
+if player.Character then
+    task.spawn(function()
+        initJumpCircleForCharacter(player.Character)
+    end)
+end
+
+-- ==========================================
+-- XC WORLD WEATHER + CAMERA DIRECTOR
+-- Inspired by the useful visual/camera ideas shown in the GameSense review.
+-- Both systems are local-only and use a single lightweight render path.
+-- ==========================================
+XCFeatureState = {
+    weatherRig = nil,
+    weatherEmitter = nil,
+    weatherAtmosphere = nil,
+    weatherUpdateAccumulator = 0,
+    weatherSignature = nil,
+    cameraMode = nil,
+    savedCameraState = nil,
+    cameraFrame = nil,
+    cameraPosition = nil,
+    cameraYaw = 0,
+    cameraPitch = 0,
+    cameraTouch = nil,
+    cameraTouchLast = nil,
+    cameraTouchDelta = Vector2.zero,
+    streamerSnapshot = nil,
+    noSmokeRecords = setmetatable({}, {__mode = "k"}),
+    noSmokeAccumulator = 0,
+    antiAimNextChange = 0,
+    antiAimRandomYaw = 180,
+    bhopGroundSince = nil,
+    bhopLastJump = 0,
+    bhopWindowFocused = true,
+    menuOpen = true,
+    worldUpdateAccumulator = 0,
+    worldAtmosphere = nil,
+    worldOriginalAtmosphere = nil,
+    worldBloom = nil,
+    worldTonePresets = {
+        Neutral = Color3.fromRGB(255, 255, 255),
+        ["XC Lime"] = Color3.fromRGB(225, 242, 185),
+        Cold = Color3.fromRGB(205, 225, 255),
+        Warm = Color3.fromRGB(255, 224, 190),
+        Purple = Color3.fromRGB(225, 200, 255),
+    },
+    hitSounds = {
+        Skeet = "rbxassetid://83717596220569",
+        Neverlose = "rbxassetid://139452805868562",
+        Bell = "rbxassetid://96481309571950",
+        Bubble = "rbxassetid://104824514322839",
+        Rust = "rbxassetid://1255040462",
+        Coins = "rbxassetid://5613553529",
+    },
+    skeletonEdges = {
+        {"Head", "Neck"}, {"Neck", "Waist"},
+        {"Neck", "LeftShoulder"}, {"LeftShoulder", "LeftHand"},
+        {"Neck", "RightShoulder"}, {"RightShoulder", "RightHand"},
+        {"Waist", "LeftHip"}, {"LeftHip", "LeftFoot"},
+        {"Waist", "RightHip"}, {"RightHip", "RightFoot"},
+    },
+    streamerHiddenKeys = {
+        "watermarkEnabled", "spectatorListEnabled", "nametagsEnabled", "boxEspEnabled",
+        "cornerBoxEnabled", "healthBarEnabled", "headDotEnabled", "tracersEnabled",
+        "grenadeEspEnabled", "grenadeDangerZonesEnabled", "soundPositionEspEnabled", "weaponEspEnabled",
+        "jumpCircleEnabled", "hitmarkerEnabled", "chamsEnabled", "skeletonEspEnabled",
+        "showFovCircle", "showSilentFovCircle",
+    },
+}
+
+function isXCSmokeObject(object)
+    if not object or not (object:IsA("ParticleEmitter") or object:IsA("Smoke")) then return false end
+    local cursor = object
+    for _ = 1, 6 do
+        if not cursor then break end
+        local name = cursor.Name:lower()
+        if name:find("smoke", 1, true) or name:find("voxel", 1, true) then return true end
+        cursor = cursor.Parent
+    end
+    return false
+end
+
+function trackXCSmokeObject(object)
+    if not XCConfig.noSmokeEnabled or not isXCSmokeObject(object) then return end
+    local record = XCFeatureState.noSmokeRecords[object]
+    if not record then
+        record = {Enabled = object.Enabled}
+        XCFeatureState.noSmokeRecords[object] = record
+    end
+    pcall(function() object.Enabled = false end)
+end
+
+function restoreXCSmoke()
+    for object, record in pairs(XCFeatureState.noSmokeRecords) do
+        pcall(function()
+            if object and object.Parent then object.Enabled = record.Enabled end
+        end)
+        XCFeatureState.noSmokeRecords[object] = nil
+    end
+end
+
+function applyXCSmokeState()
+    if not XCConfig.noSmokeEnabled then restoreXCSmoke() return end
+    task.spawn(function()
+        for _, rootName in ipairs({"Debris", "Effects"}) do
+            local root = Workspace:FindFirstChild(rootName)
+            if root then
+                for _, object in ipairs(root:GetDescendants()) do
+                    if not XCConfig.noSmokeEnabled then return end
+                    if object:IsA("ParticleEmitter") or object:IsA("Smoke") then trackXCSmokeObject(object) end
+                end
+            end
+        end
+    end)
+end
+
+function playXCHitSound(force)
+    if not force and not XCConfig.hitSoundEnabled then return end
+    pcall(function()
+        local soundService = game:GetService("SoundService")
+        local sound = Instance.new("Sound")
+        sound.Name = "XCHitSound"
+        sound.SoundId = XCFeatureState.hitSounds[XCConfig.hitSoundPreset] or XCFeatureState.hitSounds.Skeet
+        sound.Volume = math.clamp(tonumber(XCConfig.hitSoundVolume) or 1, 0.1, 3)
+        sound.PlaybackSpeed = 1
+        sound.Parent = soundService
+        if type(soundService.PlayLocalSound) == "function" then
+            soundService:PlayLocalSound(sound)
+        else
+            sound:Play()
+        end
+        game:GetService("Debris"):AddItem(sound, 4)
+    end)
+end
+
+table.insert(connections, Workspace.DescendantAdded:Connect(function(object)
+    if XCConfig.noSmokeEnabled then trackXCSmokeObject(object) end
+end))
+table.insert(connections, RunService.Heartbeat:Connect(function(dt)
+    if not XCConfig.noSmokeEnabled then return end
+    XCFeatureState.noSmokeAccumulator += dt
+    if XCFeatureState.noSmokeAccumulator < 0.5 then return end
+    XCFeatureState.noSmokeAccumulator = 0
+    for object in pairs(XCFeatureState.noSmokeRecords) do
+        if object and object.Parent then
+            pcall(function() object.Enabled = false end)
+        else
+            XCFeatureState.noSmokeRecords[object] = nil
+        end
+    end
+end))
+table.insert(connections, UserInputService.WindowFocusReleased:Connect(function()
+    XCFeatureState.bhopWindowFocused = false
+    XCFeatureState.bhopGroundSince = nil
+end))
+table.insert(connections, UserInputService.WindowFocused:Connect(function()
+    XCFeatureState.bhopWindowFocused = true
+end))
+
+function destroyXCWeather()
+    if XCFeatureState.weatherRig then pcall(function() XCFeatureState.weatherRig:Destroy() end) end
+    if XCFeatureState.weatherAtmosphere then pcall(function() XCFeatureState.weatherAtmosphere:Destroy() end) end
+    XCFeatureState.weatherRig = nil
+    XCFeatureState.weatherEmitter = nil
+    XCFeatureState.weatherAtmosphere = nil
+    XCFeatureState.weatherSignature = nil
+end
+
+function ensureXCWeatherObjects()
+    if not XCFeatureState.weatherRig or not XCFeatureState.weatherRig.Parent then
+        XCFeatureState.weatherRig = Instance.new("Part")
+        XCFeatureState.weatherRig.Name = "XCWeatherEmitter"
+        XCFeatureState.weatherRig.Size = Vector3.new(1, 1, 1)
+        XCFeatureState.weatherRig.Transparency = 1
+        XCFeatureState.weatherRig.Anchored = true
+        XCFeatureState.weatherRig.CanCollide = false
+        pcall(function() XCFeatureState.weatherRig.CanQuery = false; XCFeatureState.weatherRig.CanTouch = false end)
+        XCFeatureState.weatherRig.Parent = Workspace
+
+        XCFeatureState.weatherEmitter = Instance.new("ParticleEmitter")
+        XCFeatureState.weatherEmitter.Name = "XCWeatherParticles"
+        XCFeatureState.weatherEmitter.LockedToPart = false
+        XCFeatureState.weatherEmitter.LightInfluence = 0
+        XCFeatureState.weatherEmitter.Orientation = Enum.ParticleOrientation.FacingCamera
+        pcall(function()
+            XCFeatureState.weatherEmitter.Shape = Enum.ParticleEmitterShape.Box
+            XCFeatureState.weatherEmitter.ShapeStyle = Enum.ParticleEmitterShapeStyle.Volume
+            XCFeatureState.weatherEmitter.ShapeInOut = Enum.ParticleEmitterShapeInOut.Outward
+        end)
+        XCFeatureState.weatherEmitter.Parent = XCFeatureState.weatherRig
+    end
+end
+
+function applyXCWeather()
+    if not XCConfig.weatherEnabled then
+        destroyXCWeather()
+        return
+    end
+
+    ensureXCWeatherObjects()
+    local mode = tostring(XCConfig.weatherMode or "Rain")
+    local intensity = math.clamp(tonumber(XCConfig.weatherIntensity) or 45, 1, 100)
+    local wind = math.clamp(tonumber(XCConfig.weatherWind) or 0, -40, 40)
+    local signature = mode .. ":" .. tostring(intensity) .. ":" .. tostring(wind)
+    if XCFeatureState.weatherSignature == signature and XCFeatureState.weatherEmitter and XCFeatureState.weatherEmitter.Parent then return end
+    XCFeatureState.weatherSignature = signature
+    XCFeatureState.weatherEmitter.Enabled = mode ~= "Fog"
+
+    if XCFeatureState.weatherAtmosphere then
+        XCFeatureState.weatherAtmosphere.Density = mode == "Fog" and (0.18 + intensity * 0.0045) or 0
+        XCFeatureState.weatherAtmosphere.Haze = mode == "Fog" and (1 + intensity * 0.045) or 0
+    elseif mode == "Fog" then
+        XCFeatureState.weatherAtmosphere = Instance.new("Atmosphere")
+        XCFeatureState.weatherAtmosphere.Name = "XCWeatherAtmosphere"
+        XCFeatureState.weatherAtmosphere.Color = Color3.fromRGB(190, 198, 205)
+        XCFeatureState.weatherAtmosphere.Decay = Color3.fromRGB(90, 96, 105)
+        XCFeatureState.weatherAtmosphere.Density = 0.18 + intensity * 0.0045
+        XCFeatureState.weatherAtmosphere.Haze = 1 + intensity * 0.045
+        XCFeatureState.weatherAtmosphere.Glare = 0
+        XCFeatureState.weatherAtmosphere.Parent = Lighting
+    end
+
+    if mode == "Rain" then
+        XCFeatureState.weatherRig.Size = Vector3.new(90, 1, 90)
+        XCFeatureState.weatherEmitter.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+        XCFeatureState.weatherEmitter.Rate = intensity * 3.2
+        XCFeatureState.weatherEmitter.Lifetime = NumberRange.new(0.65, 1.05)
+        XCFeatureState.weatherEmitter.Speed = NumberRange.new(65, 90)
+        XCFeatureState.weatherEmitter.Acceleration = Vector3.new(wind, -65, 0)
+        XCFeatureState.weatherEmitter.SpreadAngle = Vector2.new(4, 4)
+        XCFeatureState.weatherEmitter.Size = NumberSequence.new(0.075)
+        XCFeatureState.weatherEmitter.Transparency = NumberSequence.new({
+            NumberSequenceKeypoint.new(0, 0.3),
+            NumberSequenceKeypoint.new(0.85, 0.45),
+            NumberSequenceKeypoint.new(1, 1),
+        })
+        XCFeatureState.weatherEmitter.Color = ColorSequence.new(Color3.fromRGB(190, 220, 255))
+    elseif mode == "Snow" then
+        XCFeatureState.weatherRig.Size = Vector3.new(100, 1, 100)
+        XCFeatureState.weatherEmitter.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+        XCFeatureState.weatherEmitter.Rate = intensity * 1.45
+        XCFeatureState.weatherEmitter.Lifetime = NumberRange.new(4.5, 7)
+        XCFeatureState.weatherEmitter.Speed = NumberRange.new(5, 11)
+        XCFeatureState.weatherEmitter.Acceleration = Vector3.new(wind * 0.35, -2.5, 0)
+        XCFeatureState.weatherEmitter.SpreadAngle = Vector2.new(18, 18)
+        XCFeatureState.weatherEmitter.Size = NumberSequence.new({
+            NumberSequenceKeypoint.new(0, 0.12),
+            NumberSequenceKeypoint.new(0.5, 0.28),
+            NumberSequenceKeypoint.new(1, 0.08),
+        })
+        XCFeatureState.weatherEmitter.Transparency = NumberSequence.new({
+            NumberSequenceKeypoint.new(0, 0.18),
+            NumberSequenceKeypoint.new(1, 0.55),
+        })
+        XCFeatureState.weatherEmitter.Color = ColorSequence.new(Color3.fromRGB(245, 248, 255))
+    elseif mode == "Ash" then
+        XCFeatureState.weatherRig.Size = Vector3.new(85, 1, 85)
+        XCFeatureState.weatherEmitter.Texture = "rbxasset://textures/particles/smoke_main.dds"
+        XCFeatureState.weatherEmitter.Rate = intensity * 1.15
+        XCFeatureState.weatherEmitter.Lifetime = NumberRange.new(3.5, 6)
+        XCFeatureState.weatherEmitter.Speed = NumberRange.new(4, 9)
+        XCFeatureState.weatherEmitter.Acceleration = Vector3.new(wind * 0.5, 5, 0)
+        XCFeatureState.weatherEmitter.SpreadAngle = Vector2.new(22, 22)
+        XCFeatureState.weatherEmitter.Size = NumberSequence.new({
+            NumberSequenceKeypoint.new(0, 0.16),
+            NumberSequenceKeypoint.new(1, 0.26),
+        })
+        XCFeatureState.weatherEmitter.Transparency = NumberSequence.new({
+            NumberSequenceKeypoint.new(0, 0.3),
+            NumberSequenceKeypoint.new(1, 0.8),
+        })
+        XCFeatureState.weatherEmitter.Color = ColorSequence.new(Color3.fromRGB(135, 135, 135))
+    elseif mode == "Hell Fire" then
+        XCFeatureState.weatherRig.Size = Vector3.new(90, 1, 90)
+        XCFeatureState.weatherEmitter.Texture = "rbxassetid://242205518"
+        XCFeatureState.weatherEmitter.Rate = intensity * 2
+        XCFeatureState.weatherEmitter.Lifetime = NumberRange.new(2, 3.5)
+        XCFeatureState.weatherEmitter.Speed = NumberRange.new(18, 32)
+        XCFeatureState.weatherEmitter.Acceleration = Vector3.new(wind * 0.4, -12, 0)
+        XCFeatureState.weatherEmitter.SpreadAngle = Vector2.new(20, 20)
+        XCFeatureState.weatherEmitter.Size = NumberSequence.new({
+            NumberSequenceKeypoint.new(0, 0.35),
+            NumberSequenceKeypoint.new(1, 0.85),
+        })
+        XCFeatureState.weatherEmitter.Transparency = NumberSequence.new({
+            NumberSequenceKeypoint.new(0, 0.12),
+            NumberSequenceKeypoint.new(1, 0.9),
+        })
+        XCFeatureState.weatherEmitter.Color = ColorSequence.new(
+            Color3.fromRGB(255, 145, 35), Color3.fromRGB(170, 25, 10)
+        )
+    end
+end
+
+function refreshXCToggle(key)
+    local refresh = UI_Bind_Registry[key]
+    if refresh then pcall(refresh, XCConfig[key] == true) end
+end
+
+function setXCStreamerMode(enabled)
+    enabled = enabled == true
+    if enabled and not XCFeatureState.streamerSnapshot then
+        XCFeatureState.streamerSnapshot = {}
+        for _, key in ipairs(XCFeatureState.streamerHiddenKeys) do
+            XCFeatureState.streamerSnapshot[key] = XCConfig[key]
+            XCConfig[key] = false
+            refreshXCToggle(key)
+        end
+        XCConfig.streamerModeEnabled = true
+        clearActiveJumpCircle()
+    elseif not enabled and XCFeatureState.streamerSnapshot then
+        for key, value in pairs(XCFeatureState.streamerSnapshot) do
+            XCConfig[key] = value
+            refreshXCToggle(key)
+        end
+        XCFeatureState.streamerSnapshot = nil
+        XCConfig.streamerModeEnabled = false
+        if XCConfig.jumpCircleEnabled and player.Character then
+            initJumpCircleForCharacter(player.Character)
+        end
+    else
+        XCConfig.streamerModeEnabled = enabled
+    end
+    refreshXCToggle("streamerModeEnabled")
+end
+
+function stopXCCameraMode()
+    XCFeatureState.cameraMode = nil
+    XCConfig.freecamEnabled = false
+    XCConfig.freelookEnabled = false
+    local cam = Workspace.CurrentCamera or camera
+    if cam and XCFeatureState.savedCameraState then
+        pcall(function()
+            cam.CameraType = XCFeatureState.savedCameraState.CameraType or Enum.CameraType.Custom
+            if XCFeatureState.savedCameraState.CameraSubject then cam.CameraSubject = XCFeatureState.savedCameraState.CameraSubject end
+            cam.CFrame = XCFeatureState.savedCameraState.CFrame or cam.CFrame
+        end)
+    end
+    if XCFeatureState.savedCameraState then
+        pcall(function()
+            UserInputService.MouseBehavior = XCFeatureState.savedCameraState.MouseBehavior
+            UserInputService.MouseIconEnabled = XCFeatureState.savedCameraState.MouseIconEnabled
+        end)
+    end
+    XCFeatureState.savedCameraState = nil
+    refreshXCToggle("freecamEnabled")
+    refreshXCToggle("freelookEnabled")
+end
+
+function setXCCameraMode(mode, enabled)
+    if not enabled then
+        if XCFeatureState.cameraMode == mode then stopXCCameraMode() end
+        return
+    end
+
+    local cam = Workspace.CurrentCamera or camera
+    if not cam then return end
+    if not XCFeatureState.savedCameraState then
+        XCFeatureState.savedCameraState = {
+            CameraType = cam.CameraType,
+            CameraSubject = cam.CameraSubject,
+            CFrame = cam.CFrame,
+            MouseBehavior = UserInputService.MouseBehavior,
+            MouseIconEnabled = UserInputService.MouseIconEnabled,
+        }
+    end
+
+    XCFeatureState.cameraMode = mode
+    XCConfig.freecamEnabled = mode == "Freecam"
+    XCConfig.freelookEnabled = mode == "Freelook"
+    XCFeatureState.cameraFrame = cam.CFrame
+    XCFeatureState.cameraPosition = cam.CFrame.Position
+    local pitch, yaw = cam.CFrame:ToOrientation()
+    XCFeatureState.cameraPitch = pitch
+    XCFeatureState.cameraYaw = yaw
+    cam.CameraType = Enum.CameraType.Scriptable
+    if not UserInputService.TouchEnabled then
+        UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
+        UserInputService.MouseIconEnabled = false
+    end
+    refreshXCToggle("freecamEnabled")
+    refreshXCToggle("freelookEnabled")
+end
+
+table.insert(connections, UserInputService.InputBegan:Connect(function(input, processed)
+    if input.UserInputType == Enum.UserInputType.Touch and XCFeatureState.cameraMode and not processed then
+        local cam = Workspace.CurrentCamera or camera
+        if cam and input.Position.X >= cam.ViewportSize.X * 0.45 then
+            XCFeatureState.cameraTouch = input
+            XCFeatureState.cameraTouchLast = input.Position
+            XCFeatureState.cameraTouchDelta = Vector2.zero
+        end
+    end
+    if processed then return end
+    local freecamKey = Enum.KeyCode[XCConfig.freecamKey or "F4"]
+    local freelookKey = Enum.KeyCode[XCConfig.freelookKey or "LeftAlt"]
+    local streamerKey = Enum.KeyCode[XCConfig.streamerKey or "F8"]
+    if freecamKey and input.KeyCode == freecamKey then
+        setXCCameraMode("Freecam", not XCConfig.freecamEnabled)
+    elseif freelookKey and input.KeyCode == freelookKey then
+        setXCCameraMode("Freelook", not XCConfig.freelookEnabled)
+    elseif streamerKey and input.KeyCode == streamerKey then
+        setXCStreamerMode(not XCConfig.streamerModeEnabled)
+    end
+end))
+
+table.insert(connections, UserInputService.InputChanged:Connect(function(input)
+    if input == XCFeatureState.cameraTouch and XCFeatureState.cameraTouchLast then
+        local current = input.Position
+        XCFeatureState.cameraTouchDelta += Vector2.new(current.X - XCFeatureState.cameraTouchLast.X, current.Y - XCFeatureState.cameraTouchLast.Y)
+        XCFeatureState.cameraTouchLast = current
+    end
+end))
+
+table.insert(connections, UserInputService.InputEnded:Connect(function(input)
+    if input == XCFeatureState.cameraTouch then
+        XCFeatureState.cameraTouch = nil
+        XCFeatureState.cameraTouchLast = nil
+        XCFeatureState.cameraTouchDelta = Vector2.zero
+    end
+end))
+
+table.insert(connections, RunService.RenderStepped:Connect(function(dt)
+    if XCConfig.weatherEnabled then
+        XCFeatureState.weatherUpdateAccumulator += dt
+        if XCFeatureState.weatherUpdateAccumulator >= 0.1 then
+            XCFeatureState.weatherUpdateAccumulator = 0
+            applyXCWeather()
+            local cam = Workspace.CurrentCamera or camera
+            if XCFeatureState.weatherRig and cam then
+                XCFeatureState.weatherRig.CFrame = CFrame.new(cam.CFrame.Position + Vector3.new(0, 30, 0))
+            end
+        end
+    elseif XCFeatureState.weatherRig or XCFeatureState.weatherAtmosphere then
+        destroyXCWeather()
+    end
+
+    if not XCFeatureState.cameraMode then return end
+    local cam = Workspace.CurrentCamera or camera
+    if not cam then return end
+    if (XCFeatureState.cameraMode == "Freecam" and not XCConfig.freecamEnabled)
+        or (XCFeatureState.cameraMode == "Freelook" and not XCConfig.freelookEnabled) then
+        stopXCCameraMode()
+        return
+    end
+
+    cam.CameraType = Enum.CameraType.Scriptable
+    local delta = UserInputService:GetMouseDelta() + XCFeatureState.cameraTouchDelta * 0.55
+    XCFeatureState.cameraTouchDelta = Vector2.zero
+    local sensitivity = XCFeatureState.cameraMode == "Freecam"
+        and (tonumber(XCConfig.freecamSensitivity) or 0.18)
+        or (tonumber(XCConfig.freelookSensitivity) or 0.16)
+    XCFeatureState.cameraYaw -= math.rad(delta.X * sensitivity)
+    XCFeatureState.cameraPitch = math.clamp(XCFeatureState.cameraPitch - math.rad(delta.Y * sensitivity), math.rad(-85), math.rad(85))
+    local rotation = CFrame.Angles(0, XCFeatureState.cameraYaw, 0) * CFrame.Angles(XCFeatureState.cameraPitch, 0, 0)
+
+    if XCFeatureState.cameraMode == "Freecam" then
+        local movement = Vector3.zero
+        if UserInputService:IsKeyDown(Enum.KeyCode.W) then movement += Vector3.new(0, 0, -1) end
+        if UserInputService:IsKeyDown(Enum.KeyCode.S) then movement += Vector3.new(0, 0, 1) end
+        if UserInputService:IsKeyDown(Enum.KeyCode.A) then movement += Vector3.new(-1, 0, 0) end
+        if UserInputService:IsKeyDown(Enum.KeyCode.D) then movement += Vector3.new(1, 0, 0) end
+        if UserInputService:IsKeyDown(Enum.KeyCode.Space) or UserInputService:IsKeyDown(Enum.KeyCode.E) then movement += Vector3.new(0, 1, 0) end
+        if UserInputService:IsKeyDown(Enum.KeyCode.Q) or UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then movement += Vector3.new(0, -1, 0) end
+        local speed = math.max(5, tonumber(XCConfig.freecamSpeed) or 55)
+        if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then speed *= 2.5 end
+        if movement.Magnitude > 0 then
+            XCFeatureState.cameraPosition += rotation:VectorToWorldSpace(movement.Unit) * speed * dt
+        end
+        if UserInputService.TouchEnabled then
+            local character = player and player.Character
+            local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+            if humanoid and humanoid.MoveDirection.Magnitude > 0.05 then
+                XCFeatureState.cameraPosition += humanoid.MoveDirection.Unit * speed * dt
+            end
+        end
+    end
+
+    XCFeatureState.cameraFrame = CFrame.new(XCFeatureState.cameraPosition) * rotation
+    cam.CFrame = XCFeatureState.cameraFrame
+end))
+
+-- ==========================================
+-- CLEANUP ROUTINES
+-- ==========================================
+function cleanup()
+    pcall(restoreXCKnifeModel)
+    setXCStreamerMode(false)
+    stopXCCameraMode()
+    destroyXCWeather()
+    pcall(function() setThirdPersonEnabled(false) end)
+    if player.Character then
+        local hum = player.Character:FindFirstChildOfClass("Humanoid")
+        if hum and savedAutoRotate ~= nil then
+            hum.AutoRotate = savedAutoRotate
+        end
+    end
+    savedAutoRotate = nil
+    hitmarkerSerial += 1
+    hitmarkerPendingHits = {}
+    restoreXCCharacterInputHook()
+
+    for _, c in pairs(connections) do 
+        pcall(function() c:Disconnect() end) 
+    end
+    if antiAfkConnection then
+        pcall(function() antiAfkConnection:Disconnect() end)
+        antiAfkConnection = nil
+    end
+    for _, holder in pairs(activeEspHolders) do
+        pcall(function() holder.Holder:Destroy() end)
+    end
+    for _, esp in pairs(screenEspCache) do
+        pcall(function()
+            esp.Box:Destroy()
+            esp.BoxOutline:Destroy()
+            esp.TagCard:Destroy()
+            esp.HealthBarBg:Destroy()
+            esp.WeaponCard:Destroy()
+            for _, corner in pairs(esp.Corners) do
+                corner.H:Destroy()
+                corner.V:Destroy()
+            end
+            for _, line in ipairs(esp.SkeletonLines or {}) do line:Destroy() end
+        end)
+    end
+    for _, gUi in pairs(grenadePool) do
+        pcall(function()
+            gUi.Tag:Destroy()
+            gUi.RadiusCircle:Destroy()
+            for _, l in ipairs(gUi.Lines) do l:Destroy() end
+        end)
+    end
+    for _, danger in pairs(grenadeDangerPool) do
+        pcall(function() destroyXCGrenadeDanger(danger) end)
+    end
+    for _, pulse in ipairs(soundEspPulses) do
+        pcall(function() destroyXCSoundPulse(pulse) end)
+    end
+    clearActiveJumpCircle()
+    pcall(function() jumpCircleFolder:Destroy() end)
+    pcall(function() hitmarkerGui:Destroy() end)
+    
+    pcall(function()
+        if bulletTrail then bulletTrail:Destroy() end
+        if bulletFlash then bulletFlash:Destroy() end
+    end)
+    
+    if genv then genv.XCShowHitmarker = nil end
+    if mobileSlideBtn then
+        pcall(function() mobileSlideBtn:Destroy() end)
+        mobileSlideBtn = nil
+    end
+    isSliding = false
+    currentSlideVel = Vector3.zero
+    for _, conn in ipairs(mobileJumpConnections) do
+        pcall(function() conn:Disconnect() end)
+    end
+    mobileJumpConnections = {}
+    mobileJumpHookedButton = nil
+    activeEspHolders = {}
+    screenEspCache = {}
+    grenadePool = {}
+    grenadeDangerPool = setmetatable({}, {__mode = "k"})
+    grenadeDangerScanStarted = false
+    soundEspTracked = setmetatable({}, {__mode = "k"})
+    soundEspPulses = {}
+    
+    restoreLightingState()
+    restoreXCSmoke()
+    if genv and type(genv.XCRestoreWeaponState) == "function" then
+        pcall(genv.XCRestoreWeaponState)
+        genv.XCRestoreWeaponState = nil
+    end
+    if sharedXCEnv then
+        sharedXCEnv.XCSilentAimRequestedV25 = false
+        sharedXCEnv.XCBulletInterceptContextV29 = nil
+    end
+
+    pcall(function() if targetGui:FindFirstChild("XCScreenGui") then targetGui.XCScreenGui:Destroy() end end)
+    pcall(function() if targetGui:FindFirstChild("XCToggleGui") then targetGui.XCToggleGui:Destroy() end end)
+    pcall(function() if targetGui:FindFirstChild("XCFovGui") then targetGui.XCFovGui:Destroy() end end)
+    pcall(function() if targetGui:FindFirstChild("XCWatermarkGui") then targetGui.XCWatermarkGui:Destroy() end end)
+    pcall(function() if targetGui:FindFirstChild("XCNotificationsGui") then targetGui.XCNotificationsGui:Destroy() end end)
+    pcall(function() if targetGui:FindFirstChild("XCFallbackGui") then targetGui.XCFallbackGui:Destroy() end end)
+    pcall(function() if spectatorGui then spectatorGui:Destroy() end end)
+    stopXCAnimation()
+    pcall(function() if targetGui:FindFirstChild("XCMainContainer") then targetGui.XCMainContainer:Destroy() end end)
+end
+
+if genv then genv.XCRunning = cleanup end
+
+function bindTouch(btn, callback)
+    btn.Activated:Connect(callback)
+end
+
+-- ==========================================
+-- HUD & WATEMARK
+-- ==========================================
+local fovGui = Instance.new("ScreenGui")
+fovGui.Name = "XCFovGui"
+fovGui.ResetOnSpawn = false
+fovGui.DisplayOrder = 9
+fovGui.IgnoreGuiInset = true
+fovGui.Parent = targetGui
+
+local fovFrame = Instance.new("Frame", fovGui)
+fovFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+fovFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+fovFrame.BackgroundTransparency = 1
+fovFrame.BorderSizePixel = 0
+fovFrame.Visible = false
+local fovStroke = Instance.new("UIStroke", fovFrame)
+fovStroke.Color = currentTheme.Accent
+fovStroke.Thickness = 0.8
+local fovCorner = Instance.new("UICorner", fovFrame)
+fovCorner.CornerRadius = UDim.new(1, 0)
+
+local silentFovFrame = Instance.new("Frame", fovGui)
+silentFovFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+silentFovFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+silentFovFrame.BackgroundTransparency = 1
+silentFovFrame.BorderSizePixel = 0
+silentFovFrame.Visible = false
+local silentFovStroke = Instance.new("UIStroke", silentFovFrame)
+silentFovStroke.Color = Color3.fromRGB(0, 230, 255)
+silentFovStroke.Thickness = 0.8
+local silentFovCorner = Instance.new("UICorner", silentFovFrame)
+silentFovCorner.CornerRadius = UDim.new(1, 0)
+
+local watermarkGui = Instance.new("ScreenGui")
+watermarkGui.Name = "XCWatermarkGui"
+watermarkGui.ResetOnSpawn = false
+watermarkGui.DisplayOrder = 20
+watermarkGui.IgnoreGuiInset = true
+watermarkGui.Parent = targetGui
+
+local wmCard = Instance.new("Frame", watermarkGui)
+wmCard.Position = UDim2.new(0, 14, 0, 14)
+wmCard.Size = UDim2.new(0, 0, 0, 22)
+wmCard.AutomaticSize = Enum.AutomaticSize.X
+wmCard.BackgroundColor3 = currentTheme.Background
+wmCard.BorderSizePixel = 0
+Instance.new("UICorner", wmCard).CornerRadius = UDim.new(0, 5)
+
+local wmStroke = Instance.new("UIStroke", wmCard)
+wmStroke.Color = currentTheme.Border
+wmStroke.Thickness = 1.0
+
+local wmPad = Instance.new("UIPadding", wmCard)
+wmPad.PaddingLeft = UDim.new(0, 8)
+wmPad.PaddingRight = UDim.new(0, 8)
+
+local wmLayout = Instance.new("UIListLayout", wmCard)
+wmLayout.FillDirection = Enum.FillDirection.Horizontal
+wmLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+wmLayout.Padding = UDim.new(0, 5)
+
+local wmDot = Instance.new("Frame", wmCard)
+wmDot.Size = UDim2.new(0, 5, 0, 5)
+wmDot.BackgroundColor3 = currentTheme.Accent
+wmDot.BorderSizePixel = 0
+Instance.new("UICorner", wmDot).CornerRadius = UDim.new(1, 0)
+
+local wmTitle = Instance.new("TextLabel", wmCard)
+wmTitle.AutomaticSize = Enum.AutomaticSize.X
+wmTitle.Size = UDim2.new(0, 0, 1, 0)
+wmTitle.BackgroundTransparency = 1
+wmTitle.Text = "XC"
+wmTitle.TextColor3 = currentTheme.Accent
+wmTitle.TextSize = 9
+wmTitle.Font = Enum.Font.GothamBold
+
+local wmDivider = Instance.new("Frame", wmCard)
+wmDivider.Size = UDim2.new(0, 1, 0, 10)
+wmDivider.BackgroundColor3 = currentTheme.Border
+wmDivider.BorderSizePixel = 0
+
+local wmMetrics = Instance.new("TextLabel", wmCard)
+wmMetrics.AutomaticSize = Enum.AutomaticSize.X
+wmMetrics.Size = UDim2.new(0, 0, 1, 0)
+wmMetrics.BackgroundTransparency = 1
+wmMetrics.Text = "FPS: 60 | PING: 0ms"
+wmMetrics.TextColor3 = currentTheme.TextSecondary
+wmMetrics.TextSize = 8.5
+wmMetrics.Font = Enum.Font.GothamBold
+
+local fpsCounter = 0
+local lastFpsUpdate = tick()
+
+-- ==========================================
+-- GRENADE TRAJECTORY ENGINE
+-- ==========================================
+local grenadeRayParams = RaycastParams.new()
+grenadeRayParams.FilterType = Enum.RaycastFilterType.Exclude
+grenadeRayParams.IgnoreWater = true
+
+function isEntityCharacter(inst)
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p.Character and inst:IsDescendantOf(p.Character) then
+            return true
+        end
+    end
+    return false
+end
+
+function getOrCreateGrenadeUI(nadeInstance)
+    if grenadePool[nadeInstance] then return grenadePool[nadeInstance] end
+
+    local tag = Instance.new("Frame", grenadeContainer)
+    tag.Size = UDim2.new(0, 0, 0, 14)
+    tag.AutomaticSize = Enum.AutomaticSize.X
+    tag.AnchorPoint = Vector2.new(0.5, 1)
+    tag.BackgroundColor3 = Color3.fromRGB(18, 19, 22)
+    tag.BackgroundTransparency = 0.35
+    tag.BorderSizePixel = 0
+    tag.Visible = false
+    Instance.new("UICorner", tag).CornerRadius = UDim.new(0, 3)
+
+    local pad = Instance.new("UIPadding", tag)
+    pad.PaddingLeft = UDim.new(0, 4)
+    pad.PaddingRight = UDim.new(0, 4)
+
+    local lbl = Instance.new("TextLabel", tag)
+    lbl.AutomaticSize = Enum.AutomaticSize.X
+    lbl.Size = UDim2.new(0, 0, 1, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.TextSize = 9
+    lbl.Font = Enum.Font.GothamBold
+    lbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+    local radiusCircle = Instance.new("Frame", grenadeContainer)
+    radiusCircle.AnchorPoint = Vector2.new(0.5, 0.5)
+    radiusCircle.BackgroundTransparency = 1
+    radiusCircle.BorderSizePixel = 0
+    radiusCircle.Visible = false
+    Instance.new("UICorner", radiusCircle).CornerRadius = UDim.new(1, 0)
+    local radStroke = Instance.new("UIStroke", radiusCircle)
+    radStroke.Thickness = 1.5
+
+    local data = {
+        Tag = tag,
+        Label = lbl,
+        RadiusCircle = radiusCircle,
+        RadiusStroke = radStroke,
+        Lines = {}
+    }
+
+    for j = 1, 8 do
+        local seg = Instance.new("Frame", grenadeContainer)
+        seg.BorderSizePixel = 0
+        seg.AnchorPoint = Vector2.new(0.5, 0.5)
+        seg.Visible = false
+        table.insert(data.Lines, seg)
+    end
+
+    grenadePool[nadeInstance] = data
+    return data
+end
+
+function renderGrenadeOverlays()
+    if not XCConfig.grenadeEspEnabled then
+        for _, v in pairs(grenadePool) do
+            v.Tag.Visible = false
+            v.RadiusCircle.Visible = false
+            for _, l in ipairs(v.Lines) do l.Visible = false end
+        end
+        return
+    end
+
+    local camPos = camera.CFrame.Position
+    local activeGrenades = {}
+
+    for _, item in ipairs(Workspace:GetChildren()) do
+        if not isEntityCharacter(item) then
+            local nName = item.Name:lower()
+            local isNade = false
+            local nadeType = "NADE"
+            local nadeColor = currentTheme.HEColor
+            local effectRadiusStuds = 14
+
+            if nName:find("molotov") or nName:find("incendiary") or nName:find("fire") then
+                isNade = true
+                nadeType = "MOLOTOV"
+                nadeColor = currentTheme.MolotovColor
+                effectRadiusStuds = 17
+            elseif nName:find("smoke") then
+                isNade = true
+                nadeType = "SMOKE"
+                nadeColor = currentTheme.SmokeColor
+                effectRadiusStuds = 20
+            elseif nName:find("grenade") or nName:find("hegrenade") or nName:find("frag") then
+                isNade = true
+                nadeType = "HE"
+                nadeColor = currentTheme.HEColor
+                effectRadiusStuds = 15
+            elseif nName:find("flash") then
+                isNade = true
+                nadeType = "FLASH"
+                nadeColor = Color3.fromRGB(245, 235, 120)
+                effectRadiusStuds = 10
+            end
+
+            if isNade then
+                local part = item:IsA("BasePart") and item or item:FindFirstChildWhichIsA("BasePart")
+                if part and part.Parent and part:IsDescendantOf(Workspace) then
+                    local dist = (part.Position - camPos).Magnitude
+                    if dist <= XCConfig.grenadeMaxDist then
+                        activeGrenades[item] = true
+                        local ui = getOrCreateGrenadeUI(item)
+                        local scrPos, onScreen = camera:WorldToViewportPoint(part.Position)
+
+                        if onScreen and scrPos.Z > 0 then
+                            ui.Tag.Position = UDim2.new(0, scrPos.X, 0, scrPos.Y - 6)
+                            ui.Label.Text = string.format("%s [%dm]", nadeType, math.floor(dist))
+                            ui.Label.TextColor3 = nadeColor
+                            ui.Tag.Visible = true
+
+                            if XCConfig.showGrenadePath and part.AssemblyLinearVelocity and part.AssemblyLinearVelocity.Magnitude > 2 then
+                                local vel = part.AssemblyLinearVelocity
+                                local simPos = part.Position
+                                local stepTime = 0.08
+                                local grav = Vector3.new(0, -Workspace.Gravity, 0)
+                                
+                                grenadeRayParams.FilterDescendantsInstances = {player.Character, item, camera}
+
+                                for step = 1, #ui.Lines do
+                                    local nextPos = simPos + (vel * stepTime) + (0.5 * grav * stepTime * stepTime)
+                                    vel = vel + (grav * stepTime)
+
+                                    local castHit = Workspace:Raycast(simPos, nextPos - simPos, grenadeRayParams)
+                                    if castHit then nextPos = castHit.Position end
+
+                                    local p1, v1 = camera:WorldToViewportPoint(simPos)
+                                    local p2, v2 = camera:WorldToViewportPoint(nextPos)
+
+                                    if v1 and v2 and p1.Z > 0 and p2.Z > 0 then
+                                        local lFrame = ui.Lines[step]
+                                        local startV2 = Vector2.new(p1.X, p1.Y)
+                                        local endV2 = Vector2.new(p2.X, p2.Y)
+                                        local lDist = (endV2 - startV2).Magnitude
+                                        local center = (startV2 + endV2) * 0.5
+                                        local angle = math.deg(math.atan2(endV2.Y - startV2.Y, endV2.X - startV2.X))
+
+                                        lFrame.Size = UDim2.new(0, lDist, 0, 1.2)
+                                        lFrame.Position = UDim2.new(0, center.X, 0, center.Y)
+                                        lFrame.Rotation = angle
+                                        lFrame.BackgroundColor3 = nadeColor
+                                        lFrame.Visible = true
+                                    else
+                                        ui.Lines[step].Visible = false
+                                    end
+
+                                    if castHit then
+                                        for rem = step + 1, #ui.Lines do ui.Lines[rem].Visible = false end
+                                        break
+                                    end
+                                    simPos = nextPos
+                                end
+                            else
+                                for _, l in ipairs(ui.Lines) do l.Visible = false end
+                            end
+
+                            local shouldShowRadius = (nadeType == "MOLOTOV" and XCConfig.showMolotovRadius) or (nadeType == "SMOKE" and XCConfig.showSmokeRadius)
+                            if shouldShowRadius then
+                                grenadeRayParams.FilterDescendantsInstances = {player.Character, item, camera}
+                                local groundCast = Workspace:Raycast(part.Position, Vector3.new(0, -60, 0), grenadeRayParams)
+                                local groundPos = groundCast and groundCast.Position or part.Position
+                                
+                                local cCenter, cVisible = camera:WorldToViewportPoint(groundPos)
+                                local cEdge, _ = camera:WorldToViewportPoint(groundPos + (camera.CFrame.RightVector * effectRadiusStuds))
+
+                                if cVisible and cCenter.Z > 0 then
+                                    local rPix = (Vector2.new(cEdge.X, cEdge.Y) - Vector2.new(cCenter.X, cCenter.Y)).Magnitude
+                                    ui.RadiusCircle.Size = UDim2.new(0, rPix * 2, 0, rPix * 2)
+                                    ui.RadiusCircle.Position = UDim2.new(0, cCenter.X, 0, cCenter.Y)
+                                    ui.RadiusCircle.BackgroundTransparency = 1
+                                    ui.RadiusStroke.Color = nadeColor
+                                    ui.RadiusCircle.Visible = true
+                                else
+                                    ui.RadiusCircle.Visible = false
+                                end
+                            else
+                                ui.RadiusCircle.Visible = false
+                            end
+                        else
+                            ui.Tag.Visible = false
+                            ui.RadiusCircle.Visible = false
+                            for _, l in ipairs(ui.Lines) do l.Visible = false end
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    for inst, data in pairs(grenadePool) do
+        if not activeGrenades[inst] or not inst.Parent then
+            data.Tag:Destroy()
+            data.RadiusCircle:Destroy()
+            for _, l in ipairs(data.Lines) do l:Destroy() end
+            grenadePool[inst] = nil
+        end
+    end
+end
+
+-- ==========================================
+-- GRENADE DANGER ZONES
+-- ==========================================
+function classifyXCGrenadeDanger(object)
+    if not object or not object.Parent or isEntityCharacter(object) then return nil end
+    local name = object.Name:lower()
+    local grenadeAttribute = object:GetAttribute("GrenadeName")
+    if type(grenadeAttribute) == "string" then name ..= " " .. grenadeAttribute:lower() end
+    if name:find("smokezone", 1, true) or name:find("smoke_zone", 1, true)
+        or name:find("voxelsmoke", 1, true) or name:find("smokearea", 1, true)
+        or name:find("gaszone", 1, true) then
+        return "SMOKE", currentTheme.SmokeColor, 20, true
+    end
+    if name:find("firezone", 1, true) or name:find("fire_zone", 1, true)
+        or name:find("voxelfire", 1, true) or name:find("molotov", 1, true)
+        or name:find("incendiary", 1, true) or name:find("ignite", 1, true)
+        or name:find("flamezone", 1, true) or name:find("burnzone", 1, true) then
+        return "FIRE", currentTheme.MolotovColor, 17, name:find("zone", 1, true) ~= nil or name:find("voxel", 1, true) ~= nil
+    end
+    if name:find("flashbang", 1, true) or name:find("flash_grenade", 1, true) or name:find("flash grenade", 1, true) then
+        return "FLASH", Color3.fromRGB(245, 235, 120), 10, false
+    end
+    if name:find("smokegrenade", 1, true) or name:find("smoke_grenade", 1, true) or name:find("smoke grenade", 1, true) then
+        return "SMOKE", currentTheme.SmokeColor, 20, false
+    end
+    if name:find("hegrenade", 1, true) or name:find("he_grenade", 1, true) or name:find("he grenade", 1, true)
+        or name:find("frag", 1, true) or name == "grenade" or name:find("grenadeprojectile", 1, true) then
+        return "HE", currentTheme.HEColor, 15, false
+    end
+    return nil
+end
+
+function getXCDangerPart(object)
+    if object:IsA("BasePart") then return object end
+    if object:IsA("Model") and object.PrimaryPart then return object.PrimaryPart end
+    return object:FindFirstChildWhichIsA("BasePart", true)
+end
+
+function createXCGrenadeDanger(object)
+    if grenadeDangerPool[object] then return grenadeDangerPool[object] end
+    local kind, color, radius, isZone = classifyXCGrenadeDanger(object)
+    if not kind then return nil end
+
+    local data = {
+        Object = object,
+        Kind = kind,
+        Color = color,
+        Radius = radius,
+        IsZone = isZone,
+        Center = nil,
+        NextPhysics = 0,
+        Segments = {},
+    }
+    for index = 1, 24 do
+        local line = Instance.new("Frame", grenadeContainer)
+        line.Name = "Danger_" .. kind .. "_" .. index
+        line.AnchorPoint = Vector2.new(0.5, 0.5)
+        line.BorderSizePixel = 0
+        line.BackgroundColor3 = color
+        line.Visible = false
+        line.ZIndex = 5
+        data.Segments[index] = line
+    end
+
+    local label = Instance.new("TextLabel", grenadeContainer)
+    label.Name = "DangerLabel_" .. kind
+    label.AnchorPoint = Vector2.new(0.5, 1)
+    label.Size = UDim2.fromOffset(84, 16)
+    label.BackgroundColor3 = Color3.fromRGB(10, 11, 13)
+    label.BackgroundTransparency = 0.24
+    label.BorderSizePixel = 0
+    label.Text = "! " .. kind
+    label.TextColor3 = color
+    label.TextSize = 9
+    label.Font = Enum.Font.GothamBold
+    label.Visible = false
+    label.ZIndex = 6
+    Instance.new("UICorner", label).CornerRadius = UDim.new(0, 3)
+    data.Label = label
+    grenadeDangerPool[object] = data
+    return data
+end
+
+function destroyXCGrenadeDanger(data)
+    if not data then return end
+    for _, line in ipairs(data.Segments or {}) do pcall(function() line:Destroy() end) end
+    pcall(function() data.Label:Destroy() end)
+end
+
+function hideXCGrenadeDanger(data)
+    for _, line in ipairs(data.Segments) do line.Visible = false end
+    data.Label.Visible = false
+end
+
+function computeXCZoneBounds(object, fallbackPart, fallbackRadius)
+    local sumX, sumZ, minY, count = 0, 0, math.huge, 0
+    local parts = {}
+    if object:IsA("BasePart") then table.insert(parts, object) end
+    for _, descendant in ipairs(object:GetDescendants()) do
+        if descendant:IsA("BasePart") then table.insert(parts, descendant) end
+    end
+    for _, part in ipairs(parts) do
+        if part.Transparency < 1 or part.CanQuery then
+            sumX += part.Position.X
+            sumZ += part.Position.Z
+            minY = math.min(minY, part.Position.Y - part.Size.Y * 0.5)
+            count += 1
+        end
+    end
+    if count == 0 then return fallbackPart.Position, fallbackRadius end
+    local center = Vector3.new(sumX / count, minY, sumZ / count)
+    local radius = 0
+    for _, part in ipairs(parts) do
+        local horizontal = Vector2.new(part.Position.X - center.X, part.Position.Z - center.Z).Magnitude
+        radius = math.max(radius, horizontal + math.max(part.Size.X, part.Size.Z) * 0.5)
+    end
+    return center, math.clamp(radius, 2, fallbackRadius * 1.35)
+end
+
+function updateXCGrenadeDangerPhysics(data, now)
+    if now < data.NextPhysics then return end
+    data.NextPhysics = now + 0.12
+    local object = data.Object
+    local part = getXCDangerPart(object)
+    if not part then data.Center = nil return end
+
+    if data.IsZone then
+        data.Center, data.RenderRadius = computeXCZoneBounds(object, part, data.Radius)
+        return
+    end
+
+    local position = part.Position
+    local velocity = part.AssemblyLinearVelocity
+    grenadeRayParams.FilterDescendantsInstances = {player.Character, object, camera}
+    if velocity.Magnitude > 1.5 then
+        local gravity = Vector3.new(0, -Workspace.Gravity, 0)
+        local stepTime = 0.08
+        for _ = 1, 32 do
+            local nextPosition = position + velocity * stepTime + gravity * (0.5 * stepTime * stepTime)
+            local result = Workspace:Raycast(position, nextPosition - position, grenadeRayParams)
+            if result then
+                position = result.Position
+                if result.Normal.Y > 0.42 then break end
+                velocity = (velocity - 2 * velocity:Dot(result.Normal) * result.Normal) * 0.42
+                position += result.Normal * 0.08
+            else
+                position = nextPosition
+            end
+            velocity += gravity * stepTime
+        end
+    end
+    local ground = Workspace:Raycast(position + Vector3.new(0, 3, 0), Vector3.new(0, -45, 0), grenadeRayParams)
+    data.Center = ground and ground.Position or position
+    data.RenderRadius = data.Radius
+end
+
+function renderXCGrenadeDangerZones()
+    local now = os.clock()
+    if not XCConfig.grenadeDangerZonesEnabled then
+        grenadeDangerScanStarted = false
+        for object, data in pairs(grenadeDangerPool) do
+            if not object.Parent then destroyXCGrenadeDanger(data) grenadeDangerPool[object] = nil
+            else hideXCGrenadeDanger(data) end
+        end
+        return
+    end
+
+    if not grenadeDangerScanStarted then
+        grenadeDangerScanStarted = true
+        task.spawn(function()
+            local queue, index, visited = {Workspace}, 1, 0
+            while queue[index] and xcSessionActive() and XCConfig.grenadeDangerZonesEnabled do
+                local parent = queue[index]
+                index += 1
+                for _, child in ipairs(parent:GetChildren()) do
+                    if classifyXCGrenadeDanger(child) then createXCGrenadeDanger(child) end
+                    if child:IsA("Folder") or child:IsA("Model") then table.insert(queue, child) end
+                    visited += 1
+                    if visited % 160 == 0 then task.wait() end
+                end
+            end
+        end)
+    end
+
+    local camPosition = camera.CFrame.Position
+    for object, data in pairs(grenadeDangerPool) do
+        if not object.Parent or isEntityCharacter(object) then
+            destroyXCGrenadeDanger(data)
+            grenadeDangerPool[object] = nil
+        else
+            updateXCGrenadeDangerPhysics(data, now)
+            local center = data.Center
+            if not center or (center - camPosition).Magnitude > XCConfig.grenadeMaxDist then
+                hideXCGrenadeDanger(data)
+                continue
+            end
+
+            local radius = (data.RenderRadius or data.Radius) * (0.985 + math.sin(now * 4) * 0.015)
+            local opacity = math.clamp(tonumber(XCConfig.grenadeDangerOpacity) or 0.82, 0.1, 1)
+            local allPoints = {}
+            for index = 1, #data.Segments do
+                local angle = math.pi * 2 * ((index - 1) / #data.Segments)
+                local worldPoint = center + Vector3.new(math.cos(angle) * radius, 0.18, math.sin(angle) * radius)
+                local screenPoint, visible = camera:WorldToViewportPoint(worldPoint)
+                allPoints[index] = visible and screenPoint.Z > 0 and Vector2.new(screenPoint.X, screenPoint.Y) or nil
+            end
+            for index, line in ipairs(data.Segments) do
+                local a = allPoints[index]
+                local b = allPoints[index == #data.Segments and 1 or index + 1]
+                if a and b then
+                    local delta = b - a
+                    line.Size = UDim2.fromOffset(delta.Magnitude + 1, 2)
+                    line.Position = UDim2.fromOffset((a.X + b.X) * 0.5, (a.Y + b.Y) * 0.5)
+                    line.Rotation = math.deg(math.atan2(delta.Y, delta.X))
+                    line.BackgroundColor3 = data.Color
+                    line.BackgroundTransparency = 1 - opacity
+                    line.Visible = true
+                else
+                    line.Visible = false
+                end
+            end
+            local centerScreen, centerVisible = camera:WorldToViewportPoint(center + Vector3.new(0, 0.35, 0))
+            data.Label.TextColor3 = data.Color
+            data.Label.Position = UDim2.fromOffset(centerScreen.X, centerScreen.Y - 4)
+            data.Label.Visible = centerVisible and centerScreen.Z > 0
+        end
+    end
+end
+
+table.insert(connections, Workspace.DescendantAdded:Connect(function(object)
+    if XCConfig.grenadeDangerZonesEnabled and classifyXCGrenadeDanger(object) then
+        createXCGrenadeDanger(object)
+    end
+end))
+
+-- ==========================================
+-- ENEMY SOUND POSITION ESP
+-- ==========================================
+function getXCSoundSource(sound)
+    local cursor = sound.Parent
+    local sourcePart
+    while cursor and cursor ~= Workspace do
+        if not sourcePart then
+            if cursor:IsA("Attachment") then
+                sourcePart = cursor
+            elseif cursor:IsA("BasePart") then
+                sourcePart = cursor
+            end
+        end
+        if cursor:IsA("Model") then
+            local owner = Players:GetPlayerFromCharacter(cursor)
+            if owner then
+                local position
+                if sourcePart and sourcePart:IsA("Attachment") then position = sourcePart.WorldPosition
+                elseif sourcePart and sourcePart:IsA("BasePart") then position = sourcePart.Position end
+                local root = cursor:FindFirstChild("HumanoidRootPart") or cursor:FindFirstChild("Torso") or cursor:FindFirstChild("UpperTorso")
+                return owner, position or (root and root.Position), cursor
+            end
+        end
+        for _, attributeName in ipairs({"Player", "Owner", "UserId", "CreatorId"}) do
+            local ownerValue = cursor:GetAttribute(attributeName)
+            local owner
+            if typeof(ownerValue) == "Instance" and ownerValue:IsA("Player") then owner = ownerValue
+            elseif type(ownerValue) == "number" then owner = Players:GetPlayerByUserId(ownerValue) end
+            if not owner and type(ownerValue) == "string" then
+                owner = Players:FindFirstChild(ownerValue)
+                if not owner then
+                    local numericId = tonumber(ownerValue)
+                    if numericId then owner = Players:GetPlayerByUserId(numericId) end
+                end
+            end
+            if owner then
+                local character = owner.Character
+                local root = character and (character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("Torso"))
+                local position = sourcePart and (sourcePart:IsA("Attachment") and sourcePart.WorldPosition or sourcePart.Position)
+                return owner, position or (root and root.Position), character
+            end
+        end
+        cursor = cursor.Parent
+    end
+
+    local position = sourcePart and (sourcePart:IsA("Attachment") and sourcePart.WorldPosition or sourcePart.Position)
+    if position and classifyXCSound(sound) ~= "SOUND" then
+        local closestPlayer, closestCharacter, closestDistance = nil, nil, 5
+        for _, candidate in ipairs(Players:GetPlayers()) do
+            local character = candidate.Character
+            local root = character and (character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("Torso"))
+            if root and isTargetEnemy(candidate, character) then
+                local distance = (root.Position - position).Magnitude
+                if distance < closestDistance then
+                    closestPlayer, closestCharacter, closestDistance = candidate, character, distance
+                end
+            end
+        end
+        if closestPlayer then return closestPlayer, position, closestCharacter end
+    end
+    return nil
+end
+
+function classifyXCSound(sound)
+    local name = sound.Name:lower()
+    if name:find("foot", 1, true) or name:find("step", 1, true)
+        or name:find("walk", 1, true) or name:find("run", 1, true) then return "STEP" end
+    if name:find("shoot", 1, true) or name:find("shot", 1, true)
+        or name:find("fire", 1, true) or name:find("gun", 1, true) then return "SHOT" end
+    if name:find("reload", 1, true) or name:find("mag", 1, true) then return "RELOAD" end
+    if name:find("jump", 1, true) or name:find("land", 1, true) then return "MOVE" end
+    return "SOUND"
+end
+
+function destroyXCSoundPulse(pulse)
+    pcall(function() pulse.Root:Destroy() end)
+end
+
+function createXCSoundPulse(position, category)
+    if #soundEspPulses >= 24 then
+        destroyXCSoundPulse(table.remove(soundEspPulses, 1))
+    end
+
+    local root = Instance.new("Frame", overlayContainer)
+    root.Name = "SoundESP_" .. category
+    root.AnchorPoint = Vector2.new(0.5, 0.5)
+    root.Size = UDim2.fromOffset(1, 1)
+    root.BackgroundTransparency = 1
+    root.Visible = false
+    root.ZIndex = 20
+
+    local ring = Instance.new("Frame", root)
+    ring.AnchorPoint = Vector2.new(0.5, 0.5)
+    ring.Position = UDim2.fromScale(0.5, 0.5)
+    ring.BackgroundTransparency = 1
+    ring.BorderSizePixel = 0
+    ring.ZIndex = 20
+    Instance.new("UICorner", ring).CornerRadius = UDim.new(1, 0)
+    local stroke = Instance.new("UIStroke", ring)
+    stroke.Color = currentTheme.Accent
+    stroke.Thickness = 2
+    stroke.Transparency = 0
+
+    local dot = Instance.new("Frame", root)
+    dot.AnchorPoint = Vector2.new(0.5, 0.5)
+    dot.Position = UDim2.fromScale(0.5, 0.5)
+    dot.Size = UDim2.fromOffset(5, 5)
+    dot.BackgroundColor3 = currentTheme.Accent
+    dot.BorderSizePixel = 0
+    dot.ZIndex = 21
+    Instance.new("UICorner", dot).CornerRadius = UDim.new(1, 0)
+
+    local label = Instance.new("TextLabel", root)
+    label.AnchorPoint = Vector2.new(0.5, 0)
+    label.Position = UDim2.fromOffset(0, 11)
+    label.Size = UDim2.fromOffset(58, 14)
+    label.BackgroundColor3 = Color3.fromRGB(10, 11, 13)
+    label.BackgroundTransparency = 0.28
+    label.BorderSizePixel = 0
+    label.Font = Enum.Font.GothamBold
+    label.TextSize = 8
+    label.Text = category
+    label.TextColor3 = currentTheme.Accent
+    label.ZIndex = 21
+    Instance.new("UICorner", label).CornerRadius = UDim.new(0, 3)
+
+    table.insert(soundEspPulses, {
+        Root = root,
+        Ring = ring,
+        Stroke = stroke,
+        Dot = dot,
+        Label = label,
+        Position = position,
+        Created = os.clock(),
+        Duration = math.clamp(tonumber(XCConfig.soundEspDuration) or 1.15, 0.35, 3),
+    })
+end
+
+function triggerXCSoundPosition(sound)
+    if not XCConfig.soundPositionEspEnabled or not sound or not sound.Parent then return end
+    local owner, position, character = getXCSoundSource(sound)
+    if not owner or not position or not isTargetEnemy(owner, character) then return end
+    local cam = Workspace.CurrentCamera or camera
+    if not cam or (position - cam.CFrame.Position).Magnitude > (tonumber(XCConfig.soundEspMaxDist) or 1200) then return end
+    local now = os.clock()
+    local record = soundEspTracked[sound]
+    if record and now - (record.LastPulse or 0) < 0.09 then return end
+    if not record then record = {} soundEspTracked[sound] = record end
+    record.LastPulse = now
+    createXCSoundPulse(position, classifyXCSound(sound))
+end
+
+function trackXCSound(sound)
+    if not sound:IsA("Sound") then return end
+    local record = soundEspTracked[sound]
+    if record and record.Hooked then return end
+    record = record or {}
+    record.Hooked = true
+    soundEspTracked[sound] = record
+    pcall(function()
+        table.insert(connections, sound.Played:Connect(function()
+            triggerXCSoundPosition(sound)
+        end))
+    end)
+    table.insert(connections, sound:GetPropertyChangedSignal("Playing"):Connect(function()
+        if sound.Playing then triggerXCSoundPosition(sound) end
+    end))
+end
+
+function hookXCSoundCharacter(plr, character)
+    if plr == player or not character then return end
+    for _, object in ipairs(character:GetDescendants()) do
+        if object:IsA("Sound") then trackXCSound(object) end
+    end
+    table.insert(connections, character.DescendantAdded:Connect(function(object)
+        if object:IsA("Sound") then trackXCSound(object) end
+    end))
+end
+
+function hookXCSoundPlayer(plr)
+    if plr == player then return end
+    if plr.Character then hookXCSoundCharacter(plr, plr.Character) end
+    table.insert(connections, plr.CharacterAdded:Connect(function(character)
+        hookXCSoundCharacter(plr, character)
+    end))
+end
+
+function renderXCSoundPositionEsp()
+    local now = os.clock()
+    for index = #soundEspPulses, 1, -1 do
+        local pulse = soundEspPulses[index]
+        local alpha = (now - pulse.Created) / pulse.Duration
+        if not XCConfig.soundPositionEspEnabled or alpha >= 1 then
+            destroyXCSoundPulse(pulse)
+            table.remove(soundEspPulses, index)
+        else
+            local point, visible = camera:WorldToViewportPoint(pulse.Position)
+            if visible and point.Z > 0 then
+                local size = 12 + alpha * 34
+                pulse.Root.Position = UDim2.fromOffset(point.X, point.Y)
+                pulse.Ring.Size = UDim2.fromOffset(size, size)
+                pulse.Stroke.Color = currentTheme.Accent
+                pulse.Stroke.Transparency = math.clamp(alpha, 0, 1)
+                pulse.Dot.BackgroundColor3 = currentTheme.Accent
+                pulse.Dot.BackgroundTransparency = math.clamp(alpha * 0.8, 0, 1)
+                pulse.Label.TextColor3 = currentTheme.Accent
+                pulse.Label.TextTransparency = math.clamp(alpha, 0, 1)
+                pulse.Label.BackgroundTransparency = 0.28 + alpha * 0.72
+                pulse.Root.Visible = true
+            else
+                pulse.Root.Visible = false
+            end
+        end
+    end
+end
+
+for _, otherPlayer in ipairs(Players:GetPlayers()) do hookXCSoundPlayer(otherPlayer) end
+table.insert(connections, Players.PlayerAdded:Connect(hookXCSoundPlayer))
+table.insert(connections, Workspace.DescendantAdded:Connect(function(object)
+    if object:IsA("Sound") then trackXCSound(object) end
+end))
+
+-- ==========================================
+--  AIM ENGINE SHLAK
+-- ==========================================
+local visRayParams = RaycastParams.new()
+visRayParams.FilterType = Enum.RaycastFilterType.Exclude
+visRayParams.IgnoreWater = true
+
+function isTargetVisible(originPos, targetPart, targetChar)
+    if not XCConfig.visibleCheck or XCConfig.wallbangEnabled then return true end
+    local myChar = player.Character
+    visRayParams.FilterDescendantsInstances = {myChar, camera}
+    local dir = targetPart.Position - originPos
+    
+    local hit = Workspace:Raycast(originPos, dir, visRayParams)
+    if hit and (hit.Instance:IsDescendantOf(targetChar) or hit.Instance == targetPart) then
+        return true
+    end
+    return false
+end
+
+function getPingLatency()
+    local ping = 0.03
+    pcall(function()
+        local serverStats = Stats:FindFirstChild("Network") and Stats.Network:FindFirstChild("ServerStatsItem")
+        if serverStats and serverStats:FindFirstChild("Data Ping") then
+            ping = (serverStats["Data Ping"]:GetValue() / 1000)
+        end
+    end)
+    return ping
+end
+
+function getKinematicAimPosition(targetPart)
+    local rawPos = targetPart.Position
+    if not XCConfig.predictionEnabled then
+        return rawPos
+    end
+
+    local ping = getPingLatency()
+    local predDelta = (XCConfig.predictionFactor * 0.5) + ping
+    local targetVel = targetPart.AssemblyLinearVelocity or Vector3.zero
+
+    local myChar = player.Character
+    local myHrp = myChar and myChar:FindFirstChild("HumanoidRootPart")
+    local myVel = (myHrp and myHrp.AssemblyLinearVelocity) or Vector3.zero
+    
+    local relativeVel = targetVel - (myVel * 0.15)
+    return rawPos + (relativeVel * predDelta)
+end
+
+function getClosestTarget()
+    local cam = Workspace.CurrentCamera or camera
+    if not cam then return nil end
+
+    local camCFrame = cam.CFrame
+    local camPos = camCFrame.Position
+    local camLook = camCFrame.LookVector
+    local maxAngleRad = math.rad(XCConfig.aimFov * 0.5)
+
+    if currentAimTarget then
+        local cChar = currentAimTarget.Char
+        local cHum = currentAimTarget.Hum
+        local cPart = currentAimTarget.Part
+        local priorityName = tostring(XCConfig.priorityPlayerName or "None")
+        local currentPlayer = currentAimTarget.Player
+        local priorityAllowsSticky = priorityName == "None"
+            or (currentPlayer and (currentPlayer.Name == priorityName or currentPlayer.DisplayName == priorityName))
+        if isEntityAlive(cChar, cHum) and cPart and cPart.Parent then
+            local predPos = getKinematicAimPosition(cPart)
+            local toTarget = (predPos - camPos).Unit
+            local angle = math.acos(math.clamp(camLook:Dot(toTarget), -1, 1))
+            
+            if priorityAllowsSticky and angle <= (maxAngleRad * 1.15) then
+                currentAimTarget.AimPosition = predPos
+                return currentAimTarget
+            end
+        end
+    end
+
+    local bestTarget = nil
+    local bestScore = math.huge
+    local allPlayers = Players:GetPlayers()
+
+    for i = 1, #allPlayers do
+        local plr = allPlayers[i]
+        local char = plr.Character
+        if char and plr ~= player and isTargetEnemy(plr, char) then
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            if isEntityAlive(char, hum) then
+                local hitPart = getTargetHitbox(char)
+                if hitPart then
+                    local aimPos = getKinematicAimPosition(hitPart)
+                    local toTarget = (aimPos - camPos).Unit
+                    local angle = math.acos(math.clamp(camLook:Dot(toTarget), -1, 1))
+
+                    if angle <= maxAngleRad then
+                        local dist = (aimPos - camPos).Magnitude
+                        local score = (angle * 0.7) + ((dist / 1000) * 0.3)
+                        local priorityName = tostring(XCConfig.priorityPlayerName or "None")
+                        if priorityName ~= "None"
+                            and (plr.Name == priorityName or plr.DisplayName == priorityName) then
+                            score -= 1000
+                        end
+                        if score < bestScore then
+                            bestScore = score
+                            bestTarget = {
+                                Player = plr,
+                                Char = char,
+                                Part = hitPart,
+                                Hum = hum,
+                                Position = hitPart.Position,
+                                AimPosition = aimPos,
+                                AngularDelta = angle
+                            }
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    if bestTarget and (tick() - lastTargetSwitchTick > TARGET_HYSTERESIS_TIME) then
+        currentAimTarget = bestTarget
+        lastTargetSwitchTick = tick()
+    elseif not bestTarget then
+        currentAimTarget = nil
+    end
+
+    return currentAimTarget
+end
+
+-- ==========================================
+-- RAGEBOT TT
+-- ==========================================
+function getRageTarget()
+    local cam = Workspace.CurrentCamera or camera
+    if not cam then return nil end
+    local camPos = cam.CFrame.Position
+    local camLook = cam.CFrame.LookVector
+
+    local bestTarget = nil
+    local bestScore = math.huge
+    local allPlayers = Players:GetPlayers()
+
+    for i = 1, #allPlayers do
+        local plr = allPlayers[i]
+        local char = plr.Character
+        if char and plr ~= player and isTargetEnemy(plr, char) then
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            if isEntityAlive(char, hum) then
+                local hitPart = getTargetHitbox(char)
+                if hitPart then
+                    if XCConfig.wallbangEnabled or isVisibleThroughWalls(hitPart, char) then
+                        local aimPos = getKinematicAimPosition(hitPart)
+                        local score = math.huge
+                        
+                        if XCConfig.rageTargetMode == "Distance" then
+                            score = (aimPos - camPos).Magnitude
+                        elseif XCConfig.rageTargetMode == "Health" then
+                            score = hum.Health
+                        elseif XCConfig.rageTargetMode == "FOV" then
+                            local direction = (aimPos - camPos).Unit
+                            score = math.acos(math.clamp(camLook:Dot(direction), -1, 1))
+                        elseif XCConfig.rageTargetMode == "Priority" then
+                            local priorityName = tostring(XCConfig.priorityPlayerName or "None")
+                            local isPriority = priorityName ~= "None"
+                                and (plr.Name == priorityName or plr.DisplayName == priorityName)
+                            score = (isPriority and -100000 or 0) + (aimPos - camPos).Magnitude
+                        end
+
+                        if score < bestScore then
+                            bestScore = score
+                            bestTarget = {
+                                Player = plr,
+                                Char = char,
+                                Part = hitPart,
+                                Hum = hum,
+                                Position = hitPart.Position,
+                                AimPosition = aimPos
+                            }
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return bestTarget
+end
+
+-- ==========================================
+-- TRIGGERBOT + MATERIAL/THICKNESS PENETRATION
+-- ==========================================
+local triggerRayParams = RaycastParams.new()
+triggerRayParams.FilterType = Enum.RaycastFilterType.Exclude
+triggerRayParams.IgnoreWater = true
+
+-- Conservative BloxStrike material limits adapted from the existing
+-- penetration model. Values are maximum accumulated thickness.
+local triggerMaterialLimits = {
+    [Enum.Material.Asphalt] = 0.25, [Enum.Material.Basalt] = 0.25,
+    [Enum.Material.Brick] = 0.25, [Enum.Material.Cobblestone] = 0.25,
+    [Enum.Material.Concrete] = 0.25, [Enum.Material.CrackedLava] = 0.25,
+    [Enum.Material.DiamondPlate] = 0.25, [Enum.Material.Foil] = 0.25,
+    [Enum.Material.Glacier] = 0.25, [Enum.Material.Granite] = 0.25,
+    [Enum.Material.Grass] = 0.25, [Enum.Material.Ground] = 0.25,
+    [Enum.Material.Ice] = 0.25, [Enum.Material.LeafyGrass] = 0.25,
+    [Enum.Material.Limestone] = 0.25, [Enum.Material.Marble] = 0.25,
+    [Enum.Material.Metal] = 0.25, [Enum.Material.Mud] = 0.25,
+    [Enum.Material.Pavement] = 0.25, [Enum.Material.Rock] = 0.25,
+    [Enum.Material.Salt] = 0.25, [Enum.Material.Sand] = 0.25,
+    [Enum.Material.Sandstone] = 0.25, [Enum.Material.Slate] = 0.25,
+    [Enum.Material.Snow] = 0.25, [Enum.Material.ForceField] = 0.25,
+    [Enum.Material.Neon] = 0.25, [Enum.Material.CorrodedMetal] = 0.25,
+    [Enum.Material.Pebble] = 0.25, [Enum.Material.CeramicTiles] = 0.25,
+    [Enum.Material.Plaster] = 0.25,
+    [Enum.Material.Plastic] = 7, [Enum.Material.SmoothPlastic] = 7,
+    [Enum.Material.Wood] = 7, [Enum.Material.WoodPlanks] = 7,
+    [Enum.Material.Cardboard] = 7, [Enum.Material.Glass] = 100,
+    [Enum.Material.Fabric] = 100,
+}
+
+local triggerMaterialVariantLimits = {
+    IndoorWall = 0.25,
+    ["Sandy Brick"] = 0.25,
+}
+
+function triggerIsCharacterPart(part, targetModel)
+    return part and targetModel and part:IsDescendantOf(targetModel)
+end
+
+function triggerFindTargetAlongRay(origin, direction, targetModel)
+    local params = RaycastParams.new()
+    params.FilterType = Enum.RaycastFilterType.Exclude
+    params.IgnoreWater = true
+    local filter = {player.Character}
+    params.FilterDescendantsInstances = filter
+
+    local currentOrigin = origin
+    local remaining = direction.Unit * math.min(direction.Magnitude, 1000)
+    local accumulated = {}
+    local steps = 0
+
+    while remaining.Magnitude > 0.05 and steps < 100 do
+        steps += 1
+        local hit = Workspace:Raycast(currentOrigin, remaining, params)
+        if not hit or not hit.Instance then
+            return nil
+        end
+
+        if triggerIsCharacterPart(hit.Instance, targetModel) then
+            return hit
+        end
+
+        local part = hit.Instance
+        if not part:IsA("BasePart") then
+            table.insert(filter, part)
+            params.FilterDescendantsInstances = filter
+            currentOrigin = hit.Position + remaining.Unit * 0.01
+            remaining = direction.Unit * math.max(0, (origin + direction.Unit * math.min(direction.Magnitude, 1000) - currentOrigin).Magnitude)
+            continue
+        end
+
+        -- Find the exit point through THIS exact hit part.
+        local backParams = RaycastParams.new()
+        backParams.FilterType = Enum.RaycastFilterType.Include
+        backParams.IgnoreWater = true
+        backParams.FilterDescendantsInstances = {part}
+
+        local farPoint = hit.Position + remaining.Unit * 1000
+        local exitHit = Workspace:Raycast(farPoint, hit.Position - farPoint, backParams)
+        if not exitHit then
+            return nil
+        end
+
+        local thickness = (hit.Position - exitHit.Position).Magnitude
+        local variant = part.MaterialVariant
+        local limit = triggerMaterialVariantLimits[variant]
+        local key = variant ~= "" and variant or part.Material
+
+        if limit then
+            accumulated[key] = (accumulated[key] or 0) + thickness
+            if accumulated[key] > limit then
+                return nil
+            end
+        else
+            limit = triggerMaterialLimits[part.Material]
+            if limit == nil then
+                -- Unknown surfaces are treated conservatively rather than
+                -- allowing a blind shot through an arbitrary map object.
+                limit = 0.25
+            end
+            accumulated[key] = (accumulated[key] or 0) + thickness
+            if accumulated[key] > limit then
+                return nil
+            end
+        end
+
+        table.insert(filter, part)
+        params.FilterDescendantsInstances = filter
+
+        local endPoint = origin + direction.Unit * math.min(direction.Magnitude, 1000)
+        currentOrigin = exitHit.Position + direction.Unit * 0.01
+        local left = (endPoint - currentOrigin).Magnitude
+        if left <= 0.05 then
+            return nil
+        end
+        remaining = direction.Unit * left
+    end
+
+    return nil
+end
+
+function triggerbotFire(vp)
+    pcall(function()
+        local myChar = player.Character
+        local equippedTool = myChar and myChar:FindFirstChildOfClass("Tool")
+        if equippedTool then
+            equippedTool:Activate()
+            return
+        end
+
+        -- Blox Strike keeps weapons outside Roblox Tool instances. Invoke its
+        -- native shoot method so mobile input mode is not changed to Mouse.
+        local nativeFired = false
+        pcall(function()
+            local controllers = ReplicatedStorage:FindFirstChild("Controllers")
+            local scriptObject = controllers and controllers:FindFirstChild("InventoryController")
+            local inventory = scriptObject and require(scriptObject)
+            local getter = inventory and inventory.peekCurrentEquippedForMovement
+            local weapon = type(getter) == "function" and getter() or nil
+            if weapon and type(weapon.shoot) == "function" then
+                weapon:shoot()
+                nativeFired = true
+            end
+        end)
+        if nativeFired then return end
+
+        if VirtualInputManager and not UserInputService.TouchEnabled then
+            VirtualInputManager:SendMouseButtonEvent(vp.X * 0.5, vp.Y * 0.5, 0, true, game, 0)
+            task.wait(0.01)
+            VirtualInputManager:SendMouseButtonEvent(vp.X * 0.5, vp.Y * 0.5, 0, false, game, 0)
+        end
+    end)
+end
+
+function runMobileTriggerbot()
+    if not XCConfig.triggerbotEnabled then return end
+
+    local cam = Workspace.CurrentCamera or camera
+    if not cam then return end
+
+    if XCConfig.triggerbotScopedOnly then
+        local nativeScope = findSniperScope()
+        if not ((nativeScope and nativeScope.Visible) or cam.FieldOfView < 68) then return end
+    end
+
+    local now = tick()
+    local delay = math.clamp(tonumber(XCConfig.triggerbotDelay) or 0.075, 0.01, 0.5)
+    if (now - lastTriggerTick) < delay then return end
+
+    local vp = cam.ViewportSize
+    local origin = cam.CFrame.Position
+    local rayDirection = cam.CFrame.LookVector * 1000
+
+    -- First pass: only consider whatever is actually under the FOV center.
+    triggerRayParams.FilterDescendantsInstances = {player.Character}
+    local first = Workspace:Raycast(origin, rayDirection, triggerRayParams)
+    if not first or not first.Instance then return end
+
+    local firstModel = first.Instance:FindFirstAncestorOfClass("Model")
+    local firstPlayer = firstModel and Players:GetPlayerFromCharacter(firstModel)
+
+    if firstPlayer and firstPlayer ~= player then
+        local _, onScreen = cam:WorldToViewportPoint(first.Instance.Position)
+        if not onScreen then return end
+        if firstModel:GetAttribute("Dead") or firstModel:GetAttribute("Invincible") then return end
+        local hum = firstModel:FindFirstChildOfClass("Humanoid")
+        if hum and hum.Health <= 0 then return end
+        if not isTargetEnemy(firstPlayer, firstModel) then return end
+        if XCConfig.triggerbotHeadOnly and first.Instance.Name ~= "Head" then return end
+
+        lastTriggerTick = now
+        if triggerbotMobileAutoFire then triggerbotFire(vp) end
+        return
+    end
+
+    -- Wall hit: find enemy candidates near the FOV center, then test the
+    -- exact camera -> candidate line for material + physical penetration.
+    local bestTarget, bestScreenDistance = nil, math.huge
+    for _, hitPlayer in ipairs(Players:GetPlayers()) do
+        if hitPlayer ~= player and isTargetEnemy(hitPlayer, hitPlayer.Character) then
+            local char = hitPlayer.Character
+            local hum = char and char:FindFirstChildOfClass("Humanoid")
+            if char and hum and hum.Health > 0 and not char:GetAttribute("Dead") and not char:GetAttribute("Invincible") then
+                local targetPart = char:FindFirstChild("Head") or char:FindFirstChild("UpperTorso") or char:FindFirstChild("HumanoidRootPart")
+                if targetPart then
+                    if not XCConfig.triggerbotHeadOnly or targetPart.Name == "Head" then
+                        local screenPos, onScreen = cam:WorldToViewportPoint(targetPart.Position)
+                        if onScreen and screenPos.Z > 0 then
+                            local center = Vector2.new(vp.X * 0.5, vp.Y * 0.5)
+                            local dist = (Vector2.new(screenPos.X, screenPos.Y) - center).Magnitude
+                            local fovRadius = tonumber(XCConfig.triggerbotFov) or tonumber(XCConfig.aimFov) or 160
+                            if dist <= fovRadius and dist < bestScreenDistance then
+                                bestScreenDistance = dist
+                                bestTarget = {Player = hitPlayer, Model = char, Part = targetPart}
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    if not bestTarget then return end
+
+    local targetDirection = bestTarget.Part.Position - origin
+    local confirmed = triggerFindTargetAlongRay(origin, targetDirection, bestTarget.Model)
+    if not confirmed then return end
+
+    lastTriggerTick = now
+    if triggerbotMobileAutoFire then triggerbotFire(vp) end
+end
+
+-- ==========================================
+-- 2D ESP 
+-- ==========================================
+function hideXCSkeleton(esp)
+    if not esp or not esp.SkeletonLines then return end
+    for _, line in ipairs(esp.SkeletonLines) do line.Visible = false end
+end
+
+function setXCSkeletonLine(line, from, to, color, alpha)
+    local delta = to - from
+    local length = delta.Magnitude
+    if length < 0.5 then line.Visible = false return end
+    line.AnchorPoint = Vector2.new(0.5, 0.5)
+    line.Position = UDim2.fromOffset((from.X + to.X) * 0.5, (from.Y + to.Y) * 0.5)
+    line.Size = UDim2.fromOffset(length, math.clamp(tonumber(XCConfig.skeletonThickness) or 1.5, 1, 4))
+    line.Rotation = math.deg(math.atan2(delta.Y, delta.X))
+    line.BackgroundColor3 = color
+    line.BackgroundTransparency = 1 - alpha
+    line.Visible = true
+end
+
+function renderXCSkeleton(esp, char, color, distance)
+    if not XCConfig.skeletonEspEnabled or not char then hideXCSkeleton(esp) return end
+    local head = char:FindFirstChild("Head")
+    local torso = char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso")
+    local waistPart = char:FindFirstChild("LowerTorso") or torso
+    if not head or not torso or not waistPart then hideXCSkeleton(esp) return end
+
+    local leftArm = char:FindFirstChild("LeftUpperArm") or char:FindFirstChild("Left Arm")
+    local rightArm = char:FindFirstChild("RightUpperArm") or char:FindFirstChild("Right Arm")
+    local leftHand = char:FindFirstChild("LeftHand") or char:FindFirstChild("LeftLowerArm") or leftArm
+    local rightHand = char:FindFirstChild("RightHand") or char:FindFirstChild("RightLowerArm") or rightArm
+    local leftLeg = char:FindFirstChild("LeftUpperLeg") or char:FindFirstChild("Left Leg")
+    local rightLeg = char:FindFirstChild("RightUpperLeg") or char:FindFirstChild("Right Leg")
+    local leftFoot = char:FindFirstChild("LeftFoot") or char:FindFirstChild("LeftLowerLeg") or leftLeg
+    local rightFoot = char:FindFirstChild("RightFoot") or char:FindFirstChild("RightLowerLeg") or rightLeg
+
+    local points = {
+        Head = head.Position,
+        Neck = torso.CFrame:PointToWorldSpace(Vector3.new(0, torso.Size.Y * 0.42, 0)),
+        Waist = waistPart.CFrame:PointToWorldSpace(Vector3.new(0, -waistPart.Size.Y * 0.25, 0)),
+        LeftShoulder = leftArm and leftArm.CFrame:PointToWorldSpace(Vector3.new(0, leftArm.Size.Y * 0.4, 0)),
+        RightShoulder = rightArm and rightArm.CFrame:PointToWorldSpace(Vector3.new(0, rightArm.Size.Y * 0.4, 0)),
+        LeftHand = leftHand and leftHand.CFrame:PointToWorldSpace(Vector3.new(0, -leftHand.Size.Y * 0.45, 0)),
+        RightHand = rightHand and rightHand.CFrame:PointToWorldSpace(Vector3.new(0, -rightHand.Size.Y * 0.45, 0)),
+        LeftHip = leftLeg and leftLeg.CFrame:PointToWorldSpace(Vector3.new(0, leftLeg.Size.Y * 0.4, 0)),
+        RightHip = rightLeg and rightLeg.CFrame:PointToWorldSpace(Vector3.new(0, rightLeg.Size.Y * 0.4, 0)),
+        LeftFoot = leftFoot and leftFoot.CFrame:PointToWorldSpace(Vector3.new(0, -leftFoot.Size.Y * 0.45, 0)),
+        RightFoot = rightFoot and rightFoot.CFrame:PointToWorldSpace(Vector3.new(0, -rightFoot.Size.Y * 0.45, 0)),
+    }
+    local alpha = XCConfig.skeletonDistanceFade
+        and math.clamp(1 - distance / math.max(1, XCConfig.espMaxDist), 0.18, 1) or 1
+    for index, edge in ipairs(XCFeatureState.skeletonEdges) do
+        local line = esp.SkeletonLines[index]
+        local a, b = points[edge[1]], points[edge[2]]
+        if a and b then
+            local pa, va = camera:WorldToViewportPoint(a)
+            local pb, vb = camera:WorldToViewportPoint(b)
+            if va and vb and pa.Z > 0 and pb.Z > 0 then
+                setXCSkeletonLine(line, Vector2.new(pa.X, pa.Y), Vector2.new(pb.X, pb.Y), color, alpha)
+            else
+                line.Visible = false
+            end
+        else
+            line.Visible = false
+        end
+    end
+end
+
+function getOrCreateScreenEsp(plr)
+    if screenEspCache[plr] then return screenEspCache[plr] end
+
+    local box = Instance.new("Frame", overlayContainer)
+    box.Name = "Box_" .. plr.Name
+    box.BackgroundTransparency = 1
+    box.BorderSizePixel = 0
+    box.Visible = false
+    box.ZIndex = 7
+
+    local boxOutline = Instance.new("Frame", overlayContainer)
+    boxOutline.Name = "BoxOutline_" .. plr.Name
+    boxOutline.BackgroundTransparency = 1
+    boxOutline.BorderSizePixel = 0
+    boxOutline.Visible = false
+    boxOutline.ZIndex = 6
+
+    local outlineStroke = Instance.new("UIStroke", boxOutline)
+    outlineStroke.Color = Color3.fromRGB(5, 7, 9)
+    outlineStroke.Thickness = XCConfig.boxThickness + 2
+    outlineStroke.Transparency = 0.12
+    outlineStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+
+    local stroke = Instance.new("UIStroke", box)
+    stroke.Color = currentTheme.Enemy_Accent
+    stroke.Thickness = XCConfig.boxThickness
+    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+
+    local healthBarBg = Instance.new("Frame", overlayContainer)
+    healthBarBg.Name = "HealthBg_" .. plr.Name
+    healthBarBg.BackgroundColor3 = Color3.fromRGB(15, 15, 18)
+    healthBarBg.BorderSizePixel = 0
+    healthBarBg.Visible = false
+    Instance.new("UICorner", healthBarBg).CornerRadius = UDim.new(0, 2)
+    local hbStroke = Instance.new("UIStroke", healthBarBg)
+    hbStroke.Color = Color3.fromRGB(35, 38, 45)
+    hbStroke.Thickness = 0.8
+
+    local healthBarFill = Instance.new("Frame", healthBarBg)
+    healthBarFill.Name = "Fill"
+    healthBarFill.AnchorPoint = Vector2.new(0, 1)
+    healthBarFill.Position = UDim2.new(0, 0, 1, 0)
+    healthBarFill.Size = UDim2.new(1, 0, 1, 0)
+    healthBarFill.BackgroundColor3 = currentTheme.HealthHigh
+    healthBarFill.BorderSizePixel = 0
+    Instance.new("UICorner", healthBarFill).CornerRadius = UDim.new(0, 2)
+
+    local weaponCard = Instance.new("Frame", overlayContainer)
+    weaponCard.Name = "WeaponIcon_" .. plr.Name
+    weaponCard.AnchorPoint = Vector2.new(0.5, 0)
+    weaponCard.Size = UDim2.fromOffset(36, 15)
+    weaponCard.BackgroundColor3 = Color3.fromRGB(5, 6, 7)
+    weaponCard.BackgroundTransparency = 1
+    weaponCard.BorderSizePixel = 0
+    weaponCard.ClipsDescendants = true
+    weaponCard.Visible = false
+    weaponCard.ZIndex = 8
+    Instance.new("UICorner", weaponCard).CornerRadius = UDim.new(0, 3)
+    local weaponCardStroke = Instance.new("UIStroke", weaponCard)
+    weaponCardStroke.Color = currentTheme.Border
+    weaponCardStroke.Thickness = 1
+    weaponCardStroke.Transparency = 1
+    weaponCardStroke.Enabled = false
+
+    local weaponImage = Instance.new("ImageLabel", weaponCard)
+    weaponImage.Name = "Image"
+    weaponImage.Size = UDim2.fromScale(1, 1)
+    weaponImage.Position = UDim2.fromOffset(0, 0)
+    weaponImage.BackgroundTransparency = 1
+    weaponImage.ScaleType = Enum.ScaleType.Fit
+    weaponImage.ImageColor3 = currentTheme.Enemy_Accent
+    weaponImage.Visible = false
+    weaponImage.ZIndex = 9
+
+    local weaponViewport = Instance.new("ViewportFrame", weaponCard)
+    weaponViewport.Name = "Viewport"
+    weaponViewport.Size = UDim2.fromScale(1, 1)
+    weaponViewport.Position = UDim2.fromOffset(0, 0)
+    weaponViewport.BackgroundTransparency = 1
+    weaponViewport.Ambient = Color3.fromRGB(255, 255, 255)
+    weaponViewport.LightColor = Color3.fromRGB(255, 255, 255)
+    weaponViewport.LightDirection = Vector3.new(-1, -0.6, -1)
+    weaponViewport.Visible = false
+    weaponViewport.ZIndex = 9
+    local weaponWorld = Instance.new("WorldModel", weaponViewport)
+    local weaponCamera = Instance.new("Camera", weaponViewport)
+    weaponViewport.CurrentCamera = weaponCamera
+
+    local corners = {}
+    for i = 1, 4 do
+        local hLine = Instance.new("Frame", overlayContainer)
+        hLine.Name = "CornerH_" .. plr.Name .. "_" .. i
+        hLine.BackgroundColor3 = currentTheme.Enemy_Accent
+        hLine.BorderSizePixel = 0
+        hLine.Visible = false
+        hLine.ZIndex = 7
+        local hOutline = Instance.new("UIStroke", hLine)
+        hOutline.Color = Color3.fromRGB(5, 7, 9)
+        hOutline.Thickness = 1
+        hOutline.Transparency = 0.1
+
+        local vLine = Instance.new("Frame", overlayContainer)
+        vLine.Name = "CornerV_" .. plr.Name .. "_" .. i
+        vLine.BackgroundColor3 = currentTheme.Enemy_Accent
+        vLine.BorderSizePixel = 0
+        vLine.Visible = false
+        vLine.ZIndex = 7
+        local vOutline = Instance.new("UIStroke", vLine)
+        vOutline.Color = Color3.fromRGB(5, 7, 9)
+        vOutline.Thickness = 1
+        vOutline.Transparency = 0.1
+
+        table.insert(corners, {H = hLine, V = vLine, HOutline = hOutline, VOutline = vOutline})
+    end
+
+    local tagCard = Instance.new("Frame", overlayContainer)
+    tagCard.Name = "TagCard_" .. plr.Name
+    tagCard.AnchorPoint = Vector2.new(0.5, 1)
+    tagCard.Size = UDim2.new(0, 0, 0, 16)
+    tagCard.AutomaticSize = Enum.AutomaticSize.X
+    tagCard.BackgroundColor3 = currentTheme.Sidebar
+    tagCard.BackgroundTransparency = XCConfig.tagTransparency
+    tagCard.BorderSizePixel = 0
+    tagCard.Visible = false
+
+    Instance.new("UICorner", tagCard).CornerRadius = UDim.new(0, 4)
+    local cardStroke = Instance.new("UIStroke", tagCard)
+    cardStroke.Color = currentTheme.Border
+    cardStroke.Thickness = 0.8
+
+    local pad = Instance.new("UIPadding", tagCard)
+    pad.PaddingRight = UDim.new(0, 6)
+    pad.PaddingLeft = UDim.new(0, 6)
+
+    local tagLabel = Instance.new("TextLabel", tagCard)
+    tagLabel.AutomaticSize = Enum.AutomaticSize.X
+    tagLabel.Size = UDim2.new(0, 0, 1, 0)
+    tagLabel.BackgroundTransparency = 1
+    tagLabel.TextColor3 = currentTheme.NametagTextColor
+    tagLabel.TextSize = XCConfig.espTextSize
+    tagLabel.Font = Enum.Font.GothamBold
+
+    local skeletonLines = {}
+    for index = 1, #XCFeatureState.skeletonEdges do
+        local line = Instance.new("Frame", overlayContainer)
+        line.Name = "Skeleton_" .. plr.Name .. "_" .. index
+        line.BorderSizePixel = 0
+        line.Visible = false
+        skeletonLines[index] = line
+    end
+
+    local data = {
+        Box = box,
+        BoxStroke = stroke,
+        BoxOutline = boxOutline,
+        BoxOutlineStroke = outlineStroke,
+        HealthBarBg = healthBarBg,
+        HealthBarFill = healthBarFill,
+        WeaponCard = weaponCard,
+        WeaponCardStroke = weaponCardStroke,
+        WeaponImage = weaponImage,
+        WeaponViewport = weaponViewport,
+        WeaponWorld = weaponWorld,
+        WeaponCamera = weaponCamera,
+        WeaponRaw = nil,
+        WeaponName = nil,
+        WeaponReady = false,
+        Corners = corners,
+        TagCard = tagCard,
+        TagCardStroke = cardStroke,
+        TagLabel = tagLabel,
+        SkeletonLines = skeletonLines,
+        LastText = "",
+        Character = nil,
+        BodyParts = nil,
+        BodyBounds = nil,
+        NextBoundsRefresh = 0,
+        SmoothRect = nil,
+    }
+    screenEspCache[plr] = data
+    return data
+end
+
+function getXCEquippedWeapon(plr, char)
+    local raw = plr:GetAttribute("CurrentEquipped")
+    local weaponName
+    if type(raw) == "string" and raw ~= "" then
+        pcall(function()
+            local decoded = HttpService:JSONDecode(raw)
+            if type(decoded) == "table" then
+                weaponName = decoded.Name or decoded.Weapon or decoded.ItemName
+            end
+        end)
+    end
+    local tool = char and char:FindFirstChildOfClass("Tool")
+    if type(weaponName) ~= "string" or weaponName == "" then
+        weaponName = tool and tool.Name or nil
+    end
+    return weaponName, tool, raw
+end
+
+function clearXCWeaponPreview(esp)
+    esp.WeaponImage.Image = ""
+    esp.WeaponImage.Visible = false
+    esp.WeaponViewport.Visible = false
+    esp.WeaponWorld:ClearAllChildren()
+    esp.WeaponReady = false
+end
+
+function findXCWeaponAsset(weaponName)
+    if type(weaponName) ~= "string" or weaponName == "" then return nil end
+    local assets = ReplicatedStorage:FindFirstChild("Assets")
+    local weapons = assets and assets:FindFirstChild("Weapons")
+    if not weapons then return nil end
+    local direct = weapons:FindFirstChild(weaponName)
+    if direct then return direct end
+    local normalized = weaponName:lower():gsub("[^%w]", "")
+    for _, candidate in ipairs(weapons:GetChildren()) do
+        if candidate.Name:lower():gsub("[^%w]", "") == normalized then return candidate end
+    end
+    return nil
+end
+
+function findXCCharacterWeaponVisual(character, weaponName)
+    if not character or type(weaponName) ~= "string" then return nil end
+    local direct = character:FindFirstChild(weaponName, true)
+    if direct and (direct:IsA("Model") or direct:IsA("Tool") or direct:IsA("BasePart")) then return direct end
+    local normalized = weaponName:lower():gsub("[^%w]", "")
+    for _, candidate in ipairs(character:GetDescendants()) do
+        if (candidate:IsA("Model") or candidate:IsA("Tool"))
+            and candidate.Name:lower():gsub("[^%w]", "") == normalized then
+            return candidate
+        end
+    end
+    return nil
+end
+
+function buildXCWeaponViewport(esp, weaponName, tool, character)
+    clearXCWeaponPreview(esp)
+
+    if tool and type(tool.TextureId) == "string" and tool.TextureId ~= "" then
+        esp.WeaponImage.Image = tool.TextureId
+        esp.WeaponImage.Visible = true
+        esp.WeaponReady = true
+        return true
+    end
+    if tool then
+        local embedded = tool:FindFirstChildWhichIsA("ImageLabel", true)
+        if embedded and embedded.Image ~= "" then
+            esp.WeaponImage.Image = embedded.Image
+            esp.WeaponImage.Visible = true
+            esp.WeaponReady = true
+            return true
+        end
+    end
+
+    local characterVisual = findXCCharacterWeaponVisual(character, weaponName)
+    local asset = findXCWeaponAsset(weaponName)
+    local source = characterVisual or (asset and (
+        asset:FindFirstChild("World")
+        or asset:FindFirstChild("Dropped")
+        or asset:FindFirstChild("ThirdPerson")
+        or asset:FindFirstChild("Camera")
+        or asset
+    )) or tool
+    if not source then return false end
+
+    local ok, clone = pcall(function() return source:Clone() end)
+    if not ok or not clone then return false end
+    clone.Parent = esp.WeaponWorld
+    local cloneObjects = {clone}
+    local visibleParts = {}
+    for _, object in ipairs(clone:GetDescendants()) do table.insert(cloneObjects, object) end
+    for _, object in ipairs(cloneObjects) do
+        if object:IsA("LuaSourceContainer") then
+            object:Destroy()
+        elseif object:IsA("BasePart") then
+            local lower = object.Name:lower()
+            if lower:find("arm", 1, true) or lower:find("hand", 1, true)
+                or lower:find("glove", 1, true) or lower:find("sleeve", 1, true)
+                or lower == "root" or lower:find("camera", 1, true)
+                or lower:find("reference", 1, true) or lower:find("pivot", 1, true) then
+                object:Destroy()
+            else
+                object.Anchored = true
+                object.CanCollide = false
+                object.CanTouch = false
+                object.CanQuery = false
+                if object.Transparency < 0.98 then table.insert(visibleParts, object) end
+            end
+        end
+    end
+
+    if #visibleParts == 0 then
+        clearXCWeaponPreview(esp)
+        return false
+    end
+
+    local minimum = Vector3.new(math.huge, math.huge, math.huge)
+    local maximum = Vector3.new(-math.huge, -math.huge, -math.huge)
+    for _, part in ipairs(visibleParts) do
+        local half = part.Size * 0.5
+        for x = -1, 1, 2 do
+            for y = -1, 1, 2 do
+                for z = -1, 1, 2 do
+                    local point = part.CFrame:PointToWorldSpace(Vector3.new(half.X * x, half.Y * y, half.Z * z))
+                    minimum = Vector3.new(math.min(minimum.X, point.X), math.min(minimum.Y, point.Y), math.min(minimum.Z, point.Z))
+                    maximum = Vector3.new(math.max(maximum.X, point.X), math.max(maximum.Y, point.Y), math.max(maximum.Z, point.Z))
+                end
+            end
+        end
+    end
+    local boundsSize = maximum - minimum
+    if boundsSize.Magnitude < 0.01 then clearXCWeaponPreview(esp) return false end
+
+    local center = (minimum + maximum) * 0.5
+    local longOnX = boundsSize.X >= boundsSize.Z
+    local viewDirection = longOnX and Vector3.new(0, 0.08, 1) or Vector3.new(1, 0.08, 0)
+    local horizontalSize = longOnX and boundsSize.X or boundsSize.Z
+    local depthSize = longOnX and boundsSize.Z or boundsSize.X
+    local fieldOfView = 28
+    local tangent = math.tan(math.rad(fieldOfView * 0.5))
+    local viewportAspect = 36 / 15
+    local distanceForWidth = horizontalSize / math.max(0.01, 2 * tangent * viewportAspect)
+    local distanceForHeight = boundsSize.Y / math.max(0.01, 2 * tangent)
+    local cameraDistance = math.max(distanceForWidth, distanceForHeight, 0.35) * 1.18 + depthSize * 0.5
+    esp.WeaponCamera.FieldOfView = fieldOfView
+    esp.WeaponCamera.CFrame = CFrame.lookAt(center + viewDirection.Unit * cameraDistance, center, Vector3.yAxis)
+    esp.WeaponViewport.Visible = true
+    esp.WeaponReady = true
+    return true
+end
+
+function updateXCWeaponPreview(esp, plr, char, sideColor, boxPosX, boxPosY, boxWidth, boxHeight)
+    if not XCConfig.weaponEspEnabled then
+        esp.WeaponCard.Visible = false
+        return
+    end
+
+    local weaponName, tool, raw = getXCEquippedWeapon(plr, char)
+    local key = tostring(raw or "") .. "|" .. tostring(weaponName or "") .. "|" .. tostring(tool)
+    local now = os.clock()
+    if key ~= esp.WeaponRaw or (not esp.WeaponReady and now >= (esp.WeaponNextRetry or 0)) then
+        esp.WeaponRaw = key
+        esp.WeaponName = weaponName
+        esp.WeaponNextRetry = now + 1
+        buildXCWeaponViewport(esp, weaponName, tool, char)
+    end
+
+    esp.WeaponCardStroke.Color = sideColor
+    esp.WeaponImage.ImageColor3 = sideColor
+    local iconWidth = math.floor(math.clamp(boxWidth * 1.35, 22, 58) + 0.5)
+    local iconHeight = math.floor(math.clamp(iconWidth * 0.42, 10, 24) + 0.5)
+    esp.WeaponCard.Size = UDim2.fromOffset(iconWidth, iconHeight)
+    esp.WeaponCard.Position = UDim2.fromOffset(boxPosX + boxWidth * 0.5, boxPosY + boxHeight + 2)
+    esp.WeaponCard.Visible = weaponName ~= nil and esp.WeaponReady
+end
+
+table.insert(connections, Players.PlayerRemoving:Connect(function(plr)
+    local oldChar = plr.Character
+    local oldHum = oldChar and oldChar:FindFirstChildOfClass("Humanoid")
+    if oldHum then
+        hitmarkerPendingHits[oldHum] = nil
+    end
+    if oldChar then hitmarkerPendingHits[oldChar] = nil end
+
+    local cache = screenEspCache[plr]
+    if cache then
+        pcall(function()
+            cache.Box:Destroy()
+            cache.BoxOutline:Destroy()
+            cache.HealthBarBg:Destroy()
+            cache.WeaponCard:Destroy()
+            cache.TagCard:Destroy()
+            for _, corner in pairs(cache.Corners) do
+                corner.H:Destroy()
+                corner.V:Destroy()
+            end
+            for _, line in ipairs(cache.SkeletonLines) do line:Destroy() end
+        end)
+        screenEspCache[plr] = nil
+    end
+end))
+
+-- ==========================================
+-- TACTICAL ESP
+-- ==========================================
+local tacticalOverlayWasActive = false
+function hideTacticalOverlay()
+    for _, esp in pairs(screenEspCache) do
+        esp.Box.Visible = false
+        esp.BoxOutline.Visible = false
+        esp.HealthBarBg.Visible = false
+        esp.WeaponCard.Visible = false
+        esp.TagCard.Visible = false
+        for _, corner in ipairs(esp.Corners) do
+            corner.H.Visible = false
+            corner.V.Visible = false
+        end
+        hideXCSkeleton(esp)
+    end
+end
+
+-- Produces one perspective-correct rectangle shared by Box ESP, Corner Box
+-- and Health Bar. A stable world-space body height is projected to the screen,
+-- so near targets grow and distant targets shrink without width distortion.
+function getXCCharacterScreenRect(esp, char, rootPart)
+    if esp.Character ~= char then
+        esp.Character = char
+        esp.SmoothRect = nil
+    end
+
+    local rootPosition = rootPart.Position
+    local rootScreen = camera:WorldToViewportPoint(rootPosition)
+    if rootScreen.Z <= 0.2 then
+        esp.SmoothRect = nil
+        return nil
+    end
+    local viewport = camera.ViewportSize
+    local preferredAspect = math.clamp(tonumber(XCConfig.espBoxAspect) or 0.52, 0.38, 0.8)
+    local perspectiveScale = math.clamp(tonumber(XCConfig.espPerspectiveScale) or 1, 0.65, 1.5)
+
+    -- Use a constant six-stud body span instead of animated limbs/accessories.
+    -- This makes size respond only to distance/FOV and prevents flattening.
+    local topScreen = camera:WorldToViewportPoint(rootPosition + Vector3.new(0, 3.15, 0))
+    local bottomScreen = camera:WorldToViewportPoint(rootPosition - Vector3.new(0, 2.85, 0))
+    if topScreen.Z <= 0.2 or bottomScreen.Z <= 0.2 then
+        esp.SmoothRect = nil
+        return nil
+    end
+
+    local projectedHeight = math.abs(bottomScreen.Y - topScreen.Y) * perspectiveScale
+    local maxHeight = math.max(80, viewport.Y * 0.72)
+    local height = math.clamp(projectedHeight, 16, maxHeight)
+    local width = height * preferredAspect
+    local centerScreenX = rootScreen.X
+    local centerScreenY = (topScreen.Y + bottomScreen.Y) * 0.5
+    local target = {
+        X = centerScreenX - width * 0.5,
+        Y = centerScreenY - height * 0.5,
+        W = width,
+        H = height,
+    }
+    local smooth = math.clamp(tonumber(XCConfig.espBoxSmoothing) or 0.42, 0, 0.9)
+    local alpha = 1 - smooth
+    local old = esp.SmoothRect
+    if old then
+        local oldCenterX = old.X + old.W * 0.5
+        local oldCenterY = old.Y + old.H * 0.5
+        local jump = math.abs(oldCenterX - centerScreenX) + math.abs(oldCenterY - centerScreenY)
+        if jump < math.max(140, viewport.Y * 0.28) then
+            centerScreenX = oldCenterX + (centerScreenX - oldCenterX) * alpha
+            centerScreenY = oldCenterY + (centerScreenY - oldCenterY) * alpha
+            height = old.H + (height - old.H) * alpha
+            width = height * preferredAspect
+            target.X = centerScreenX - width * 0.5
+            target.Y = centerScreenY - height * 0.5
+            target.W = width
+            target.H = height
+        end
+    end
+
+    target.X = math.floor(target.X + 0.5)
+    target.Y = math.floor(target.Y + 0.5)
+    target.W = math.max(2, math.floor(target.W + 0.5))
+    target.H = math.max(2, math.floor(target.H + 0.5))
+    esp.SmoothRect = target
+
+    if target.X > viewport.X or target.Y > viewport.Y or target.X + target.W < 0 or target.Y + target.H < 0 then
+        return nil
+    end
+    return target
+end
+
+function renderTacticalOverlay()
+    local active = XCConfig.nametagsEnabled or XCConfig.boxEspEnabled or XCConfig.cornerBoxEnabled
+        or XCConfig.healthBarEnabled or XCConfig.skeletonEspEnabled or XCConfig.weaponEspEnabled
+    if not active then
+        if tacticalOverlayWasActive then hideTacticalOverlay() end
+        tacticalOverlayWasActive = false
+        return
+    end
+    tacticalOverlayWasActive = true
+    local camPos = camera.CFrame.Position
+    local allPlayers = Players:GetPlayers()
+
+    for i = 1, #allPlayers do
+        local plr = allPlayers[i]
+        local esp = getOrCreateScreenEsp(plr)
+        local char = plr.Character
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        local rootPart = char and (char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso"))
+        local head = char and char:FindFirstChild("Head")
+
+        local isEnemy = isTargetEnemy(plr, char)
+        local isAlive = isEntityAlive(char, hum)
+        local health, maxHealth = getXCHealth(char, plr, hum)
+
+        if isEnemy and isAlive and rootPart and active then
+            local dist = (rootPart.Position - camPos).Magnitude
+
+            if dist <= XCConfig.espMaxDist then
+                local isVisible = isVisibleThroughWalls(head or rootPart, char)
+                local sideColor = isVisible and currentTheme.Enemy_Accent or currentTheme.Enemy_Hidden
+
+                local screenRect = getXCCharacterScreenRect(esp, char, rootPart)
+
+                if screenRect then
+                    local boxHeight = screenRect.H
+                    local boxWidth = screenRect.W
+                    local boxPosX = screenRect.X
+                    local boxPosY = screenRect.Y
+
+                    if XCConfig.boxEspEnabled and not XCConfig.cornerBoxEnabled then
+                        esp.BoxStroke.Color = sideColor
+                        local boxStrokeWidth = math.clamp(math.floor((tonumber(XCConfig.boxThickness) or 1) + 0.5), 1, 2)
+                        esp.BoxStroke.Thickness = boxStrokeWidth
+                        esp.Box.Size = UDim2.new(0, boxWidth, 0, boxHeight)
+                        esp.Box.Position = UDim2.new(0, boxPosX, 0, boxPosY)
+                        esp.Box.Visible = true
+                        esp.BoxOutlineStroke.Thickness = boxStrokeWidth + 2
+                        esp.BoxOutline.Size = esp.Box.Size
+                        esp.BoxOutline.Position = esp.Box.Position
+                        esp.BoxOutline.Visible = XCConfig.espBoxOutline
+                        for _, corner in ipairs(esp.Corners) do
+                            corner.H.Visible = false
+                            corner.V.Visible = false
+                        end
+                    elseif XCConfig.cornerBoxEnabled then
+                        esp.Box.Visible = false
+                        esp.BoxOutline.Visible = false
+                        local lengthX = math.min(
+                            math.floor(math.clamp(boxWidth * 0.30, 3, 28) + 0.5),
+                            math.max(2, math.floor(boxWidth * 0.48))
+                        )
+                        local lengthY = math.min(
+                            math.floor(math.clamp(boxHeight * 0.20, 5, 36) + 0.5),
+                            math.max(3, math.floor(boxHeight * 0.48))
+                        )
+                        local thick = math.clamp(math.floor((tonumber(XCConfig.boxThickness) or 1) + 0.5), 1, 2)
+
+                        for _, corner in ipairs(esp.Corners) do
+                            corner.H.BackgroundColor3 = sideColor
+                            corner.V.BackgroundColor3 = sideColor
+                            corner.HOutline.Enabled = XCConfig.espBoxOutline
+                            corner.VOutline.Enabled = XCConfig.espBoxOutline
+                        end
+
+                        esp.Corners[1].H.Size = UDim2.new(0, lengthX, 0, thick)
+                        esp.Corners[1].H.Position = UDim2.new(0, boxPosX, 0, boxPosY)
+                        esp.Corners[1].H.Visible = true
+
+                        esp.Corners[1].V.Size = UDim2.new(0, thick, 0, lengthY)
+                        esp.Corners[1].V.Position = UDim2.new(0, boxPosX, 0, boxPosY)
+                        esp.Corners[1].V.Visible = true
+
+                        esp.Corners[2].H.Size = UDim2.new(0, lengthX, 0, thick)
+                        esp.Corners[2].H.Position = UDim2.new(0, boxPosX + boxWidth - lengthX, 0, boxPosY)
+                        esp.Corners[2].H.Visible = true
+
+                        esp.Corners[2].V.Size = UDim2.new(0, thick, 0, lengthY)
+                        esp.Corners[2].V.Position = UDim2.new(0, boxPosX + boxWidth - thick, 0, boxPosY)
+                        esp.Corners[2].V.Visible = true
+
+                        esp.Corners[3].H.Size = UDim2.new(0, lengthX, 0, thick)
+                        esp.Corners[3].H.Position = UDim2.new(0, boxPosX, 0, boxPosY + boxHeight - thick)
+                        esp.Corners[3].H.Visible = true
+
+                        esp.Corners[3].V.Size = UDim2.new(0, thick, 0, lengthY)
+                        esp.Corners[3].V.Position = UDim2.new(0, boxPosX, 0, boxPosY + boxHeight - lengthY)
+                        esp.Corners[3].V.Visible = true
+
+                        esp.Corners[4].H.Size = UDim2.new(0, lengthX, 0, thick)
+                        esp.Corners[4].H.Position = UDim2.new(0, boxPosX + boxWidth - lengthX, 0, boxPosY + boxHeight - thick)
+                        esp.Corners[4].H.Visible = true
+
+                        esp.Corners[4].V.Size = UDim2.new(0, thick, 0, lengthY)
+                        esp.Corners[4].V.Position = UDim2.new(0, boxPosX + boxWidth - thick, 0, boxPosY + boxHeight - lengthY)
+                        esp.Corners[4].V.Visible = true
+                    else
+                        esp.Box.Visible = false
+                        esp.BoxOutline.Visible = false
+                        for _, corner in ipairs(esp.Corners) do
+                            corner.H.Visible = false
+                            corner.V.Visible = false
+                        end
+                    end
+
+                    if XCConfig.healthBarEnabled and health then
+                        local hpPercent = math.clamp(health / maxHealth, 0, 1)
+
+                        local barWidth = boxHeight < 32 and 3 or 4
+                        local barGap = boxHeight < 32 and 2 or 3
+                        local barX = boxPosX - barWidth - barGap
+                        local barY = boxPosY
+                        local fillHeight = math.max(1, math.floor((boxHeight - 2) * hpPercent + 0.5))
+
+                        esp.HealthBarBg.Size = UDim2.new(0, barWidth, 0, boxHeight)
+                        esp.HealthBarBg.Position = UDim2.new(0, barX, 0, barY)
+                        esp.HealthBarBg.Visible = true
+
+                        esp.HealthBarFill.Position = UDim2.new(0, 1, 1, -1)
+                        esp.HealthBarFill.Size = UDim2.fromOffset(barWidth - 2, fillHeight)
+                        
+                        esp.HealthBarFill.BackgroundColor3 = sideColor:Lerp(Color3.fromRGB(38, 40, 43), (1 - hpPercent) * 0.35)
+                    else
+                        esp.HealthBarBg.Visible = false
+                    end
+
+                    if XCConfig.nametagsEnabled then
+                        esp.TagCard.BackgroundTransparency = XCConfig.tagTransparency
+                        esp.TagCardStroke.Color = sideColor
+                        esp.TagLabel.TextColor3 = sideColor
+                        esp.TagLabel.TextSize = XCConfig.espTextSize
+
+                        local baseName = plr.DisplayName or plr.Name
+                        local infoText = baseName
+                        
+                        if XCConfig.espShowDistance then
+                            infoText = string.format("%s [%dm]", infoText, math.floor(dist))
+                        end
+                        if XCConfig.espShowHealth and health then
+                            infoText = string.format("%s [%dHP]", infoText, math.floor(health + 0.5))
+                        end
+                        if XCConfig.tagShowWeapon and not XCConfig.weaponEspEnabled then
+                            local tool = char:FindFirstChildOfClass("Tool")
+                            if tool then
+                                infoText = string.format("%s {%s}", infoText, tool.Name)
+                            end
+                        end
+
+                        if esp.LastText ~= infoText then
+                            esp.TagLabel.Text = infoText
+                            esp.LastText = infoText
+                        end
+
+                        esp.TagCard.Position = UDim2.new(0, boxPosX + boxWidth * 0.5, 0, boxPosY - 4)
+                        esp.TagCard.Visible = true
+                    else
+                        esp.TagCard.Visible = false
+                    end
+                    updateXCWeaponPreview(esp, plr, char, sideColor, boxPosX, boxPosY, boxWidth, boxHeight)
+                    renderXCSkeleton(esp, char, sideColor, dist)
+                else
+                    esp.Box.Visible = false
+                    esp.BoxOutline.Visible = false
+                    esp.HealthBarBg.Visible = false
+                    esp.WeaponCard.Visible = false
+                    for _, corner in ipairs(esp.Corners) do
+                        corner.H.Visible = false
+                        corner.V.Visible = false
+                    end
+                    esp.TagCard.Visible = false
+                    hideXCSkeleton(esp)
+                end
+            else
+                esp.Box.Visible = false
+                esp.BoxOutline.Visible = false
+                esp.HealthBarBg.Visible = false
+                esp.WeaponCard.Visible = false
+                for _, corner in ipairs(esp.Corners) do
+                    corner.H.Visible = false
+                    corner.V.Visible = false
+                end
+                esp.TagCard.Visible = false
+                hideXCSkeleton(esp)
+            end
+        else
+            esp.Box.Visible = false
+            esp.BoxOutline.Visible = false
+            esp.HealthBarBg.Visible = false
+            esp.WeaponCard.Visible = false
+            for _, corner in ipairs(esp.Corners) do
+                corner.H.Visible = false
+                corner.V.Visible = false
+            end
+            esp.TagCard.Visible = false
+            hideXCSkeleton(esp)
+        end
+    end
+end
+
+-- ==========================================
+-- 3D ESP
+-- ==========================================
+function attachEspToPlayer(plr)
+    if plr == player then return end
+
+    local holder = Instance.new("Folder")
+    holder.Name = "XCESP_" .. plr.Name
+    holder.Parent = mainContainer
+
+    local dotBillboard = Instance.new("BillboardGui", holder)
+    dotBillboard.Size = UDim2.new(0, 6, 0, 6)
+    dotBillboard.StudsOffset = Vector3.new(0, 0.5, 0)
+    dotBillboard.AlwaysOnTop = true
+    dotBillboard.Enabled = false
+
+    local dotFrame = Instance.new("Frame", dotBillboard)
+    dotFrame.Size = UDim2.new(1, 0, 1, 0)
+    dotFrame.BackgroundColor3 = currentTheme.Enemy_Accent
+    dotFrame.BorderSizePixel = 0
+    Instance.new("UICorner", dotFrame).CornerRadius = UDim.new(1, 0)
+
+    local tracerLine = Instance.new("Frame", mainContainer)
+    tracerLine.AnchorPoint = Vector2.new(0.5, 0.5)
+    tracerLine.BorderSizePixel = 0
+    tracerLine.BackgroundColor3 = currentTheme.Enemy_Accent
+    tracerLine.Visible = false
+
+    local hl = Instance.new("Highlight")
+    hl.Name = "XCChams_" .. plr.Name
+    hl.FillTransparency = XCConfig.chamsFillTransparency
+    hl.OutlineTransparency = XCConfig.chamsOutlineTransparency
+    hl.Enabled = false
+    hl.FillColor = chamsColorVisible
+    hl.OutlineColor = chamsOutlineColor
+    hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    hl.Parent = holder
+
+    local function setupCharacter(char)
+        if not char then return end
+        task.spawn(function()
+            local head = char:WaitForChild("Head", 3)
+            if head and dotBillboard then
+                dotBillboard.Adornee = head
+            end
+            if hl then
+                hl.Adornee = char
+            end
+        end)
+    end
+
+    if plr.Character then setupCharacter(plr.Character) end
+    local charConn = plr.CharacterAdded:Connect(setupCharacter)
+    local charRemConn = plr.CharacterRemoving:Connect(function()
+        if hl then
+            hl.Adornee = nil
+            hl.Enabled = false
+        end
+    end)
+    table.insert(connections, charConn)
+    table.insert(connections, charRemConn)
+
+    activeEspHolders[plr] = {
+        Holder = holder,
+        HeadDot = dotBillboard,
+        DotFrame = dotFrame,
+        Tracer = tracerLine,
+        Highlight = hl
+    }
+end
+
+for _, v in pairs(Players:GetPlayers()) do attachEspToPlayer(v) end
+table.insert(connections, Players.PlayerAdded:Connect(attachEspToPlayer))
+
+-- ==========================================
+-- MAIN ENGINE RENDER LOOP
+-- ==========================================
+local visualOverlayAccumulator = 0
+local threeDEspWasActive = false
+table.insert(connections, RunService.RenderStepped:Connect(function(dt)
+    camera = Workspace.CurrentCamera or camera
+    if not camera then return end
+
+    applyThirdPerson(dt)
+
+    local localPos = camera.CFrame.Position
+
+    fpsCounter = fpsCounter + 1
+    local nowTick = tick()
+    if nowTick - lastFpsUpdate >= 0.5 then
+        local currentFps = math.floor(fpsCounter / (nowTick - lastFpsUpdate))
+        local pingVal = 0
+        pcall(function()
+            local serverStats = Stats:FindFirstChild("Network") and Stats.Network:FindFirstChild("ServerStatsItem")
+            if serverStats and serverStats:FindFirstChild("Data Ping") then
+                pingVal = math.floor(serverStats["Data Ping"]:GetValue())
+            end
+        end)
+        local parts = {}
+        if XCConfig.watermarkShowFPS then table.insert(parts, string.format("FPS: %d", currentFps)) end
+        if XCConfig.watermarkShowPing then table.insert(parts, string.format("PING: %dms", pingVal)) end
+        wmMetrics.Text = table.concat(parts, " | ")
+        fpsCounter = 0
+        lastFpsUpdate = nowTick
+    end
+    wmCard.Visible = XCConfig.watermarkEnabled
+    wmTitle.Text = XCConfig.watermarkText or "XC"
+    if XCConfig.watermarkShowName then
+        wmTitle.Text = (XCConfig.watermarkText or "XC") .. " • " .. player.Name
+    end
+    wmMetrics.Visible = XCConfig.watermarkShowFPS or XCConfig.watermarkShowPing
+    wmDivider.Visible = wmMetrics.Visible
+
+    if fovFrame then
+        local isFovVisible = XCConfig.aimbotEnabled and XCConfig.showFovCircle
+        fovFrame.Visible = isFovVisible
+        if isFovVisible then
+            local diameter = XCConfig.aimFov * 2
+            fovFrame.Size = UDim2.new(0, diameter, 0, diameter)
+        end
+    end
+
+    if silentFovFrame then
+        local isSilentFovVisible = XCConfig.silentAimEnabled and XCConfig.showSilentFovCircle
+        silentFovFrame.Visible = isSilentFovVisible
+        if isSilentFovVisible then
+            local diameter = XCConfig.silentAimFov * 2
+            silentFovFrame.Size = UDim2.new(0, diameter, 0, diameter)
+        end
+    end
+
+    if XCConfig.silentAimEnabled then
+        setXCSilentAimRequested(true)
+        -- Cache only the current target for legacy camera/mouse hooks.
+        -- The native bullet ray hook resolves again at fire time and performs
+        -- Hit Chance exactly once for each real shot.
+        silentAimResolved = getSilentAimTarget()
+    else
+        setXCSilentAimRequested(false)
+        silentAimResolved = nil
+        xcMobileSilentGateUntil = 0
+        xcMobileSilentGateAllowed = false
+        xcMobileSilentGateTarget = nil
+    end
+
+    if (XCConfig.rcsEnabled or XCConfig.noRecoilEnabled) and noRecoil.isShooting then
+        local comp = (XCConfig.noRecoilEnabled and (XCConfig.recoilStrength * 0.0035) or 0) + (XCConfig.rcsEnabled and ((XCConfig.rcsStrength / 100) * 0.004 * XCConfig.rcsPitchFactor) or 0)
+        camera.CFrame = camera.CFrame * CFrame.Angles(-comp, 0, 0)
+    end
+
+    -- RAGEBOT & AIMBOT EXECUTION
+    if XCConfig.rageBotEnabled then
+        local target = getRageTarget()
+        if target and target.Part and target.Part.Parent then
+            local aimPos = getKinematicAimPosition(target.Part)
+            camera.CFrame = CFrame.lookAt(camera.CFrame.Position, aimPos)
+            
+            if XCConfig.rageAutoFire and tick() - lastTriggerTick > math.clamp(tonumber(XCConfig.triggerbotDelay) or 0.075, 0.01, 0.5) then
+                lastTriggerTick = tick()
+                pcall(function()
+                    local vp = camera.ViewportSize
+                    triggerbotFire(vp)
+                end)
+            end
+        end
+    elseif XCConfig.aimbotEnabled then
+        local target = getClosestTarget()
+        if target and target.Part and target.Part.Parent then
+            local aimPos = getKinematicAimPosition(target.Part)
+            local currentCF = camera.CFrame
+            local desiredCF = CFrame.lookAt(currentCF.Position, aimPos)
+
+            if XCConfig.snapAimMode then
+                camera.CFrame = desiredCF
+            else
+                local responsiveness = math.clamp(XCConfig.aimbotSpeed, 1, 100)
+                local damping = 1 - math.clamp(XCConfig.aimbotSmoothness, 0, 0.95)
+                local effectiveFactor = 1 - math.exp(-responsiveness * damping * dt)
+                camera.CFrame = currentCF:Lerp(desiredCF, effectiveFactor)
+            end
+        end
+    else
+        currentAimTarget = nil
+    end
+
+    runMobileTriggerbot()
+
+    visualOverlayAccumulator += dt
+    if visualOverlayAccumulator >= (1 / 30) then
+        visualOverlayAccumulator = 0
+        renderTacticalOverlay()
+        renderGrenadeOverlays()
+        renderXCGrenadeDangerZones()
+        renderXCSoundPositionEsp()
+
+        local threeDEspActive = XCConfig.chamsEnabled or XCConfig.headDotEnabled or XCConfig.tracersEnabled
+        if threeDEspActive or threeDEspWasActive then
+        for plr, data in pairs(activeEspHolders) do
+        if not threeDEspActive then
+            data.HeadDot.Enabled = false
+            data.Highlight.Enabled = false
+            data.Tracer.Visible = false
+            continue
+        end
+        local char = plr.Character
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        local rootPart = char and (char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso"))
+        local head = char and char:FindFirstChild("Head")
+        
+        local ally = isAlly(plr)
+        local isAlive = isEntityAlive(char, hum)
+        local dist = rootPart and (rootPart.Position - localPos).Magnitude or 9999
+
+        if char and isAlive and (dist <= XCConfig.espMaxDist) then
+            local isVisible = isVisibleThroughWalls(head or rootPart, char)
+            
+            if XCConfig.chamsEnabled then
+                if ally and not XCConfig.chamsShowTeammates then
+                    data.Highlight.Enabled = false
+                else
+                    data.Highlight.Enabled = true
+                    if data.Highlight.Adornee ~= char then
+                        data.Highlight.Adornee = char
+                    end
+                    data.Highlight.FillTransparency = XCConfig.chamsFillTransparency
+                    data.Highlight.OutlineTransparency = XCConfig.chamsOutlineTransparency
+                    if ally then
+                        data.Highlight.FillColor = chamsColorAlly
+                        data.Highlight.OutlineColor = chamsOutlineColor
+                    else
+                        local chamsAccent = isVisible and chamsColorVisible or chamsColorHidden
+                        data.Highlight.FillColor = XCConfig.chamsOcclusion and chamsAccent or chamsColorVisible
+                        data.Highlight.OutlineColor = XCConfig.chamsOcclusion and chamsAccent or chamsColorVisible
+                    end
+                end
+            else
+                data.Highlight.Enabled = false
+            end
+
+            if not ally then
+                local activeAccent = isVisible and currentTheme.Enemy_Accent or currentTheme.Enemy_Hidden
+                
+                if head and data.HeadDot.Adornee ~= head then
+                    data.HeadDot.Adornee = head
+                end
+                data.DotFrame.BackgroundColor3 = activeAccent
+                data.HeadDot.Enabled = XCConfig.headDotEnabled
+
+                if XCConfig.tracersEnabled and rootPart then
+                    local scrPos, onScreen = camera:WorldToViewportPoint(rootPart.Position)
+                    if onScreen and scrPos.Z > 0 then
+                        local origin = Vector2.new(camera.ViewportSize.X * 0.5, camera.ViewportSize.Y)
+                        local dest = Vector2.new(scrPos.X, scrPos.Y)
+                        local lineDist = (dest - origin).Magnitude
+                        local center = (origin + dest) * 0.5
+                        local angle = math.deg(math.atan2(dest.Y - origin.Y, dest.X - origin.X))
+
+                        data.Tracer.BackgroundColor3 = activeAccent
+                        data.Tracer.Size = UDim2.new(0, lineDist, 0, 1.5)
+                        data.Tracer.Position = UDim2.new(0, center.X, 0, center.Y)
+                        data.Tracer.Rotation = angle
+                        data.Tracer.Visible = true
+                    else
+                        data.Tracer.Visible = false
+                    end
+                else
+                    data.Tracer.Visible = false
+                end
+            else
+                data.HeadDot.Enabled = false
+                data.Tracer.Visible = false
+            end
+        else
+            data.HeadDot.Enabled = false
+            data.Highlight.Enabled = false
+            data.Tracer.Visible = false
+            if data.Highlight.Adornee then data.Highlight.Adornee = nil end
+            if data.HeadDot.Adornee then data.HeadDot.Adornee = nil end
+        end
+        end
+        end
+        threeDEspWasActive = threeDEspActive
+    end
+
+    if XCConfig.fullBrightEnabled then
+        Lighting.Brightness = 3
+        Lighting.ClockTime = 14
+        Lighting.GlobalShadows = false
+    elseif XCConfig.nightModeEnabled then
+        local cfg = nightPresets[XCConfig.nightPreset] or nightPresets["Midnight"]
+        Lighting.Brightness = XCConfig.nightBrightness or cfg.Brightness
+        Lighting.ClockTime = XCConfig.nightClockTime or cfg.ClockTime
+        Lighting.GlobalShadows = true
+        Lighting.OutdoorAmbient = cfg.OutdoorAmbient
+        Lighting.Ambient = cfg.Ambient
+    end
+
+    if XCConfig.removeFogEnabled then
+        Lighting.FogEnd = 100000
+    else
+        Lighting.FogEnd = defaultLighting.FogEnd
+    end
+    if XCConfig.antiFlashEnabled then
+        pcall(function()
+            for _, v in pairs(Lighting:GetChildren()) do
+                if v:IsA("ColorCorrectionEffect") and v.Saturation < -0.5 then v.Enabled = false end
+            end
+        end)
+    end
+end))
+
+-- ==========================================
+-- ANTI-AIM ROTATION SHLAK
+-- ==========================================
+function resetXCCharacterInputState()
+    xcCharacterInputHook.Character = nil
+    xcCharacterInputHook.GroundSince = nil
+    xcCharacterInputHook.LastJumpDown = false
+    xcCharacterInputHook.AntiCharacter = nil
+    xcCharacterInputHook.AntiStarted = nil
+    xcCharacterInputHook.AntiLastStep = nil
+    xcCharacterInputHook.RandomYaw = nil
+    xcCharacterInputHook.AntiFireUntil = 0
+end
+
+function restoreXCCharacterInputHook()
+    local state = xcCharacterInputHook
+    if state.Module and state.Wrapper and state.Module.SampleInput == state.Wrapper and state.Original then
+        pcall(function() state.Module.SampleInput = state.Original end)
+    end
+    if state.Module and rawget(state.Module, "__XCInputOwner") == xcSessionToken then
+        pcall(function() rawset(state.Module, "__XCInputOwner", nil) end)
+    end
+    state.Ready = false
+    resetXCCharacterInputState()
+end
+
+function setupXCCharacterInputHook()
+    if xcCharacterInputHook.Ready then return true end
+    local ok, failure = pcall(function()
+        local classes = ReplicatedStorage:FindFirstChild("Classes")
+        local movement = ReplicatedStorage:FindFirstChild("MovementV2")
+        local characterModule = classes and classes:FindFirstChild("Character")
+        local buttonsModule = movement and movement:FindFirstChild("Buttons")
+        assert(characterModule and buttonsModule, "Blox Strike movement modules are unavailable")
+        local module = require(characterModule)
+        local buttons = require(buttonsModule)
+        assert(type(module) == "table" and type(module.SampleInput) == "function", "SampleInput is unavailable")
+        assert(type(buttons) == "table" and type(buttons.has) == "function" and type(buttons.with) == "function", "Button helpers are unavailable")
+        if table.isfrozen and table.isfrozen(module) then error("Character module is frozen", 0) end
+
+        local original = module.SampleInput
+        xcCharacterInputHook.Module = module
+        xcCharacterInputHook.Original = original
+        xcCharacterInputHook.Buttons = buttons
+
+        xcCharacterInputHook.Wrapper = function(character, context, ...)
+            local input = original(character, context, ...)
+            if type(input) ~= "table" or not xcSessionActive() then return input end
+            local success, modified = pcall(function()
+                local model = player.Character
+                if not model or character.IsDestroyed or character.Character ~= model
+                    or GuiService.MenuIsOpen or UserInputService:GetFocusedTextBox()
+                    or player:GetAttribute("IsPlayerChatting") == true then
+                    resetXCCharacterInputState()
+                    return input
+                end
+
+                local result = input
+                local movementState = context and context.State
+                local now = (context and context.ScheduledServerTime) or os.clock()
+
+                local bhopActive = XCConfig.bunnyHopEnabled and movementState
+                    and not (XCConfig.bhopPauseWithMenu and XCFeatureState.menuOpen)
+                if bhopActive then
+                    if xcCharacterInputHook.Character ~= character then
+                        xcCharacterInputHook.Character = character
+                        xcCharacterInputHook.GroundSince = nil
+                        xcCharacterInputHook.LastJumpDown = buttons.has((movementState.PreviousButtons or 0), buttons.Jump)
+                    end
+                    local moving = input.Move and input.Move.Magnitude > 0.05
+                    local requested = XCConfig.bhopMode == "Automatic" or character.JumpInputDown
+                        or isMobileJumpHeld or buttons.has(input.Buttons, buttons.Jump)
+                    if requested and (not XCConfig.bhopMovingOnly or moving) then
+                        if movementState.OnGround then
+                            xcCharacterInputHook.GroundSince = xcCharacterInputHook.GroundSince or now
+                        else
+                            xcCharacterInputHook.GroundSince = nil
+                        end
+                        local delay = math.clamp(tonumber(XCConfig.bhopGroundDelay) or 0, 0, 0.25)
+                        local jump = movementState.OnGround == true
+                            and not xcCharacterInputHook.LastJumpDown
+                            and xcCharacterInputHook.GroundSince ~= nil
+                            and now - xcCharacterInputHook.GroundSince >= delay
+                        result = table.clone(result)
+                        result.Buttons = buttons.with(input.Buttons, buttons.Jump, jump)
+                        xcCharacterInputHook.LastJumpDown = jump
+                        if jump then xcCharacterInputHook.GroundSince = nil end
+                    else
+                        xcCharacterInputHook.GroundSince = nil
+                        xcCharacterInputHook.LastJumpDown = buttons.has(input.Buttons, buttons.Jump)
+                    end
+                else
+                    xcCharacterInputHook.Character = nil
+                    xcCharacterInputHook.GroundSince = nil
+                    xcCharacterInputHook.LastJumpDown = false
+                end
+
+                -- Pause anti-aim only for the tiny server-input window of a
+                -- local shot. The visual spin resumes immediately afterwards,
+                -- while bullet ray calculation remains camera-based.
+                local weaponIsFiring = false
+                if skinData and type(skinData.GetWeapon) == "function" then
+                    pcall(function()
+                        local weapon = skinData.GetWeapon()
+                        weaponIsFiring = weapon and (weapon.IsFireHeld or weapon.IsShooting or weapon.IsBurstShooting) == true
+                    end)
+                end
+                if weaponIsFiring then
+                    xcCharacterInputHook.AntiFireUntil = os.clock() + 0.16
+                end
+                local antiAimPausedForShot = os.clock() < (xcCharacterInputHook.AntiFireUntil or 0)
+
+                if XCConfig.antiAimEnabled and not antiAimPausedForShot then
+                    if xcCharacterInputHook.AntiCharacter ~= character or not xcCharacterInputHook.AntiStarted then
+                        xcCharacterInputHook.AntiCharacter = character
+                        xcCharacterInputHook.AntiStarted = now
+                        xcCharacterInputHook.AntiLastStep = nil
+                        xcCharacterInputHook.RandomYaw = nil
+                    end
+                    local elapsed = math.max(0, now - xcCharacterInputHook.AntiStarted)
+                    local interval = math.max(0.04, tonumber(XCConfig.antiAimInterval) or 0.15)
+                    local step = math.floor(elapsed / interval)
+                    local side = step % 2 == 0 and -1 or 1
+                    local originalYaw = tonumber(result.LookYaw) or 0
+                    local yaw = originalYaw + math.rad(tonumber(XCConfig.antiAimYaw) or 180)
+                    local mode = tostring(XCConfig.antiAimMode or "Static")
+                    if mode == "Backwards" then
+                        yaw = originalYaw + math.pi
+                    elseif mode == "Jitter" then
+                        yaw += math.rad(tonumber(XCConfig.antiAimJitter) or 60) * side
+                    elseif mode == "Spin" then
+                        yaw += math.rad((elapsed * math.max(10, tonumber(XCConfig.spinSpeed) or 50) * 6) % 360)
+                    elseif mode == "Random" then
+                        if xcCharacterInputHook.AntiLastStep ~= step or not xcCharacterInputHook.RandomYaw then
+                            xcCharacterInputHook.RandomYaw = math.rad(math.random(-180, 180))
+                        end
+                        yaw += xcCharacterInputHook.RandomYaw
+                    end
+                    yaw = (yaw + math.pi) % (math.pi * 2) - math.pi
+                    local move = result.Move or Vector2.zero
+                    if move.Magnitude > 1 then move = move.Unit end
+                    local delta = yaw - originalYaw
+                    local cosine, sine = math.cos(delta), math.sin(delta)
+                    if result == input then result = table.clone(result) end
+                    result.Move = Vector2.new(move.X * cosine - move.Y * sine, move.X * sine + move.Y * cosine)
+                    result.LookYaw = yaw
+                    xcCharacterInputHook.AntiLastStep = step
+                elseif not XCConfig.antiAimEnabled then
+                    xcCharacterInputHook.AntiCharacter = nil
+                    xcCharacterInputHook.AntiStarted = nil
+                end
+                return result
+            end)
+            if success then return modified end
+            xcCharacterInputHook.LastError = tostring(modified)
+            return input
+        end
+
+        module.SampleInput = xcCharacterInputHook.Wrapper
+        rawset(module, "__XCInputOwner", xcSessionToken)
+        xcCharacterInputHook.Ready = true
+        xcCharacterInputHook.LastError = nil
+    end)
+    if not ok then
+        xcCharacterInputHook.LastError = tostring(failure)
+        restoreXCCharacterInputHook()
+    end
+    return xcCharacterInputHook.Ready
+end
+
+table.insert(connections, RunService.RenderStepped:Connect(function(dt)
+    local char = player.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+
+    if not XCConfig.antiAimEnabled then
+        if hum and savedAutoRotate ~= nil then
+            hum.AutoRotate = savedAutoRotate
+            savedAutoRotate = nil
+        end
+        return
+    end
+
+    -- The native Blox Strike input hook is authoritative. The HRP rotation
+    -- below remains only as a compatibility fallback for other experiences.
+    if xcCharacterInputHook.Ready then return end
+
+    if not hrp or not hum or hum.Health <= 0 then return end
+
+    if savedAutoRotate == nil then
+        savedAutoRotate = hum.AutoRotate
+        hum.AutoRotate = false
+    end
+
+    local mode = tostring(XCConfig.antiAimMode or "Spin")
+    local activeCamera = Workspace.CurrentCamera or camera
+    if not activeCamera then return end
+    local _, cameraYaw = activeCamera.CFrame:ToOrientation()
+    local targetYaw
+    if mode == "Spin" then
+        currentSpinAngle = (currentSpinAngle + (XCConfig.spinSpeed * 6 * dt)) % 360
+        targetYaw = math.rad(currentSpinAngle)
+    elseif mode == "Backwards" then
+        targetYaw = cameraYaw + math.pi
+    elseif mode == "Jitter" then
+        local interval = math.max(0.04, tonumber(XCConfig.antiAimInterval) or 0.15)
+        local side = math.floor(os.clock() / interval) % 2 == 0 and -1 or 1
+        targetYaw = cameraYaw + math.rad((tonumber(XCConfig.antiAimYaw) or 180) + side * (tonumber(XCConfig.antiAimJitter) or 60))
+    elseif mode == "Random" then
+        if os.clock() >= XCFeatureState.antiAimNextChange then
+            XCFeatureState.antiAimNextChange = os.clock() + math.max(0.04, tonumber(XCConfig.antiAimInterval) or 0.15)
+            XCFeatureState.antiAimRandomYaw = math.random(-180, 180)
+        end
+        targetYaw = cameraYaw + math.rad(XCFeatureState.antiAimRandomYaw)
+    else
+        targetYaw = cameraYaw + math.rad(tonumber(XCConfig.antiAimYaw) or 180)
+    end
+    hrp.CFrame = CFrame.new(hrp.Position) * CFrame.Angles(0, targetYaw, 0)
+end))
+
+-- ==========================================
+-- GROUND CHECK & MOBILE INPUT HOOKS
+-- ==========================================
+local groundRayParams = RaycastParams.new()
+groundRayParams.FilterType = Enum.RaycastFilterType.Exclude
+groundRayParams.IgnoreWater = true
+
+function isPlayerGrounded(char, hrp)
+    groundRayParams.FilterDescendantsInstances = {char, camera}
+    local origin = hrp.Position
+    local direction = Vector3.new(0, -3.2, 0)
+    return Workspace:Raycast(origin, direction, groundRayParams) ~= nil
+end
+
+function captureDefaultHipHeight(char)
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    if hum and hum.Parent then
+        defaultHipHeight = hum.HipHeight
+        defaultHipHeightCaptured = true
+    end
+end
+
+function restoreDefaultHipHeight()
+    local char = player.Character
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    if hum then
+        hum.HipHeight = defaultHipHeightCaptured and defaultHipHeight or hum.HipHeight
+    end
+end
+
+local mobileSlideDragging = false
+local mobileSlideToggleActive = false
+
+function positionMobileSlideButton(jumpBtn)
+    if not mobileSlideBtn or not jumpBtn then return end
+    mobileSlideBtn.Position = UDim2.new(
+        jumpBtn.Position.X.Scale,
+        jumpBtn.Position.X.Offset - 60,
+        jumpBtn.Position.Y.Scale,
+        jumpBtn.Position.Y.Offset
+    )
+end
+
+function updateMobileSlideIndicator()
+    if not mobileSlideBtn then return end
+    local stroke = mobileSlideBtn:FindFirstChild("XCSlideStroke")
+    if mobileSlideToggleActive then
+        mobileSlideBtn.BackgroundColor3 = currentTheme.Accent
+        mobileSlideBtn.BackgroundTransparency = 0.08
+        mobileSlideBtn.TextColor3 = currentTheme.TextPrimary
+        if stroke then
+            stroke.Color = currentTheme.Accent
+            stroke.Thickness = 2
+        end
+    else
+        mobileSlideBtn.BackgroundColor3 = currentTheme.CardBg
+        mobileSlideBtn.BackgroundTransparency = 0.3
+        mobileSlideBtn.TextColor3 = currentTheme.Accent
+        if stroke then
+            stroke.Color = currentTheme.Border
+            stroke.Thickness = 1.2
+        end
+    end
+end
+
+function updateMobileSlideVisibility()
+    if mobileSlideBtn then
+        mobileSlideBtn.Visible = XCConfig.slideEnabled and UserInputService.TouchEnabled
+        if not XCConfig.slideEnabled then
+            mobileSlideToggleActive = false
+            isSliding = false
+            currentSlideVel = Vector3.zero
+            updateMobileSlideIndicator()
+        end
+    end
+end
+
+function triggerMobileSlideStart()
+    if not XCConfig.slideEnabled then return end
+    local char = player.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    if not (hrp and hum and isEntityAlive(char, hum) and isPlayerGrounded(char, hrp)) then return false end
+
+    local moveDir = hum.MoveDirection.Magnitude > 0.1 and hum.MoveDirection or hrp.CFrame.LookVector
+    currentSlideVel = moveDir * (16 * XCConfig.slideSpeedBoost)
+    isSliding = true
+    hum.HipHeight = defaultHipHeight * 0.4
+    return true
+end
+
+function triggerMobileSlideEnd()
+    isSliding = false
+    currentSlideVel = Vector3.zero
+    restoreDefaultHipHeight()
+end
+
+function toggleMobileSlide()
+    if not XCConfig.slideEnabled then return end
+    if mobileSlideToggleActive then
+        mobileSlideToggleActive = false
+        triggerMobileSlideEnd()
+    else
+        if triggerMobileSlideStart() then
+            mobileSlideToggleActive = true
+        end
+    end
+    updateMobileSlideIndicator()
+end
+
+function createMobileSlideButton()
+    if mobileSlideBtn then
+        updateMobileSlideVisibility()
+        return
+    end
+
+    mobileSlideBtn = Instance.new("TextButton")
+    mobileSlideBtn.Name = "XCMobileSlideBtn"
+    mobileSlideBtn.Size = UDim2.new(0, 50, 0, 50)
+    mobileSlideBtn.Position = UDim2.new(1, -145, 1, -115)
+    mobileSlideBtn.BackgroundColor3 = currentTheme.CardBg
+    mobileSlideBtn.BackgroundTransparency = 0.3
+    mobileSlideBtn.Text = "SLIDE"
+    mobileSlideBtn.TextColor3 = currentTheme.Accent
+    mobileSlideBtn.TextSize = 9.5
+    mobileSlideBtn.Font = Enum.Font.GothamBold
+    mobileSlideBtn.Visible = XCConfig.slideEnabled and UserInputService.TouchEnabled
+    mobileSlideBtn.ZIndex = 80
+    mobileSlideBtn.Active = true
+    mobileSlideBtn.AutoButtonColor = false
+    mobileSlideBtn.Parent = mainContainer
+
+    Instance.new("UICorner", mobileSlideBtn).CornerRadius = UDim.new(1, 0)
+    local stroke = Instance.new("UIStroke", mobileSlideBtn)
+    stroke.Name = "XCSlideStroke"
+    stroke.Color = currentTheme.Border
+    stroke.Thickness = 1.2
+
+    local tapConn = mobileSlideBtn.Activated:Connect(function()
+        if mobileSlideDragging then
+            mobileSlideDragging = false
+            return
+        end
+        toggleMobileSlide()
+    end)
+    table.insert(connections, tapConn)
+
+    local dragStart, buttonStart = nil, nil
+    local dragConn = mobileSlideBtn.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch then
+            dragStart = input.Position
+            buttonStart = mobileSlideBtn.Position
+            mobileSlideDragging = false
+        end
+    end)
+    table.insert(connections, dragConn)
+
+    local changedConn = mobileSlideBtn.InputChanged:Connect(function(input)
+        if input.UserInputType ~= Enum.UserInputType.Touch or not dragStart or not buttonStart then return end
+        local delta = input.Position - dragStart
+        if math.abs(delta.X) > 10 or math.abs(delta.Y) > 10 then
+            mobileSlideDragging = true
+            mobileSlideBtn.Position = UDim2.new(
+                buttonStart.X.Scale,
+                buttonStart.X.Offset + delta.X,
+                buttonStart.Y.Scale,
+                buttonStart.Y.Offset + delta.Y
+            )
+        end
+    end)
+    table.insert(connections, changedConn)
+
+    updateMobileSlideIndicator()
+end
+
+function hookMobileJumpButton()
+    task.spawn(function()
+        local pGui = player:WaitForChild("PlayerGui", 5)
+        if not pGui then return end
+        local touchGui = pGui:WaitForChild("TouchGui", 5)
+        if not touchGui then return end
+        local controlFrame = touchGui:WaitForChild("TouchControlFrame", 5)
+        if not controlFrame then return end
+        local jumpBtn = controlFrame:WaitForChild("JumpButton", 5)
+        if not jumpBtn then return end
+
+        if mobileJumpHookedButton == jumpBtn then
+            positionMobileSlideButton(jumpBtn)
+            return
+        end
+
+        for _, conn in ipairs(mobileJumpConnections) do pcall(function() conn:Disconnect() end) end
+        mobileJumpConnections = {}
+        mobileJumpHookedButton = jumpBtn
+
+        local jConn1 = jumpBtn.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+                isMobileJumpHeld = true
+            end
+        end)
+        table.insert(mobileJumpConnections, jConn1)
+        table.insert(connections, jConn1)
+
+        local jConn2 = jumpBtn.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+                isMobileJumpHeld = false
+            end
+        end)
+        table.insert(mobileJumpConnections, jConn2)
+        table.insert(connections, jConn2)
+
+        positionMobileSlideButton(jumpBtn)
+    end)
+end
+
+createMobileSlideButton()
+hookMobileJumpButton()
+
+function hookCharacterWeapons(char)
+    if not char then return end
+    local childAddedConnection = char.ChildAdded:Connect(function(child)
+        if child:IsA("Tool") then scanAndMorphKnives(child) end
+    end)
+    table.insert(connections, childAddedConnection)
+    for _, tool in ipairs(char:GetChildren()) do
+        if tool:IsA("Tool") then scanAndMorphKnives(tool) end
+    end
+end
+
+table.insert(connections, player.CharacterAdded:Connect(function(char)
+    mobileSlideToggleActive = false
+    mobileSlideDragging = false
+    isSliding = false
+    currentSlideVel = Vector3.zero
+    mobileSlideInputActive = false
+    defaultHipHeightCaptured = false
+    XCFeatureState.bhopGroundSince = nil
+    XCFeatureState.bhopLastJump = 0
+    local hum = char:WaitForChild("Humanoid", 5)
+    if hum then
+        defaultHipHeight = hum.HipHeight
+        defaultHipHeightCaptured = true
+        hum.HipHeight = defaultHipHeight
+    end
+    hookMobileJumpButton()
+    hookCharacterWeapons(char)
+    if XCConfig.animationsEnabled then
+        task.delay(0.75, function()
+            if xcSessionActive() and XCConfig.animationsEnabled and player.Character == char then
+                playXCAnimation()
+            end
+        end)
+    end
+end))
+
+if player.Character then
+    captureDefaultHipHeight(player.Character)
+    hookCharacterWeapons(player.Character)
+end
+
+local jumpReqConn = UserInputService.JumpRequest:Connect(function() isMobileJumpHeld = true end)
+table.insert(connections, jumpReqConn)
+
+local inBeganConn = UserInputService.InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.Space then isMobileJumpHeld = true end
+    if XCConfig.slideEnabled and (input.KeyCode == Enum.KeyCode.C or input.KeyCode == Enum.KeyCode.LeftControl) then
+        local char = player.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        if hrp and hum and isEntityAlive(char, hum) and isPlayerGrounded(char, hrp) then
+            if not defaultHipHeightCaptured then captureDefaultHipHeight(char) end
+            local moveDir = hum.MoveDirection.Magnitude > 0.1 and hum.MoveDirection or hrp.CFrame.LookVector
+            currentSlideVel = moveDir * (16 * XCConfig.slideSpeedBoost)
+            isSliding = true
+            hum.HipHeight = defaultHipHeight * 0.4
+        end
+    end
+end)
+table.insert(connections, inBeganConn)
+
+local inEndedConn = UserInputService.InputEnded:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.Space then isMobileJumpHeld = false end
+    if input.KeyCode == Enum.KeyCode.C or input.KeyCode == Enum.KeyCode.LeftControl then
+        isSliding = false
+        currentSlideVel = Vector3.zero
+        restoreDefaultHipHeight()
+    end
+end)
+table.insert(connections, inEndedConn)
+
+-- ==========================================
+-- LOCAL-SHOT HIT CONFIRMATION & PHYSICS LOOP
+-- ==========================================
+table.insert(connections, RunService.Heartbeat:Connect(function()
+    if not XCConfig.hitmarkerEnabled and not XCConfig.hitSoundEnabled then
+        hitmarkerPendingHits = {}
+        return
+    end
+
+    local now = os.clock()
+    for healthKey, pending in pairs(hitmarkerPendingHits) do
+        local char = pending.Character
+        local targetPlr = pending.Player
+        if now > pending.Expires or not char or not char.Parent or not targetPlr
+            or not isTargetEnemy(targetPlr, char) then
+            hitmarkerPendingHits[healthKey] = nil
+        else
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            local currentHealth = getXCHealth(char, targetPlr, hum)
+            if currentHealth ~= nil and currentHealth < pending.Health then
+                local damage = pending.Health - currentHealth
+                hitmarkerPendingHits[healthKey] = nil
+                showHitmarker(damage)
+            elseif currentHealth ~= nil and currentHealth > pending.Health then
+                pending.Health = currentHealth
+            end
+        end
+    end
+end))
+
+table.insert(connections, RunService.RenderStepped:Connect(function(dt)
+    local char = player.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    if not hrp or not hum or not isEntityAlive(char, hum) then return end
+
+    local moveDir = hum.MoveDirection
+    if moveDir.Magnitude < 0.05 then
+        local camCFrame = Workspace.CurrentCamera.CFrame
+        local kbDir = Vector3.zero
+        if UserInputService:IsKeyDown(Enum.KeyCode.W) then kbDir += camCFrame.LookVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.S) then kbDir -= camCFrame.LookVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.A) then kbDir -= camCFrame.RightVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.D) then kbDir += camCFrame.RightVector end
+        kbDir = Vector3.new(kbDir.X, 0, kbDir.Z)
+        if kbDir.Magnitude > 0 then moveDir = kbDir.Unit end
+    end
+
+    local currentMove = moveDir
+    if currentMove.Magnitude > 0.05 then lastMoveDirection = currentMove end
+
+    local currentVel = hrp.AssemblyLinearVelocity
+    local finalVelocity = nil
+    local activeMode = "Normal"
+
+    if XCConfig.flightEnabled then
+        activeMode = "Flight"
+        finalVelocity = camera.CFrame.LookVector * XCConfig.flightSpeed
+    elseif XCConfig.slideEnabled and isSliding then
+        if isPlayerGrounded(char, hrp) and currentSlideVel.Magnitude > XCConfig.slideMinSpeed then
+            activeMode = "Slide"
+            local frictionFactor = math.pow(math.clamp(XCConfig.slideFriction, 0, 1), math.max(dt, 0) * 60)
+            currentSlideVel = currentSlideVel * frictionFactor
+            finalVelocity = Vector3.new(currentSlideVel.X, currentVel.Y, currentSlideVel.Z)
+        else
+            isSliding = false
+            currentSlideVel = Vector3.zero
+            restoreDefaultHipHeight()
+        end
+    end
+
+    if activeMode == "Normal" and XCConfig.bunnyHopEnabled and not xcCharacterInputHook.Ready then
+        local paused = not XCFeatureState.bhopWindowFocused
+            or UserInputService:GetFocusedTextBox() ~= nil
+            or GuiService.MenuIsOpen
+            or player:GetAttribute("IsPlayerChatting") == true
+            or (XCConfig.bhopPauseWithMenu and XCFeatureState.menuOpen)
+        if paused then
+            XCFeatureState.bhopGroundSince = nil
+        else
+            local now = os.clock()
+            local grounded = isPlayerGrounded(char, hrp) or hum.FloorMaterial ~= Enum.Material.Air
+            local isSpacePressed = UserInputService:IsKeyDown(Enum.KeyCode.Space)
+            local automatic = XCConfig.bhopMode == "Automatic" or XCConfig.bhopAutoJump
+            local requested = automatic or isMobileJumpHeld or hum.Jump or isSpacePressed
+            local moving = currentMove.Magnitude > 0.05
+            local movementAllowed = not XCConfig.bhopMovingOnly or moving
+
+            if grounded then
+                XCFeatureState.bhopGroundSince = XCFeatureState.bhopGroundSince or now
+            else
+                XCFeatureState.bhopGroundSince = nil
+            end
+
+            local groundDelay = math.clamp(tonumber(XCConfig.bhopGroundDelay) or 0, 0, 0.25)
+            local canJump = grounded and requested and movementAllowed
+                and XCFeatureState.bhopGroundSince
+                and now - XCFeatureState.bhopGroundSince >= groundDelay
+                and now - XCFeatureState.bhopLastJump >= 0.05
+
+            if canJump then
+                activeMode = "Bhop"
+                XCFeatureState.bhopLastJump = now
+                XCFeatureState.bhopGroundSince = nil
+                hum.Jump = true
+                finalVelocity = Vector3.new(currentVel.X, math.clamp(tonumber(XCConfig.bhopJumpPower) or 52, 30, 100), currentVel.Z)
+                pcall(function() hum:ChangeState(Enum.HumanoidStateType.Jumping) end)
+            end
+
+            if moving and (grounded or XCConfig.bhopAirStrafe) then
+                activeMode = canJump and "Bhop" or (grounded and "Bhop accelerate" or "AutoStrafe")
+                local targetSpeed = 16 * math.clamp(tonumber(XCConfig.bhopSpeedBoost) or 1.35, 1, 3)
+                local targetVel = currentMove.Unit * targetSpeed
+                local acceleration = math.clamp(tonumber(XCConfig.bhopAcceleration) or 12, 2, 30)
+                local blend = 1 - math.exp(-acceleration * math.max(dt, 0))
+                local base = finalVelocity or currentVel
+                finalVelocity = Vector3.new(
+                    base.X + (targetVel.X - base.X) * blend,
+                    base.Y,
+                    base.Z + (targetVel.Z - base.Z) * blend
+                )
+            end
+        end
+    else
+        XCFeatureState.bhopGroundSince = nil
+    end
+
+    if activeMode == "Normal" and XCConfig.speedEnabled and currentMove.Magnitude > 0 then
+        activeMode = "Speed"
+        local targetVel = currentMove * (16 * XCConfig.walkMultiplier)
+        finalVelocity = Vector3.new(targetVel.X, currentVel.Y, targetVel.Z)
+    end
+
+    if finalVelocity then 
+        hrp.AssemblyLinearVelocity = finalVelocity 
+    end
+end))
+
+-- ==========================================
+-- UI BUILDER
+-- ==========================================
+function setAntiAfkEnabled(enabled)
+    XCConfig.antiAfkEnabled = enabled
+    if antiAfkConnection then
+        pcall(function() antiAfkConnection:Disconnect() end)
+        antiAfkConnection = nil
+    end
+    if not XCConfig.antiAfkEnabled then return end
+
+    antiAfkConnection = player.Idled:Connect(function()
+        pcall(function()
+            if VirtualInputManager then
+                VirtualInputManager:SendMouseButtonEvent(1, 1, 0, true, game, 0)
+                VirtualInputManager:SendMouseButtonEvent(1, 1, 0, false, game, 0)
+            end
+        end)
+    end)
+end
+
+-- ==========================================
+-- XC SKEET / GAMESENSE INTERFACE
+-- ==========================================
+function buildXCUI()
+    setAntiAfkEnabled(XCConfig.antiAfkEnabled)
+
+    local C = {
+        Main = Color3.fromRGB(17, 17, 17),
+        Sidebar = Color3.fromRGB(13, 13, 13),
+        Panel = Color3.fromRGB(12, 12, 12),
+        Control = Color3.fromRGB(25, 25, 25),
+        Control2 = Color3.fromRGB(35, 35, 35),
+        Border = Color3.fromRGB(44, 44, 44),
+        Black = Color3.fromRGB(0, 0, 0),
+        Lime = Color3.fromRGB(152, 204, 0),
+        White = Color3.fromRGB(235, 235, 235),
+        Text = Color3.fromRGB(200, 200, 200),
+        Muted = Color3.fromRGB(110, 110, 110),
+    }
+
+    local toggleGui = Instance.new("ScreenGui")
+    toggleGui.Name = "XCToggleGui"
+    toggleGui.ResetOnSpawn = false
+    toggleGui.IgnoreGuiInset = true
+    toggleGui.DisplayOrder = 100
+    toggleGui.Parent = targetGui
+
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "XCScreenGui"
+    screenGui.ResetOnSpawn = false
+    screenGui.IgnoreGuiInset = true
+    screenGui.DisplayOrder = 50
+    screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    screenGui.Parent = targetGui
+
+    local main = Instance.new("Frame")
+    main.Name = "SkeetMain"
+    main.Size = UDim2.fromOffset(680, 450)
+    main.Position = UDim2.new(0.5, -340, 0.5, -225)
+    main.BackgroundColor3 = C.Main
+    main.BorderColor3 = C.Border
+    main.BorderSizePixel = 1
+    main.Active = true
+    main.Parent = screenGui
+
+    local mainStroke = Instance.new("UIStroke")
+    mainStroke.Color = C.Black
+    mainStroke.Thickness = 2
+    mainStroke.Parent = main
+
+    local scale = Instance.new("UIScale")
+    scale.Name = "ResponsiveScale"
+    scale.Parent = main
+
+    local function updateScale()
+        local viewport = screenGui.AbsoluteSize
+        if viewport.X <= 0 or viewport.Y <= 0 then return end
+        local preferred = UserInputService.TouchEnabled and 0.82 or 1
+        if XCConfig.settingsCompactMode then preferred *= 0.88 end
+        scale.Scale = math.min(preferred, (viewport.X - 20) / 680, (viewport.Y - 20) / 450)
+        main.Position = UDim2.new(0.5, -340 * scale.Scale, 0.5, -225 * scale.Scale)
+    end
+    updateScale()
+    task.defer(updateScale)
+    table.insert(connections, screenGui:GetPropertyChangedSignal("AbsoluteSize"):Connect(updateScale))
+
+    local topLine = Instance.new("Frame")
+    topLine.Size = UDim2.new(1, -4, 0, 2)
+    topLine.Position = UDim2.fromOffset(2, 2)
+    topLine.BorderSizePixel = 0
+    topLine.BackgroundColor3 = C.Lime
+    topLine.Parent = main
+    local gradient = Instance.new("UIGradient")
+    gradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 210, 255)),
+        ColorSequenceKeypoint.new(0.25, Color3.fromRGB(160, 75, 255)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 65, 140)),
+        ColorSequenceKeypoint.new(0.75, Color3.fromRGB(255, 135, 20)),
+        ColorSequenceKeypoint.new(1, C.Lime),
+    })
+    gradient.Parent = topLine
+
+    local dragBar = Instance.new("Frame")
+    dragBar.Name = "DragBar"
+    dragBar.Size = UDim2.new(1, -52, 0, 10)
+    dragBar.Position = UDim2.fromOffset(52, 0)
+    dragBar.BackgroundTransparency = 1
+    dragBar.Active = true
+    dragBar.ZIndex = 20
+    dragBar.Parent = main
+
+    local sidebar = Instance.new("Frame")
+    sidebar.Name = "IconBar"
+    sidebar.Size = UDim2.new(0, 48, 1, -4)
+    sidebar.Position = UDim2.fromOffset(2, 2)
+    sidebar.BackgroundColor3 = C.Sidebar
+    sidebar.BorderColor3 = C.Border
+    sidebar.BorderSizePixel = 1
+    sidebar.Parent = main
+
+    local sideLayout = Instance.new("UIListLayout")
+    sideLayout.Padding = UDim.new(0, 1)
+    sideLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    sideLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    sideLayout.Parent = sidebar
+
+    local content = Instance.new("Frame")
+    content.Name = "Content"
+    content.Size = UDim2.new(1, -64, 1, -46)
+    content.Position = UDim2.fromOffset(56, 38)
+    content.BackgroundTransparency = 1
+    content.Parent = main
+
+    local pages = {}
+    local tabData = {}
+    local currentPage
+    local refreshers = {}
+    local activeSliderInput
+    local activeSliderMove
+    local searchableControls = {}
+    local sectionGroups = {}
+    local activeSectionByParent = {}
+    local moduleStatusRefreshers = {}
+    local scheduleConfigAutoSave = function() end
+    local applySearch
+
+    local searchBar = Instance.new("Frame")
+    searchBar.Name = "QuickSearch"
+    searchBar.Size = UDim2.new(1, -64, 0, 24)
+    searchBar.Position = UDim2.fromOffset(56, 10)
+    searchBar.BackgroundColor3 = C.Panel
+    searchBar.BorderColor3 = C.Border
+    searchBar.BorderSizePixel = 1
+    searchBar.Parent = main
+    local searchIcon = Instance.new("TextLabel")
+    searchIcon.Size = UDim2.fromOffset(24, 22)
+    searchIcon.BackgroundTransparency = 1
+    searchIcon.Text = ">"
+    searchIcon.TextColor3 = C.Lime
+    searchIcon.Font = Enum.Font.Code
+    searchIcon.TextSize = 13
+    searchIcon.Parent = searchBar
+    local searchBox = Instance.new("TextBox")
+    searchBox.Size = UDim2.new(1, -50, 1, 0)
+    searchBox.Position = UDim2.fromOffset(23, 0)
+    searchBox.BackgroundTransparency = 1
+    searchBox.ClearTextOnFocus = false
+    searchBox.PlaceholderText = "Search modules in this tab..."
+    searchBox.PlaceholderColor3 = C.Muted
+    searchBox.Text = ""
+    searchBox.TextColor3 = C.Text
+    searchBox.Font = Enum.Font.Code
+    searchBox.TextSize = 10
+    searchBox.TextXAlignment = Enum.TextXAlignment.Left
+    searchBox.Parent = searchBar
+    local clearSearch = Instance.new("TextButton")
+    clearSearch.Size = UDim2.fromOffset(24, 22)
+    clearSearch.Position = UDim2.new(1, -25, 0, 0)
+    clearSearch.BackgroundTransparency = 1
+    clearSearch.Text = "x"
+    clearSearch.TextColor3 = C.Muted
+    clearSearch.Font = Enum.Font.Code
+    clearSearch.TextSize = 12
+    clearSearch.Parent = searchBar
+    clearSearch.Activated:Connect(function() searchBox.Text = "" end)
+
+    local CONTROL_HELP = {
+        aimbotEnabled = "Tracks a valid target inside the configured field of view.",
+        silentAimEnabled = "Redirects supported shot data without visibly snapping the camera.",
+        triggerbotEnabled = "Fires when a valid target is under the crosshair.",
+        triggerbotDelay = "Minimum delay between automatic trigger shots.",
+        triggerbotScopedOnly = "Allows Triggerbot to fire only while a native scope is active.",
+        triggerbotHeadOnly = "Triggerbot fires only when the detected hit part is the head.",
+        rageBotEnabled = "Aggressive target selection using the Rage FOV and priority settings.",
+        noRecoilEnabled = "Suppresses supported weapon and camera recoil callbacks.",
+        noSpreadEnabled = "Requests zero spread from supported weapon calculations.",
+        wallbangEnabled = "Allows target selection through surfaces when supported by the game.",
+        thirdPersonEnabled = "Moves the native camera behind the character.",
+        bunnyHopEnabled = "Smooth XC Bhop with grounded timing and optional air control.",
+        bhopMode = "Hold requires jump input; Automatic keeps hopping while movement is active.",
+        bhopMovingOnly = "Prevents automatic jumps while no movement direction is pressed.",
+        bhopPauseWithMenu = "Pauses Bhop while the XC menu or a text box is open.",
+        bhopGroundDelay = "Delay after touching the ground before the next jump.",
+        bhopAcceleration = "How quickly horizontal velocity approaches the configured Bhop speed.",
+        flightEnabled = "Moves the character along the camera direction.",
+        chamsEnabled = "Adds a local highlight to valid player models.",
+        grenadeEspEnabled = "Shows nearby grenade labels, paths and effect radiuses.",
+        skeletonEspEnabled = "Draws a lightweight R6/R15 skeleton at 30 updates per second.",
+        skeletonDistanceFade = "Gradually fades skeleton lines at long distances.",
+        noSmokeEnabled = "Disables detected BloxStrike smoke emitters and restores them when turned off.",
+        hitSoundEnabled = "Plays the selected local sound when enemy health decreases.",
+        antiAimMode = "Spin, backwards, jitter, random or static anti-aim direction.",
+        nightModeEnabled = "Applies the selected lighting preset locally.",
+        worldSkyboxEnabled = "Applies the selected custom skybox locally.",
+        worldPostFXEnabled = "Enables local color correction and post-processing.",
+        worldSkyboxPreset = "Selects a local sky preset from the supplied World visual scripts.",
+        worldTonePreset = "Applies a coordinated tint preset to Post FX and atmosphere.",
+        worldAtmosphereEnabled = "Adds a configurable local Atmosphere without deleting the game's original one.",
+        worldBloomEnabled = "Adds a lightweight local Bloom effect with configurable intensity.",
+        weatherEnabled = "Local weather layer. Uses one particle emitter to avoid frame spikes.",
+        weatherMode = "Rain, snow, fog or ash. The effect follows the active camera.",
+        weatherIntensity = "Controls particle rate or fog density.",
+        weatherWind = "Horizontal drift of rain, snow and ash particles.",
+        freecamEnabled = "Detaches the camera. WASD moves, Space/E rises, Q/Ctrl lowers, Shift boosts.",
+        freecamSpeed = "Movement speed of the detached camera.",
+        freecamKey = "Hotkey that toggles Freecam without opening the menu.",
+        freelookEnabled = "Rotates the view in place without moving the character or camera origin.",
+        freelookSensitivity = "Mouse sensitivity used by Freelook.",
+        freelookKey = "Hotkey that toggles Freelook without opening the menu.",
+        streamerModeEnabled = "Roblox-safe capture mode: temporarily hides XC overlays without deleting their settings.",
+        streamerKey = "Hotkey for quickly hiding or restoring XC overlays.",
+        priorityPlayerName = "Roblox player selected as the preferred target. The list uses live server usernames.",
+        customScopeEnabled = "Draws the XC scope overlay when scoped.",
+        customHandsEnabled = "Offsets the detected first-person weapon or hands model.",
+        spectatorListEnabled = "Shows players currently observing the local player when detectable.",
+        settingsAutoSave = "Saves the current profile shortly after a UI setting changes.",
+        menuKey = "Keyboard shortcut used to show or hide XC.",
+        tab_Rage = "Combat: aim assistants, targeting and weapon mechanics.",
+        tab_AntiAim = "Movement: anti-aim, third person, bhop, slide and flight.",
+        tab_Visuals = "Visuals: ESP, chams and on-screen combat feedback.",
+        tab_World = "World: lighting, weather, scope and camera tools.",
+        tab_Misc = "Utilities: session helpers, animations and viewmodel controls.",
+        tab_Skins = "Cosmetics: knives, gloves, weapon materials and bullet effects.",
+        tab_Players = "Players: target rules, priority player and ESP details.",
+        tab_Configs = "Settings: interface, quick actions and configuration profiles.",
+    }
+
+    local helpPopup = Instance.new("Frame")
+    helpPopup.Name = "ContextHelp"
+    helpPopup.Size = UDim2.fromOffset(UserInputService.TouchEnabled and 260 or 235, 0)
+    helpPopup.AutomaticSize = Enum.AutomaticSize.Y
+    helpPopup.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
+    helpPopup.BorderColor3 = C.Lime
+    helpPopup.BorderSizePixel = 1
+    helpPopup.Visible = false
+    helpPopup.ZIndex = 300
+    helpPopup.Parent = screenGui
+    local helpPadding = Instance.new("UIPadding")
+    helpPadding.PaddingTop = UDim.new(0, 7)
+    helpPadding.PaddingBottom = UDim.new(0, 7)
+    helpPadding.PaddingLeft = UDim.new(0, 9)
+    helpPadding.PaddingRight = UDim.new(0, 9)
+    helpPadding.Parent = helpPopup
+    local helpText = Instance.new("TextLabel")
+    helpText.Size = UDim2.new(1, 0, 0, 0)
+    helpText.AutomaticSize = Enum.AutomaticSize.Y
+    helpText.BackgroundTransparency = 1
+    helpText.TextColor3 = C.Text
+    helpText.Font = Enum.Font.Code
+    helpText.TextSize = UserInputService.TouchEnabled and 11 or 10
+    helpText.TextWrapped = true
+    helpText.TextXAlignment = Enum.TextXAlignment.Left
+    helpText.TextYAlignment = Enum.TextYAlignment.Top
+    helpText.ZIndex = 301
+    helpText.Parent = helpPopup
+    local helpToken = 0
+
+    local function hideHelp()
+        helpToken += 1
+        helpPopup.Visible = false
+    end
+
+    local function showHelp(target, message)
+        if not message or message == "" or not target or not target.Parent then return end
+        helpToken += 1
+        helpText.Text = message
+        helpPopup.Visible = true
+        task.defer(function()
+            if not helpPopup.Visible or not target.Parent then return end
+            local viewport = screenGui.AbsoluteSize
+            local width = helpPopup.AbsoluteSize.X
+            local height = math.max(helpPopup.AbsoluteSize.Y, 34)
+            local x = math.clamp(target.AbsolutePosition.X, 6, math.max(6, viewport.X - width - 6))
+            local below = target.AbsolutePosition.Y + target.AbsoluteSize.Y + 5
+            local y = below + height <= viewport.Y - 6 and below
+                or math.max(6, target.AbsolutePosition.Y - height - 5)
+            helpPopup.Position = UDim2.fromOffset(x, y)
+        end)
+    end
+
+    local function attachHelp(target, key)
+        local message = CONTROL_HELP[key]
+        if not message then return end
+        local touchHelpShown = false
+        target.MouseEnter:Connect(function() showHelp(target, message) end)
+        target.MouseLeave:Connect(hideHelp)
+        target.InputBegan:Connect(function(input)
+            if input.UserInputType ~= Enum.UserInputType.Touch then return end
+            touchHelpShown = false
+            helpToken += 1
+            local token = helpToken
+            task.delay(0.45, function()
+                if token == helpToken then
+                    touchHelpShown = true
+                    target:SetAttribute("XCLongPressUntil", os.clock() + 0.4)
+                    showHelp(target, message)
+                end
+            end)
+        end)
+        target.InputEnded:Connect(function(input)
+            if input.UserInputType ~= Enum.UserInputType.Touch then return end
+            if touchHelpShown then
+                local shownToken = helpToken
+                task.delay(2.5, function()
+                    if shownToken == helpToken then hideHelp() end
+                end)
+            else
+                hideHelp()
+            end
+        end)
+    end
+
+    local function createPage(name)
+        local page = Instance.new("Frame")
+        page.Name = name
+        page.Size = UDim2.fromScale(1, 1)
+        page.BackgroundTransparency = 1
+        page.Visible = false
+        page.Parent = content
+        pages[name] = page
+        return page
+    end
+
+    local function createPanel(page, title, x, width)
+        local panel = Instance.new("Frame")
+        panel.Name = title
+        panel.Size = UDim2.new(width, 0, 1, 0)
+        panel.Position = UDim2.new(x, 0, 0, 0)
+        panel.BackgroundColor3 = C.Panel
+        panel.BorderColor3 = C.Border
+        panel.BorderSizePixel = 1
+        panel.Parent = page
+
+        local titleLabel = Instance.new("TextLabel")
+        titleLabel.Size = UDim2.new(1, -16, 0, 24)
+        titleLabel.Position = UDim2.fromOffset(8, 3)
+        titleLabel.BackgroundTransparency = 1
+        titleLabel.Text = title
+        titleLabel.TextColor3 = C.Text
+        titleLabel.Font = Enum.Font.Code
+        titleLabel.TextSize = 12
+        titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+        titleLabel.Parent = panel
+
+        local scroll = Instance.new("ScrollingFrame")
+        scroll.Name = "Controls"
+        scroll.Size = UDim2.new(1, -14, 1, -32)
+        scroll.Position = UDim2.fromOffset(7, 28)
+        scroll.BackgroundTransparency = 1
+        scroll.BorderSizePixel = 0
+        scroll.ScrollBarThickness = 2
+        scroll.ScrollBarImageColor3 = C.Border
+        scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+        scroll.CanvasSize = UDim2.new()
+        scroll.Parent = panel
+
+        local layout = Instance.new("UIListLayout")
+        layout.Padding = UDim.new(0, 4)
+        layout.SortOrder = Enum.SortOrder.LayoutOrder
+        layout.Parent = scroll
+        local padding = Instance.new("UIPadding")
+        padding.PaddingLeft = UDim.new(0, 7)
+        padding.PaddingRight = UDim.new(0, 7)
+        padding.PaddingBottom = UDim.new(0, 9)
+        padding.Parent = scroll
+        return scroll
+    end
+
+    local function section(parent, text)
+        local outer = Instance.new("Frame")
+        outer.Name = "Section_" .. text:gsub("%W", "_")
+        outer.Size = UDim2.new(1, 0, 0, 0)
+        outer.AutomaticSize = Enum.AutomaticSize.Y
+        outer.BackgroundTransparency = 1
+        outer.Parent = parent
+        local outerLayout = Instance.new("UIListLayout")
+        outerLayout.Padding = UDim.new(0, 5)
+        outerLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        outerLayout.Parent = outer
+
+        local header = Instance.new("TextButton")
+        header.Size = UDim2.new(1, 0, 0, 24)
+        header.LayoutOrder = 1
+        header.BackgroundTransparency = 1
+        header.BorderSizePixel = 0
+        header.Text = ""
+        header.AutoButtonColor = false
+        header.Parent = outer
+
+        local title = Instance.new("TextLabel")
+        title.Name = "SectionTitle"
+        title.Size = UDim2.new(1, -26, 0, 18)
+        title.Position = UDim2.fromOffset(1, 0)
+        title.BackgroundTransparency = 1
+        title.Text = text:upper()
+        title.TextColor3 = C.White
+        title.Font = Enum.Font.Code
+        title.TextSize = 11
+        title.TextXAlignment = Enum.TextXAlignment.Left
+        title.Parent = header
+
+        local collapseIcon = Instance.new("TextLabel")
+        collapseIcon.Name = "CollapseIcon"
+        collapseIcon.Size = UDim2.fromOffset(20, 18)
+        collapseIcon.Position = UDim2.new(1, -20, 0, 0)
+        collapseIcon.BackgroundTransparency = 1
+        collapseIcon.Text = "v"
+        collapseIcon.TextColor3 = C.Lime
+        collapseIcon.Font = Enum.Font.Code
+        collapseIcon.TextSize = 11
+        collapseIcon.Parent = header
+
+        local accentLine = Instance.new("Frame")
+        accentLine.Name = "LimeDivider"
+        accentLine.Size = UDim2.new(1, 0, 0, 1)
+        accentLine.Position = UDim2.new(0, 0, 1, -2)
+        accentLine.BackgroundColor3 = C.Lime
+        accentLine.BackgroundTransparency = 0.08
+        accentLine.BorderSizePixel = 0
+        accentLine.Parent = header
+
+        local lineFade = Instance.new("UIGradient")
+        lineFade.Transparency = NumberSequence.new({
+            NumberSequenceKeypoint.new(0, 0),
+            NumberSequenceKeypoint.new(0.72, 0.28),
+            NumberSequenceKeypoint.new(1, 1),
+        })
+        lineFade.Parent = accentLine
+
+        local body = Instance.new("Frame")
+        body.Name = "Body"
+        body.Size = UDim2.new(1, 0, 0, 0)
+        body.LayoutOrder = 2
+        body.AutomaticSize = Enum.AutomaticSize.Y
+        body.BackgroundTransparency = 1
+        body.Parent = outer
+        local bodyLayout = Instance.new("UIListLayout")
+        bodyLayout.Padding = UDim.new(0, 4)
+        bodyLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        bodyLayout.Parent = body
+
+        local group = {outer = outer, body = body, header = header, collapsed = false}
+        table.insert(sectionGroups, group)
+        activeSectionByParent[parent] = body
+        header.Activated:Connect(function()
+            group.collapsed = not group.collapsed
+            body.Visible = not group.collapsed
+            collapseIcon.Text = group.collapsed and ">" or "v"
+            title.TextColor3 = group.collapsed and C.Text or C.White
+            accentLine.BackgroundTransparency = group.collapsed and 0.45 or 0.08
+        end)
+        return body
+    end
+
+    local function registerSearch(gui, label)
+        table.insert(searchableControls, {gui = gui, label = tostring(label):lower()})
+    end
+
+    local function refreshConfigControls(key, value)
+        for _, refreshControl in ipairs(refreshers[key] or {}) do pcall(refreshControl, value) end
+    end
+
+    local function getModuleRuntimeStatus(key)
+        if XCConfig[key] ~= true then return "OFF", C.Muted end
+        if key == "skinChangerEnabled" then
+            if skinData.LastError then return "ERR", Color3.fromRGB(218, 82, 82) end
+            if not skinData.Ready then return "WAIT", Color3.fromRGB(220, 170, 72) end
+        elseif key == "antiAimEnabled" or key == "bunnyHopEnabled" then
+            if not xcCharacterInputHook.Ready and xcCharacterInputHook.LastError then
+                return "FALL", Color3.fromRGB(220, 170, 72)
+            end
+            if not xcCharacterInputHook.Ready then return "WAIT", Color3.fromRGB(220, 170, 72) end
+        elseif key == "silentAimEnabled" and not bloxStrikeShootHooked and not silentAimHooked then
+            return "WAIT", Color3.fromRGB(220, 170, 72)
+        end
+        return "ON", C.Lime
+    end
+
+    local function addToggle(parent, label, key, onChanged)
+        parent = activeSectionByParent[parent] or parent
+        local row = Instance.new("TextButton")
+        row.Name = key
+        row.Size = UDim2.new(1, 0, 0, UserInputService.TouchEnabled and 28 or 22)
+        row.BackgroundTransparency = 1
+        row.Text = ""
+        row.AutoButtonColor = false
+        row.Parent = parent
+        local text = Instance.new("TextLabel")
+        text.Size = UDim2.new(1, -76, 1, 0)
+        text.Position = UDim2.fromOffset(0, 0)
+        text.BackgroundTransparency = 1
+        text.Text = label
+        text.TextColor3 = C.Text
+        text.Font = Enum.Font.Code
+        text.TextSize = 11
+        text.TextXAlignment = Enum.TextXAlignment.Left
+        text.Parent = row
+
+        local statusText = Instance.new("TextLabel")
+        statusText.Name = "RuntimeStatus"
+        statusText.Size = UDim2.fromOffset(34, 14)
+        statusText.Position = UDim2.new(1, -67, 0.5, -7)
+        statusText.BackgroundColor3 = C.Control
+        statusText.BackgroundTransparency = 0.15
+        statusText.BorderSizePixel = 0
+        statusText.Font = Enum.Font.Code
+        statusText.TextSize = 8
+        statusText.TextXAlignment = Enum.TextXAlignment.Center
+        statusText.Parent = row
+        local statusCorner = Instance.new("UICorner")
+        statusCorner.CornerRadius = UDim.new(0, 3)
+        statusCorner.Parent = statusText
+
+        local track = Instance.new("Frame")
+        track.Name = "SwitchTrack"
+        track.Size = UDim2.fromOffset(27, 13)
+        track.Position = UDim2.new(1, -28, 0.5, -6)
+        track.BackgroundColor3 = C.Control2
+        track.BorderColor3 = C.Black
+        track.BorderSizePixel = 1
+        track.Parent = row
+        local trackCorner = Instance.new("UICorner")
+        trackCorner.CornerRadius = UDim.new(1, 0)
+        trackCorner.Parent = track
+
+        local knob = Instance.new("Frame")
+        knob.Name = "Knob"
+        knob.Size = UDim2.fromOffset(9, 9)
+        knob.Position = UDim2.new(0, 2, 0.5, -4)
+        knob.BackgroundColor3 = C.Muted
+        knob.BorderSizePixel = 0
+        knob.Parent = track
+        local knobCorner = Instance.new("UICorner")
+        knobCorner.CornerRadius = UDim.new(1, 0)
+        knobCorner.Parent = knob
+
+        local function refreshStatus()
+            local state, color = getModuleRuntimeStatus(key)
+            local background = state == "ERR" and Color3.fromRGB(45, 18, 18)
+                or (state == "WAIT" or state == "FALL") and Color3.fromRGB(43, 34, 17) or C.Control
+            if statusText.Text ~= state then statusText.Text = state end
+            if statusText.TextColor3 ~= color then statusText.TextColor3 = color end
+            if statusText.BackgroundColor3 ~= background then statusText.BackgroundColor3 = background end
+        end
+        local function refresh(value)
+            track.BackgroundColor3 = value and Color3.fromRGB(76, 102, 0) or C.Control2
+            knob.BackgroundColor3 = value and C.Lime or C.Muted
+            knob.Position = value and UDim2.new(1, -11, 0.5, -4) or UDim2.new(0, 2, 0.5, -4)
+            text.TextColor3 = value and C.White or C.Text
+            refreshStatus()
+        end
+        refresh(XCConfig[key] == true)
+        UI_Bind_Registry[key] = refresh
+        refreshers[key] = refreshers[key] or {}
+        table.insert(refreshers[key], refresh)
+        table.insert(moduleStatusRefreshers, function()
+            if row.Parent then refreshStatus() end
+        end)
+        row.Activated:Connect(function()
+            if os.clock() < (row:GetAttribute("XCLongPressUntil") or 0) then return end
+            XCConfig[key] = not XCConfig[key]
+            refreshConfigControls(key, XCConfig[key])
+            if onChanged then onChanged(XCConfig[key]) end
+            scheduleConfigAutoSave()
+            if key ~= "settingsShowNotifications" then
+                XCNotify(label, XCConfig[key] and "Enabled" or "Disabled", XCConfig[key] and "success" or "warning", 1.5)
+            end
+        end)
+        attachHelp(row, key)
+        registerSearch(row, label .. " " .. key)
+        return row
+    end
+
+    local function addSlider(parent, label, key, minValue, maxValue, step, suffix, onChanged)
+        parent = activeSectionByParent[parent] or parent
+        local holder = Instance.new("Frame")
+        holder.Name = key
+        holder.Size = UDim2.new(1, 0, 0, 36)
+        holder.BackgroundTransparency = 1
+        holder.Active = true
+        holder.Parent = parent
+        local name = Instance.new("TextLabel")
+        name.Size = UDim2.new(0.68, 0, 0, 16)
+        name.BackgroundTransparency = 1
+        name.Text = label
+        name.TextColor3 = C.Text
+        name.Font = Enum.Font.Code
+        name.TextSize = 10
+        name.TextXAlignment = Enum.TextXAlignment.Left
+        name.Parent = holder
+        local valueLabel = Instance.new("TextLabel")
+        valueLabel.Size = UDim2.new(0.32, 0, 0, 16)
+        valueLabel.Position = UDim2.new(0.68, 0, 0, 0)
+        valueLabel.BackgroundTransparency = 1
+        valueLabel.TextColor3 = C.Text
+        valueLabel.Font = Enum.Font.Code
+        valueLabel.TextSize = 10
+        valueLabel.TextXAlignment = Enum.TextXAlignment.Right
+        valueLabel.Parent = holder
+        local bar = Instance.new("Frame")
+        bar.Size = UDim2.new(1, 0, 0, 7)
+        bar.Position = UDim2.fromOffset(0, 21)
+        bar.BackgroundColor3 = C.Control2
+        bar.BorderColor3 = C.Black
+        bar.BorderSizePixel = 1
+        bar.Active = true
+        bar.Parent = holder
+        local fill = Instance.new("Frame")
+        fill.BorderSizePixel = 0
+        fill.BackgroundColor3 = C.Lime
+        fill.Parent = bar
+        local function refresh(value)
+            value = math.clamp(tonumber(value) or minValue, minValue, maxValue)
+            fill.Size = UDim2.new((value - minValue) / (maxValue - minValue), 0, 1, 0)
+            local shown = step < 0.01 and string.format("%.3f", value)
+                or step < 1 and string.format("%.2f", value)
+                or tostring(math.floor(value + 0.5))
+            valueLabel.Text = shown .. (suffix or "")
+        end
+        local function setFromX(x)
+            if bar.AbsoluteSize.X <= 0 then return end
+            local pct = math.clamp((x - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)
+            local raw = minValue + (maxValue - minValue) * pct
+            local value = math.floor(raw / step + 0.5) * step
+            XCConfig[key] = value
+            refreshConfigControls(key, value)
+            if onChanged then onChanged(value) end
+            scheduleConfigAutoSave()
+        end
+        refresh(XCConfig[key])
+        refreshers[key] = refreshers[key] or {}
+        table.insert(refreshers[key], refresh)
+        bar.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                activeSliderInput = input
+                activeSliderMove = setFromX
+                setFromX(input.Position.X)
+            end
+        end)
+        attachHelp(holder, key)
+        registerSearch(holder, label .. " " .. key)
+    end
+
+    table.insert(connections, UserInputService.InputChanged:Connect(function(input)
+        if activeSliderMove and activeSliderInput
+            and (input == activeSliderInput or input.UserInputType == Enum.UserInputType.MouseMovement) then
+            activeSliderMove(input.Position.X)
+        end
+    end))
+    table.insert(connections, UserInputService.InputEnded:Connect(function(input)
+        if input == activeSliderInput
+            or (activeSliderInput and activeSliderInput.UserInputType == Enum.UserInputType.MouseButton1
+                and input.UserInputType == Enum.UserInputType.MouseButton1) then
+            activeSliderInput = nil
+            activeSliderMove = nil
+        end
+    end))
+
+    local activeDropdown
+    local function closeDropdown()
+        if activeDropdown and activeDropdown.popup then
+            activeDropdown.popup:Destroy()
+        end
+        activeDropdown = nil
+    end
+
+    local function pointInside(gui, point)
+        if not gui or not gui.Parent then return false end
+        local pos, size = gui.AbsolutePosition, gui.AbsoluteSize
+        return point.X >= pos.X and point.X <= pos.X + size.X
+            and point.Y >= pos.Y and point.Y <= pos.Y + size.Y
+    end
+
+    table.insert(connections, UserInputService.InputBegan:Connect(function(input)
+        if not activeDropdown then return end
+        if input.UserInputType ~= Enum.UserInputType.MouseButton1
+            and input.UserInputType ~= Enum.UserInputType.Touch then return end
+        if not pointInside(activeDropdown.button, input.Position)
+            and not pointInside(activeDropdown.popup, input.Position) then
+            closeDropdown()
+        end
+    end))
+
+    local function openDropdown(button, key, values, onChanged, refresh)
+        hideHelp()
+        if activeDropdown and activeDropdown.button == button then
+            closeDropdown()
+            return
+        end
+        closeDropdown()
+
+        local rowHeight = UserInputService.TouchEnabled and 28 or 23
+        local visibleRows = math.min(#values, UserInputService.TouchEnabled and 5 or 7)
+        local popupHeight = visibleRows * rowHeight + 2
+        local buttonPos, buttonSize = button.AbsolutePosition, button.AbsoluteSize
+        local viewport = screenGui.AbsoluteSize
+        local belowY = buttonPos.Y + buttonSize.Y + 2
+        local aboveY = buttonPos.Y - popupHeight - 2
+        local openAbove = belowY + popupHeight > viewport.Y - 6 and aboveY >= 6
+
+        local popup = Instance.new("ScrollingFrame")
+        popup.Name = "SmartDropdown_" .. key
+        popup.Position = UDim2.fromOffset(
+            math.clamp(buttonPos.X, 6, math.max(6, viewport.X - buttonSize.X - 6)),
+            openAbove and aboveY or math.min(belowY, viewport.Y - popupHeight - 6)
+        )
+        popup.Size = UDim2.fromOffset(buttonSize.X, popupHeight)
+        popup.BackgroundColor3 = Color3.fromRGB(16, 16, 16)
+        popup.BorderColor3 = C.Border
+        popup.BorderSizePixel = 1
+        popup.ScrollBarThickness = #values > visibleRows and 2 or 0
+        popup.ScrollBarImageColor3 = C.Lime
+        popup.CanvasSize = UDim2.fromOffset(0, #values * rowHeight)
+        popup.ZIndex = 200
+        popup.Parent = screenGui
+
+        local popupStroke = Instance.new("UIStroke")
+        popupStroke.Color = C.Black
+        popupStroke.Thickness = 1
+        popupStroke.Parent = popup
+
+        local layout = Instance.new("UIListLayout")
+        layout.SortOrder = Enum.SortOrder.LayoutOrder
+        layout.Parent = popup
+
+        for index, option in ipairs(values) do
+            local selected = XCConfig[key] == option
+            local optionButton = Instance.new("TextButton")
+            optionButton.Name = tostring(option)
+            optionButton.LayoutOrder = index
+            optionButton.Size = UDim2.new(1, 0, 0, rowHeight)
+            optionButton.BackgroundColor3 = selected and Color3.fromRGB(32, 39, 17) or Color3.fromRGB(18, 18, 18)
+            optionButton.BorderSizePixel = 0
+            optionButton.Text = ""
+            optionButton.Font = Enum.Font.Code
+            optionButton.TextSize = UserInputService.TouchEnabled and 11 or 10
+            optionButton.AutoButtonColor = false
+            optionButton.ZIndex = 201
+            optionButton.Parent = popup
+
+            local optionText = Instance.new("TextLabel")
+            optionText.Size = UDim2.new(1, -28, 1, 0)
+            optionText.Position = UDim2.fromOffset(19, 0)
+            optionText.BackgroundTransparency = 1
+            optionText.Text = tostring(option)
+            optionText.TextColor3 = selected and C.White or C.Text
+            optionText.Font = Enum.Font.Code
+            optionText.TextSize = UserInputService.TouchEnabled and 11 or 10
+            optionText.TextXAlignment = Enum.TextXAlignment.Left
+            optionText.ZIndex = 202
+            optionText.Parent = optionButton
+
+            local marker = Instance.new("Frame")
+            marker.Name = "SelectionMarker"
+            marker.Size = UDim2.fromOffset(selected and 7 or 4, selected and 7 or 4)
+            marker.Position = UDim2.new(0, 7, 0.5, selected and -3 or -2)
+            marker.BackgroundColor3 = selected and C.Lime or C.Border
+            marker.BorderSizePixel = 0
+            marker.ZIndex = 202
+            marker.Parent = optionButton
+            local markerCorner = Instance.new("UICorner")
+            markerCorner.CornerRadius = UDim.new(1, 0)
+            markerCorner.Parent = marker
+
+            optionButton.MouseEnter:Connect(function()
+                optionButton.BackgroundColor3 = selected and Color3.fromRGB(38, 48, 18) or C.Control2
+                optionText.TextColor3 = C.White
+            end)
+            optionButton.MouseLeave:Connect(function()
+                optionButton.BackgroundColor3 = selected and Color3.fromRGB(32, 39, 17) or Color3.fromRGB(18, 18, 18)
+                optionText.TextColor3 = selected and C.White or C.Text
+            end)
+            optionButton.Activated:Connect(function()
+                XCConfig[key] = option
+                refreshConfigControls(key, option)
+                if onChanged then onChanged(option) end
+                scheduleConfigAutoSave()
+                closeDropdown()
+            end)
+        end
+
+        local selectedIndex = table.find(values, XCConfig[key]) or 1
+        popup.CanvasPosition = Vector2.new(0, math.max(0, (selectedIndex - 2) * rowHeight))
+        activeDropdown = {popup = popup, button = button, key = key}
+    end
+
+    local function addChoice(parent, label, key, values, onChanged)
+        parent = activeSectionByParent[parent] or parent
+        local holder = Instance.new("Frame")
+        holder.Size = UDim2.new(1, 0, 0, 38)
+        holder.BackgroundTransparency = 1
+        holder.Active = true
+        holder.Parent = parent
+        local name = Instance.new("TextLabel")
+        name.Size = UDim2.new(1, 0, 0, 14)
+        name.BackgroundTransparency = 1
+        name.Text = label
+        name.TextColor3 = C.Text
+        name.Font = Enum.Font.Code
+        name.TextSize = 10
+        name.TextXAlignment = Enum.TextXAlignment.Left
+        name.Parent = holder
+        local button = Instance.new("TextButton")
+        button.Size = UDim2.new(1, 0, 0, 22)
+        button.Position = UDim2.fromOffset(0, 15)
+        button.BackgroundColor3 = C.Control
+        button.BorderColor3 = C.Black
+        button.BorderSizePixel = 1
+        button.Text = ""
+        button.AutoButtonColor = false
+        button.Parent = holder
+
+        local valueText = Instance.new("TextLabel")
+        valueText.Size = UDim2.new(1, -30, 1, 0)
+        valueText.Position = UDim2.fromOffset(8, 0)
+        valueText.BackgroundTransparency = 1
+        valueText.TextColor3 = C.Text
+        valueText.Font = Enum.Font.Code
+        valueText.TextSize = 10
+        valueText.TextXAlignment = Enum.TextXAlignment.Left
+        valueText.TextTruncate = Enum.TextTruncate.AtEnd
+        valueText.Parent = button
+
+        local arrow = Instance.new("Frame")
+        arrow.Name = "Chevron"
+        arrow.Size = UDim2.fromOffset(14, 12)
+        arrow.Position = UDim2.new(1, -20, 0.5, -6)
+        arrow.BackgroundTransparency = 1
+        arrow.Parent = button
+        local arrowLeft = Instance.new("Frame")
+        arrowLeft.AnchorPoint = Vector2.new(0.5, 0.5)
+        arrowLeft.Position = UDim2.fromOffset(5, 5)
+        arrowLeft.Size = UDim2.fromOffset(6, 1.4)
+        arrowLeft.BackgroundColor3 = C.Muted
+        arrowLeft.BorderSizePixel = 0
+        arrowLeft.Rotation = 42
+        arrowLeft.Parent = arrow
+        local arrowRight = Instance.new("Frame")
+        arrowRight.AnchorPoint = Vector2.new(0.5, 0.5)
+        arrowRight.Position = UDim2.fromOffset(9, 5)
+        arrowRight.Size = UDim2.fromOffset(6, 1.4)
+        arrowRight.BackgroundColor3 = C.Muted
+        arrowRight.BorderSizePixel = 0
+        arrowRight.Rotation = -42
+        arrowRight.Parent = arrow
+
+        local function refresh(value)
+            valueText.Text = tostring(value)
+            valueText.TextColor3 = C.Text
+        end
+        refresh(XCConfig[key] or values[1])
+        refreshers[key] = refreshers[key] or {}
+        table.insert(refreshers[key], refresh)
+        button.Activated:Connect(function()
+            openDropdown(button, key, values, onChanged, refresh)
+        end)
+        attachHelp(holder, key)
+        registerSearch(holder, label .. " " .. key)
+    end
+
+    local function addButton(parent, label, callback)
+        parent = activeSectionByParent[parent] or parent
+        local button = Instance.new("TextButton")
+        button.Size = UDim2.new(1, 0, 0, 24)
+        button.BackgroundColor3 = C.Control
+        button.BorderColor3 = C.Black
+        button.BorderSizePixel = 1
+        button.Text = label
+        button.TextColor3 = C.Text
+        button.Font = Enum.Font.Code
+        button.TextSize = 10
+        button.AutoButtonColor = false
+        button.Parent = parent
+        button.Activated:Connect(callback)
+        registerSearch(button, label)
+        return button
+    end
+
+    local function addNote(parent, message)
+        parent = activeSectionByParent[parent] or parent
+        local note = Instance.new("TextLabel")
+        note.Size = UDim2.new(1, 0, 0, 30)
+        note.BackgroundColor3 = Color3.fromRGB(13, 13, 13)
+        note.BorderColor3 = C.Border
+        note.BorderSizePixel = 1
+        note.Text = message
+        note.TextColor3 = C.Muted
+        note.Font = Enum.Font.Code
+        note.TextSize = 8
+        note.TextWrapped = true
+        note.TextXAlignment = Enum.TextXAlignment.Left
+        note.Parent = parent
+        local padding = Instance.new("UIPadding")
+        padding.PaddingLeft = UDim.new(0, 6)
+        padding.PaddingRight = UDim.new(0, 6)
+        padding.Parent = note
+        registerSearch(note, message)
+        return note
+    end
+
+    local function addESPPreview(parent)
+        parent = activeSectionByParent[parent] or parent
+        local card = Instance.new("Frame")
+        card.Name = "ESPPreview"
+        card.Size = UDim2.new(1, 0, 0, 154)
+        card.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+        card.BorderColor3 = C.Border
+        card.BorderSizePixel = 1
+        card.Parent = parent
+
+        local title = Instance.new("TextLabel")
+        title.Size = UDim2.new(1, -76, 0, 20)
+        title.Position = UDim2.fromOffset(7, 3)
+        title.BackgroundTransparency = 1
+        title.Text = "LIVE ESP PREVIEW"
+        title.TextColor3 = C.Text
+        title.Font = Enum.Font.Code
+        title.TextSize = 9
+        title.TextXAlignment = Enum.TextXAlignment.Left
+        title.Parent = card
+
+        local previewVisible = true
+        local mode = Instance.new("TextButton")
+        mode.Size = UDim2.fromOffset(67, 18)
+        mode.Position = UDim2.new(1, -72, 0, 4)
+        mode.BackgroundColor3 = C.Control
+        mode.BorderColor3 = C.Border
+        mode.BorderSizePixel = 1
+        mode.TextColor3 = C.Lime
+        mode.Font = Enum.Font.Code
+        mode.TextSize = 8
+        mode.AutoButtonColor = false
+        mode.Parent = card
+
+        local canvas = Instance.new("Frame")
+        canvas.Size = UDim2.new(1, -12, 1, -31)
+        canvas.Position = UDim2.fromOffset(6, 26)
+        canvas.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+        canvas.BorderSizePixel = 0
+        canvas.ClipsDescendants = true
+        canvas.Parent = card
+
+        local body = Instance.new("Frame")
+        body.AnchorPoint = Vector2.new(0.5, 0.5)
+        body.Position = UDim2.fromScale(0.5, 0.55)
+        body.Size = UDim2.fromOffset(18, 62)
+        body.BackgroundColor3 = C.Lime
+        body.BackgroundTransparency = 0.72
+        body.BorderSizePixel = 0
+        body.Parent = canvas
+        local head = Instance.new("Frame")
+        head.AnchorPoint = Vector2.new(0.5, 1)
+        head.Position = UDim2.new(0.5, 0, 0, -2)
+        head.Size = UDim2.fromOffset(18, 18)
+        head.BackgroundColor3 = C.Lime
+        head.BackgroundTransparency = 0.72
+        head.BorderSizePixel = 0
+        head.Parent = body
+        local headCorner = Instance.new("UICorner")
+        headCorner.CornerRadius = UDim.new(1, 0)
+        headCorner.Parent = head
+
+        local box = Instance.new("Frame")
+        box.AnchorPoint = Vector2.new(0.5, 0.5)
+        box.Position = UDim2.fromScale(0.5, 0.55)
+        box.BackgroundTransparency = 1
+        box.Parent = canvas
+        local boxStroke = Instance.new("UIStroke")
+        boxStroke.Thickness = 1
+        boxStroke.Parent = box
+
+        local cornerLines = {}
+        for index = 1, 8 do
+            local line = Instance.new("Frame")
+            line.BorderSizePixel = 0
+            line.Parent = canvas
+            cornerLines[index] = line
+        end
+
+        local healthBack = Instance.new("Frame")
+        healthBack.AnchorPoint = Vector2.new(1, 0.5)
+        healthBack.BackgroundColor3 = Color3.fromRGB(4, 4, 4)
+        healthBack.BorderSizePixel = 0
+        healthBack.Parent = canvas
+        local healthFill = Instance.new("Frame")
+        healthFill.AnchorPoint = Vector2.new(0, 1)
+        healthFill.Position = UDim2.new(0, 1, 1, -1)
+        healthFill.Size = UDim2.new(1, -2, 0.72, -1)
+        healthFill.BackgroundColor3 = Color3.fromRGB(112, 196, 64)
+        healthFill.BorderSizePixel = 0
+        healthFill.Parent = healthBack
+
+        local tag = Instance.new("TextLabel")
+        tag.AnchorPoint = Vector2.new(0.5, 1)
+        tag.BackgroundTransparency = 1
+        tag.Text = "enemy [42m] [72HP]"
+        tag.Font = Enum.Font.Code
+        tag.TextSize = 9
+        tag.Parent = canvas
+
+        local function refreshPreview()
+            local color = previewVisible and currentTheme.Enemy_Accent or currentTheme.Enemy_Hidden
+            mode.Text = previewVisible and "VISIBLE" or "HIDDEN"
+            mode.TextColor3 = color
+            local height = 58 * math.clamp(tonumber(XCConfig.espPerspectiveScale) or 1, 0.65, 1.5)
+            local width = height * math.clamp(tonumber(XCConfig.espBoxAspect) or 0.52, 0.38, 0.8)
+            box.Size = UDim2.fromOffset(width, height)
+            boxStroke.Color = color
+            boxStroke.Thickness = tonumber(XCConfig.boxThickness) or 1
+            box.Visible = XCConfig.boxEspEnabled and not XCConfig.cornerBoxEnabled
+            body.BackgroundColor3 = color
+            head.BackgroundColor3 = color
+            body.Visible = XCConfig.chamsEnabled
+            healthBack.Position = UDim2.new(0.5, -width * 0.5 - 4, 0.55, 0)
+            healthBack.Size = UDim2.fromOffset(4, height)
+            healthBack.Visible = XCConfig.healthBarEnabled
+            tag.Position = UDim2.new(0.5, 0, 0.55, -height * 0.5 - 3)
+            tag.TextColor3 = color
+            tag.Visible = XCConfig.nametagsEnabled
+
+            local left = canvas.AbsoluteSize.X * 0.5 - width * 0.5
+            local top = canvas.AbsoluteSize.Y * 0.55 - height * 0.5
+            local length = math.floor(math.clamp(width * 0.30, 4, 28) + 0.5)
+            local specs = {
+                {left, top, length, 1}, {left, top, 1, length},
+                {left + width - length, top, length, 1}, {left + width - 1, top, 1, length},
+                {left, top + height - 1, length, 1}, {left, top + height - length, 1, length},
+                {left + width - length, top + height - 1, length, 1}, {left + width - 1, top + height - length, 1, length},
+            }
+            for index, line in ipairs(cornerLines) do
+                local spec = specs[index]
+                line.Position = UDim2.fromOffset(spec[1], spec[2])
+                line.Size = UDim2.fromOffset(spec[3], spec[4])
+                line.BackgroundColor3 = color
+                line.Visible = XCConfig.cornerBoxEnabled
+            end
+        end
+
+        mode.Activated:Connect(function()
+            previewVisible = not previewVisible
+            refreshPreview()
+        end)
+        for _, key in ipairs({"boxEspEnabled", "cornerBoxEnabled", "healthBarEnabled", "nametagsEnabled", "chamsEnabled", "espPerspectiveScale", "espBoxAspect", "boxThickness"}) do
+            refreshers[key] = refreshers[key] or {}
+            table.insert(refreshers[key], refreshPreview)
+        end
+        task.defer(refreshPreview)
+        table.insert(connections, canvas:GetPropertyChangedSignal("AbsoluteSize"):Connect(refreshPreview))
+        registerSearch(card, "esp preview visible hidden box corner health nametag chams")
+        return card
+    end
+
+    local function specialToggle(key, value)
+        if value then
+            if key == "fireRateEnabled" then lazyFeatureRequests.fireRate = true end
+            if key == "noRecoilEnabled" or key == "noSpreadEnabled" then lazyFeatureRequests.recoilSpread = true end
+            if key == "silentAimEnabled" then lazyFeatureRequests.silentFallback = true end
+        end
+        if key == "slideEnabled" then updateMobileSlideVisibility()
+        elseif key == "jumpCircleEnabled" then
+            if value and player.Character then initJumpCircleForCharacter(player.Character) else clearActiveJumpCircle() end
+        elseif key == "skinChangerEnabled" then
+            if value then
+                hookBloxStrikeModules(true)
+                applyXCKnifeChanger()
+            else
+                restoreXCKnifeModel()
+            end
+        elseif key == "gloveChangerEnabled" and value then applyXCGloves()
+        elseif key == "nightModeEnabled" then
+            if value then
+                applyNightPreset(XCConfig.nightPreset)
+            else
+                Lighting.Brightness = defaultLighting.Brightness
+                Lighting.ClockTime = defaultLighting.ClockTime
+                Lighting.GlobalShadows = defaultLighting.GlobalShadows
+                Lighting.Ambient = defaultLighting.Ambient
+                Lighting.OutdoorAmbient = defaultLighting.OutdoorAmbient
+            end
+            updateWorldChanger()
+        elseif key == "fullBrightEnabled" and not value and not XCConfig.nightModeEnabled then
+            Lighting.Brightness = defaultLighting.Brightness
+            Lighting.ClockTime = defaultLighting.ClockTime
+            Lighting.GlobalShadows = defaultLighting.GlobalShadows
+            Lighting.Ambient = defaultLighting.Ambient
+            Lighting.OutdoorAmbient = defaultLighting.OutdoorAmbient
+            updateWorldChanger()
+        elseif key == "removeFogEnabled" and not value then
+            Lighting.FogStart = defaultLighting.FogStart or 0
+            Lighting.FogEnd = defaultLighting.FogEnd
+            Lighting.FogColor = defaultLighting.FogColor
+            updateWorldChanger()
+        elseif key == "thirdPersonEnabled" then setThirdPersonEnabled(value)
+        elseif key == "antiAfkEnabled" then setAntiAfkEnabled(value)
+        elseif key == "spectatorListEnabled" and value then buildSpectatorGui()
+        elseif key == "animationsEnabled" then if value then playXCAnimation() else stopXCAnimation() end
+        elseif key == "weaponChamsEnabled" then setWeaponVisuals()
+        elseif key == "customScopeEnabled" then updateCustomScope()
+        elseif key == "customFovEnabled" and not value then
+            local cam = Workspace.CurrentCamera or camera
+            if cam then cam.FieldOfView = 70 end
+        elseif key == "weatherEnabled" then applyXCWeather(); updateWorldChanger()
+        elseif key == "noSmokeEnabled" then applyXCSmokeState()
+        elseif key == "worldSkyboxEnabled" or key == "worldSkyCelestial" or key == "worldPostFXEnabled"
+            or key == "worldAtmosphereEnabled" or key == "worldBloomEnabled" then updateWorldChanger()
+        elseif key == "freecamEnabled" then setXCCameraMode("Freecam", value)
+        elseif key == "freelookEnabled" then setXCCameraMode("Freelook", value)
+        elseif key == "streamerModeEnabled" then setXCStreamerMode(value)
+        elseif key == "settingsCompactMode" then updateScale()
+        end
+        if value and (key == "antiAimEnabled" or key == "bunnyHopEnabled") then
+            setupXCCharacterInputHook()
+        end
+    end
+    local function toggle(parent, label, key)
+        return addToggle(parent, label, key, function(v) specialToggle(key, v) end)
+    end
+
+    local ICON_OFF = Color3.fromRGB(88, 88, 88)
+    local ICON_HOVER = Color3.fromRGB(155, 155, 155)
+    local ICON_ON = C.White
+
+    local function iconLine(parent, x, y, w, h, color, rotation)
+        local line = Instance.new("Frame")
+        line.AnchorPoint = Vector2.new(0.5, 0.5)
+        line.Position = UDim2.fromOffset(x, y)
+        line.Size = UDim2.fromOffset(w, h)
+        line.BackgroundColor3 = color
+        line.BorderSizePixel = 0
+        line.Rotation = rotation or 0
+        line.Parent = parent
+        return line
+    end
+
+    local function iconCircle(parent, x, y, size, color, filled)
+        local circle = Instance.new("Frame")
+        circle.AnchorPoint = Vector2.new(0.5, 0.5)
+        circle.Position = UDim2.fromOffset(x, y)
+        circle.Size = UDim2.fromOffset(size, size)
+        circle.BackgroundColor3 = color
+        circle.BackgroundTransparency = filled and 0 or 1
+        circle.BorderSizePixel = 0
+        circle.Parent = parent
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(1, 0)
+        corner.Parent = circle
+        if not filled then
+            local stroke = Instance.new("UIStroke")
+            stroke.Color = color
+            stroke.Thickness = 1.4
+            stroke.Parent = circle
+        end
+        return circle
+    end
+
+    local function drawTabIcon(parent, kind, color)
+        local root = Instance.new("Frame")
+        root.Name = "VectorIcon"
+        root.Size = UDim2.fromOffset(22, 22)
+        root.Position = UDim2.fromScale(0.5, 0.5)
+        root.AnchorPoint = Vector2.new(0.5, 0.5)
+        root.BackgroundTransparency = 1
+        root.Parent = parent
+        local cx, cy = 11, 11
+
+        if kind == "target" then
+            iconCircle(root, cx, cy, 14, color, false)
+            iconCircle(root, cx, cy, 5, color, false)
+            iconLine(root, cx, 2.5, 1.5, 5, color)
+            iconLine(root, cx, 19.5, 1.5, 5, color)
+            iconLine(root, 2.5, cy, 5, 1.5, color)
+            iconLine(root, 19.5, cy, 5, 1.5, color)
+        elseif kind == "antiaim" then
+            iconCircle(root, cx, cy, 15, color, false)
+            iconLine(root, 7, 9, 7, 1.5, color, -32)
+            iconLine(root, 15, 9, 7, 1.5, color, 32)
+            iconLine(root, cx, 15, 1.5, 7, color)
+        elseif kind == "visuals" then
+            iconCircle(root, cx, cy, 7, color, false)
+            for _, angle in ipairs({0, 45, 90, 135}) do
+                iconLine(root, cx, 2, 1.5, 4, color, angle)
+                iconLine(root, cx, 20, 1.5, 4, color, angle)
+            end
+        elseif kind == "world" then
+            iconCircle(root, cx, cy, 15, color, false)
+            iconLine(root, cx, cy, 1.5, 13, color)
+            iconLine(root, cx, cy, 13, 1.5, color)
+            iconCircle(root, cx, cy, 8, color, false)
+        elseif kind == "misc" then
+            iconCircle(root, cx, cy, 9, color, false)
+            iconCircle(root, cx, cy, 3, color, false)
+            for _, angle in ipairs({0, 45, 90, 135}) do iconLine(root, cx, 2, 3, 5, color, angle) end
+        elseif kind == "skins" then
+            iconLine(root, 12, 10, 14, 2, color, -42)
+            iconLine(root, 6, 16, 7, 2, color, 42)
+            iconLine(root, 8, 17.5, 6, 2, color, -42)
+        elseif kind == "players" then
+            iconCircle(root, cx, 6, 7, color, false)
+            iconLine(root, cx, 14, 10, 1.6, color)
+            iconLine(root, 7, 17, 1.7, 7, color, 18)
+            iconLine(root, 15, 17, 1.7, 7, color, -18)
+        elseif kind == "configs" then
+            local box = Instance.new("Frame")
+            box.Size = UDim2.fromOffset(14, 16)
+            box.Position = UDim2.fromOffset(4, 3)
+            box.BackgroundTransparency = 1
+            box.Parent = root
+            local stroke = Instance.new("UIStroke")
+            stroke.Color = color
+            stroke.Thickness = 1.4
+            stroke.Parent = box
+            iconLine(root, 8, 8, 7, 1.4, color)
+            iconLine(root, 8, 12, 7, 1.4, color)
+            iconLine(root, 8, 16, 7, 1.4, color)
+        end
+        return root
+    end
+
+    local function recolorTabIcon(root, color)
+        for _, object in ipairs(root:GetDescendants()) do
+            if object:IsA("UIStroke") then
+                object.Color = color
+            elseif object:IsA("Frame") and object.BackgroundTransparency < 1 then
+                object.BackgroundColor3 = color
+            end
+        end
+    end
+
+    local tabs = {
+        {"Rage", "target"}, {"AntiAim", "antiaim"}, {"Visuals", "visuals"}, {"World", "world"},
+        {"Misc", "misc"}, {"Skins", "skins"}, {"Players", "players"}, {"Configs", "configs"},
+    }
+    local function switchPage(name)
+        closeDropdown()
+        hideHelp()
+        currentPage = name
+        for pageName, page in pairs(pages) do page.Visible = pageName == name end
+        for tabName, data in pairs(tabData) do
+            data.active.Visible = tabName == name
+            recolorTabIcon(data.icon, tabName == name and ICON_ON or ICON_OFF)
+        end
+        if applySearch then applySearch() end
+    end
+    for index, info in ipairs(tabs) do
+        local holder = Instance.new("Frame")
+        holder.Size = UDim2.new(1, 0, 0, 41)
+        holder.LayoutOrder = index
+        holder.BackgroundTransparency = 1
+        holder.Parent = sidebar
+        local active = Instance.new("Frame")
+        active.Size = UDim2.fromOffset(2, 30)
+        active.Position = UDim2.new(0, -1, 0.5, -15)
+        active.BackgroundColor3 = C.Lime
+        active.BorderSizePixel = 0
+        active.Visible = false
+        active.Parent = holder
+        local button = Instance.new("TextButton")
+        button.Size = UDim2.new(1, -8, 1, 0)
+        button.Position = UDim2.fromOffset(4, 0)
+        button.BackgroundTransparency = 1
+        button.Text = ""
+        button.AutoButtonColor = false
+        button.Parent = holder
+        local icon = drawTabIcon(button, info[2], ICON_OFF)
+        button.MouseEnter:Connect(function()
+            if currentPage ~= info[1] then recolorTabIcon(icon, ICON_HOVER) end
+        end)
+        button.MouseLeave:Connect(function()
+            if currentPage ~= info[1] then recolorTabIcon(icon, ICON_OFF) end
+        end)
+        button.Activated:Connect(function() switchPage(info[1]) end)
+        attachHelp(button, "tab_" .. info[1])
+        tabData[info[1]] = {button = button, active = active, icon = icon}
+        createPage(info[1])
+    end
+
+    local function columns(name, leftTitle, rightTitle)
+        local page = pages[name]
+        return createPanel(page, leftTitle, 0, 0.49), createPanel(page, rightTitle, 0.51, 0.49)
+    end
+
+    local function currentPlayerChoices()
+        local values = {"None"}
+        local names = {}
+        for _, serverPlayer in ipairs(Players:GetPlayers()) do
+            if serverPlayer ~= player then table.insert(names, serverPlayer.Name) end
+        end
+        table.sort(names, function(a, b) return a:lower() < b:lower() end)
+        for _, name in ipairs(names) do table.insert(values, name) end
+        return values
+    end
+
+    local L, R = columns("Rage", "Aim assistance", "Combat mechanics")
+    section(L, "Aimbot")
+    toggle(L, "Tracking", "aimbotEnabled")
+    addSlider(L, "Aim FOV", "aimFov", 10, 360, 1, "°")
+    addSlider(L, "Aim speed", "aimbotSpeed", 1, 100, 1, "%")
+    addSlider(L, "Smoothness", "aimbotSmoothness", 0.01, 1, 0.01, "")
+    toggle(L, "Visible check", "visibleCheck")
+
+    section(L, "Silent aim")
+    toggle(L, "Silent aim", "silentAimEnabled")
+    addSlider(L, "Silent FOV", "silentAimFov", 10, 360, 1, "°")
+    addSlider(L, "Hit chance", "silentAimHitChance", 1, 100, 1, "%")
+    toggle(L, "Team check", "silentAimTeamCheck")
+    toggle(L, "Visible check", "silentAimVisibleCheck")
+    toggle(L, "Aim at head", "silentAimAimHead")
+    toggle(L, "Perfect silent", "pSilentEnabled")
+    toggle(L, "Wall penetration", "wallbangEnabled")
+
+    section(L, "Triggerbot")
+    toggle(L, "Triggerbot", "triggerbotEnabled")
+    addSlider(L, "Trigger delay", "triggerbotDelay", 0.01, 0.5, 0.005, "s")
+    addSlider(L, "Trigger FOV", "triggerbotFov", 10, 360, 1, "px")
+    toggle(L, "Scoped only", "triggerbotScopedOnly")
+    toggle(L, "Head only", "triggerbotHeadOnly")
+
+    section(R, "Weapon")
+    toggle(R, "Recoil control", "rcsEnabled")
+    toggle(R, "No recoil", "noRecoilEnabled")
+    toggle(R, "No spread", "noSpreadEnabled")
+    toggle(R, "Fire rate", "fireRateEnabled")
+    addSlider(R, "Fire interval", "fireRate", 0.01, 0.2, 0.01, "s")
+    addSlider(R, "RCS strength", "rcsStrength", 10, 100, 1, "%")
+    addSlider(R, "RCS pitch", "rcsPitchFactor", 0.1, 2, 0.1, "x")
+    addSlider(R, "RCS yaw", "rcsYawFactor", 0.1, 2, 0.1, "x")
+    section(R, "Ragebot")
+    toggle(R, "Ragebot", "rageBotEnabled")
+    addSlider(R, "Rage FOV", "rageFov", 30, 360, 1, "°")
+    toggle(R, "Rage auto fire", "rageAutoFire")
+    addChoice(R, "Target priority", "rageTargetMode", {"Distance", "Health", "FOV", "Priority"})
+
+    task.wait()
+    L, R = columns("AntiAim", "Anti-aim", "Movement")
+    section(L, "Anti-aim")
+    toggle(L, "Anti-aim", "antiAimEnabled")
+    addChoice(L, "Anti-aim mode", "antiAimMode", {"Spin", "Backwards", "Jitter", "Random", "Static"})
+    addSlider(L, "Spin speed", "spinSpeed", 10, 150, 1, "")
+    addSlider(L, "Base yaw", "antiAimYaw", -180, 180, 1, "°")
+    addSlider(L, "Jitter range", "antiAimJitter", 0, 180, 1, "°")
+    addSlider(L, "Switch interval", "antiAimInterval", 0.04, 0.5, 0.01, "s")
+    section(L, "Third person")
+    toggle(L, "Third person", "thirdPersonEnabled")
+    addSlider(L, "Third person distance", "thirdPersonDistance", 5, 25, 1, "")
+    addSlider(L, "Third person height", "thirdPersonHeight", -3, 6, 0.5, "")
+    section(R, "Bunny hop")
+    toggle(R, "Bhop engine", "bunnyHopEnabled")
+    addChoice(R, "Bhop mode", "bhopMode", {"Hold", "Automatic"})
+    toggle(R, "Moving only", "bhopMovingOnly")
+    toggle(R, "Pause with menu", "bhopPauseWithMenu")
+    addSlider(R, "Bhop power", "bhopJumpPower", 30, 100, 1, "")
+    addSlider(R, "Bhop speed", "bhopSpeedBoost", 1, 3, 0.1, "x")
+    addSlider(R, "Ground delay", "bhopGroundDelay", 0, 0.25, 0.01, "s")
+    addSlider(R, "Acceleration", "bhopAcceleration", 2, 30, 1, "")
+    toggle(R, "Air strafe", "bhopAirStrafe")
+    section(R, "Movement")
+    toggle(R, "Slide", "slideEnabled")
+    toggle(R, "Flight", "flightEnabled")
+    toggle(R, "Speed boost", "speedEnabled")
+    toggle(R, "No fall damage", "noFallDamageEnabled")
+    addSlider(R, "Slide boost", "slideSpeedBoost", 1.2, 3, 0.1, "x")
+    addSlider(R, "Flight speed", "flightSpeed", 10, 150, 1, "")
+    addSlider(R, "Walk multiplier", "walkMultiplier", 1, 5, 0.1, "x")
+
+    task.wait()
+    L, R = columns("Visuals", "Player ESP", "Indicators")
+    section(L, "Chams")
+    toggle(L, "Chams", "chamsEnabled")
+    section(L, "Box ESP")
+    toggle(L, "Box overlay", "boxEspEnabled")
+    toggle(L, "Corner box", "cornerBoxEnabled")
+    toggle(L, "Health bar", "healthBarEnabled")
+    toggle(L, "Dark ESP outline", "espBoxOutline")
+    addSlider(L, "ESP distance", "espMaxDist", 100, 5000, 50, "")
+    addSlider(L, "Box stability", "espBoxSmoothing", 0, 0.9, 0.05, "")
+    addSlider(L, "ESP scale", "espPerspectiveScale", 0.65, 1.5, 0.05, "x")
+    addSlider(L, "Box width ratio", "espBoxAspect", 0.42, 0.68, 0.02, "x")
+    section(L, "Weapon ESP")
+    toggle(L, "Weapon image", "weaponEspEnabled")
+    section(L, "Skeleton")
+    toggle(L, "Skeleton ESP", "skeletonEspEnabled")
+    toggle(L, "Distance fade", "skeletonDistanceFade")
+    addSlider(L, "Skeleton thickness", "skeletonThickness", 1, 4, 0.5, "px")
+    section(L, "Nametags")
+    toggle(L, "Nametags", "nametagsEnabled")
+    addSlider(L, "Text size", "espTextSize", 8, 20, 1, "")
+    toggle(L, "Show distance", "espShowDistance")
+    toggle(L, "Show health", "espShowHealth")
+    toggle(L, "Show weapon", "tagShowWeapon")
+    section(R, "ESP preview")
+    addESPPreview(R)
+    section(R, "ESP indicators")
+    toggle(R, "Grenade ESP", "grenadeEspEnabled")
+    toggle(R, "Grenade danger zones", "grenadeDangerZonesEnabled")
+    toggle(R, "Sound position ESP", "soundPositionEspEnabled")
+    addSlider(R, "Sound marker duration", "soundEspDuration", 0.4, 2.5, 0.05, "s")
+    toggle(R, "Tracers", "tracersEnabled")
+    toggle(R, "Head dot", "headDotEnabled")
+    section(R, "Hit feedback")
+    toggle(R, "Hitmarker", "hitmarkerEnabled")
+    toggle(R, "Hit sound", "hitSoundEnabled")
+    addChoice(R, "Hit sound preset", "hitSoundPreset", {"Skeet", "Neverlose", "Bell", "Bubble", "Rust", "Coins"}, function()
+        playXCHitSound(true)
+    end)
+    addSlider(R, "Hit sound volume", "hitSoundVolume", 0.1, 3, 0.1, "x")
+    addButton(R, "TEST HIT SOUND", function() playXCHitSound(true) end)
+    addSlider(R, "Hitmarker size", "hitmarkerSize", 5, 30, 1, "")
+    addSlider(R, "Hitmarker duration", "hitmarkerDuration", 0.05, 1, 0.05, "s")
+    section(R, "Jump circle")
+    toggle(R, "Jump circle", "jumpCircleEnabled")
+    addSlider(R, "Jump radius", "jumpCircleRadius", 1.5, 8, 0.5, "")
+    addChoice(R, "Jump style", "jumpCircleStyle", {"GradientWave", "ChromaPulse", "StaticNeon"})
+
+    task.wait()
+    L, R = columns("World", "Environment", "Scope & camera")
+    section(L, "lighting")
+    toggle(L, "World changer", "nightModeEnabled")
+    toggle(L, "Fullbright", "fullBrightEnabled")
+    toggle(L, "Remove fog", "removeFogEnabled")
+    toggle(L, "Anti flash", "antiFlashEnabled")
+    toggle(L, "No smoke", "noSmokeEnabled")
+    addChoice(L, "Night preset", "nightPreset", {"Midnight", "Nebula", "DeepBlood", "CyberPurple", "EmeraldNight", "PitchBlack"}, function(v) if XCConfig.nightModeEnabled then applyNightPreset(v) end end)
+    addSlider(L, "Brightness", "nightBrightness", 0, 5, 0.1, "")
+    addSlider(L, "Clock time", "nightClockTime", 0, 24, 0.5, "h")
+    section(L, "sky & tone")
+    toggle(L, "Custom skybox", "worldSkyboxEnabled")
+    addChoice(L, "Skybox preset", "worldSkyboxPreset", {"Night", "Ocean Sunset", "My Summer Car", "Standard", "Minecraft", "Spongebob", "Deep Space", "Clouded Sky", "Retro", "City", "Purple Nebula", "Pink Sky"}, function() updateWorldChanger() end)
+    addSlider(L, "Sky rotation", "worldSkyRotation", -180, 180, 1, "°", function() updateWorldChanger() end)
+    addSlider(L, "Stars", "worldSkyStars", 0, 5000, 100, "", function() updateWorldChanger() end)
+    toggle(L, "Sun & moon", "worldSkyCelestial")
+    toggle(L, "Post FX", "worldPostFXEnabled")
+    addChoice(L, "Tone preset", "worldTonePreset", {"Neutral", "XC Lime", "Cold", "Warm", "Purple"}, function() updateWorldChanger() end)
+    addSlider(L, "Exposure", "worldExposure", -3, 3, 0.1, "", function() updateWorldChanger() end)
+    addSlider(L, "Saturation", "worldSaturation", -1, 1, 0.05, "", function() updateWorldChanger() end)
+    addSlider(L, "Contrast", "worldContrast", -1, 1, 0.05, "", function() updateWorldChanger() end)
+    section(L, "atmosphere & bloom")
+    toggle(L, "Atmosphere", "worldAtmosphereEnabled")
+    addSlider(L, "Atmosphere density", "worldAtmosphereDensity", 0, 1, 0.05, "", function() updateWorldChanger() end)
+    addSlider(L, "Atmosphere haze", "worldAtmosphereHaze", 0, 10, 0.1, "", function() updateWorldChanger() end)
+    addSlider(L, "Atmosphere glare", "worldAtmosphereGlare", 0, 10, 0.1, "", function() updateWorldChanger() end)
+    toggle(L, "Bloom", "worldBloomEnabled")
+    addSlider(L, "Bloom intensity", "worldBloomIntensity", 0, 3, 0.05, "", function() updateWorldChanger() end)
+    addSlider(L, "Bloom size", "worldBloomSize", 0, 56, 1, "", function() updateWorldChanger() end)
+    addSlider(L, "Bloom threshold", "worldBloomThreshold", 0, 5, 0.1, "", function() updateWorldChanger() end)
+    section(L, "weather")
+    toggle(L, "Weather effects", "weatherEnabled")
+    addChoice(L, "Weather type", "weatherMode", {"Rain", "Snow", "Fog", "Ash", "Hell Fire"}, function() applyXCWeather(); updateWorldChanger() end)
+    addSlider(L, "Weather intensity", "weatherIntensity", 1, 100, 1, "%", function() applyXCWeather() end)
+    addSlider(L, "Wind", "weatherWind", -40, 40, 1, "", function() applyXCWeather() end)
+    section(R, "scope")
+    toggle(R, "Custom scope", "customScopeEnabled")
+    toggle(R, "Custom FOV", "customFovEnabled")
+    addSlider(R, "Camera FOV", "customFov", 70, 120, 1, "°")
+    toggle(R, "Remove original scope", "scopeRemoveOriginal")
+    toggle(R, "Scope crosshair", "scopeCrosshairEnabled")
+    addChoice(R, "Crosshair style", "scopeCrosshairStyle", {"Cross", "T", "X", "Dot"})
+    addSlider(R, "Scope FOV", "scopeFov", 10, 120, 1, "°")
+    addSlider(R, "Crosshair gap", "scopeCrosshairGap", 0, 80, 1, "")
+    addSlider(R, "Crosshair length", "scopeCrosshairLength", 5, 300, 1, "")
+    section(R, "camera director")
+    toggle(R, "Freecam", "freecamEnabled")
+    addSlider(R, "Freecam speed", "freecamSpeed", 5, 180, 1, "")
+    addSlider(R, "Freecam sensitivity", "freecamSensitivity", 0.05, 0.5, 0.01, "")
+    addChoice(R, "Freecam bind", "freecamKey", {"F3", "F4", "F5", "F6", "LeftAlt", "RightAlt"})
+    toggle(R, "Freelook", "freelookEnabled")
+    addSlider(R, "Look sensitivity", "freelookSensitivity", 0.05, 0.5, 0.01, "")
+    addChoice(R, "Freelook bind", "freelookKey", {"LeftAlt", "RightAlt", "F3", "F4", "F5", "F6"})
+
+    task.wait()
+    L, R = columns("Skins", "Cosmetics", "Bullet effects")
+    section(L, "Skin changer")
+    toggle(L, "Skin changer", "skinChangerEnabled")
+    toggle(L, "Glove changer", "gloveChangerEnabled")
+    addChoice(L, "Knife", "selectedKnifeType", getXCKnifeChoices(), function()
+        applyXCKnifeChanger()
+    end)
+    addChoice(L, "Skin", "selectedSkin", {"Fade", "Doppler", "Crimson Web", "Default"}, function()
+        applyXCKnifeChanger()
+    end)
+    addChoice(L, "Glove model", "selectedGloveModel", {"Sports Gloves", "Driver Gloves", "Default"})
+    section(L, "Weapon chams")
+    toggle(L, "Weapon chams", "weaponChamsEnabled")
+    addChoice(L, "Weapon material", "weaponChamsMode", {"Glass", "ForceField", "Metal", "Highlight", "Neon"})
+    section(R, "Bullet tracers")
+    toggle(R, "Bullet trail", "bulletTrailEnabled")
+    toggle(R, "Bullet flash", "bulletFlashEnabled")
+    toggle(R, "Bullet impacts", "bulletImpactEnabled")
+    toggle(R, "Rainbow trail", "bulletTracerRainbow")
+    addChoice(R, "Trail style", "bulletTracerStyle", {"Block", "Cylinder"})
+    addSlider(R, "Trail duration", "bulletTracerDuration", 0.05, 3, 0.05, "s")
+    addSlider(R, "Trail width", "bulletTracerWidth", 0.02, 0.5, 0.01, "")
+    section(R, "Surface marker")
+    toggle(R, "Cube checker", "cubeCheckerEnabled")
+    addSlider(R, "Cube distance", "cubeCheckerDistance", 1, 100, 1, "")
+
+    task.wait()
+    L, R = columns("Misc", "Utilities", "Viewmodel")
+    section(L, "Session")
+    toggle(L, "Anti AFK", "antiAfkEnabled")
+    toggle(L, "Spectator list", "spectatorListEnabled")
+    section(L, "Animations")
+    toggle(L, "Animations", "animationsEnabled")
+    addSlider(L, "Animation speed", "animationSpeed", 0.1, 3, 0.1, "x")
+    toggle(L, "Animation loop", "animationLoop")
+    addButton(L, "RESTART ANIMATION", playXCAnimation)
+    section(L, "Privacy")
+    toggle(L, "Streamer mode", "streamerModeEnabled")
+    addChoice(L, "Streamer bind", "streamerKey", {"F6", "F7", "F8", "F9", "F10"})
+    section(R, "Viewmodel")
+    toggle(R, "Custom hands", "customHandsEnabled")
+    addSlider(R, "Hands X", "customHandsX", -2, 2, 0.1, "")
+    addSlider(R, "Hands Y", "customHandsY", -2, 2, 0.1, "")
+    addSlider(R, "Hands Z", "customHandsZ", -2, 2, 0.1, "")
+    addSlider(R, "Hands pitch", "customHandsPitch", -45, 45, 1, "°")
+    addSlider(R, "Hands yaw", "customHandsYaw", -45, 45, 1, "°")
+    addSlider(R, "Hands roll", "customHandsRoll", -90, 90, 1, "°")
+
+    task.wait()
+    L, R = columns("Players", "Target filtering", "Overlay options")
+    section(L, "Target rules")
+    toggle(L, "Ignore teammates", "silentAimTeamCheck")
+    toggle(L, "Visible targets only", "silentAimVisibleCheck")
+    addChoice(L, "Priority player", "priorityPlayerName", currentPlayerChoices())
+    section(L, "Chams rules")
+    toggle(L, "Show teammates", "chamsShowTeammates")
+    toggle(L, "Chams team check", "chamsTeamCheck")
+    toggle(L, "Chams occlusion", "chamsOcclusion")
+    addSlider(L, "Chams fill", "chamsFillTransparency", 0, 1, 0.05, "")
+    addSlider(L, "Chams outline", "chamsOutlineTransparency", 0, 1, 0.05, "")
+    section(R, "Nametag details")
+    toggle(R, "Nametag distance", "espShowDistance")
+    toggle(R, "Nametag health", "espShowHealth")
+    toggle(R, "Nametag weapon", "tagShowWeapon")
+    addSlider(R, "Tag transparency", "tagTransparency", 0, 0.9, 0.05, "")
+    section(R, "ESP tuning")
+    addSlider(R, "Box thickness", "boxThickness", 1, 3, 0.1, "")
+    addSlider(R, "Grenade distance", "grenadeMaxDist", 200, 3000, 50, "")
+
+    task.wait()
+    L, R = columns("Configs", "Interface", "Config manager")
+    section(L, "menu & hud")
+    toggle(L, "Notifications", "settingsShowNotifications")
+    toggle(L, "Compact mode", "settingsCompactMode")
+    toggle(L, "Autosave config", "settingsAutoSave")
+    toggle(L, "Watermark", "watermarkEnabled")
+    toggle(L, "Show FPS", "watermarkShowFPS")
+    toggle(L, "Show ping", "watermarkShowPing")
+    toggle(L, "Show name", "watermarkShowName")
+    addChoice(L, "Menu key", "menuKey", {"RightShift", "LeftControl", "RightControl", "F6", "F7", "F8", "F9", "F10"})
+    addNote(L, "STATUS: ON active  |  WAIT loading  |  FALL fallback  |  ERR failed")
+    section(R, "profiles")
+
+    local configName = "Default"
+    local function safeName(value)
+        value = tostring(value or "Default"):gsub("[^%w%-%_ ]", ""):sub(1, 48)
+        return value ~= "" and value or "Default"
+    end
+    local nameBox = Instance.new("TextBox")
+    nameBox.Size = UDim2.new(1, 0, 0, 24)
+    nameBox.BackgroundColor3 = C.Control
+    nameBox.BorderColor3 = C.Black
+    nameBox.BorderSizePixel = 1
+    nameBox.PlaceholderText = "Config name"
+    nameBox.Text = configName
+    nameBox.TextColor3 = C.Text
+    nameBox.Font = Enum.Font.Code
+    nameBox.TextSize = 10
+    nameBox.Parent = activeSectionByParent[R] or R
+    local status = Instance.new("TextLabel")
+    status.Size = UDim2.new(1, 0, 0, 20)
+    status.BackgroundTransparency = 1
+    status.Text = "XCConfigs/Default.json"
+    status.TextColor3 = C.Muted
+    status.Font = Enum.Font.Code
+    status.TextSize = 9
+    status.TextXAlignment = Enum.TextXAlignment.Left
+    status.Parent = activeSectionByParent[R] or R
+    local function configPath() return "XCConfigs/" .. safeName(nameBox.Text) .. ".json" end
+    local autoSaveSerial = 0
+    local function saveCurrentConfig(prefix)
+        local ok = pcall(function()
+            if type(makefolder) == "function" and type(isfolder) == "function" and not isfolder("XCConfigs") then makefolder("XCConfigs") end
+            assert(type(writefile) == "function", "File API unavailable")
+            local saveData = {}
+            for key, value in pairs(XCConfig) do saveData[key] = value end
+            if XCFeatureState.streamerSnapshot then
+                for key, value in pairs(XCFeatureState.streamerSnapshot) do saveData[key] = value end
+                saveData.streamerModeEnabled = false
+            end
+            writefile(configPath(), HttpService:JSONEncode(saveData))
+        end)
+        status.Text = ok and ((prefix or "saved") .. ": " .. safeName(nameBox.Text)) or "save unavailable"
+        status.TextColor3 = ok and C.Lime or Color3.fromRGB(218, 82, 82)
+        return ok
+    end
+    scheduleConfigAutoSave = function()
+        if not XCConfig.settingsAutoSave then return end
+        autoSaveSerial += 1
+        local serial = autoSaveSerial
+        task.delay(0.8, function()
+            if serial == autoSaveSerial and XCConfig.settingsAutoSave and screenGui.Parent then
+                saveCurrentConfig("autosaved")
+            end
+        end)
+    end
+    nameBox.FocusLost:Connect(function()
+        status.Text = configPath()
+        status.TextColor3 = C.Muted
+        scheduleConfigAutoSave()
+    end)
+    local function refreshAll()
+        for key, keyRefreshers in pairs(refreshers) do
+            for _, refresh in ipairs(keyRefreshers) do refresh(XCConfig[key]) end
+        end
+        updateScale()
+    end
+
+    section(L, "quick actions")
+    addButton(L, "PANIC: DISABLE ACTIVE MODULES", function()
+        for _, key in ipairs({
+            "aimbotEnabled", "silentAimEnabled", "triggerbotEnabled", "rageBotEnabled",
+            "flightEnabled", "speedEnabled", "antiAimEnabled", "chamsEnabled",
+            "grenadeEspEnabled", "freecamEnabled", "freelookEnabled", "thirdPersonEnabled"
+        }) do
+            if XCConfig[key] then
+                XCConfig[key] = false
+                if UI_Bind_Registry[key] then UI_Bind_Registry[key](false) end
+                pcall(specialToggle, key, false)
+            end
+        end
+        XCNotify("Panic", "Active combat and camera modules disabled", "warning", 2)
+    end)
+    addButton(L, "RESET CAMERA", function()
+        for _, key in ipairs({"freecamEnabled", "freelookEnabled", "thirdPersonEnabled", "customFovEnabled"}) do
+            XCConfig[key] = false
+            if UI_Bind_Registry[key] then UI_Bind_Registry[key](false) end
+        end
+        stopXCCameraMode()
+        setThirdPersonEnabled(false)
+        if camera then camera.FieldOfView = 70 end
+        XCNotify("Camera", "Camera state restored", "success", 1.5)
+    end)
+    addButton(R, "SAVE CONFIG", function()
+        saveCurrentConfig("saved")
+    end)
+    addButton(R, "LOAD CONFIG", function()
+        local ok = pcall(function()
+            setXCStreamerMode(false)
+            assert(type(readfile) == "function", "File API unavailable")
+            local data = HttpService:JSONDecode(readfile(configPath()))
+            for key, value in pairs(data) do if XCConfig[key] ~= nil then XCConfig[key] = value end end
+            lazyFeatureRequests.fireRate = XCConfig.fireRateEnabled == true
+            lazyFeatureRequests.recoilSpread = XCConfig.noRecoilEnabled == true or XCConfig.noSpreadEnabled == true
+            lazyFeatureRequests.silentFallback = XCConfig.silentAimEnabled == true
+            refreshAll()
+            updateMobileSlideVisibility(); refreshThirdPerson(); setWeaponVisuals(); updateCustomScope(); updateWorldPostFX()
+            applyXCWeather()
+            applyXCSmokeState()
+            if XCConfig.freecamEnabled then setXCCameraMode("Freecam", true)
+            elseif XCConfig.freelookEnabled then setXCCameraMode("Freelook", true)
+            else stopXCCameraMode() end
+            setXCStreamerMode(XCConfig.streamerModeEnabled)
+            setAntiAfkEnabled(XCConfig.antiAfkEnabled)
+            if XCConfig.animationsEnabled then playXCAnimation() else stopXCAnimation() end
+            if XCConfig.nightModeEnabled then
+                applyNightPreset(XCConfig.nightPreset)
+            else
+                Lighting.Brightness = defaultLighting.Brightness
+                Lighting.ClockTime = defaultLighting.ClockTime
+                Lighting.GlobalShadows = defaultLighting.GlobalShadows
+                Lighting.Ambient = defaultLighting.Ambient
+                Lighting.OutdoorAmbient = defaultLighting.OutdoorAmbient
+            end
+            updateWorldChanger()
+        end)
+        status.Text = ok and ("loaded: " .. safeName(nameBox.Text)) or "load failed"
+    end)
+    addButton(R, "RESET DEFAULTS", function()
+        setXCStreamerMode(false)
+        for key, value in pairs(XCConfigDefaults) do XCConfig[key] = deepCopyConfigValue(value) end
+        lazyFeatureRequests.fireRate = false
+        lazyFeatureRequests.recoilSpread = false
+        lazyFeatureRequests.silentFallback = false
+        refreshAll(); updateMobileSlideVisibility(); refreshThirdPerson(); setWeaponVisuals(); updateCustomScope(); updateWorldPostFX()
+        stopXCCameraMode(); destroyXCWeather(); restoreXCSmoke(); restoreLightingState()
+        setAntiAfkEnabled(XCConfig.antiAfkEnabled)
+        status.Text = "defaults restored"
+    end)
+    addButton(R, "DELETE CONFIG", function()
+        local ok = pcall(function() assert(type(delfile) == "function"); delfile(configPath()) end)
+        status.Text = ok and "config deleted" or "delete failed"
+    end)
+
+    applySearch = function()
+        local query = searchBox.Text:lower():gsub("^%s+", ""):gsub("%s+$", "")
+        local page = pages[currentPage]
+        for _, entry in ipairs(searchableControls) do
+            if page and entry.gui:IsDescendantOf(page) then
+                entry.gui.Visible = query == "" or entry.label:find(query, 1, true) ~= nil
+            else
+                entry.gui.Visible = true
+            end
+        end
+        for _, group in ipairs(sectionGroups) do
+            if page and group.outer:IsDescendantOf(page) then
+                local anyVisible = false
+                for _, child in ipairs(group.body:GetChildren()) do
+                    if child:IsA("GuiObject") and child.Visible then anyVisible = true break end
+                end
+                group.outer.Visible = query == "" or anyVisible
+                if query ~= "" then
+                    group.body.Visible = anyVisible
+                else
+                    group.body.Visible = not group.collapsed
+                end
+            else
+                group.outer.Visible = true
+                group.body.Visible = not group.collapsed
+            end
+        end
+        clearSearch.TextColor3 = query ~= "" and C.Lime or C.Muted
+    end
+    table.insert(connections, searchBox:GetPropertyChangedSignal("Text"):Connect(applySearch))
+    task.spawn(function()
+        while xcSessionActive() and screenGui.Parent do
+            task.wait(0.75)
+            for _, refreshStatus in ipairs(moduleStatusRefreshers) do pcall(refreshStatus) end
+        end
+    end)
+    switchPage("Rage")
+
+    local menuVisible = true
+    local function toggleMenu()
+        closeDropdown()
+        hideHelp()
+        main.Visible = not main.Visible
+        menuVisible = main.Visible
+        XCFeatureState.menuOpen = main.Visible
+    end
+    table.insert(connections, UserInputService.InputBegan:Connect(function(input, processed)
+        if processed then return end
+        local key = Enum.KeyCode[XCConfig.menuKey or "RightShift"]
+        if key and input.KeyCode == key then toggleMenu() end
+    end))
+
+    local function dragObject(handle, object, saveButtonPosition)
+        local activeInput, startInput, startPos, moved
+        handle.InputBegan:Connect(function(input)
+            if activeInput then return end
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                activeInput, startInput, startPos, moved = input, input.Position, object.Position, false
+            end
+        end)
+        table.insert(connections, UserInputService.InputChanged:Connect(function(input)
+            if not activeInput then return end
+            if input == activeInput or input.UserInputType == Enum.UserInputType.MouseMovement then
+                local delta = input.Position - startInput
+                if delta.Magnitude >= 7 then moved = true end
+                if moved then
+                    object.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+                    if saveButtonPosition then savedPos.OpenBtn = object.Position; if genv then genv.XCSavedPos.OpenBtn = object.Position end end
+                end
+            end
+        end))
+        table.insert(connections, UserInputService.InputEnded:Connect(function(input)
+            if input ~= activeInput then return end
+            local tap = not moved
+            activeInput = nil
+            if tap and saveButtonPosition then toggleMenu() end
+        end))
+    end
+    dragObject(dragBar, main, false)
+
+    local openBtn = Instance.new("TextButton")
+    openBtn.Name = "XCButton"
+    openBtn.Size = UDim2.fromOffset(56, 48)
+    openBtn.Position = savedPos.OpenBtn
+    openBtn.BackgroundColor3 = C.Panel
+    openBtn.BorderColor3 = C.Lime
+    openBtn.BorderSizePixel = 1
+    openBtn.RichText = true
+    openBtn.Text = '<font color="rgb(152,204,0)">X</font><font color="rgb(255,255,255)">C</font>'
+    openBtn.TextColor3 = C.White
+    openBtn.Font = Enum.Font.GothamBold
+    openBtn.TextSize = 23
+    openBtn.AutoButtonColor = false
+    openBtn.Active = true
+    openBtn.Parent = toggleGui
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 7)
+    corner.Parent = openBtn
+    dragObject(openBtn, openBtn, true)
+end
+
+-- ==========================================
+-- XC-STYLE THIRD PERSON PROTECTION
+-- ==========================================
+local thirdPersonCameraConnection
+local thirdPersonMetaInstalled = false
+
+function installThirdPersonProtection()
+    if thirdPersonMetaInstalled then return end
+    if type(getrawmetatable) ~= "function" or type(setreadonly) ~= "function" then return end
+    if type(newcclosure) ~= "function" then return end
+
+    pcall(function()
+        local mt = getrawmetatable(game)
+        if not mt then return end
+
+        local oldNewIndex = mt.__newindex
+        if type(oldNewIndex) ~= "function" then return end
+
+        setreadonly(mt, false)
+        mt.__newindex = newcclosure(function(self, key, value)
+            if self == player and XCConfig.thirdPersonEnabled then
+                local distance = math.clamp(
+                    tonumber(XCConfig.thirdPersonDistance) or 12,
+                    5,
+                    50
+                )
+
+                if key == "CameraMode" then
+                    return oldNewIndex(self, key, Enum.CameraMode.Classic)
+                elseif key == "CameraMaxZoomDistance" then
+                    return oldNewIndex(self, key, distance)
+                elseif key == "CameraMinZoomDistance" then
+                    return oldNewIndex(self, key, distance)
+                end
+            end
+
+            return oldNewIndex(self, key, value)
+        end)
+        setreadonly(mt, true)
+        thirdPersonMetaInstalled = true
+    end)
+end
+
+function reconnectThirdPersonCamera()
+    if thirdPersonCameraConnection then
+        thirdPersonCameraConnection:Disconnect()
+        thirdPersonCameraConnection = nil
+    end
+
+    if not camera then return end
+
+    thirdPersonCameraConnection = camera:GetPropertyChangedSignal("CameraType"):Connect(function()
+        if not XCConfig.thirdPersonEnabled or not camera then return end
+
+        -- XC keeps the native Custom camera pipeline.
+        if camera.CameraType ~= Enum.CameraType.Custom then
+            camera.CameraType = Enum.CameraType.Custom
+        end
+
+        local char, hum = getThirdPersonTarget()
+        if hum then
+            camera.CameraSubject = hum
+        end
+    end)
+    table.insert(connections, thirdPersonCameraConnection)
+end
+
+task.spawn(function()
+    installThirdPersonProtection()
+end)
+
+reconnectThirdPersonCamera()
+
+local currentCameraConnection = Workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
+    camera = Workspace.CurrentCamera or camera
+    reconnectThirdPersonCamera()
+
+    if XCConfig.thirdPersonEnabled and camera then
+        applyThirdPerson()
+    end
+end)
+table.insert(connections, currentCameraConnection)
+
+-- ==========================================
+-- XC WEAPON MODS (ADAPTED)
+-- XC No Recoil + No Spread + FireRate logic only.
+-- FireRate follows the source approach: discover weapon tables containing
+-- FireRate, remember their original values, and periodically write the
+-- configured interval while the XC toggle is enabled.
+-- ==========================================
+local xcRecoilSpreadInstalled = false
+local xcFireRateInstalled = false
+local xcFireRateObjects = {}
+local xcFireRateOriginal = {}
+local xcFireRateReadonly = {}
+local xcFireRateScanDone = false
+local xcRecoilSpreadRetrying = false
+local xcFireRateGetWeapon = nil
+local xcFireRateWeaponRecords = setmetatable({}, {__mode = "k"})
+
+local function resolveXCFireRateGetWeapon()
+    if type(xcFireRateGetWeapon) == "function" then return true end
+    pcall(function()
+        local controllers = ReplicatedStorage:FindFirstChild("Controllers")
+        local scriptObject = controllers and controllers:FindFirstChild("InventoryController")
+        local inventory = scriptObject and require(scriptObject)
+        if type(inventory) == "table" and type(inventory.peekCurrentEquippedForMovement) == "function" then
+            xcFireRateGetWeapon = inventory.peekCurrentEquippedForMovement
+        end
+    end)
+    return type(xcFireRateGetWeapon) == "function"
+end
+
+local function restoreXCNativeFireRate(exceptWeapon)
+    for weapon, record in pairs(xcFireRateWeaponRecords) do
+        if weapon ~= exceptWeapon then
+            pcall(function()
+                local properties = record.Properties
+                if type(properties) == "table" then
+                    if type(setreadonly) == "function" then setreadonly(properties, false) end
+                    rawset(properties, "FireRate", record.OriginalFireRate)
+                    if type(setreadonly) == "function" and record.Readonly ~= nil then
+                        setreadonly(properties, record.Readonly)
+                    end
+                end
+            end)
+            xcFireRateWeaponRecords[weapon] = nil
+        end
+    end
+end
+
+local function applyXCNativeFireRate()
+    if not resolveXCFireRateGetWeapon() then return false end
+    local okWeapon, weapon = pcall(xcFireRateGetWeapon)
+    if not okWeapon or type(weapon) ~= "table" or weapon.IsDestroyed
+        or type(weapon.Properties) ~= "table" then return false end
+
+    restoreXCNativeFireRate(weapon)
+    local record = xcFireRateWeaponRecords[weapon]
+    if record and weapon.Properties ~= record.Properties then
+        restoreXCNativeFireRate(nil)
+        record = nil
+    end
+    if not record then
+        local readonly = nil
+        if type(isreadonly) == "function" then
+            local okReadonly, value = pcall(isreadonly, weapon.Properties)
+            if okReadonly then readonly = value == true end
+        end
+        record = {
+            Properties = weapon.Properties,
+            OriginalFireRate = rawget(weapon.Properties, "FireRate"),
+            OriginalAutomatic = rawget(weapon.Properties, "Automatic"),
+            Readonly = readonly,
+        }
+        xcFireRateWeaponRecords[weapon] = record
+    end
+
+    local requested = math.max(tonumber(XCConfig.fireRate) or 0.03, 0.01)
+    local originalRate = tonumber(record.OriginalFireRate) or requested
+    local stableRate = math.max(requested, 0.03, originalRate * 0.40)
+    if UserInputService.TouchEnabled then
+        -- Mobile uses the native hold-to-fire loop below. Leave every weapon
+        -- property byte-for-byte unchanged so the game's touch HUD never
+        -- rebuilds itself as a desktop control scheme.
+        record.Rate = stableRate
+        return true
+    end
+    if record.Rate == stableRate
+        and rawget(record.Properties, "FireRate") == stableRate then
+        return true
+    end
+
+    -- Change only cooldown. Do not change Automatic: Blox Strike rebuilds its
+    -- control scheme when this property changes and can select the desktop HUD.
+    local properties = record.Properties
+    if type(setreadonly) == "function" then setreadonly(properties, false) end
+    rawset(properties, "FireRate", stableRate)
+    if type(setreadonly) == "function" and record.Readonly ~= nil then
+        setreadonly(properties, record.Readonly)
+    end
+    record.Rate = stableRate
+    return true
+end
+
+if genv then
+    genv.XCRestoreWeaponState = function()
+        restoreXCNativeFireRate(nil)
+        restoreXCFireRates()
+    end
+end
+
+function scanXCFireRateObjects()
+    if xcFireRateScanDone then return #xcFireRateObjects > 0 end
+    if type(getgc) ~= "function" then return false end
+
+    local found = false
+    pcall(function()
+        for _, obj in next, getgc(true) do
+            if type(obj) == "table" then
+                local fireRate = rawget(obj, "FireRate")
+                if type(fireRate) == "number" then
+                    local already = false
+                    for _, existing in ipairs(xcFireRateObjects) do
+                        if existing == obj then
+                            already = true
+                            break
+                        end
+                    end
+                    if not already then
+                        table.insert(xcFireRateObjects, obj)
+                        xcFireRateOriginal[obj] = fireRate
+                        if type(isreadonly) == "function" then
+                            local okReadonly, readonly = pcall(isreadonly, obj)
+                            if okReadonly then xcFireRateReadonly[obj] = readonly == true end
+                        end
+                        found = true
+                    end
+                end
+            end
+        end
+    end)
+
+    xcFireRateScanDone = true
+    return found or #xcFireRateObjects > 0
+end
+
+function restoreXCFireRates()
+    for _, obj in ipairs(xcFireRateObjects) do
+        pcall(function()
+            if type(setreadonly) == "function" then setreadonly(obj, false) end
+            local original = xcFireRateOriginal[obj]
+            if type(original) == "number" then
+                rawset(obj, "FireRate", original)
+            end
+            -- Restore the table exactly as it was. Forcing every weapon table
+            -- readonly prevents the game from advancing its firing state.
+            if type(setreadonly) == "function" and xcFireRateReadonly[obj] ~= nil then
+                setreadonly(obj, xcFireRateReadonly[obj])
+            end
+        end)
+    end
+end
+
+function applyXCFireRate()
+    local requested = math.max(tonumber(XCConfig.fireRate) or 0.03, 0.01)
+    for _, obj in ipairs(xcFireRateObjects) do
+        pcall(function()
+            if type(setreadonly) == "function" then setreadonly(obj, false) end
+            local original = tonumber(xcFireRateOriginal[obj]) or requested
+            -- Limit acceleration to a stable interval. Extremely small values
+            -- flood ShootWeapon and are rejected after the first few rounds.
+            local stableMinimum = math.max(0.03, original * 0.40)
+            rawset(obj, "FireRate", math.max(requested, stableMinimum))
+            if type(setreadonly) == "function" and xcFireRateReadonly[obj] ~= nil then
+                setreadonly(obj, xcFireRateReadonly[obj])
+            end
+        end)
+    end
+end
+
+task.spawn(function()
+    local wasEnabled = false
+    while xcSessionActive() and task.wait(0.1) do
+        pcall(function()
+            if XCConfig.fireRateEnabled and lazyFeatureRequests.fireRate then
+                local nativeApplied = applyXCNativeFireRate()
+                if nativeApplied then
+                    -- Undo the broad legacy getgc writer once the equipped
+                    -- weapon can be modified through its native Properties.
+                    if #xcFireRateObjects > 0 then restoreXCFireRates() end
+                elseif not UserInputService.TouchEnabled then
+                    if not xcFireRateScanDone then scanXCFireRateObjects() end
+                    if #xcFireRateObjects == 0 then
+                        -- The game can create weapon data after injection/respawn.
+                        xcFireRateScanDone = false
+                        scanXCFireRateObjects()
+                    end
+                    applyXCFireRate()
+                else
+                    -- Never use broad getgc property writes on mobile.
+                    restoreXCFireRates()
+                end
+            elseif wasEnabled then
+                restoreXCNativeFireRate(nil)
+                restoreXCFireRates()
+            end
+            wasEnabled = XCConfig.fireRateEnabled
+        end)
+    end
+end)
+
+-- Native hold-to-fire for semi-automatic weapons. This replaces the old
+-- Automatic property mutation without generating mouse input on phones.
+task.spawn(function()
+    local heldLast = false
+    local heldWeapon = nil
+    local nextShot = 0
+    while xcSessionActive() and task.wait(0.01) do
+        if not (XCConfig.fireRateEnabled and lazyFeatureRequests.fireRate)
+            or not resolveXCFireRateGetWeapon() then
+            heldLast, heldWeapon, nextShot = false, nil, 0
+            continue
+        end
+        local okWeapon, weapon = pcall(xcFireRateGetWeapon)
+        local record = okWeapon and weapon and xcFireRateWeaponRecords[weapon] or nil
+        local held = record and record.OriginalAutomatic ~= true and weapon.IsFireHeld == true
+        if not held then
+            heldLast, heldWeapon, nextShot = false, weapon, 0
+            continue
+        end
+        if weapon ~= heldWeapon or not heldLast then
+            heldWeapon, heldLast = weapon, true
+            nextShot = os.clock() + math.max(tonumber(record.Rate) or 0.08, 0.03)
+            continue
+        end
+        local now = os.clock()
+        if now >= nextShot and type(weapon.shoot) == "function"
+            and not weapon.IsShooting and not weapon.IsBurstShooting then
+            nextShot = now + math.max(tonumber(record.Rate) or 0.08, 0.03)
+            pcall(function() weapon:shoot() end)
+        end
+    end
+end)
+
+function installXCRecoilSpread()
+    if xcRecoilSpreadInstalled then return true end
+    if type(getgc) ~= "function" or type(hookfunction) ~= "function" then
+        return false
+    end
+    if type(debug) ~= "table" or type(debug.getinfo) ~= "function" then
+        return false
+    end
+
+    local hookedSomething = false
+
+    pcall(function()
+        for _, obj in next, getgc(true) do
+            -- XC: setWeaponRecoil -> suppress the recoil setter.
+            if type(obj) == "table" then
+                local setRecoil = rawget(obj, "setWeaponRecoil")
+                if typeof(setRecoil) == "function" then
+                    pcall(function()
+                        local oldSetRecoil
+                        oldSetRecoil = hookfunction(setRecoil, function(...)
+                            if XCConfig.noRecoilEnabled then
+                                return
+                            end
+                            return oldSetRecoil(...)
+                        end)
+                        hookedSomething = true
+                    end)
+                end
+
+                -- XC: weaponKick -> suppress the camera/weapon kick.
+                local weaponKick = rawget(obj, "weaponKick")
+                if typeof(weaponKick) == "function" then
+                    pcall(function()
+                        local oldKick
+                        oldKick = hookfunction(weaponKick, function(...)
+                            if XCConfig.noRecoilEnabled then
+                                return
+                            end
+                            return oldKick(...)
+                        end)
+                        hookedSomething = true
+                    end)
+                end
+
+                -- XC: getTrueSpread -> zero the calculated spread.
+                local getSpread = rawget(obj, "getTrueSpread")
+                if typeof(getSpread) == "function" then
+                    pcall(function()
+                        local oldSpread
+                        oldSpread = hookfunction(getSpread, function(...)
+                            if XCConfig.noSpreadEnabled then
+                                return 0
+                            end
+                            return oldSpread(...)
+                        end)
+                        hookedSomething = true
+                    end)
+                end
+            end
+
+            -- XC: calculateRecoilOffset -> return a neutral UDim2.
+            if type(obj) == "function" then
+                local info
+                pcall(function() info = debug.getinfo(obj) end)
+                if type(info) == "table" and info.name == "calculateRecoilOffset" then
+                    pcall(function()
+                        local oldCalc
+                        oldCalc = hookfunction(obj, function(...)
+                            if XCConfig.noRecoilEnabled then
+                                return UDim2.new()
+                            end
+                            return oldCalc(...)
+                        end)
+                        hookedSomething = true
+                    end)
+                end
+            end
+        end
+    end)
+
+    if hookedSomething then
+        xcRecoilSpreadInstalled = true
+        return true
+    end
+    return false
+end
+
+-- Delay GC scanning until XC UI has finished building. This is intentionally
+-- separate from the launch path so unsupported executors don't block injection.
+task.spawn(function()
+    if xcRecoilSpreadRetrying then return end
+    xcRecoilSpreadRetrying = true
+
+    local attempts = 0
+    while xcSessionActive() and not xcRecoilSpreadInstalled and attempts < 20 do
+        if lazyFeatureRequests.recoilSpread
+            and (XCConfig.noRecoilEnabled or XCConfig.noSpreadEnabled) then
+            attempts += 1
+            if installXCRecoilSpread() then break end
+            task.wait(0.75)
+        else
+            task.wait(0.25)
+        end
+    end
+
+    xcRecoilSpreadRetrying = false
+end)
+
+-- ==========================================
+-- XC-STYLE SEND HOOK FALLBACK FOR SILENT AIM
+-- ==========================================
+local xcSilentSendHooked = false
+function setupXCSilentSendHook()
+    if xcSilentSendHooked then return end
+    if xcBulletInterceptHooked or xcMobileCameraSilentHooked then
+        xcSilentSendHooked = true
+        return
+    end
+    -- InventoryController is the authoritative and safer interception point.
+    -- Never install a second random/changing pass for the same shot.
+    if bloxStrikeShootHooked and not UserInputService.TouchEnabled then return end
+    if type(getgc) ~= "function" or type(hookfunction) ~= "function" then return end
+
+    local sendFunc = nil
+    local shootContainer = nil
+    pcall(function()
+        for _, obj in next, getgc(true) do
+            if type(obj) == "table" and rawget(obj, "shoot") and typeof(obj.shoot) == "function" then
+                for _, uv in pairs(debug.getupvalues(obj.shoot)) do
+                    if type(uv) == "table" then
+                        local inventory = rawget(uv, "Inventory")
+                        local shootWeapon = inventory and rawget(inventory, "ShootWeapon")
+                        if type(shootWeapon) == "table" and typeof(shootWeapon.Send) == "function" then
+                            sendFunc = shootWeapon.Send
+                            shootContainer = shootWeapon
+                            break
+                        end
+                    end
+                end
+            end
+            if sendFunc then break end
+        end
+    end)
+
+    if type(sendFunc) ~= "function" then return end
+    if shootContainer and rawget(shootContainer, "__XCSilentSendHookV28") then
+        xcSilentSendHooked = true
+        return
+    end
+
+    local oldSend
+    oldSend = hookfunction(sendFunc, function(...)
+        local args = {...}
+        if type(args[1]) == "table" then
+            local prepare = sharedXCEnv and sharedXCEnv.XCPrepareSilentSendPayloadV28
+            local okPrepare, prepared = pcall(function()
+                if type(prepare) == "function" then return prepare(args[1]) end
+                return prepareXCSilentShotPayload(args[1], true)
+            end)
+            if okPrepare and type(prepared) == "table" then args[1] = prepared end
+        end
+
+        -- Suppress a persistent pre-v23 Send hook while it forwards our copied
+        -- payload. This prevents double hit-chance rolls and in-place rewrites.
+        local silentWasEnabled = XCConfig.silentAimEnabled
+        XCConfig.silentAimEnabled = false
+        local results = table.pack(pcall(oldSend, unpack(args)))
+        XCConfig.silentAimEnabled = silentWasEnabled
+        if not results[1] then error(results[2], 0) end
+        return table.unpack(results, 2, results.n)
+    end)
+
+    if shootContainer then rawset(shootContainer, "__XCSilentSendHooked", true) end
+    if shootContainer then rawset(shootContainer, "__XCSilentSendHookV23", true) end
+    if shootContainer then rawset(shootContainer, "__XCSilentSendHookV28", true) end
+    xcSilentSendHooked = true
+end
+
+-- ==========================================
+-- ENGINE LAUNCH / XC VISUAL EXTENSION
+-- ==========================================
+pcall(setupSilentAimHooks)
+pcall(setupXCNativeSilentHook)
+pcall(setupXCBulletInterceptHookV29)
+pcall(setupBloxStrikeShootHook)
+pcall(setupXCCharacterInputHook)
+task.spawn(function()
+    while xcSessionActive() do
+        if not xcCharacterInputHook.Ready and (XCConfig.antiAimEnabled or XCConfig.bunnyHopEnabled) then
+            setupXCCharacterInputHook()
+            task.wait(1.5)
+        else
+            task.wait(0.5)
+        end
+    end
+end)
+task.spawn(function()
+    while xcSessionActive() and not xcSilentSendHooked
+        and not xcBulletInterceptHooked and not xcMobileCameraSilentHooked
+        and (UserInputService.TouchEnabled or not bloxStrikeShootHooked) do
+        if XCConfig.silentAimEnabled and lazyFeatureRequests.silentFallback
+            and (UserInputService.TouchEnabled or not bloxStrikeShootHooked) then
+            setupXCSilentSendHook()
+            if not xcSilentSendHooked then task.wait(1.5) end
+        else
+            task.wait(0.25)
+        end
+    end
+end)
+XCFeatureState.uiBuildOK, XCFeatureState.uiBuildError = pcall(buildXCUI)
+if not XCFeatureState.uiBuildOK then
+    warn("[XC] UI startup failed: " .. tostring(XCFeatureState.uiBuildError))
+    pcall(function()
+        if targetGui:FindFirstChild("XCScreenGui") then targetGui.XCScreenGui:Destroy() end
+        if targetGui:FindFirstChild("XCToggleGui") then targetGui.XCToggleGui:Destroy() end
+        XCFeatureState.fallbackGui = Instance.new("ScreenGui")
+        XCFeatureState.fallbackGui.Name = "XCFallbackGui"
+        XCFeatureState.fallbackGui.ResetOnSpawn = false
+        XCFeatureState.fallbackGui.IgnoreGuiInset = true
+        XCFeatureState.fallbackGui.DisplayOrder = 999
+        XCFeatureState.fallbackGui.Parent = targetGui
+        XCFeatureState.fallbackCard = Instance.new("TextLabel")
+        XCFeatureState.fallbackCard.Size = UDim2.fromOffset(340, 82)
+        XCFeatureState.fallbackCard.Position = UDim2.new(0.5, -170, 0, 22)
+        XCFeatureState.fallbackCard.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+        XCFeatureState.fallbackCard.BorderColor3 = Color3.fromRGB(152, 204, 0)
+        XCFeatureState.fallbackCard.BorderSizePixel = 1
+        XCFeatureState.fallbackCard.TextColor3 = Color3.fromRGB(235, 235, 235)
+        XCFeatureState.fallbackCard.Font = Enum.Font.Code
+        XCFeatureState.fallbackCard.TextSize = 12
+        XCFeatureState.fallbackCard.TextWrapped = true
+        XCFeatureState.fallbackCard.Text = "XC STARTUP ERROR\n" .. tostring(XCFeatureState.uiBuildError):sub(1, 220)
+        XCFeatureState.fallbackCard.Parent = XCFeatureState.fallbackGui
+    end)
+end
+
+-- XC-style active navigation accent.
+function XCApplyXCTabAccent(button, active)
+    pcall(function()
+        local accent = button:FindFirstChild("XCActiveAccent")
+        if active then
+            if not accent then
+                accent = Instance.new("Frame")
+                accent.Name = "XCActiveAccent"
+                accent.BorderSizePixel = 0
+                accent.AnchorPoint = Vector2.new(0, 0.5)
+                accent.Position = UDim2.new(0, 0, 0.5, 0)
+                accent.Size = UDim2.new(0, 2, 0, 22)
+                accent.BackgroundColor3 = Color3.fromRGB(152, 204, 0)
+                accent.Parent = button
+            end
+            accent.Visible = true
+        elseif accent then
+            accent.Visible = false
+        end
+    end)
+end
+
+-- ==========================================
+-- XC CONFIG SYSTEM v2
+-- Named profiles, save/load/delete/reset, export/import.
+-- Uses executor file APIs when available.
+-- ==========================================
+local XCConfigSystem = {}
+XCConfigSystem.Folder = "XCConfigs"
+XCConfigSystem.ActiveName = "Default"
+
+function cfgFileAPI()
+    return type(isfile)=="function" and type(readfile)=="function" and type(writefile)=="function"
+end
+
+function cfgSafeName(name)
+    name=tostring(name or "Default"):gsub("[^%w%-%_ ]",""):sub(1,48)
+    return name~="" and name or "Default"
+end
+
+function cfgPath(name)
+    return XCConfigSystem.Folder.."/"..cfgSafeName(name)..".json"
+end
+
+function cfgJSONEncode(v)
+    local ok,res=pcall(function() return game:GetService("HttpService"):JSONEncode(v) end)
+    return ok and res or nil
+end
+
+function cfgJSONDecode(v)
+    local ok,res=pcall(function() return game:GetService("HttpService"):JSONDecode(v) end)
+    return ok and res or nil
+end
+
+function cfgEnsureFolder()
+    if type(makefolder)=="function" and type(isfolder)=="function" then
+        pcall(function() if not isfolder(XCConfigSystem.Folder) then makefolder(XCConfigSystem.Folder) end end)
+    end
+end
+
+function cfgSerialize()
+    local out={}
+    for k,v in pairs(XCConfig) do
+        local t=typeof(v)
+        if t=="boolean" or t=="number" or t=="string" then
+            out[k]=v
+        elseif t=="Color3" then
+            out[k]={__type="Color3",r=v.R,g=v.G,b=v.B}
+        elseif t=="UDim2" then
+            out[k]={__type="UDim2",xs=v.X.Scale,xo=v.X.Offset,ys=v.Y.Scale,yo=v.Y.Offset}
+        end
+    end
+    if XCFeatureState.streamerSnapshot then
+        for key,value in pairs(XCFeatureState.streamerSnapshot) do out[key]=value end
+        out.streamerModeEnabled=false
+    end
+    return out
+end
+
+function cfgApply(data)
+    if type(data)~="table" then return false end
+    setXCStreamerMode(false)
+    local requestedStreamerMode=data.streamerModeEnabled==true
+    for k,v in pairs(data) do
+        if XCConfig[k]~=nil then
+            pcall(function()
+                if type(v)=="table" and v.__type=="Color3" then
+                    XCConfig[k]=Color3.new(tonumber(v.r) or 1,tonumber(v.g) or 1,tonumber(v.b) or 1)
+                elseif type(v)=="table" and v.__type=="UDim2" then
+                    XCConfig[k]=UDim2.new(tonumber(v.xs) or 0,tonumber(v.xo) or 0,tonumber(v.ys) or 0,tonumber(v.yo) or 0)
+                else XCConfig[k]=v end
+            end)
+        end
+    end
+    setXCStreamerMode(requestedStreamerMode)
+    return true
+end
+
+function XCConfigSystem.Save(name)
+    if not cfgFileAPI() then return false,"File API unavailable" end
+    name=cfgSafeName(name or XCConfigSystem.ActiveName)
+    cfgEnsureFolder()
+    local raw=cfgJSONEncode({schema=2,product="XC",name=name,savedAt=os.time(),settings=cfgSerialize()})
+    if not raw then return false,"JSON encode failed" end
+    local ok,err=pcall(function() writefile(cfgPath(name),raw) end)
+    if ok then XCConfigSystem.ActiveName=name end
+    return ok,ok and "Saved" or tostring(err)
+end
+
+function XCConfigSystem.Load(name)
+    if not cfgFileAPI() then return false,"File API unavailable" end
+    name=cfgSafeName(name or XCConfigSystem.ActiveName)
+    local path=cfgPath(name)
+    if not isfile(path) then return false,"Config not found" end
+    local ok,raw=pcall(readfile,path)
+    if not ok then return false,"Read failed" end
+    local data=cfgJSONDecode(raw)
+    if type(data)~="table" or type(data.settings)~="table" then return false,"Invalid config" end
+    cfgApply(data.settings)
+    XCConfigSystem.ActiveName=name
+    return true,"Loaded"
+end
+
+function XCConfigSystem.Delete(name)
+    if type(delfile)~="function" then return false,"Delete API unavailable" end
+    name=cfgSafeName(name or XCConfigSystem.ActiveName)
+    local path=cfgPath(name)
+    if not isfile(path) then return false,"Config not found" end
+    local ok,err=pcall(delfile,path)
+    return ok,ok and "Deleted" or tostring(err)
+end
+
+function XCConfigSystem.List()
+    local out={}
+    if type(listfiles)~="function" then return out end
+    cfgEnsureFolder()
+    local ok,files=pcall(listfiles,XCConfigSystem.Folder)
+    if ok and type(files)=="table" then
+        for _,path in ipairs(files) do
+            local n=tostring(path):match("([^/\\]+)%.json$")
+            if n then table.insert(out,n) end
+        end
+    end
+    table.sort(out)
+    return out
+end
+
+function XCConfigSystem.Reset()
+    setXCStreamerMode(false)
+    for k,v in pairs(XCConfigDefaults or {}) do pcall(function() XCConfig[k]=v end) end
+    return true,"Reset"
+end
+
+function XCConfigSystem.Export()
+    return cfgJSONEncode({schema=2,product="XC",name=XCConfigSystem.ActiveName,settings=cfgSerialize()})
+end
+
+function XCConfigSystem.Import(raw,name)
+    local data=cfgJSONDecode(raw)
+    if type(data)~="table" or type(data.settings)~="table" then return false,"Invalid import" end
+    cfgApply(data.settings)
+    XCConfigSystem.ActiveName=cfgSafeName(name or data.name or "Imported")
+    return true,"Imported"
+end
+
+if type(getgenv) == "function" then
+    pcall(function() getgenv().XCConfigSystem = XCConfigSystem end)
+end
