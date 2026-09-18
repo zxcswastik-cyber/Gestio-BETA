@@ -683,6 +683,7 @@ local silentAimCamHooked = false
 local bloxStrikeShootHooked = false
 local xcNativeSilentHooked = false
 local xcBulletInterceptHooked = false
+local xcMobileCameraSilentHooked = false
 
 local function setXCSilentAimRequested(value)
     if sharedXCEnv then sharedXCEnv.XCSilentAimRequestedV25 = value == true end
@@ -826,7 +827,7 @@ end
 if sharedXCEnv then
     sharedXCEnv.XCPrepareSilentShotPayloadV23 = prepareXCSilentShotPayload
     sharedXCEnv.XCPrepareSilentSendPayloadV28 = function(data)
-        if xcBulletInterceptHooked then return data, false end
+        if xcBulletInterceptHooked or xcMobileCameraSilentHooked then return data, false end
         return prepareXCSilentShotPayload(data, true)
     end
 end
@@ -1178,6 +1179,24 @@ silentAimCamPosAim = function(targetPart)
     return camPos, aimPos
 end
 
+local xcMobileSilentGateUntil = 0
+local xcMobileSilentGateAllowed = false
+local xcMobileSilentGateTarget = nil
+
+local function getXCMobileSilentRayTarget()
+    local now = os.clock()
+    if now >= xcMobileSilentGateUntil
+        or not xcMobileSilentGateTarget
+        or not xcMobileSilentGateTarget.Parent then
+        xcMobileSilentGateUntil = now + 0.035
+        xcMobileSilentGateTarget = getSilentAimTarget and getSilentAimTarget() or silentAimResolved
+        local chance = math.clamp(tonumber(XCConfig.silentAimHitChance) or 100, 0, 100)
+        xcMobileSilentGateAllowed = xcMobileSilentGateTarget ~= nil
+            and (chance >= 100 or math.random(1, 100) <= chance)
+    end
+    return xcMobileSilentGateAllowed and xcMobileSilentGateTarget or nil
+end
+
 function setupSilentAimHooks()
     if silentAimHooked and silentAimCamHooked then return end
 
@@ -1207,18 +1226,28 @@ function setupSilentAimHooks()
     end
 
     if not silentAimCamHooked and hookmetamethod and getnamecallmethod then
-        pcall(function()
+        local cameraHookInstalled = pcall(function()
             local oldNamecall
             oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
                 local method = getnamecallmethod()
                 local args = {...}
 
-                if XCConfig.silentAimEnabled and silentAimResolved and noRecoil.isShooting
-                    and self == camera
+                local activeCamera = Workspace.CurrentCamera or camera
+                if isXCSilentAimRequested() and noRecoil.isShooting
+                    and self == activeCamera
                     and (method == "ViewportPointToRay" or method == "ScreenPointToRay") then
-                    local camPos, aimPos = silentAimCamPosAim()
-                    if camPos then
-                        return Ray.new(camPos, (aimPos - camPos).Unit)
+                    local targetPart = UserInputService.TouchEnabled
+                        and getXCMobileSilentRayTarget() or silentAimResolved
+                    if targetPart and targetPart.Parent then
+                        local originalRay = oldNamecall(self, ...)
+                        if typeof(originalRay) == "Ray" then
+                            local aimPos = getKinematicAimPosition(targetPart)
+                            local delta = aimPos - originalRay.Origin
+                            if delta.Magnitude > 0.001 then
+                                local magnitude = originalRay.Direction.Magnitude
+                                return Ray.new(originalRay.Origin, delta.Unit * (magnitude > 0.001 and magnitude or 1))
+                            end
+                        end
                     end
                 end
 
@@ -1267,7 +1296,10 @@ function setupSilentAimHooks()
                 return oldNamecall(self, ...)
             end)
         end)
-        silentAimCamHooked = true
+        silentAimCamHooked = cameraHookInstalled
+        if UserInputService.TouchEnabled and cameraHookInstalled then
+            xcMobileCameraSilentHooked = true
+        end
     end
 end
 
@@ -1403,6 +1435,7 @@ end
 -- Bullet._performRaycast and builds the canonical shot/Hits payload. XC only
 -- redirects the ray arguments while that exact local bullet is being cast.
 local function beginXCBulletInterceptV29(bullet)
+    if xcMobileCameraSilentHooked then return nil end
     if not isXCSilentAimRequested() or type(bullet) ~= "table"
         or bullet.IsDestroyed or bullet.IsActive == false then return nil end
     local weapon = bullet.Weapon
@@ -1453,6 +1486,7 @@ end
 
 function setupXCBulletInterceptHookV29()
     if xcBulletInterceptHooked then return true end
+    if xcMobileCameraSilentHooked then return false end
     if not UserInputService.TouchEnabled or type(hookfunction) ~= "function" then return false end
     local installed = false
     pcall(function()
@@ -5990,6 +6024,9 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     else
         setXCSilentAimRequested(false)
         silentAimResolved = nil
+        xcMobileSilentGateUntil = 0
+        xcMobileSilentGateAllowed = false
+        xcMobileSilentGateTarget = nil
     end
 
     if (XCConfig.rcsEnabled or XCConfig.noRecoilEnabled) and noRecoil.isShooting then
@@ -9060,7 +9097,7 @@ end)
 local xcSilentSendHooked = false
 function setupXCSilentSendHook()
     if xcSilentSendHooked then return end
-    if xcBulletInterceptHooked then
+    if xcBulletInterceptHooked or xcMobileCameraSilentHooked then
         xcSilentSendHooked = true
         return
     end
@@ -9143,7 +9180,8 @@ task.spawn(function()
     end
 end)
 task.spawn(function()
-    while xcSessionActive() and not xcSilentSendHooked and not xcBulletInterceptHooked
+    while xcSessionActive() and not xcSilentSendHooked
+        and not xcBulletInterceptHooked and not xcMobileCameraSilentHooked
         and (UserInputService.TouchEnabled or not bloxStrikeShootHooked) do
         if XCConfig.silentAimEnabled and lazyFeatureRequests.silentFallback
             and (UserInputService.TouchEnabled or not bloxStrikeShootHooked) then
