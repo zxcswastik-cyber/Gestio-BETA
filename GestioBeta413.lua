@@ -682,6 +682,7 @@ local silentAimHooked = false
 local silentAimCamHooked = false
 local bloxStrikeShootHooked = false
 local xcNativeSilentHooked = false
+local xcBulletInterceptHooked = false
 
 local function setXCSilentAimRequested(value)
     if sharedXCEnv then sharedXCEnv.XCSilentAimRequestedV25 = value == true end
@@ -825,6 +826,7 @@ end
 if sharedXCEnv then
     sharedXCEnv.XCPrepareSilentShotPayloadV23 = prepareXCSilentShotPayload
     sharedXCEnv.XCPrepareSilentSendPayloadV28 = function(data)
+        if xcBulletInterceptHooked then return data, false end
         return prepareXCSilentShotPayload(data, true)
     end
 end
@@ -1326,6 +1328,7 @@ end
 local function redirectXCNativeSilentShot(bullet, shot)
     -- Use a dedicated request flag: persistent v23/v24 payload wrappers may
     -- temporarily mask XCConfig.silentAimEnabled while calling the game.
+    if UserInputService.TouchEnabled then return shot end
     if not isXCSilentAimRequested() or type(shot) ~= "table"
         or typeof(shot.Origin) ~= "Vector3" then return shot end
     if type(bullet) ~= "table" or bullet.IsDestroyed or bullet.IsActive == false then return shot end
@@ -1352,8 +1355,8 @@ if sharedXCEnv then sharedXCEnv.XCNativeSilentRedirectV24 = redirectXCNativeSile
 
 function setupXCNativeSilentHook()
     if xcNativeSilentHooked then return true end
-    -- Mobile weapon controllers reject a replacement _performRaycast result
-    -- and cancel firing. Phones use the late Send payload hook instead.
+    -- Mobile weapon controllers reject a replacement _performRaycast result.
+    -- Phones use the argument-level bullet interceptor v29 instead.
     if UserInputService.TouchEnabled then return false end
     local installed = false
     pcall(function()
@@ -1393,6 +1396,128 @@ function setupXCNativeSilentHook()
         installed = bulletModule._performRaycast ~= originalRaycast
     end)
     xcNativeSilentHooked = installed
+    return installed
+end
+
+-- Mobile bullet interception v29. The game still executes its original
+-- Bullet._performRaycast and builds the canonical shot/Hits payload. XC only
+-- redirects the ray arguments while that exact local bullet is being cast.
+local function beginXCBulletInterceptV29(bullet)
+    if not isXCSilentAimRequested() or type(bullet) ~= "table"
+        or bullet.IsDestroyed or bullet.IsActive == false then return nil end
+    local weapon = bullet.Weapon
+    if not weapon or (weapon.Player and weapon.Player ~= player) then return nil end
+
+    local targetPart = getSilentAimTarget and getSilentAimTarget() or silentAimResolved
+    if not targetPart or not targetPart.Parent then return nil end
+    local chance = math.clamp(tonumber(XCConfig.silentAimHitChance) or 100, 0, 100)
+    if chance < 100 and math.random(1, 100) > chance then return nil end
+
+    return {
+        Thread = coroutine.running(),
+        Target = targetPart,
+        AimPosition = targetPart.Position,
+        Direction = nil,
+        Used = false,
+    }
+end
+
+if sharedXCEnv then sharedXCEnv.XCBeginBulletInterceptV29 = beginXCBulletInterceptV29 end
+
+local xcBulletInterceptContextV29 = nil
+local function getXCActiveBulletInterceptV29()
+    local context = sharedXCEnv and sharedXCEnv.XCBulletInterceptContextV29 or xcBulletInterceptContextV29
+    if not context then return nil end
+    local thread = coroutine.running()
+    if context.Thread and context.Thread ~= thread then return nil end
+    return context
+end
+
+local function redirectXCRaycastArgumentsV29(origin, direction, firstCast)
+    local context = getXCActiveBulletInterceptV29()
+    if not context or typeof(origin) ~= "Vector3" or typeof(direction) ~= "Vector3"
+        or direction.Magnitude <= 0.001 then return direction end
+    if firstCast and context.Used then return direction end
+
+    local delta = context.AimPosition - origin
+    if delta.Magnitude <= 0.05 then return direction end
+    local redirectedUnit = delta.Unit
+    if firstCast then
+        context.Used = true
+        context.Direction = redirectedUnit
+    elseif context.Direction then
+        redirectedUnit = context.Direction
+    end
+    return redirectedUnit * direction.Magnitude
+end
+
+function setupXCBulletInterceptHookV29()
+    if xcBulletInterceptHooked then return true end
+    if not UserInputService.TouchEnabled or type(hookfunction) ~= "function" then return false end
+    local installed = false
+    pcall(function()
+        local components = ReplicatedStorage:FindFirstChild("Components")
+        local weaponFolder = components and components:FindFirstChild("Weapon")
+        local classes = weaponFolder and weaponFolder:FindFirstChild("Classes")
+        local bulletScript = classes and classes:FindFirstChild("Bullet")
+        local sharedFolder = ReplicatedStorage:FindFirstChild("Shared")
+        local raycastScript = sharedFolder and sharedFolder:FindFirstChild("Raycast")
+        if not bulletScript or not raycastScript then return end
+
+        local bulletModule = require(bulletScript)
+        local raycastModule = require(raycastScript)
+        if type(bulletModule) ~= "table" or type(bulletModule._performRaycast) ~= "function"
+            or type(raycastModule) ~= "table" or type(raycastModule.cast) ~= "function"
+            or type(raycastModule.castThrough) ~= "function" then return end
+
+        if not (sharedXCEnv and sharedXCEnv.XCRaycastArgumentHooksV29) then
+            local oldCast
+            oldCast = hookfunction(raycastModule.cast, function(origin, direction, ...)
+                direction = redirectXCRaycastArgumentsV29(origin, direction, true)
+                return oldCast(origin, direction, ...)
+            end)
+
+            local oldCastThrough
+            oldCastThrough = hookfunction(raycastModule.castThrough, function(origin, direction, ...)
+                direction = redirectXCRaycastArgumentsV29(origin, direction, false)
+                return oldCastThrough(origin, direction, ...)
+            end)
+            if sharedXCEnv then sharedXCEnv.XCRaycastArgumentHooksV29 = true end
+        end
+
+        if rawget(bulletModule, "__XCBulletInterceptV29") then
+            installed = true
+            return
+        end
+
+        local originalPerformRaycast = bulletModule._performRaycast
+        bulletModule._performRaycast = function(self, spread, ...)
+            local begin = sharedXCEnv and sharedXCEnv.XCBeginBulletInterceptV29 or beginXCBulletInterceptV29
+            local okContext, context = pcall(begin, self)
+            if not okContext then context = nil end
+            local previous = sharedXCEnv and sharedXCEnv.XCBulletInterceptContextV29 or xcBulletInterceptContextV29
+            xcBulletInterceptContextV29 = context
+            if sharedXCEnv then sharedXCEnv.XCBulletInterceptContextV29 = context end
+
+            local results = table.pack(pcall(originalPerformRaycast, self, spread, ...))
+            xcBulletInterceptContextV29 = previous
+            if sharedXCEnv then sharedXCEnv.XCBulletInterceptContextV29 = previous end
+            if not results[1] then error(results[2], 0) end
+
+            local shot = results[2]
+            if context and context.Used and context.Direction and type(shot) == "table" then
+                local redirectedShot = table.clone(shot)
+                redirectedShot.Direction = context.Direction
+                results[2] = redirectedShot
+                silentAimResolved = context.Target
+                if registerXCLocalHitCandidate then registerXCLocalHitCandidate(context.Target) end
+            end
+            return table.unpack(results, 2, results.n)
+        end
+        rawset(bulletModule, "__XCBulletInterceptV29", true)
+        installed = true
+    end)
+    xcBulletInterceptHooked = installed
     return installed
 end
 
@@ -3761,6 +3886,10 @@ function cleanup()
     if genv and type(genv.XCRestoreWeaponState) == "function" then
         pcall(genv.XCRestoreWeaponState)
         genv.XCRestoreWeaponState = nil
+    end
+    if sharedXCEnv then
+        sharedXCEnv.XCSilentAimRequestedV25 = false
+        sharedXCEnv.XCBulletInterceptContextV29 = nil
     end
 
     pcall(function() if targetGui:FindFirstChild("XCScreenGui") then targetGui.XCScreenGui:Destroy() end end)
@@ -8931,6 +9060,10 @@ end)
 local xcSilentSendHooked = false
 function setupXCSilentSendHook()
     if xcSilentSendHooked then return end
+    if xcBulletInterceptHooked then
+        xcSilentSendHooked = true
+        return
+    end
     -- InventoryController is the authoritative and safer interception point.
     -- Never install a second random/changing pass for the same shot.
     if bloxStrikeShootHooked and not UserInputService.TouchEnabled then return end
@@ -8996,6 +9129,7 @@ end
 -- ==========================================
 pcall(setupSilentAimHooks)
 pcall(setupXCNativeSilentHook)
+pcall(setupXCBulletInterceptHookV29)
 pcall(setupBloxStrikeShootHook)
 pcall(setupXCCharacterInputHook)
 task.spawn(function()
@@ -9009,7 +9143,7 @@ task.spawn(function()
     end
 end)
 task.spawn(function()
-    while xcSessionActive() and not xcSilentSendHooked
+    while xcSessionActive() and not xcSilentSendHooked and not xcBulletInterceptHooked
         and (UserInputService.TouchEnabled or not bloxStrikeShootHooked) do
         if XCConfig.silentAimEnabled and lazyFeatureRequests.silentFallback
             and (UserInputService.TouchEnabled or not bloxStrikeShootHooked) then
