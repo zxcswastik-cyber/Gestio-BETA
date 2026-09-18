@@ -367,9 +367,14 @@ local Workspace = game:GetService("Workspace")
 local Stats = game:GetService("Stats")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local VirtualInputManager = nil
-pcall(function()
-    VirtualInputManager = game:GetService("VirtualInputManager")
-end)
+-- A synthetic mouse event changes Roblox's preferred input to desktop and
+-- makes Blox Strike remove its mobile buttons. Never create that path on a
+-- touch device; mobile combat uses native weapon methods instead.
+if not UserInputService.TouchEnabled then
+    pcall(function()
+        VirtualInputManager = game:GetService("VirtualInputManager")
+    end)
+end
 
 -- ==========================================
 -- CLIENT ENVIRONMENT VALIDATION XC
@@ -1160,7 +1165,11 @@ end
 function setupSilentAimHooks()
     if silentAimHooked and silentAimCamHooked then return end
 
-    if not silentAimHooked and hookmetamethod then
+    if not silentAimHooked and UserInputService.TouchEnabled then
+        -- Native bullet redirection is used on mobile. Do not create/access a
+        -- Mouse object because some mobile executors report it as desktop input.
+        silentAimHooked = true
+    elseif not silentAimHooked and hookmetamethod then
         pcall(function()
             local mouse = player:GetMouse()
             local oldIndex
@@ -4842,7 +4851,23 @@ function triggerbotFire(vp)
             return
         end
 
-        if VirtualInputManager then
+        -- Blox Strike keeps weapons outside Roblox Tool instances. Invoke its
+        -- native shoot method so mobile input mode is not changed to Mouse.
+        local nativeFired = false
+        pcall(function()
+            local controllers = ReplicatedStorage:FindFirstChild("Controllers")
+            local scriptObject = controllers and controllers:FindFirstChild("InventoryController")
+            local inventory = scriptObject and require(scriptObject)
+            local getter = inventory and inventory.peekCurrentEquippedForMovement
+            local weapon = type(getter) == "function" and getter() or nil
+            if weapon and type(weapon.shoot) == "function" then
+                weapon:shoot()
+                nativeFired = true
+            end
+        end)
+        if nativeFired then return end
+
+        if VirtualInputManager and not UserInputService.TouchEnabled then
             VirtualInputManager:SendMouseButtonEvent(vp.X * 0.5, vp.Y * 0.5, 0, true, game, 0)
             task.wait(0.01)
             VirtualInputManager:SendMouseButtonEvent(vp.X * 0.5, vp.Y * 0.5, 0, false, game, 0)
@@ -5837,11 +5862,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
                 lastTriggerTick = tick()
                 pcall(function()
                     local vp = camera.ViewportSize
-                    if VirtualInputManager then
-                        VirtualInputManager:SendMouseButtonEvent(vp.X * 0.5, vp.Y * 0.5, 0, true, game, 0)
-                        task.wait(0.01)
-                        VirtualInputManager:SendMouseButtonEvent(vp.X * 0.5, vp.Y * 0.5, 0, false, game, 0)
-                    end
+                    triggerbotFire(vp)
                 end)
             end
         end
@@ -8575,7 +8596,6 @@ local function restoreXCNativeFireRate(exceptWeapon)
                 if type(properties) == "table" then
                     if type(setreadonly) == "function" then setreadonly(properties, false) end
                     rawset(properties, "FireRate", record.OriginalFireRate)
-                    rawset(properties, "Automatic", record.OriginalAutomatic)
                     if type(setreadonly) == "function" and record.Readonly ~= nil then
                         setreadonly(properties, record.Readonly)
                     end
@@ -8616,19 +8636,23 @@ local function applyXCNativeFireRate()
     local requested = math.max(tonumber(XCConfig.fireRate) or 0.03, 0.01)
     local originalRate = tonumber(record.OriginalFireRate) or requested
     local stableRate = math.max(requested, 0.03, originalRate * 0.40)
+    if UserInputService.TouchEnabled then
+        -- Mobile uses the native hold-to-fire loop below. Leave every weapon
+        -- property byte-for-byte unchanged so the game's touch HUD never
+        -- rebuilds itself as a desktop control scheme.
+        record.Rate = stableRate
+        return true
+    end
     if record.Rate == stableRate
-        and rawget(record.Properties, "FireRate") == stableRate
-        and rawget(record.Properties, "Automatic") == true then
+        and rawget(record.Properties, "FireRate") == stableRate then
         return true
     end
 
-    -- Mutate the existing Properties table instead of replacing it. Mobile
-    -- weapon controls retain this exact table reference; replacing it causes
-    -- their fire/aim/reload buttons to detach and disappear.
+    -- Change only cooldown. Do not change Automatic: Blox Strike rebuilds its
+    -- control scheme when this property changes and can select the desktop HUD.
     local properties = record.Properties
     if type(setreadonly) == "function" then setreadonly(properties, false) end
     rawset(properties, "FireRate", stableRate)
-    rawset(properties, "Automatic", true)
     if type(setreadonly) == "function" and record.Readonly ~= nil then
         setreadonly(properties, record.Readonly)
     end
@@ -8722,7 +8746,7 @@ task.spawn(function()
                     -- Undo the broad legacy getgc writer once the equipped
                     -- weapon can be modified through its native Properties.
                     if #xcFireRateObjects > 0 then restoreXCFireRates() end
-                else
+                elseif not UserInputService.TouchEnabled then
                     if not xcFireRateScanDone then scanXCFireRateObjects() end
                     if #xcFireRateObjects == 0 then
                         -- The game can create weapon data after injection/respawn.
@@ -8730,6 +8754,9 @@ task.spawn(function()
                         scanXCFireRateObjects()
                     end
                     applyXCFireRate()
+                else
+                    -- Never use broad getgc property writes on mobile.
+                    restoreXCFireRates()
                 end
             elseif wasEnabled then
                 restoreXCNativeFireRate(nil)
@@ -8737,6 +8764,39 @@ task.spawn(function()
             end
             wasEnabled = XCConfig.fireRateEnabled
         end)
+    end
+end)
+
+-- Native hold-to-fire for semi-automatic weapons. This replaces the old
+-- Automatic property mutation without generating mouse input on phones.
+task.spawn(function()
+    local heldLast = false
+    local heldWeapon = nil
+    local nextShot = 0
+    while xcSessionActive() and task.wait(0.01) do
+        if not (XCConfig.fireRateEnabled and lazyFeatureRequests.fireRate)
+            or not resolveXCFireRateGetWeapon() then
+            heldLast, heldWeapon, nextShot = false, nil, 0
+            continue
+        end
+        local okWeapon, weapon = pcall(xcFireRateGetWeapon)
+        local record = okWeapon and weapon and xcFireRateWeaponRecords[weapon] or nil
+        local held = record and record.OriginalAutomatic ~= true and weapon.IsFireHeld == true
+        if not held then
+            heldLast, heldWeapon, nextShot = false, weapon, 0
+            continue
+        end
+        if weapon ~= heldWeapon or not heldLast then
+            heldWeapon, heldLast = weapon, true
+            nextShot = os.clock() + math.max(tonumber(record.Rate) or 0.08, 0.03)
+            continue
+        end
+        local now = os.clock()
+        if now >= nextShot and type(weapon.shoot) == "function"
+            and not weapon.IsShooting and not weapon.IsBurstShooting then
+            nextShot = now + math.max(tonumber(record.Rate) or 0.08, 0.03)
+            pcall(function() weapon:shoot() end)
+        end
     end
 end)
 
