@@ -827,17 +827,16 @@ local function prepareXCSilentShotPayload(data, forceSendStage)
 end
 
 if sharedXCEnv then
-    sharedXCEnv.XCPrepareSilentShotPayloadV23 = prepareXCSilentShotPayload
+    -- v35: persistent legacy wrappers may survive reinjection. Keep their
+    -- callbacks inert so Silent Aim is driven only by Bullet._performRaycast.
+    sharedXCEnv.XCPrepareSilentShotPayloadV23 = function(data) return data, false end
     sharedXCEnv.XCPrepareSilentSendPayloadV28 = function(data)
-        if xcNativeSilentHooked or xcBulletInterceptHooked or xcMobileCameraSilentHooked then return data, false end
-        return prepareXCSilentShotPayload(data, true)
+        return data, false
     end
 end
 
 local function dispatchXCPrepareSilentShotPayload(data)
-    local prepare = sharedXCEnv and sharedXCEnv.XCPrepareSilentShotPayloadV23 or prepareXCSilentShotPayload
-    if type(prepare) ~= "function" then return data, false end
-    return prepare(data)
+    return data, false
 end
 
 -- Legacy XC hooks remain alive after reinjection. Disable their old in-place
@@ -1414,8 +1413,8 @@ end
 
 -- Native Blox Strike Silent Aim path. Redirecting Bullet._performRaycast keeps
 -- Silent Aim independent from character LookYaw (Spin/Jitter anti-aim) and
--- from the weapon's FireRate. The InventoryController payload hook below is
--- retained only for game versions where these weapon modules are unavailable.
+-- from the weapon's FireRate. No Camera, Mouse or Send payload fallback is
+-- allowed: if this native module is unavailable, Silent Aim stays in WAIT.
 local xcNativeRaycast = nil
 local xcNativeGetRayIgnore = nil
 
@@ -1466,22 +1465,96 @@ local function castXCNativeSilentShot(origin, direction, properties)
     return result
 end
 
+-- ScriptAdap target pass, executed only from the real Bullet raycast. The
+-- native ray module is also used for visibility so target selection and the
+-- weapon's collision rules cannot disagree.
+local function selectXCNativeSilentTarget(origin, properties)
+    local cam = Workspace.CurrentCamera or camera
+    if not cam or typeof(origin) ~= "Vector3" or not xcNativeRaycast
+        or type(xcNativeRaycast.cast) ~= "function" or type(xcNativeGetRayIgnore) ~= "function" then
+        return nil
+    end
+
+    local center = cam.ViewportSize * 0.5
+    local radiusLimit = math.max(1, tonumber(XCConfig.silentAimFov) or 150)
+    local range = math.max(1, tonumber(properties and properties.Range) or 500)
+    local ignore = xcNativeGetRayIgnore()
+    local candidates = {}
+
+    for _, targetPlayer in ipairs(Players:GetPlayers()) do
+        if targetPlayer == player then continue end
+        if XCConfig.silentAimTeamCheck and isAlly(targetPlayer) then continue end
+        local character = targetPlayer.Character
+        local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+        if not isEntityAlive(character, humanoid) then continue end
+        local part = character:FindFirstChild(XCConfig.silentAimAimHead and "Head" or "HumanoidRootPart")
+            or character:FindFirstChild("UpperTorso") or character:FindFirstChild("Torso")
+        if not part or not part:IsA("BasePart") then continue end
+
+        -- ScriptAdap aims at the live part position. Applying prediction before
+        -- the visibility cast can move the point outside the character and make
+        -- every valid target look obstructed.
+        local position = part.Position
+        local point, onScreen = cam:WorldToViewportPoint(position)
+        local distance = (position - origin).Magnitude
+        if onScreen and point.Z > 0 and distance > 0.05 and distance <= range then
+            local radius = (Vector2.new(point.X, point.Y) - center).Magnitude
+            if radius <= radiusLimit then
+                candidates[#candidates + 1] = {
+                    Player = targetPlayer,
+                    Character = character,
+                    Part = part,
+                    Position = position,
+                    Radius = radius,
+                }
+            end
+        end
+    end
+
+    table.sort(candidates, function(a, b)
+        if a.Radius ~= b.Radius then return a.Radius < b.Radius end
+        return a.Player.UserId < b.Player.UserId
+    end)
+
+    for _, candidate in ipairs(candidates) do
+        local offset = candidate.Position - origin
+        local first = xcNativeRaycast.cast(origin, offset.Unit * (offset.Magnitude + 0.05), nil, ignore)
+        local firstInstance = type(first) == "table" and (first.instance or first.Instance) or nil
+        local visible = not firstInstance or (typeof(firstInstance) == "Instance"
+            and (firstInstance == candidate.Part or firstInstance:IsDescendantOf(candidate.Character)))
+
+        if visible then return candidate end
+        if XCConfig.wallbangEnabled and not XCConfig.silentAimVisibleCheck then
+            local penetrated = castXCNativeSilentShot(origin, offset.Unit, properties or {})
+            if penetrated and type(penetrated.Hits) == "table" then
+                for _, impact in ipairs(penetrated.Hits) do
+                    local instance = impact.Instance or impact.instance
+                    if typeof(instance) == "Instance" and not impact.Exit
+                        and instance:IsDescendantOf(candidate.Character) then
+                        return candidate
+                    end
+                end
+            end
+        end
+    end
+    return nil
+end
+
 local function redirectXCNativeSilentShot(bullet, shot)
-    -- Use a dedicated request flag: persistent v23/v24 payload wrappers may
-    -- temporarily mask XCConfig.silentAimEnabled while calling the game.
-    if UserInputService.TouchEnabled then return shot end
     if not isXCSilentAimRequested() or type(shot) ~= "table"
         or typeof(shot.Origin) ~= "Vector3" then return shot end
-    if type(bullet) ~= "table" or bullet.IsDestroyed or bullet.IsActive == false then return shot end
+    if type(bullet) ~= "table" or bullet.IsDestroyed or not bullet.IsActive then return shot end
     local weapon = bullet.Weapon
-    if weapon and weapon.Player and weapon.Player ~= player then return shot end
+    if not weapon or weapon.Player ~= player then return shot end
 
-    local targetPart = getSilentAimTarget and getSilentAimTarget() or silentAimResolved
-    if not targetPart or not targetPart.Parent then return shot end
     local chance = math.clamp(tonumber(XCConfig.silentAimHitChance) or 100, 0, 100)
     if chance < 100 and math.random(1, 100) > chance then return shot end
 
-    local aimPosition = getKinematicAimPosition(targetPart)
+    local target = selectXCNativeSilentTarget(shot.Origin, bullet.Properties or {})
+    local targetPart = target and target.Part
+    if not targetPart or not targetPart.Parent then return shot end
+
+    local aimPosition = target.Position
     local offset = aimPosition - shot.Origin
     if offset.Magnitude < 0.05 then return shot end
 
@@ -1492,7 +1565,12 @@ local function redirectXCNativeSilentShot(bullet, shot)
     return redirected
 end
 
-if sharedXCEnv then sharedXCEnv.XCNativeSilentRedirectV24 = redirectXCNativeSilentShot end
+if sharedXCEnv then
+    -- Disable persistent pre-v36 redirectors; the new wrapper below owns the
+    -- only per-bullet redirect and performs Hit Chance exactly once.
+    sharedXCEnv.XCNativeSilentRedirectV24 = function(_, shot) return shot end
+    sharedXCEnv.XCNativeSilentRedirectV36 = redirectXCNativeSilentShot
+end
 
 function setupXCNativeSilentHook()
     if xcNativeSilentHooked then return true end
@@ -1520,7 +1598,7 @@ function setupXCNativeSilentHook()
 
         xcNativeRaycast = raycastModule
         xcNativeGetRayIgnore = getRayIgnore
-        if rawget(bulletModule, "__XCSilentRayHookV24") then
+        if rawget(bulletModule, "__XCSilentRayHookV36") then
             installed = true
             return
         end
@@ -1528,12 +1606,12 @@ function setupXCNativeSilentHook()
         local originalRaycast = bulletModule._performRaycast
         bulletModule._performRaycast = function(self, spread, ...)
             local shot = originalRaycast(self, spread, ...)
-            local redirect = sharedXCEnv and sharedXCEnv.XCNativeSilentRedirectV24 or redirectXCNativeSilentShot
+            local redirect = sharedXCEnv and sharedXCEnv.XCNativeSilentRedirectV36 or redirectXCNativeSilentShot
             if type(redirect) ~= "function" then return shot end
             local ok, redirected = pcall(redirect, self, shot)
             return ok and redirected or shot
         end
-        rawset(bulletModule, "__XCSilentRayHookV24", true)
+        rawset(bulletModule, "__XCSilentRayHookV36", true)
         installed = bulletModule._performRaycast ~= originalRaycast
     end)
     xcNativeSilentHooked = installed
@@ -4002,6 +4080,8 @@ end))
 -- CLEANUP ROUTINES
 -- ==========================================
 function cleanup()
+    XCConfig.silentAimEnabled = false
+    setXCSilentAimRequested(false)
     pcall(restoreXCKnifeModel)
     setXCStreamerMode(false)
     stopXCCameraMode()
@@ -7538,7 +7618,7 @@ function buildXCUI()
                 return "FALL", Color3.fromRGB(220, 170, 72)
             end
             if not xcCharacterInputHook.Ready then return "WAIT", Color3.fromRGB(220, 170, 72) end
-        elseif key == "silentAimEnabled" and not bloxStrikeShootHooked and not silentAimHooked then
+        elseif key == "silentAimEnabled" and not xcNativeSilentHooked then
             return "WAIT", Color3.fromRGB(220, 170, 72)
         end
         return "ON", C.Lime
@@ -9451,29 +9531,9 @@ end
 -- ENGINE LAUNCH / XC VISUAL EXTENSION
 -- ==========================================
 pcall(setupXCNativeSilentHook)
-pcall(setupSilentAimHooks)
-pcall(setupXCBulletInterceptHookV29)
 pcall(setupBloxStrikeShootHook)
 pcall(setupXCCharacterInputHook)
 pcall(setupXCCustomHandsHook)
-if not xcNativeSilentHooked then
-    pcall(wrapXCEquippedShootV31)
-    task.spawn(function()
-        while xcSessionActive() and not xcNativeSilentHooked do
-            pcall(wrapXCEquippedShootV31)
-            task.wait(0.20)
-        end
-    end)
-end
-if UserInputService.TouchEnabled and not xcNativeSilentHooked then
-    pcall(setupXCSilentSendHook)
-    task.spawn(function()
-        while xcSessionActive() and not xcSilentSendHooked do
-            task.wait(1.0)
-            pcall(setupXCSilentSendHook)
-        end
-    end)
-end
 task.spawn(function()
     while xcSessionActive() do
         if not xcCharacterInputHook.Ready and (XCConfig.antiAimEnabled or XCConfig.bunnyHopEnabled) then
@@ -9485,15 +9545,12 @@ task.spawn(function()
     end
 end)
 task.spawn(function()
-    while xcSessionActive() and not xcNativeSilentHooked and not xcSilentSendHooked
-        and not xcBulletInterceptHooked and not xcMobileCameraSilentHooked
-        and (UserInputService.TouchEnabled or not bloxStrikeShootHooked) do
-        if XCConfig.silentAimEnabled and lazyFeatureRequests.silentFallback
-            and (UserInputService.TouchEnabled or not bloxStrikeShootHooked) then
-            setupXCSilentSendHook()
-            if not xcSilentSendHooked then task.wait(1.5) end
+    while xcSessionActive() and not xcNativeSilentHooked do
+        if XCConfig.silentAimEnabled then
+            setupXCNativeSilentHook()
+            if not xcNativeSilentHooked then task.wait(1.0) end
         else
-            task.wait(0.25)
+            task.wait(0.5)
         end
     end
 end)
