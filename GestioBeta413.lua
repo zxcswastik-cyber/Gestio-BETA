@@ -730,12 +730,15 @@ end
 -- the following rounds and can make the weapon stop after a short burst.
 -- XC therefore copies only the mutable path and leaves the game's source table
 -- completely untouched.
-local function prepareXCSilentShotPayload(data)
+local function prepareXCSilentShotPayload(data, forceSendStage)
     -- When the native bullet ray hook is available, the shot has already been
     -- redirected before Fire Rate / InventoryController serialize it. Do not
     -- perform a second target roll or payload rewrite here.
-    if xcNativeSilentHooked then return data, false end
-    if not XCConfig.silentAimEnabled
+    if not forceSendStage and (xcNativeSilentHooked or UserInputService.TouchEnabled) then
+        return data, false
+    end
+    local silentEnabled = forceSendStage and isXCSilentAimRequested() or XCConfig.silentAimEnabled
+    if not silentEnabled
         or type(data) ~= "table"
         or type(data.Bullets) ~= "table" then
         return data, false
@@ -748,7 +751,15 @@ local function prepareXCSilentShotPayload(data)
     if chance < 100 and math.random(1, 100) > chance then return data, false end
 
     local camPos, aimPos = nil, nil
-    if silentAimCamPosAim then camPos, aimPos = silentAimCamPosAim(targetPart) end
+    if forceSendStage then
+        local activeCamera = Workspace.CurrentCamera or camera
+        if activeCamera then
+            camPos = activeCamera.CFrame.Position
+            aimPos = getKinematicAimPosition(targetPart)
+        end
+    elseif silentAimCamPosAim then
+        camPos, aimPos = silentAimCamPosAim(targetPart)
+    end
     if not camPos or not aimPos then return data, false end
 
     local shotData = {}
@@ -813,6 +824,9 @@ end
 
 if sharedXCEnv then
     sharedXCEnv.XCPrepareSilentShotPayloadV23 = prepareXCSilentShotPayload
+    sharedXCEnv.XCPrepareSilentSendPayloadV28 = function(data)
+        return prepareXCSilentShotPayload(data, true)
+    end
 end
 
 local function dispatchXCPrepareSilentShotPayload(data)
@@ -1338,6 +1352,9 @@ if sharedXCEnv then sharedXCEnv.XCNativeSilentRedirectV24 = redirectXCNativeSile
 
 function setupXCNativeSilentHook()
     if xcNativeSilentHooked then return true end
+    -- Mobile weapon controllers reject a replacement _performRaycast result
+    -- and cancel firing. Phones use the late Send payload hook instead.
+    if UserInputService.TouchEnabled then return false end
     local installed = false
     pcall(function()
         local components = ReplicatedStorage:FindFirstChild("Components")
@@ -8916,7 +8933,7 @@ function setupXCSilentSendHook()
     if xcSilentSendHooked then return end
     -- InventoryController is the authoritative and safer interception point.
     -- Never install a second random/changing pass for the same shot.
-    if bloxStrikeShootHooked then return end
+    if bloxStrikeShootHooked and not UserInputService.TouchEnabled then return end
     if type(getgc) ~= "function" or type(hookfunction) ~= "function" then return end
 
     local sendFunc = nil
@@ -8941,7 +8958,7 @@ function setupXCSilentSendHook()
     end)
 
     if type(sendFunc) ~= "function" then return end
-    if shootContainer and rawget(shootContainer, "__XCSilentSendHookV23") then
+    if shootContainer and rawget(shootContainer, "__XCSilentSendHookV28") then
         xcSilentSendHooked = true
         return
     end
@@ -8950,7 +8967,12 @@ function setupXCSilentSendHook()
     oldSend = hookfunction(sendFunc, function(...)
         local args = {...}
         if type(args[1]) == "table" then
-            args[1] = dispatchXCPrepareSilentShotPayload(args[1])
+            local prepare = sharedXCEnv and sharedXCEnv.XCPrepareSilentSendPayloadV28
+            local okPrepare, prepared = pcall(function()
+                if type(prepare) == "function" then return prepare(args[1]) end
+                return prepareXCSilentShotPayload(args[1], true)
+            end)
+            if okPrepare and type(prepared) == "table" then args[1] = prepared end
         end
 
         -- Suppress a persistent pre-v23 Send hook while it forwards our copied
@@ -8965,6 +8987,7 @@ function setupXCSilentSendHook()
 
     if shootContainer then rawset(shootContainer, "__XCSilentSendHooked", true) end
     if shootContainer then rawset(shootContainer, "__XCSilentSendHookV23", true) end
+    if shootContainer then rawset(shootContainer, "__XCSilentSendHookV28", true) end
     xcSilentSendHooked = true
 end
 
@@ -8986,8 +9009,10 @@ task.spawn(function()
     end
 end)
 task.spawn(function()
-    while xcSessionActive() and not xcSilentSendHooked and not bloxStrikeShootHooked do
-        if XCConfig.silentAimEnabled and lazyFeatureRequests.silentFallback and not bloxStrikeShootHooked then
+    while xcSessionActive() and not xcSilentSendHooked
+        and (UserInputService.TouchEnabled or not bloxStrikeShootHooked) do
+        if XCConfig.silentAimEnabled and lazyFeatureRequests.silentFallback
+            and (UserInputService.TouchEnabled or not bloxStrikeShootHooked) then
             setupXCSilentSendHook()
             if not xcSilentSendHooked then task.wait(1.5) end
         else
