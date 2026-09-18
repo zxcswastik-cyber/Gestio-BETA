@@ -96,9 +96,6 @@ local XCConfig = {
     headDotEnabled = false,
     tracersEnabled = false,
     grenadeEspEnabled = false,
-    grenadeDangerZonesEnabled = false,
-    soundPositionEspEnabled = false,
-    weaponEspEnabled = false,
     jumpCircleEnabled = false,
     antiFlashEnabled = false,
     noSmokeEnabled = false,
@@ -227,9 +224,6 @@ local XCConfig = {
     showGrenadePath = true,
     showMolotovRadius = true,
     showSmokeRadius = true,
-    grenadeDangerOpacity = 0.82,
-    soundEspDuration = 1.15,
-    soundEspMaxDist = 1200,
 
     espMaxDist = 3000,
     espTextSize = 8.5,
@@ -367,14 +361,9 @@ local Workspace = game:GetService("Workspace")
 local Stats = game:GetService("Stats")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local VirtualInputManager = nil
--- A synthetic mouse event changes Roblox's preferred input to desktop and
--- makes Blox Strike remove its mobile buttons. Never create that path on a
--- touch device; mobile combat uses native weapon methods instead.
-if not UserInputService.TouchEnabled then
-    pcall(function()
-        VirtualInputManager = game:GetService("VirtualInputManager")
-    end)
-end
+pcall(function()
+    VirtualInputManager = game:GetService("VirtualInputManager")
+end)
 
 -- ==========================================
 -- CLIENT ENVIRONMENT VALIDATION XC
@@ -681,21 +670,6 @@ local hitmarkerPendingHits = {}
 local silentAimHooked = false
 local silentAimCamHooked = false
 local bloxStrikeShootHooked = false
-local xcNativeSilentHooked = false
-local xcBulletInterceptHooked = false
-local xcMobileCameraSilentHooked = false
-
-local function setXCSilentAimRequested(value)
-    if sharedXCEnv then sharedXCEnv.XCSilentAimRequestedV25 = value == true end
-end
-
-local function isXCSilentAimRequested()
-    if sharedXCEnv and sharedXCEnv.XCSilentAimRequestedV25 ~= nil then
-        return sharedXCEnv.XCSilentAimRequestedV25 == true
-    end
-    return XCConfig.silentAimEnabled == true
-end
-setXCSilentAimRequested(XCConfig.silentAimEnabled)
 
 -- The InventoryController hook can survive reinjection. Keep its callback in
 -- getgenv so a persistent wrapper always forwards shots to the current XC
@@ -725,128 +699,6 @@ end
 local function dispatchXCLocalHitPayload(data)
     local recorder = sharedXCEnv and sharedXCEnv.XCRecordLocalHitPayload or recordXCLocalHitPayload
     if type(recorder) == "function" then recorder(data) end
-end
-
--- Build a per-shot payload for Silent Aim. InventoryController reuses parts of
--- its shot table for automatic fire, so editing Bullets/Hits in place poisons
--- the following rounds and can make the weapon stop after a short burst.
--- XC therefore copies only the mutable path and leaves the game's source table
--- completely untouched.
-local function prepareXCSilentShotPayload(data, forceSendStage)
-    -- When the native bullet ray hook is available, the shot has already been
-    -- redirected before Fire Rate / InventoryController serialize it. Do not
-    -- perform a second target roll or payload rewrite here.
-    if not forceSendStage and (xcNativeSilentHooked or UserInputService.TouchEnabled) then
-        return data, false
-    end
-    local silentEnabled = forceSendStage and isXCSilentAimRequested() or XCConfig.silentAimEnabled
-    if not silentEnabled
-        or type(data) ~= "table"
-        or type(data.Bullets) ~= "table" then
-        return data, false
-    end
-
-    local targetPart = getSilentAimTarget and getSilentAimTarget() or silentAimResolved
-    if not targetPart or not targetPart.Parent then return data, false end
-
-    local chance = math.clamp(tonumber(XCConfig.silentAimHitChance) or 100, 0, 100)
-    if chance < 100 and math.random(1, 100) > chance then return data, false end
-
-    local camPos, aimPos = nil, nil
-    if forceSendStage then
-        local activeCamera = Workspace.CurrentCamera or camera
-        if activeCamera then
-            camPos = activeCamera.CFrame.Position
-            aimPos = getKinematicAimPosition(targetPart)
-        end
-    elseif silentAimCamPosAim then
-        camPos, aimPos = silentAimCamPosAim(targetPart)
-    end
-    if not camPos or not aimPos then return data, false end
-
-    local shotData = {}
-    for key, value in pairs(data) do shotData[key] = value end
-    local shotBullets = {}
-    shotData.Bullets = shotBullets
-
-    for key, bullet in pairs(data.Bullets) do
-        if type(bullet) ~= "table" then
-            shotBullets[key] = bullet
-        else
-            local shotBullet = {}
-            for bulletKey, value in pairs(bullet) do shotBullet[bulletKey] = value end
-            shotBullets[key] = shotBullet
-
-            local origin = bullet.Origin or bullet.StartingPoint or bullet.Position or camPos
-            if typeof(origin) == "CFrame" then origin = origin.Position end
-            if typeof(origin) ~= "Vector3" then origin = camPos end
-
-            local delta = aimPos - origin
-            if delta.Magnitude > 0.001 then
-                -- Preserve the direction magnitude expected by the weapon. Some
-                -- guns use a unit vector while others store ray distance here.
-                if typeof(bullet.Direction) == "Vector3" then
-                    local magnitude = bullet.Direction.Magnitude
-                    shotBullet.Direction = delta.Unit * (magnitude > 0.001 and magnitude or 1)
-                end
-                if typeof(bullet.Ray) == "Ray" then
-                    local magnitude = bullet.Ray.Direction.Magnitude
-                    shotBullet.Ray = Ray.new(bullet.Ray.Origin, delta.Unit * magnitude)
-                end
-            end
-
-            if type(bullet.Hits) == "table" then
-                local shotHits = {}
-                shotBullet.Hits = shotHits
-                for hitKey, hitData in pairs(bullet.Hits) do
-                    if type(hitData) == "table" then
-                        local shotHit = {}
-                        for field, value in pairs(hitData) do shotHit[field] = value end
-                        shotHit.Instance = targetPart
-                        shotHit.Position = targetPart.Position
-                        shotHits[hitKey] = shotHit
-                    else
-                        shotHits[hitKey] = hitData
-                    end
-                end
-            end
-
-            if XCConfig.wallbangEnabled then
-                shotBullet.Penetration = 9999
-                shotBullet.Wallbang = true
-                shotBullet.IgnoreEnvironment = true
-            end
-        end
-    end
-
-    silentAimResolved = targetPart
-    if registerXCLocalHitCandidate then registerXCLocalHitCandidate(targetPart) end
-    return shotData, true
-end
-
-if sharedXCEnv then
-    sharedXCEnv.XCPrepareSilentShotPayloadV23 = prepareXCSilentShotPayload
-    sharedXCEnv.XCPrepareSilentSendPayloadV28 = function(data)
-        if xcBulletInterceptHooked or xcMobileCameraSilentHooked then return data, false end
-        return prepareXCSilentShotPayload(data, true)
-    end
-end
-
-local function dispatchXCPrepareSilentShotPayload(data)
-    local prepare = sharedXCEnv and sharedXCEnv.XCPrepareSilentShotPayloadV23 or prepareXCSilentShotPayload
-    if type(prepare) ~= "function" then return data, false end
-    return prepare(data)
-end
-
--- Legacy XC hooks remain alive after reinjection. Disable their old in-place
--- rewriter only for the synchronous original call, then restore the UI toggle.
-local function callXCShotWithoutLegacyRewrite(callback, self, data, ...)
-    local silentWasEnabled = XCConfig.silentAimEnabled
-    XCConfig.silentAimEnabled = false
-    local results = table.pack(pcall(callback, self, data, ...))
-    XCConfig.silentAimEnabled = silentWasEnabled
-    if not results[1] then error(results[2], 0) end
-    return table.unpack(results, 2, results.n)
 end
 
 function setupBloxStrikeShootHook()
@@ -941,33 +793,95 @@ function setupBloxStrikeShootHook()
         local inventoryController = require(moduleScript)
         if type(inventoryController) ~= "table" then return end
         if type(inventoryController.ShootWeapon) ~= "function" then return end
-        if rawget(inventoryController, "__XCSilentAimSafeHookV25") then
+        if rawget(inventoryController, "__XCShootHooked") then
+            -- Upgrade an older persistent XC shoot hook without stacking the
+            -- silent-aim rewrite. This thin wrapper only dispatches the final
+            -- local shot payload to the current session's hit confirmer.
+            if not rawget(inventoryController, "__XCHitConfirmHookV18") then
+                local existingShootWeapon = inventoryController.ShootWeapon
+                inventoryController.ShootWeapon = function(self, data, ...)
+                    local results = table.pack(existingShootWeapon(self, data, ...))
+                    dispatchXCLocalHitPayload(data)
+                    return table.unpack(results, 1, results.n)
+                end
+                rawset(inventoryController, "__XCHitConfirmHookV18", true)
+            end
             bloxStrikeShootHooked = true
             return
         end
 
-        -- This also upgrades a persistent pre-v23 wrapper. The old wrapper is
-        -- called with Silent Aim temporarily disabled, so it cannot mutate the
-        -- fresh payload a second time.
         local originalShootWeapon = inventoryController.ShootWeapon
         inventoryController.ShootWeapon = function(self, data, ...)
-            -- Capture the user's real toggle before a persistent inner wrapper
-            -- masks XCConfig to suppress its obsolete payload mutation.
-            setXCSilentAimRequested(XCConfig.silentAimEnabled)
-            local shotData = dispatchXCPrepareSilentShotPayload(data)
+            if XCConfig.silentAimEnabled
+                and type(data) == "table"
+                and type(data.Bullets) == "table" then
+
+                -- Resolve the target at the actual weapon call instead of relying only
+                -- on the RenderStepped snapshot. This removes frame-rate dependent
+                -- target staleness for automatic weapons and multi-pellet shots.
+                local shotTarget = getSilentAimTarget and getSilentAimTarget() or nil
+                local shotAllowed = true
+
+                -- Hit chance is evaluated once per actual ShootWeapon invocation.
+                -- A single invocation may contain multiple pellets; they share the
+                -- same decision so one shot is not partially modified.
+                if XCConfig.silentAimHitChance < 100 then
+                    shotAllowed = math.random(1, 100) <= math.clamp(XCConfig.silentAimHitChance, 0, 100)
+                end
+
+                if shotTarget and shotAllowed then
+                    local camPos, aimPos = silentAimCamPosAim(shotTarget)
+                    if camPos and aimPos then
+                        for _, bullet in pairs(data.Bullets) do
+                            if type(bullet) == "table" then
+                                local origin = bullet.Origin
+                                    or bullet.StartingPoint
+                                    or bullet.Position
+                                    or camPos
+
+                                if typeof(origin) == "CFrame" then
+                                    origin = origin.Position
+                                end
+
+                                if typeof(origin) == "Vector3" then
+                                    local delta = aimPos - origin
+                                    if delta.Magnitude > 0.001 then
+                                        -- Keep XC's direction rewrite.
+                                        bullet.Direction = delta.Unit
+                                    end
+
+                                    -- XC-style authoritative hit payload rewrite.
+                                    if type(bullet.Hits) == "table" then
+                                        for _, hitData in pairs(bullet.Hits) do
+                                            if type(hitData) == "table" then
+                                                hitData.Instance = shotTarget
+                                                hitData.Position = shotTarget.Position
+                                            end
+                                        end
+                                    end
+
+                                    if XCConfig.wallbangEnabled then
+                                        bullet.Penetration = 9999
+                                        bullet.Wallbang = true
+                                        bullet.IgnoreEnvironment = true
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
 
             -- The payload belongs to the local InventoryController. Record only
             -- enemy parts predicted by this exact shot; health changes from other
             -- players are ignored by the hit feedback system below.
-            dispatchXCLocalHitPayload(shotData)
+            dispatchXCLocalHitPayload(data)
 
-            return callXCShotWithoutLegacyRewrite(originalShootWeapon, self, shotData, ...)
+            return originalShootWeapon(self, data, ...)
         end
 
         rawset(inventoryController, "__XCShootHooked", true)
         rawset(inventoryController, "__XCHitConfirmHookV18", true)
-        rawset(inventoryController, "__XCSilentAimSafeHookV23", true)
-        rawset(inventoryController, "__XCSilentAimSafeHookV25", true)
         bloxStrikeShootHooked = true
     end)
 end
@@ -1179,32 +1093,10 @@ silentAimCamPosAim = function(targetPart)
     return camPos, aimPos
 end
 
-local xcMobileSilentGateUntil = 0
-local xcMobileSilentGateAllowed = false
-local xcMobileSilentGateTarget = nil
-
-local function getXCMobileSilentRayTarget()
-    local now = os.clock()
-    if now >= xcMobileSilentGateUntil
-        or not xcMobileSilentGateTarget
-        or not xcMobileSilentGateTarget.Parent then
-        xcMobileSilentGateUntil = now + 0.035
-        xcMobileSilentGateTarget = getSilentAimTarget and getSilentAimTarget() or silentAimResolved
-        local chance = math.clamp(tonumber(XCConfig.silentAimHitChance) or 100, 0, 100)
-        xcMobileSilentGateAllowed = xcMobileSilentGateTarget ~= nil
-            and (chance >= 100 or math.random(1, 100) <= chance)
-    end
-    return xcMobileSilentGateAllowed and xcMobileSilentGateTarget or nil
-end
-
 function setupSilentAimHooks()
     if silentAimHooked and silentAimCamHooked then return end
 
-    if not silentAimHooked and UserInputService.TouchEnabled then
-        -- Native bullet redirection is used on mobile. Do not create/access a
-        -- Mouse object because some mobile executors report it as desktop input.
-        silentAimHooked = true
-    elseif not silentAimHooked and hookmetamethod then
+    if not silentAimHooked and hookmetamethod then
         pcall(function()
             local mouse = player:GetMouse()
             local oldIndex
@@ -1226,28 +1118,18 @@ function setupSilentAimHooks()
     end
 
     if not silentAimCamHooked and hookmetamethod and getnamecallmethod then
-        local cameraHookInstalled = pcall(function()
+        pcall(function()
             local oldNamecall
             oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
                 local method = getnamecallmethod()
                 local args = {...}
 
-                local activeCamera = Workspace.CurrentCamera or camera
-                if isXCSilentAimRequested() and noRecoil.isShooting
-                    and self == activeCamera
+                if XCConfig.silentAimEnabled and silentAimResolved and noRecoil.isShooting
+                    and self == camera
                     and (method == "ViewportPointToRay" or method == "ScreenPointToRay") then
-                    local targetPart = UserInputService.TouchEnabled
-                        and getXCMobileSilentRayTarget() or silentAimResolved
-                    if targetPart and targetPart.Parent then
-                        local originalRay = oldNamecall(self, ...)
-                        if typeof(originalRay) == "Ray" then
-                            local aimPos = getKinematicAimPosition(targetPart)
-                            local delta = aimPos - originalRay.Origin
-                            if delta.Magnitude > 0.001 then
-                                local magnitude = originalRay.Direction.Magnitude
-                                return Ray.new(originalRay.Origin, delta.Unit * (magnitude > 0.001 and magnitude or 1))
-                            end
-                        end
+                    local camPos, aimPos = silentAimCamPosAim()
+                    if camPos then
+                        return Ray.new(camPos, (aimPos - camPos).Unit)
                     end
                 end
 
@@ -1296,263 +1178,8 @@ function setupSilentAimHooks()
                 return oldNamecall(self, ...)
             end)
         end)
-        silentAimCamHooked = cameraHookInstalled
-        if UserInputService.TouchEnabled and cameraHookInstalled then
-            xcMobileCameraSilentHooked = true
-        end
+        silentAimCamHooked = true
     end
-end
-
--- Native Blox Strike Silent Aim path. Redirecting Bullet._performRaycast keeps
--- Silent Aim independent from character LookYaw (Spin/Jitter anti-aim) and
--- from the weapon's FireRate. The InventoryController payload hook below is
--- retained only for game versions where these weapon modules are unavailable.
-local xcNativeRaycast = nil
-local xcNativeGetRayIgnore = nil
-
-local function castXCNativeSilentShot(origin, direction, properties)
-    if not xcNativeRaycast or type(xcNativeRaycast.cast) ~= "function"
-        or type(xcNativeRaycast.castThrough) ~= "function"
-        or type(xcNativeGetRayIgnore) ~= "function" then
-        return nil
-    end
-
-    local range = math.max(1, tonumber(properties and properties.Range) or 500)
-    local penetration = math.max(0, tonumber(properties and properties.Penetration) or 0)
-    local maxSurfaces = 24
-    if XCConfig.wallbangEnabled then
-        penetration = math.max(penetration, range)
-        maxSurfaces = 100
-    end
-
-    local ignore = xcNativeGetRayIgnore()
-    local result = {Origin = origin, Direction = direction, Distance = range, Hits = {}}
-    local first = xcNativeRaycast.cast(origin, direction * range, nil, ignore)
-    if type(first) ~= "table" or not first.instance then return result end
-    if typeof(first.position) == "Vector3" then
-        result.Distance = (first.position - origin).Magnitude
-    end
-
-    local throughDistance = math.max(penetration, 0.001)
-    local hits = xcNativeRaycast.castThrough(
-        first.position - direction * 0.001,
-        direction * (throughDistance + 0.001),
-        penetration,
-        ignore
-    )
-    if type(hits) ~= "table" then return result end
-    for index, hit in ipairs(hits) do
-        if index > maxSurfaces * 2 then break end
-        if type(hit) == "table" and hit.instance and hit.material and typeof(hit.position) == "Vector3" then
-            if (hit.position - origin).Magnitude > range + 0.01 then break end
-            table.insert(result.Hits, {
-                Position = hit.position,
-                Instance = hit.instance,
-                Material = hit.material.Name,
-                Normal = hit.normal or Vector3.zero,
-                Exit = index % 2 == 0,
-            })
-        end
-    end
-    return result
-end
-
-local function redirectXCNativeSilentShot(bullet, shot)
-    -- Use a dedicated request flag: persistent v23/v24 payload wrappers may
-    -- temporarily mask XCConfig.silentAimEnabled while calling the game.
-    if UserInputService.TouchEnabled then return shot end
-    if not isXCSilentAimRequested() or type(shot) ~= "table"
-        or typeof(shot.Origin) ~= "Vector3" then return shot end
-    if type(bullet) ~= "table" or bullet.IsDestroyed or bullet.IsActive == false then return shot end
-    local weapon = bullet.Weapon
-    if weapon and weapon.Player and weapon.Player ~= player then return shot end
-
-    local targetPart = getSilentAimTarget and getSilentAimTarget() or silentAimResolved
-    if not targetPart or not targetPart.Parent then return shot end
-    local chance = math.clamp(tonumber(XCConfig.silentAimHitChance) or 100, 0, 100)
-    if chance < 100 and math.random(1, 100) > chance then return shot end
-
-    local aimPosition = getKinematicAimPosition(targetPart)
-    local offset = aimPosition - shot.Origin
-    if offset.Magnitude < 0.05 then return shot end
-
-    local redirected = castXCNativeSilentShot(shot.Origin, offset.Unit, bullet.Properties or {})
-    if not redirected then return shot end
-    silentAimResolved = targetPart
-    if registerXCLocalHitCandidate then registerXCLocalHitCandidate(targetPart) end
-    return redirected
-end
-
-if sharedXCEnv then sharedXCEnv.XCNativeSilentRedirectV24 = redirectXCNativeSilentShot end
-
-function setupXCNativeSilentHook()
-    if xcNativeSilentHooked then return true end
-    -- Mobile weapon controllers reject a replacement _performRaycast result.
-    -- Phones use the argument-level bullet interceptor v29 instead.
-    if UserInputService.TouchEnabled then return false end
-    local installed = false
-    pcall(function()
-        local components = ReplicatedStorage:FindFirstChild("Components")
-        local weaponFolder = components and components:FindFirstChild("Weapon")
-        local classes = weaponFolder and weaponFolder:FindFirstChild("Classes")
-        local bulletScript = classes and classes:FindFirstChild("Bullet")
-        local common = components and components:FindFirstChild("Common")
-        local ignoreScript = common and common:FindFirstChild("GetRayIgnore")
-        local sharedFolder = ReplicatedStorage:FindFirstChild("Shared")
-        local raycastScript = sharedFolder and sharedFolder:FindFirstChild("Raycast")
-        if not bulletScript or not ignoreScript or not raycastScript then return end
-
-        local bulletModule = require(bulletScript)
-        local raycastModule = require(raycastScript)
-        local getRayIgnore = require(ignoreScript)
-        if type(bulletModule) ~= "table" or type(bulletModule._performRaycast) ~= "function"
-            or type(raycastModule) ~= "table" or type(raycastModule.cast) ~= "function"
-            or type(raycastModule.castThrough) ~= "function" or type(getRayIgnore) ~= "function" then return end
-
-        xcNativeRaycast = raycastModule
-        xcNativeGetRayIgnore = getRayIgnore
-        if rawget(bulletModule, "__XCSilentRayHookV24") then
-            installed = true
-            return
-        end
-
-        local originalRaycast = bulletModule._performRaycast
-        bulletModule._performRaycast = function(self, spread, ...)
-            local shot = originalRaycast(self, spread, ...)
-            local redirect = sharedXCEnv and sharedXCEnv.XCNativeSilentRedirectV24 or redirectXCNativeSilentShot
-            if type(redirect) ~= "function" then return shot end
-            local ok, redirected = pcall(redirect, self, shot)
-            return ok and redirected or shot
-        end
-        rawset(bulletModule, "__XCSilentRayHookV24", true)
-        installed = bulletModule._performRaycast ~= originalRaycast
-    end)
-    xcNativeSilentHooked = installed
-    return installed
-end
-
--- Mobile bullet interception v29. The game still executes its original
--- Bullet._performRaycast and builds the canonical shot/Hits payload. XC only
--- redirects the ray arguments while that exact local bullet is being cast.
-local function beginXCBulletInterceptV29(bullet)
-    if xcMobileCameraSilentHooked then return nil end
-    if not isXCSilentAimRequested() or type(bullet) ~= "table"
-        or bullet.IsDestroyed or bullet.IsActive == false then return nil end
-    local weapon = bullet.Weapon
-    if not weapon or (weapon.Player and weapon.Player ~= player) then return nil end
-
-    local targetPart = getSilentAimTarget and getSilentAimTarget() or silentAimResolved
-    if not targetPart or not targetPart.Parent then return nil end
-    local chance = math.clamp(tonumber(XCConfig.silentAimHitChance) or 100, 0, 100)
-    if chance < 100 and math.random(1, 100) > chance then return nil end
-
-    return {
-        Thread = coroutine.running(),
-        Target = targetPart,
-        AimPosition = targetPart.Position,
-        Direction = nil,
-        Used = false,
-    }
-end
-
-if sharedXCEnv then sharedXCEnv.XCBeginBulletInterceptV29 = beginXCBulletInterceptV29 end
-
-local xcBulletInterceptContextV29 = nil
-local function getXCActiveBulletInterceptV29()
-    local context = sharedXCEnv and sharedXCEnv.XCBulletInterceptContextV29 or xcBulletInterceptContextV29
-    if not context then return nil end
-    local thread = coroutine.running()
-    if context.Thread and context.Thread ~= thread then return nil end
-    return context
-end
-
-local function redirectXCRaycastArgumentsV29(origin, direction, firstCast)
-    local context = getXCActiveBulletInterceptV29()
-    if not context or typeof(origin) ~= "Vector3" or typeof(direction) ~= "Vector3"
-        or direction.Magnitude <= 0.001 then return direction end
-    if firstCast and context.Used then return direction end
-
-    local delta = context.AimPosition - origin
-    if delta.Magnitude <= 0.05 then return direction end
-    local redirectedUnit = delta.Unit
-    if firstCast then
-        context.Used = true
-        context.Direction = redirectedUnit
-    elseif context.Direction then
-        redirectedUnit = context.Direction
-    end
-    return redirectedUnit * direction.Magnitude
-end
-
-function setupXCBulletInterceptHookV29()
-    if xcBulletInterceptHooked then return true end
-    if xcMobileCameraSilentHooked then return false end
-    if not UserInputService.TouchEnabled or type(hookfunction) ~= "function" then return false end
-    local installed = false
-    pcall(function()
-        local components = ReplicatedStorage:FindFirstChild("Components")
-        local weaponFolder = components and components:FindFirstChild("Weapon")
-        local classes = weaponFolder and weaponFolder:FindFirstChild("Classes")
-        local bulletScript = classes and classes:FindFirstChild("Bullet")
-        local sharedFolder = ReplicatedStorage:FindFirstChild("Shared")
-        local raycastScript = sharedFolder and sharedFolder:FindFirstChild("Raycast")
-        if not bulletScript or not raycastScript then return end
-
-        local bulletModule = require(bulletScript)
-        local raycastModule = require(raycastScript)
-        if type(bulletModule) ~= "table" or type(bulletModule._performRaycast) ~= "function"
-            or type(raycastModule) ~= "table" or type(raycastModule.cast) ~= "function"
-            or type(raycastModule.castThrough) ~= "function" then return end
-
-        if not (sharedXCEnv and sharedXCEnv.XCRaycastArgumentHooksV29) then
-            local oldCast
-            oldCast = hookfunction(raycastModule.cast, function(origin, direction, ...)
-                direction = redirectXCRaycastArgumentsV29(origin, direction, true)
-                return oldCast(origin, direction, ...)
-            end)
-
-            local oldCastThrough
-            oldCastThrough = hookfunction(raycastModule.castThrough, function(origin, direction, ...)
-                direction = redirectXCRaycastArgumentsV29(origin, direction, false)
-                return oldCastThrough(origin, direction, ...)
-            end)
-            if sharedXCEnv then sharedXCEnv.XCRaycastArgumentHooksV29 = true end
-        end
-
-        if rawget(bulletModule, "__XCBulletInterceptV29") then
-            installed = true
-            return
-        end
-
-        local originalPerformRaycast = bulletModule._performRaycast
-        bulletModule._performRaycast = function(self, spread, ...)
-            local begin = sharedXCEnv and sharedXCEnv.XCBeginBulletInterceptV29 or beginXCBulletInterceptV29
-            local okContext, context = pcall(begin, self)
-            if not okContext then context = nil end
-            local previous = sharedXCEnv and sharedXCEnv.XCBulletInterceptContextV29 or xcBulletInterceptContextV29
-            xcBulletInterceptContextV29 = context
-            if sharedXCEnv then sharedXCEnv.XCBulletInterceptContextV29 = context end
-
-            local results = table.pack(pcall(originalPerformRaycast, self, spread, ...))
-            xcBulletInterceptContextV29 = previous
-            if sharedXCEnv then sharedXCEnv.XCBulletInterceptContextV29 = previous end
-            if not results[1] then error(results[2], 0) end
-
-            local shot = results[2]
-            if context and context.Used and context.Direction and type(shot) == "table" then
-                local redirectedShot = table.clone(shot)
-                redirectedShot.Direction = context.Direction
-                results[2] = redirectedShot
-                silentAimResolved = context.Target
-                if registerXCLocalHitCandidate then registerXCLocalHitCandidate(context.Target) end
-            end
-            return table.unpack(results, 2, results.n)
-        end
-        rawset(bulletModule, "__XCBulletInterceptV29", true)
-        installed = true
-    end)
-    xcBulletInterceptHooked = installed
-    return installed
 end
 
 -- ==========================================
@@ -2159,7 +1786,6 @@ local xcCharacterInputHook = {
     AntiStarted = nil,
     AntiLastStep = nil,
     RandomYaw = nil,
-    AntiFireUntil = 0,
     LastError = nil,
 }
 
@@ -2258,10 +1884,6 @@ local jumpCircleFolder = Instance.new("Folder", Workspace)
 jumpCircleFolder.Name = "XC_JumpCircleWorld"
 
 local grenadePool = {}
-local grenadeDangerPool = setmetatable({}, {__mode = "k"})
-local grenadeDangerScanStarted = false
-local soundEspTracked = setmetatable({}, {__mode = "k"})
-local soundEspPulses = {}
 local mobileSlideBtn = nil
 
 -- ==========================================
@@ -3411,8 +3033,7 @@ XCFeatureState = {
     streamerHiddenKeys = {
         "watermarkEnabled", "spectatorListEnabled", "nametagsEnabled", "boxEspEnabled",
         "cornerBoxEnabled", "healthBarEnabled", "headDotEnabled", "tracersEnabled",
-        "grenadeEspEnabled", "grenadeDangerZonesEnabled", "soundPositionEspEnabled", "weaponEspEnabled",
-        "jumpCircleEnabled", "hitmarkerEnabled", "chamsEnabled", "skeletonEspEnabled",
+        "grenadeEspEnabled", "jumpCircleEnabled", "hitmarkerEnabled", "chamsEnabled", "skeletonEspEnabled",
         "showFovCircle", "showSilentFovCircle",
     },
 }
@@ -3865,7 +3486,6 @@ function cleanup()
             esp.BoxOutline:Destroy()
             esp.TagCard:Destroy()
             esp.HealthBarBg:Destroy()
-            esp.WeaponCard:Destroy()
             for _, corner in pairs(esp.Corners) do
                 corner.H:Destroy()
                 corner.V:Destroy()
@@ -3879,12 +3499,6 @@ function cleanup()
             gUi.RadiusCircle:Destroy()
             for _, l in ipairs(gUi.Lines) do l:Destroy() end
         end)
-    end
-    for _, danger in pairs(grenadeDangerPool) do
-        pcall(function() destroyXCGrenadeDanger(danger) end)
-    end
-    for _, pulse in ipairs(soundEspPulses) do
-        pcall(function() destroyXCSoundPulse(pulse) end)
     end
     clearActiveJumpCircle()
     pcall(function() jumpCircleFolder:Destroy() end)
@@ -3910,21 +3524,9 @@ function cleanup()
     activeEspHolders = {}
     screenEspCache = {}
     grenadePool = {}
-    grenadeDangerPool = setmetatable({}, {__mode = "k"})
-    grenadeDangerScanStarted = false
-    soundEspTracked = setmetatable({}, {__mode = "k"})
-    soundEspPulses = {}
     
     restoreLightingState()
     restoreXCSmoke()
-    if genv and type(genv.XCRestoreWeaponState) == "function" then
-        pcall(genv.XCRestoreWeaponState)
-        genv.XCRestoreWeaponState = nil
-    end
-    if sharedXCEnv then
-        sharedXCEnv.XCSilentAimRequestedV25 = false
-        sharedXCEnv.XCBulletInterceptContextV29 = nil
-    end
 
     pcall(function() if targetGui:FindFirstChild("XCScreenGui") then targetGui.XCScreenGui:Destroy() end end)
     pcall(function() if targetGui:FindFirstChild("XCToggleGui") then targetGui.XCToggleGui:Destroy() end end)
@@ -4254,464 +3856,6 @@ function renderGrenadeOverlays()
 end
 
 -- ==========================================
--- GRENADE DANGER ZONES
--- ==========================================
-function classifyXCGrenadeDanger(object)
-    if not object or not object.Parent or isEntityCharacter(object) then return nil end
-    local name = object.Name:lower()
-    local grenadeAttribute = object:GetAttribute("GrenadeName")
-    if type(grenadeAttribute) == "string" then name ..= " " .. grenadeAttribute:lower() end
-    if name:find("smokezone", 1, true) or name:find("smoke_zone", 1, true)
-        or name:find("voxelsmoke", 1, true) or name:find("smokearea", 1, true)
-        or name:find("gaszone", 1, true) then
-        return "SMOKE", currentTheme.SmokeColor, 20, true
-    end
-    if name:find("firezone", 1, true) or name:find("fire_zone", 1, true)
-        or name:find("voxelfire", 1, true) or name:find("molotov", 1, true)
-        or name:find("incendiary", 1, true) or name:find("ignite", 1, true)
-        or name:find("flamezone", 1, true) or name:find("burnzone", 1, true) then
-        return "FIRE", currentTheme.MolotovColor, 17, name:find("zone", 1, true) ~= nil or name:find("voxel", 1, true) ~= nil
-    end
-    if name:find("flashbang", 1, true) or name:find("flash_grenade", 1, true) or name:find("flash grenade", 1, true) then
-        return "FLASH", Color3.fromRGB(245, 235, 120), 10, false
-    end
-    if name:find("smokegrenade", 1, true) or name:find("smoke_grenade", 1, true) or name:find("smoke grenade", 1, true) then
-        return "SMOKE", currentTheme.SmokeColor, 20, false
-    end
-    if name:find("hegrenade", 1, true) or name:find("he_grenade", 1, true) or name:find("he grenade", 1, true)
-        or name:find("frag", 1, true) or name == "grenade" or name:find("grenadeprojectile", 1, true) then
-        return "HE", currentTheme.HEColor, 15, false
-    end
-    return nil
-end
-
-function getXCDangerPart(object)
-    if object:IsA("BasePart") then return object end
-    if object:IsA("Model") and object.PrimaryPart then return object.PrimaryPart end
-    return object:FindFirstChildWhichIsA("BasePart", true)
-end
-
-function createXCGrenadeDanger(object)
-    if grenadeDangerPool[object] then return grenadeDangerPool[object] end
-    local kind, color, radius, isZone = classifyXCGrenadeDanger(object)
-    if not kind then return nil end
-
-    local data = {
-        Object = object,
-        Kind = kind,
-        Color = color,
-        Radius = radius,
-        IsZone = isZone,
-        Center = nil,
-        NextPhysics = 0,
-        Segments = {},
-    }
-    for index = 1, 24 do
-        local line = Instance.new("Frame", grenadeContainer)
-        line.Name = "Danger_" .. kind .. "_" .. index
-        line.AnchorPoint = Vector2.new(0.5, 0.5)
-        line.BorderSizePixel = 0
-        line.BackgroundColor3 = color
-        line.Visible = false
-        line.ZIndex = 5
-        data.Segments[index] = line
-    end
-
-    local label = Instance.new("TextLabel", grenadeContainer)
-    label.Name = "DangerLabel_" .. kind
-    label.AnchorPoint = Vector2.new(0.5, 1)
-    label.Size = UDim2.fromOffset(84, 16)
-    label.BackgroundColor3 = Color3.fromRGB(10, 11, 13)
-    label.BackgroundTransparency = 0.24
-    label.BorderSizePixel = 0
-    label.Text = "! " .. kind
-    label.TextColor3 = color
-    label.TextSize = 9
-    label.Font = Enum.Font.GothamBold
-    label.Visible = false
-    label.ZIndex = 6
-    Instance.new("UICorner", label).CornerRadius = UDim.new(0, 3)
-    data.Label = label
-    grenadeDangerPool[object] = data
-    return data
-end
-
-function destroyXCGrenadeDanger(data)
-    if not data then return end
-    for _, line in ipairs(data.Segments or {}) do pcall(function() line:Destroy() end) end
-    pcall(function() data.Label:Destroy() end)
-end
-
-function hideXCGrenadeDanger(data)
-    for _, line in ipairs(data.Segments) do line.Visible = false end
-    data.Label.Visible = false
-end
-
-function computeXCZoneBounds(object, fallbackPart, fallbackRadius)
-    local sumX, sumZ, minY, count = 0, 0, math.huge, 0
-    local parts = {}
-    if object:IsA("BasePart") then table.insert(parts, object) end
-    for _, descendant in ipairs(object:GetDescendants()) do
-        if descendant:IsA("BasePart") then table.insert(parts, descendant) end
-    end
-    for _, part in ipairs(parts) do
-        if part.Transparency < 1 or part.CanQuery then
-            sumX += part.Position.X
-            sumZ += part.Position.Z
-            minY = math.min(minY, part.Position.Y - part.Size.Y * 0.5)
-            count += 1
-        end
-    end
-    if count == 0 then return fallbackPart.Position, fallbackRadius end
-    local center = Vector3.new(sumX / count, minY, sumZ / count)
-    local radius = 0
-    for _, part in ipairs(parts) do
-        local horizontal = Vector2.new(part.Position.X - center.X, part.Position.Z - center.Z).Magnitude
-        radius = math.max(radius, horizontal + math.max(part.Size.X, part.Size.Z) * 0.5)
-    end
-    return center, math.clamp(radius, 2, fallbackRadius * 1.35)
-end
-
-function updateXCGrenadeDangerPhysics(data, now)
-    if now < data.NextPhysics then return end
-    data.NextPhysics = now + 0.12
-    local object = data.Object
-    local part = getXCDangerPart(object)
-    if not part then data.Center = nil return end
-
-    if data.IsZone then
-        data.Center, data.RenderRadius = computeXCZoneBounds(object, part, data.Radius)
-        return
-    end
-
-    local position = part.Position
-    local velocity = part.AssemblyLinearVelocity
-    grenadeRayParams.FilterDescendantsInstances = {player.Character, object, camera}
-    if velocity.Magnitude > 1.5 then
-        local gravity = Vector3.new(0, -Workspace.Gravity, 0)
-        local stepTime = 0.08
-        for _ = 1, 32 do
-            local nextPosition = position + velocity * stepTime + gravity * (0.5 * stepTime * stepTime)
-            local result = Workspace:Raycast(position, nextPosition - position, grenadeRayParams)
-            if result then
-                position = result.Position
-                if result.Normal.Y > 0.42 then break end
-                velocity = (velocity - 2 * velocity:Dot(result.Normal) * result.Normal) * 0.42
-                position += result.Normal * 0.08
-            else
-                position = nextPosition
-            end
-            velocity += gravity * stepTime
-        end
-    end
-    local ground = Workspace:Raycast(position + Vector3.new(0, 3, 0), Vector3.new(0, -45, 0), grenadeRayParams)
-    data.Center = ground and ground.Position or position
-    data.RenderRadius = data.Radius
-end
-
-function renderXCGrenadeDangerZones()
-    local now = os.clock()
-    if not XCConfig.grenadeDangerZonesEnabled then
-        grenadeDangerScanStarted = false
-        for object, data in pairs(grenadeDangerPool) do
-            if not object.Parent then destroyXCGrenadeDanger(data) grenadeDangerPool[object] = nil
-            else hideXCGrenadeDanger(data) end
-        end
-        return
-    end
-
-    if not grenadeDangerScanStarted then
-        grenadeDangerScanStarted = true
-        task.spawn(function()
-            local queue, index, visited = {Workspace}, 1, 0
-            while queue[index] and xcSessionActive() and XCConfig.grenadeDangerZonesEnabled do
-                local parent = queue[index]
-                index += 1
-                for _, child in ipairs(parent:GetChildren()) do
-                    if classifyXCGrenadeDanger(child) then createXCGrenadeDanger(child) end
-                    if child:IsA("Folder") or child:IsA("Model") then table.insert(queue, child) end
-                    visited += 1
-                    if visited % 160 == 0 then task.wait() end
-                end
-            end
-        end)
-    end
-
-    local camPosition = camera.CFrame.Position
-    for object, data in pairs(grenadeDangerPool) do
-        if not object.Parent or isEntityCharacter(object) then
-            destroyXCGrenadeDanger(data)
-            grenadeDangerPool[object] = nil
-        else
-            updateXCGrenadeDangerPhysics(data, now)
-            local center = data.Center
-            if not center or (center - camPosition).Magnitude > XCConfig.grenadeMaxDist then
-                hideXCGrenadeDanger(data)
-                continue
-            end
-
-            local radius = (data.RenderRadius or data.Radius) * (0.985 + math.sin(now * 4) * 0.015)
-            local opacity = math.clamp(tonumber(XCConfig.grenadeDangerOpacity) or 0.82, 0.1, 1)
-            local allPoints = {}
-            for index = 1, #data.Segments do
-                local angle = math.pi * 2 * ((index - 1) / #data.Segments)
-                local worldPoint = center + Vector3.new(math.cos(angle) * radius, 0.18, math.sin(angle) * radius)
-                local screenPoint, visible = camera:WorldToViewportPoint(worldPoint)
-                allPoints[index] = visible and screenPoint.Z > 0 and Vector2.new(screenPoint.X, screenPoint.Y) or nil
-            end
-            for index, line in ipairs(data.Segments) do
-                local a = allPoints[index]
-                local b = allPoints[index == #data.Segments and 1 or index + 1]
-                if a and b then
-                    local delta = b - a
-                    line.Size = UDim2.fromOffset(delta.Magnitude + 1, 2)
-                    line.Position = UDim2.fromOffset((a.X + b.X) * 0.5, (a.Y + b.Y) * 0.5)
-                    line.Rotation = math.deg(math.atan2(delta.Y, delta.X))
-                    line.BackgroundColor3 = data.Color
-                    line.BackgroundTransparency = 1 - opacity
-                    line.Visible = true
-                else
-                    line.Visible = false
-                end
-            end
-            local centerScreen, centerVisible = camera:WorldToViewportPoint(center + Vector3.new(0, 0.35, 0))
-            data.Label.TextColor3 = data.Color
-            data.Label.Position = UDim2.fromOffset(centerScreen.X, centerScreen.Y - 4)
-            data.Label.Visible = centerVisible and centerScreen.Z > 0
-        end
-    end
-end
-
-table.insert(connections, Workspace.DescendantAdded:Connect(function(object)
-    if XCConfig.grenadeDangerZonesEnabled and classifyXCGrenadeDanger(object) then
-        createXCGrenadeDanger(object)
-    end
-end))
-
--- ==========================================
--- ENEMY SOUND POSITION ESP
--- ==========================================
-function getXCSoundSource(sound)
-    local cursor = sound.Parent
-    local sourcePart
-    while cursor and cursor ~= Workspace do
-        if not sourcePart then
-            if cursor:IsA("Attachment") then
-                sourcePart = cursor
-            elseif cursor:IsA("BasePart") then
-                sourcePart = cursor
-            end
-        end
-        if cursor:IsA("Model") then
-            local owner = Players:GetPlayerFromCharacter(cursor)
-            if owner then
-                local position
-                if sourcePart and sourcePart:IsA("Attachment") then position = sourcePart.WorldPosition
-                elseif sourcePart and sourcePart:IsA("BasePart") then position = sourcePart.Position end
-                local root = cursor:FindFirstChild("HumanoidRootPart") or cursor:FindFirstChild("Torso") or cursor:FindFirstChild("UpperTorso")
-                return owner, position or (root and root.Position), cursor
-            end
-        end
-        for _, attributeName in ipairs({"Player", "Owner", "UserId", "CreatorId"}) do
-            local ownerValue = cursor:GetAttribute(attributeName)
-            local owner
-            if typeof(ownerValue) == "Instance" and ownerValue:IsA("Player") then owner = ownerValue
-            elseif type(ownerValue) == "number" then owner = Players:GetPlayerByUserId(ownerValue) end
-            if not owner and type(ownerValue) == "string" then
-                owner = Players:FindFirstChild(ownerValue)
-                if not owner then
-                    local numericId = tonumber(ownerValue)
-                    if numericId then owner = Players:GetPlayerByUserId(numericId) end
-                end
-            end
-            if owner then
-                local character = owner.Character
-                local root = character and (character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("Torso"))
-                local position = sourcePart and (sourcePart:IsA("Attachment") and sourcePart.WorldPosition or sourcePart.Position)
-                return owner, position or (root and root.Position), character
-            end
-        end
-        cursor = cursor.Parent
-    end
-
-    local position = sourcePart and (sourcePart:IsA("Attachment") and sourcePart.WorldPosition or sourcePart.Position)
-    if position and classifyXCSound(sound) ~= "SOUND" then
-        local closestPlayer, closestCharacter, closestDistance = nil, nil, 5
-        for _, candidate in ipairs(Players:GetPlayers()) do
-            local character = candidate.Character
-            local root = character and (character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("Torso"))
-            if root and isTargetEnemy(candidate, character) then
-                local distance = (root.Position - position).Magnitude
-                if distance < closestDistance then
-                    closestPlayer, closestCharacter, closestDistance = candidate, character, distance
-                end
-            end
-        end
-        if closestPlayer then return closestPlayer, position, closestCharacter end
-    end
-    return nil
-end
-
-function classifyXCSound(sound)
-    local name = sound.Name:lower()
-    if name:find("foot", 1, true) or name:find("step", 1, true)
-        or name:find("walk", 1, true) or name:find("run", 1, true) then return "STEP" end
-    if name:find("shoot", 1, true) or name:find("shot", 1, true)
-        or name:find("fire", 1, true) or name:find("gun", 1, true) then return "SHOT" end
-    if name:find("reload", 1, true) or name:find("mag", 1, true) then return "RELOAD" end
-    if name:find("jump", 1, true) or name:find("land", 1, true) then return "MOVE" end
-    return "SOUND"
-end
-
-function destroyXCSoundPulse(pulse)
-    pcall(function() pulse.Root:Destroy() end)
-end
-
-function createXCSoundPulse(position, category)
-    if #soundEspPulses >= 24 then
-        destroyXCSoundPulse(table.remove(soundEspPulses, 1))
-    end
-
-    local root = Instance.new("Frame", overlayContainer)
-    root.Name = "SoundESP_" .. category
-    root.AnchorPoint = Vector2.new(0.5, 0.5)
-    root.Size = UDim2.fromOffset(1, 1)
-    root.BackgroundTransparency = 1
-    root.Visible = false
-    root.ZIndex = 20
-
-    local ring = Instance.new("Frame", root)
-    ring.AnchorPoint = Vector2.new(0.5, 0.5)
-    ring.Position = UDim2.fromScale(0.5, 0.5)
-    ring.BackgroundTransparency = 1
-    ring.BorderSizePixel = 0
-    ring.ZIndex = 20
-    Instance.new("UICorner", ring).CornerRadius = UDim.new(1, 0)
-    local stroke = Instance.new("UIStroke", ring)
-    stroke.Color = currentTheme.Accent
-    stroke.Thickness = 2
-    stroke.Transparency = 0
-
-    local dot = Instance.new("Frame", root)
-    dot.AnchorPoint = Vector2.new(0.5, 0.5)
-    dot.Position = UDim2.fromScale(0.5, 0.5)
-    dot.Size = UDim2.fromOffset(5, 5)
-    dot.BackgroundColor3 = currentTheme.Accent
-    dot.BorderSizePixel = 0
-    dot.ZIndex = 21
-    Instance.new("UICorner", dot).CornerRadius = UDim.new(1, 0)
-
-    local label = Instance.new("TextLabel", root)
-    label.AnchorPoint = Vector2.new(0.5, 0)
-    label.Position = UDim2.fromOffset(0, 11)
-    label.Size = UDim2.fromOffset(58, 14)
-    label.BackgroundColor3 = Color3.fromRGB(10, 11, 13)
-    label.BackgroundTransparency = 0.28
-    label.BorderSizePixel = 0
-    label.Font = Enum.Font.GothamBold
-    label.TextSize = 8
-    label.Text = category
-    label.TextColor3 = currentTheme.Accent
-    label.ZIndex = 21
-    Instance.new("UICorner", label).CornerRadius = UDim.new(0, 3)
-
-    table.insert(soundEspPulses, {
-        Root = root,
-        Ring = ring,
-        Stroke = stroke,
-        Dot = dot,
-        Label = label,
-        Position = position,
-        Created = os.clock(),
-        Duration = math.clamp(tonumber(XCConfig.soundEspDuration) or 1.15, 0.35, 3),
-    })
-end
-
-function triggerXCSoundPosition(sound)
-    if not XCConfig.soundPositionEspEnabled or not sound or not sound.Parent then return end
-    local owner, position, character = getXCSoundSource(sound)
-    if not owner or not position or not isTargetEnemy(owner, character) then return end
-    local cam = Workspace.CurrentCamera or camera
-    if not cam or (position - cam.CFrame.Position).Magnitude > (tonumber(XCConfig.soundEspMaxDist) or 1200) then return end
-    local now = os.clock()
-    local record = soundEspTracked[sound]
-    if record and now - (record.LastPulse or 0) < 0.09 then return end
-    if not record then record = {} soundEspTracked[sound] = record end
-    record.LastPulse = now
-    createXCSoundPulse(position, classifyXCSound(sound))
-end
-
-function trackXCSound(sound)
-    if not sound:IsA("Sound") then return end
-    local record = soundEspTracked[sound]
-    if record and record.Hooked then return end
-    record = record or {}
-    record.Hooked = true
-    soundEspTracked[sound] = record
-    pcall(function()
-        table.insert(connections, sound.Played:Connect(function()
-            triggerXCSoundPosition(sound)
-        end))
-    end)
-    table.insert(connections, sound:GetPropertyChangedSignal("Playing"):Connect(function()
-        if sound.Playing then triggerXCSoundPosition(sound) end
-    end))
-end
-
-function hookXCSoundCharacter(plr, character)
-    if plr == player or not character then return end
-    for _, object in ipairs(character:GetDescendants()) do
-        if object:IsA("Sound") then trackXCSound(object) end
-    end
-    table.insert(connections, character.DescendantAdded:Connect(function(object)
-        if object:IsA("Sound") then trackXCSound(object) end
-    end))
-end
-
-function hookXCSoundPlayer(plr)
-    if plr == player then return end
-    if plr.Character then hookXCSoundCharacter(plr, plr.Character) end
-    table.insert(connections, plr.CharacterAdded:Connect(function(character)
-        hookXCSoundCharacter(plr, character)
-    end))
-end
-
-function renderXCSoundPositionEsp()
-    local now = os.clock()
-    for index = #soundEspPulses, 1, -1 do
-        local pulse = soundEspPulses[index]
-        local alpha = (now - pulse.Created) / pulse.Duration
-        if not XCConfig.soundPositionEspEnabled or alpha >= 1 then
-            destroyXCSoundPulse(pulse)
-            table.remove(soundEspPulses, index)
-        else
-            local point, visible = camera:WorldToViewportPoint(pulse.Position)
-            if visible and point.Z > 0 then
-                local size = 12 + alpha * 34
-                pulse.Root.Position = UDim2.fromOffset(point.X, point.Y)
-                pulse.Ring.Size = UDim2.fromOffset(size, size)
-                pulse.Stroke.Color = currentTheme.Accent
-                pulse.Stroke.Transparency = math.clamp(alpha, 0, 1)
-                pulse.Dot.BackgroundColor3 = currentTheme.Accent
-                pulse.Dot.BackgroundTransparency = math.clamp(alpha * 0.8, 0, 1)
-                pulse.Label.TextColor3 = currentTheme.Accent
-                pulse.Label.TextTransparency = math.clamp(alpha, 0, 1)
-                pulse.Label.BackgroundTransparency = 0.28 + alpha * 0.72
-                pulse.Root.Visible = true
-            else
-                pulse.Root.Visible = false
-            end
-        end
-    end
-end
-
-for _, otherPlayer in ipairs(Players:GetPlayers()) do hookXCSoundPlayer(otherPlayer) end
-table.insert(connections, Players.PlayerAdded:Connect(hookXCSoundPlayer))
-table.insert(connections, Workspace.DescendantAdded:Connect(function(object)
-    if object:IsA("Sound") then trackXCSound(object) end
-end))
-
--- ==========================================
 --  AIM ENGINE SHLAK
 -- ==========================================
 local visRayParams = RaycastParams.new()
@@ -5031,23 +4175,7 @@ function triggerbotFire(vp)
             return
         end
 
-        -- Blox Strike keeps weapons outside Roblox Tool instances. Invoke its
-        -- native shoot method so mobile input mode is not changed to Mouse.
-        local nativeFired = false
-        pcall(function()
-            local controllers = ReplicatedStorage:FindFirstChild("Controllers")
-            local scriptObject = controllers and controllers:FindFirstChild("InventoryController")
-            local inventory = scriptObject and require(scriptObject)
-            local getter = inventory and inventory.peekCurrentEquippedForMovement
-            local weapon = type(getter) == "function" and getter() or nil
-            if weapon and type(weapon.shoot) == "function" then
-                weapon:shoot()
-                nativeFired = true
-            end
-        end)
-        if nativeFired then return end
-
-        if VirtualInputManager and not UserInputService.TouchEnabled then
+        if VirtualInputManager then
             VirtualInputManager:SendMouseButtonEvent(vp.X * 0.5, vp.Y * 0.5, 0, true, game, 0)
             task.wait(0.01)
             VirtualInputManager:SendMouseButtonEvent(vp.X * 0.5, vp.Y * 0.5, 0, false, game, 0)
@@ -5249,47 +4377,6 @@ function getOrCreateScreenEsp(plr)
     healthBarFill.BorderSizePixel = 0
     Instance.new("UICorner", healthBarFill).CornerRadius = UDim.new(0, 2)
 
-    local weaponCard = Instance.new("Frame", overlayContainer)
-    weaponCard.Name = "WeaponIcon_" .. plr.Name
-    weaponCard.AnchorPoint = Vector2.new(0.5, 0)
-    weaponCard.Size = UDim2.fromOffset(36, 15)
-    weaponCard.BackgroundColor3 = Color3.fromRGB(5, 6, 7)
-    weaponCard.BackgroundTransparency = 1
-    weaponCard.BorderSizePixel = 0
-    weaponCard.ClipsDescendants = true
-    weaponCard.Visible = false
-    weaponCard.ZIndex = 8
-    Instance.new("UICorner", weaponCard).CornerRadius = UDim.new(0, 3)
-    local weaponCardStroke = Instance.new("UIStroke", weaponCard)
-    weaponCardStroke.Color = currentTheme.Border
-    weaponCardStroke.Thickness = 1
-    weaponCardStroke.Transparency = 1
-    weaponCardStroke.Enabled = false
-
-    local weaponImage = Instance.new("ImageLabel", weaponCard)
-    weaponImage.Name = "Image"
-    weaponImage.Size = UDim2.fromScale(1, 1)
-    weaponImage.Position = UDim2.fromOffset(0, 0)
-    weaponImage.BackgroundTransparency = 1
-    weaponImage.ScaleType = Enum.ScaleType.Fit
-    weaponImage.ImageColor3 = currentTheme.Enemy_Accent
-    weaponImage.Visible = false
-    weaponImage.ZIndex = 9
-
-    local weaponViewport = Instance.new("ViewportFrame", weaponCard)
-    weaponViewport.Name = "Viewport"
-    weaponViewport.Size = UDim2.fromScale(1, 1)
-    weaponViewport.Position = UDim2.fromOffset(0, 0)
-    weaponViewport.BackgroundTransparency = 1
-    weaponViewport.Ambient = Color3.fromRGB(255, 255, 255)
-    weaponViewport.LightColor = Color3.fromRGB(255, 255, 255)
-    weaponViewport.LightDirection = Vector3.new(-1, -0.6, -1)
-    weaponViewport.Visible = false
-    weaponViewport.ZIndex = 9
-    local weaponWorld = Instance.new("WorldModel", weaponViewport)
-    local weaponCamera = Instance.new("Camera", weaponViewport)
-    weaponViewport.CurrentCamera = weaponCamera
-
     local corners = {}
     for i = 1, 4 do
         local hLine = Instance.new("Frame", overlayContainer)
@@ -5360,15 +4447,6 @@ function getOrCreateScreenEsp(plr)
         BoxOutlineStroke = outlineStroke,
         HealthBarBg = healthBarBg,
         HealthBarFill = healthBarFill,
-        WeaponCard = weaponCard,
-        WeaponCardStroke = weaponCardStroke,
-        WeaponImage = weaponImage,
-        WeaponViewport = weaponViewport,
-        WeaponWorld = weaponWorld,
-        WeaponCamera = weaponCamera,
-        WeaponRaw = nil,
-        WeaponName = nil,
-        WeaponReady = false,
         Corners = corners,
         TagCard = tagCard,
         TagCardStroke = cardStroke,
@@ -5385,181 +4463,6 @@ function getOrCreateScreenEsp(plr)
     return data
 end
 
-function getXCEquippedWeapon(plr, char)
-    local raw = plr:GetAttribute("CurrentEquipped")
-    local weaponName
-    if type(raw) == "string" and raw ~= "" then
-        pcall(function()
-            local decoded = HttpService:JSONDecode(raw)
-            if type(decoded) == "table" then
-                weaponName = decoded.Name or decoded.Weapon or decoded.ItemName
-            end
-        end)
-    end
-    local tool = char and char:FindFirstChildOfClass("Tool")
-    if type(weaponName) ~= "string" or weaponName == "" then
-        weaponName = tool and tool.Name or nil
-    end
-    return weaponName, tool, raw
-end
-
-function clearXCWeaponPreview(esp)
-    esp.WeaponImage.Image = ""
-    esp.WeaponImage.Visible = false
-    esp.WeaponViewport.Visible = false
-    esp.WeaponWorld:ClearAllChildren()
-    esp.WeaponReady = false
-end
-
-function findXCWeaponAsset(weaponName)
-    if type(weaponName) ~= "string" or weaponName == "" then return nil end
-    local assets = ReplicatedStorage:FindFirstChild("Assets")
-    local weapons = assets and assets:FindFirstChild("Weapons")
-    if not weapons then return nil end
-    local direct = weapons:FindFirstChild(weaponName)
-    if direct then return direct end
-    local normalized = weaponName:lower():gsub("[^%w]", "")
-    for _, candidate in ipairs(weapons:GetChildren()) do
-        if candidate.Name:lower():gsub("[^%w]", "") == normalized then return candidate end
-    end
-    return nil
-end
-
-function findXCCharacterWeaponVisual(character, weaponName)
-    if not character or type(weaponName) ~= "string" then return nil end
-    local direct = character:FindFirstChild(weaponName, true)
-    if direct and (direct:IsA("Model") or direct:IsA("Tool") or direct:IsA("BasePart")) then return direct end
-    local normalized = weaponName:lower():gsub("[^%w]", "")
-    for _, candidate in ipairs(character:GetDescendants()) do
-        if (candidate:IsA("Model") or candidate:IsA("Tool"))
-            and candidate.Name:lower():gsub("[^%w]", "") == normalized then
-            return candidate
-        end
-    end
-    return nil
-end
-
-function buildXCWeaponViewport(esp, weaponName, tool, character)
-    clearXCWeaponPreview(esp)
-
-    if tool and type(tool.TextureId) == "string" and tool.TextureId ~= "" then
-        esp.WeaponImage.Image = tool.TextureId
-        esp.WeaponImage.Visible = true
-        esp.WeaponReady = true
-        return true
-    end
-    if tool then
-        local embedded = tool:FindFirstChildWhichIsA("ImageLabel", true)
-        if embedded and embedded.Image ~= "" then
-            esp.WeaponImage.Image = embedded.Image
-            esp.WeaponImage.Visible = true
-            esp.WeaponReady = true
-            return true
-        end
-    end
-
-    local characterVisual = findXCCharacterWeaponVisual(character, weaponName)
-    local asset = findXCWeaponAsset(weaponName)
-    local source = characterVisual or (asset and (
-        asset:FindFirstChild("World")
-        or asset:FindFirstChild("Dropped")
-        or asset:FindFirstChild("ThirdPerson")
-        or asset:FindFirstChild("Camera")
-        or asset
-    )) or tool
-    if not source then return false end
-
-    local ok, clone = pcall(function() return source:Clone() end)
-    if not ok or not clone then return false end
-    clone.Parent = esp.WeaponWorld
-    local cloneObjects = {clone}
-    local visibleParts = {}
-    for _, object in ipairs(clone:GetDescendants()) do table.insert(cloneObjects, object) end
-    for _, object in ipairs(cloneObjects) do
-        if object:IsA("LuaSourceContainer") then
-            object:Destroy()
-        elseif object:IsA("BasePart") then
-            local lower = object.Name:lower()
-            if lower:find("arm", 1, true) or lower:find("hand", 1, true)
-                or lower:find("glove", 1, true) or lower:find("sleeve", 1, true)
-                or lower == "root" or lower:find("camera", 1, true)
-                or lower:find("reference", 1, true) or lower:find("pivot", 1, true) then
-                object:Destroy()
-            else
-                object.Anchored = true
-                object.CanCollide = false
-                object.CanTouch = false
-                object.CanQuery = false
-                if object.Transparency < 0.98 then table.insert(visibleParts, object) end
-            end
-        end
-    end
-
-    if #visibleParts == 0 then
-        clearXCWeaponPreview(esp)
-        return false
-    end
-
-    local minimum = Vector3.new(math.huge, math.huge, math.huge)
-    local maximum = Vector3.new(-math.huge, -math.huge, -math.huge)
-    for _, part in ipairs(visibleParts) do
-        local half = part.Size * 0.5
-        for x = -1, 1, 2 do
-            for y = -1, 1, 2 do
-                for z = -1, 1, 2 do
-                    local point = part.CFrame:PointToWorldSpace(Vector3.new(half.X * x, half.Y * y, half.Z * z))
-                    minimum = Vector3.new(math.min(minimum.X, point.X), math.min(minimum.Y, point.Y), math.min(minimum.Z, point.Z))
-                    maximum = Vector3.new(math.max(maximum.X, point.X), math.max(maximum.Y, point.Y), math.max(maximum.Z, point.Z))
-                end
-            end
-        end
-    end
-    local boundsSize = maximum - minimum
-    if boundsSize.Magnitude < 0.01 then clearXCWeaponPreview(esp) return false end
-
-    local center = (minimum + maximum) * 0.5
-    local longOnX = boundsSize.X >= boundsSize.Z
-    local viewDirection = longOnX and Vector3.new(0, 0.08, 1) or Vector3.new(1, 0.08, 0)
-    local horizontalSize = longOnX and boundsSize.X or boundsSize.Z
-    local depthSize = longOnX and boundsSize.Z or boundsSize.X
-    local fieldOfView = 28
-    local tangent = math.tan(math.rad(fieldOfView * 0.5))
-    local viewportAspect = 36 / 15
-    local distanceForWidth = horizontalSize / math.max(0.01, 2 * tangent * viewportAspect)
-    local distanceForHeight = boundsSize.Y / math.max(0.01, 2 * tangent)
-    local cameraDistance = math.max(distanceForWidth, distanceForHeight, 0.35) * 1.18 + depthSize * 0.5
-    esp.WeaponCamera.FieldOfView = fieldOfView
-    esp.WeaponCamera.CFrame = CFrame.lookAt(center + viewDirection.Unit * cameraDistance, center, Vector3.yAxis)
-    esp.WeaponViewport.Visible = true
-    esp.WeaponReady = true
-    return true
-end
-
-function updateXCWeaponPreview(esp, plr, char, sideColor, boxPosX, boxPosY, boxWidth, boxHeight)
-    if not XCConfig.weaponEspEnabled then
-        esp.WeaponCard.Visible = false
-        return
-    end
-
-    local weaponName, tool, raw = getXCEquippedWeapon(plr, char)
-    local key = tostring(raw or "") .. "|" .. tostring(weaponName or "") .. "|" .. tostring(tool)
-    local now = os.clock()
-    if key ~= esp.WeaponRaw or (not esp.WeaponReady and now >= (esp.WeaponNextRetry or 0)) then
-        esp.WeaponRaw = key
-        esp.WeaponName = weaponName
-        esp.WeaponNextRetry = now + 1
-        buildXCWeaponViewport(esp, weaponName, tool, char)
-    end
-
-    esp.WeaponCardStroke.Color = sideColor
-    esp.WeaponImage.ImageColor3 = sideColor
-    local iconWidth = math.floor(math.clamp(boxWidth * 1.35, 22, 58) + 0.5)
-    local iconHeight = math.floor(math.clamp(iconWidth * 0.42, 10, 24) + 0.5)
-    esp.WeaponCard.Size = UDim2.fromOffset(iconWidth, iconHeight)
-    esp.WeaponCard.Position = UDim2.fromOffset(boxPosX + boxWidth * 0.5, boxPosY + boxHeight + 2)
-    esp.WeaponCard.Visible = weaponName ~= nil and esp.WeaponReady
-end
-
 table.insert(connections, Players.PlayerRemoving:Connect(function(plr)
     local oldChar = plr.Character
     local oldHum = oldChar and oldChar:FindFirstChildOfClass("Humanoid")
@@ -5574,7 +4477,6 @@ table.insert(connections, Players.PlayerRemoving:Connect(function(plr)
             cache.Box:Destroy()
             cache.BoxOutline:Destroy()
             cache.HealthBarBg:Destroy()
-            cache.WeaponCard:Destroy()
             cache.TagCard:Destroy()
             for _, corner in pairs(cache.Corners) do
                 corner.H:Destroy()
@@ -5595,7 +4497,6 @@ function hideTacticalOverlay()
         esp.Box.Visible = false
         esp.BoxOutline.Visible = false
         esp.HealthBarBg.Visible = false
-        esp.WeaponCard.Visible = false
         esp.TagCard.Visible = false
         for _, corner in ipairs(esp.Corners) do
             corner.H.Visible = false
@@ -5678,7 +4579,7 @@ end
 
 function renderTacticalOverlay()
     local active = XCConfig.nametagsEnabled or XCConfig.boxEspEnabled or XCConfig.cornerBoxEnabled
-        or XCConfig.healthBarEnabled or XCConfig.skeletonEspEnabled or XCConfig.weaponEspEnabled
+        or XCConfig.healthBarEnabled or XCConfig.skeletonEspEnabled
     if not active then
         if tacticalOverlayWasActive then hideTacticalOverlay() end
         tacticalOverlayWasActive = false
@@ -5826,7 +4727,7 @@ function renderTacticalOverlay()
                         if XCConfig.espShowHealth and health then
                             infoText = string.format("%s [%dHP]", infoText, math.floor(health + 0.5))
                         end
-                        if XCConfig.tagShowWeapon and not XCConfig.weaponEspEnabled then
+                        if XCConfig.tagShowWeapon then
                             local tool = char:FindFirstChildOfClass("Tool")
                             if tool then
                                 infoText = string.format("%s {%s}", infoText, tool.Name)
@@ -5843,13 +4744,11 @@ function renderTacticalOverlay()
                     else
                         esp.TagCard.Visible = false
                     end
-                    updateXCWeaponPreview(esp, plr, char, sideColor, boxPosX, boxPosY, boxWidth, boxHeight)
                     renderXCSkeleton(esp, char, sideColor, dist)
                 else
                     esp.Box.Visible = false
                     esp.BoxOutline.Visible = false
                     esp.HealthBarBg.Visible = false
-                    esp.WeaponCard.Visible = false
                     for _, corner in ipairs(esp.Corners) do
                         corner.H.Visible = false
                         corner.V.Visible = false
@@ -5861,7 +4760,6 @@ function renderTacticalOverlay()
                 esp.Box.Visible = false
                 esp.BoxOutline.Visible = false
                 esp.HealthBarBg.Visible = false
-                esp.WeaponCard.Visible = false
                 for _, corner in ipairs(esp.Corners) do
                     corner.H.Visible = false
                     corner.V.Visible = false
@@ -5873,7 +4771,6 @@ function renderTacticalOverlay()
             esp.Box.Visible = false
             esp.BoxOutline.Visible = false
             esp.HealthBarBg.Visible = false
-            esp.WeaponCard.Visible = false
             for _, corner in ipairs(esp.Corners) do
                 corner.H.Visible = false
                 corner.V.Visible = false
@@ -6016,17 +4913,12 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     end
 
     if XCConfig.silentAimEnabled then
-        setXCSilentAimRequested(true)
         -- Cache only the current target for legacy camera/mouse hooks.
-        -- The native bullet ray hook resolves again at fire time and performs
-        -- Hit Chance exactly once for each real shot.
+        -- Actual ShootWeapon interception resolves its own target at fire time
+        -- and performs Hit Chance once per shot.
         silentAimResolved = getSilentAimTarget()
     else
-        setXCSilentAimRequested(false)
         silentAimResolved = nil
-        xcMobileSilentGateUntil = 0
-        xcMobileSilentGateAllowed = false
-        xcMobileSilentGateTarget = nil
     end
 
     if (XCConfig.rcsEnabled or XCConfig.noRecoilEnabled) and noRecoil.isShooting then
@@ -6045,7 +4937,11 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
                 lastTriggerTick = tick()
                 pcall(function()
                     local vp = camera.ViewportSize
-                    triggerbotFire(vp)
+                    if VirtualInputManager then
+                        VirtualInputManager:SendMouseButtonEvent(vp.X * 0.5, vp.Y * 0.5, 0, true, game, 0)
+                        task.wait(0.01)
+                        VirtualInputManager:SendMouseButtonEvent(vp.X * 0.5, vp.Y * 0.5, 0, false, game, 0)
+                    end
                 end)
             end
         end
@@ -6076,8 +4972,6 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         visualOverlayAccumulator = 0
         renderTacticalOverlay()
         renderGrenadeOverlays()
-        renderXCGrenadeDangerZones()
-        renderXCSoundPositionEsp()
 
         local threeDEspActive = XCConfig.chamsEnabled or XCConfig.headDotEnabled or XCConfig.tracersEnabled
         if threeDEspActive or threeDEspWasActive then
@@ -6206,7 +5100,6 @@ function resetXCCharacterInputState()
     xcCharacterInputHook.AntiStarted = nil
     xcCharacterInputHook.AntiLastStep = nil
     xcCharacterInputHook.RandomYaw = nil
-    xcCharacterInputHook.AntiFireUntil = 0
 end
 
 function restoreXCCharacterInputHook()
@@ -6292,22 +5185,7 @@ function setupXCCharacterInputHook()
                     xcCharacterInputHook.LastJumpDown = false
                 end
 
-                -- Pause anti-aim only for the tiny server-input window of a
-                -- local shot. The visual spin resumes immediately afterwards,
-                -- while bullet ray calculation remains camera-based.
-                local weaponIsFiring = false
-                if skinData and type(skinData.GetWeapon) == "function" then
-                    pcall(function()
-                        local weapon = skinData.GetWeapon()
-                        weaponIsFiring = weapon and (weapon.IsFireHeld or weapon.IsShooting or weapon.IsBurstShooting) == true
-                    end)
-                end
-                if weaponIsFiring then
-                    xcCharacterInputHook.AntiFireUntil = os.clock() + 0.16
-                end
-                local antiAimPausedForShot = os.clock() < (xcCharacterInputHook.AntiFireUntil or 0)
-
-                if XCConfig.antiAimEnabled and not antiAimPausedForShot then
+                if XCConfig.antiAimEnabled then
                     if xcCharacterInputHook.AntiCharacter ~= character or not xcCharacterInputHook.AntiStarted then
                         xcCharacterInputHook.AntiCharacter = character
                         xcCharacterInputHook.AntiStarted = now
@@ -6342,7 +5220,7 @@ function setupXCCharacterInputHook()
                     result.Move = Vector2.new(move.X * cosine - move.Y * sine, move.X * sine + move.Y * cosine)
                     result.LookYaw = yaw
                     xcCharacterInputHook.AntiLastStep = step
-                elseif not XCConfig.antiAimEnabled then
+                else
                     xcCharacterInputHook.AntiCharacter = nil
                     xcCharacterInputHook.AntiStarted = nil
                 end
@@ -8241,8 +7119,6 @@ function buildXCUI()
     addSlider(L, "Box stability", "espBoxSmoothing", 0, 0.9, 0.05, "")
     addSlider(L, "ESP scale", "espPerspectiveScale", 0.65, 1.5, 0.05, "x")
     addSlider(L, "Box width ratio", "espBoxAspect", 0.42, 0.68, 0.02, "x")
-    section(L, "Weapon ESP")
-    toggle(L, "Weapon image", "weaponEspEnabled")
     section(L, "Skeleton")
     toggle(L, "Skeleton ESP", "skeletonEspEnabled")
     toggle(L, "Distance fade", "skeletonDistanceFade")
@@ -8257,9 +7133,6 @@ function buildXCUI()
     addESPPreview(R)
     section(R, "ESP indicators")
     toggle(R, "Grenade ESP", "grenadeEspEnabled")
-    toggle(R, "Grenade danger zones", "grenadeDangerZonesEnabled")
-    toggle(R, "Sound position ESP", "soundPositionEspEnabled")
-    addSlider(R, "Sound marker duration", "soundEspDuration", 0.4, 2.5, 0.05, "s")
     toggle(R, "Tracers", "tracersEnabled")
     toggle(R, "Head dot", "headDotEnabled")
     section(R, "Hit feedback")
@@ -8752,103 +7625,8 @@ local xcRecoilSpreadInstalled = false
 local xcFireRateInstalled = false
 local xcFireRateObjects = {}
 local xcFireRateOriginal = {}
-local xcFireRateReadonly = {}
 local xcFireRateScanDone = false
 local xcRecoilSpreadRetrying = false
-local xcFireRateGetWeapon = nil
-local xcFireRateWeaponRecords = setmetatable({}, {__mode = "k"})
-
-local function resolveXCFireRateGetWeapon()
-    if type(xcFireRateGetWeapon) == "function" then return true end
-    pcall(function()
-        local controllers = ReplicatedStorage:FindFirstChild("Controllers")
-        local scriptObject = controllers and controllers:FindFirstChild("InventoryController")
-        local inventory = scriptObject and require(scriptObject)
-        if type(inventory) == "table" and type(inventory.peekCurrentEquippedForMovement) == "function" then
-            xcFireRateGetWeapon = inventory.peekCurrentEquippedForMovement
-        end
-    end)
-    return type(xcFireRateGetWeapon) == "function"
-end
-
-local function restoreXCNativeFireRate(exceptWeapon)
-    for weapon, record in pairs(xcFireRateWeaponRecords) do
-        if weapon ~= exceptWeapon then
-            pcall(function()
-                local properties = record.Properties
-                if type(properties) == "table" then
-                    if type(setreadonly) == "function" then setreadonly(properties, false) end
-                    rawset(properties, "FireRate", record.OriginalFireRate)
-                    if type(setreadonly) == "function" and record.Readonly ~= nil then
-                        setreadonly(properties, record.Readonly)
-                    end
-                end
-            end)
-            xcFireRateWeaponRecords[weapon] = nil
-        end
-    end
-end
-
-local function applyXCNativeFireRate()
-    if not resolveXCFireRateGetWeapon() then return false end
-    local okWeapon, weapon = pcall(xcFireRateGetWeapon)
-    if not okWeapon or type(weapon) ~= "table" or weapon.IsDestroyed
-        or type(weapon.Properties) ~= "table" then return false end
-
-    restoreXCNativeFireRate(weapon)
-    local record = xcFireRateWeaponRecords[weapon]
-    if record and weapon.Properties ~= record.Properties then
-        restoreXCNativeFireRate(nil)
-        record = nil
-    end
-    if not record then
-        local readonly = nil
-        if type(isreadonly) == "function" then
-            local okReadonly, value = pcall(isreadonly, weapon.Properties)
-            if okReadonly then readonly = value == true end
-        end
-        record = {
-            Properties = weapon.Properties,
-            OriginalFireRate = rawget(weapon.Properties, "FireRate"),
-            OriginalAutomatic = rawget(weapon.Properties, "Automatic"),
-            Readonly = readonly,
-        }
-        xcFireRateWeaponRecords[weapon] = record
-    end
-
-    local requested = math.max(tonumber(XCConfig.fireRate) or 0.03, 0.01)
-    local originalRate = tonumber(record.OriginalFireRate) or requested
-    local stableRate = math.max(requested, 0.03, originalRate * 0.40)
-    if UserInputService.TouchEnabled then
-        -- Mobile uses the native hold-to-fire loop below. Leave every weapon
-        -- property byte-for-byte unchanged so the game's touch HUD never
-        -- rebuilds itself as a desktop control scheme.
-        record.Rate = stableRate
-        return true
-    end
-    if record.Rate == stableRate
-        and rawget(record.Properties, "FireRate") == stableRate then
-        return true
-    end
-
-    -- Change only cooldown. Do not change Automatic: Blox Strike rebuilds its
-    -- control scheme when this property changes and can select the desktop HUD.
-    local properties = record.Properties
-    if type(setreadonly) == "function" then setreadonly(properties, false) end
-    rawset(properties, "FireRate", stableRate)
-    if type(setreadonly) == "function" and record.Readonly ~= nil then
-        setreadonly(properties, record.Readonly)
-    end
-    record.Rate = stableRate
-    return true
-end
-
-if genv then
-    genv.XCRestoreWeaponState = function()
-        restoreXCNativeFireRate(nil)
-        restoreXCFireRates()
-    end
-end
 
 function scanXCFireRateObjects()
     if xcFireRateScanDone then return #xcFireRateObjects > 0 end
@@ -8870,10 +7648,6 @@ function scanXCFireRateObjects()
                     if not already then
                         table.insert(xcFireRateObjects, obj)
                         xcFireRateOriginal[obj] = fireRate
-                        if type(isreadonly) == "function" then
-                            local okReadonly, readonly = pcall(isreadonly, obj)
-                            if okReadonly then xcFireRateReadonly[obj] = readonly == true end
-                        end
                         found = true
                     end
                 end
@@ -8893,28 +7667,18 @@ function restoreXCFireRates()
             if type(original) == "number" then
                 rawset(obj, "FireRate", original)
             end
-            -- Restore the table exactly as it was. Forcing every weapon table
-            -- readonly prevents the game from advancing its firing state.
-            if type(setreadonly) == "function" and xcFireRateReadonly[obj] ~= nil then
-                setreadonly(obj, xcFireRateReadonly[obj])
-            end
+            if type(setreadonly) == "function" then setreadonly(obj, true) end
         end)
     end
 end
 
 function applyXCFireRate()
-    local requested = math.max(tonumber(XCConfig.fireRate) or 0.03, 0.01)
+    local value = math.max(tonumber(XCConfig.fireRate) or 0.01, 0.01)
     for _, obj in ipairs(xcFireRateObjects) do
         pcall(function()
             if type(setreadonly) == "function" then setreadonly(obj, false) end
-            local original = tonumber(xcFireRateOriginal[obj]) or requested
-            -- Limit acceleration to a stable interval. Extremely small values
-            -- flood ShootWeapon and are rejected after the first few rounds.
-            local stableMinimum = math.max(0.03, original * 0.40)
-            rawset(obj, "FireRate", math.max(requested, stableMinimum))
-            if type(setreadonly) == "function" and xcFireRateReadonly[obj] ~= nil then
-                setreadonly(obj, xcFireRateReadonly[obj])
-            end
+            rawset(obj, "FireRate", value)
+            if type(setreadonly) == "function" then setreadonly(obj, true) end
         end)
     end
 end
@@ -8924,62 +7688,18 @@ task.spawn(function()
     while xcSessionActive() and task.wait(0.1) do
         pcall(function()
             if XCConfig.fireRateEnabled and lazyFeatureRequests.fireRate then
-                local nativeApplied = applyXCNativeFireRate()
-                if nativeApplied then
-                    -- Undo the broad legacy getgc writer once the equipped
-                    -- weapon can be modified through its native Properties.
-                    if #xcFireRateObjects > 0 then restoreXCFireRates() end
-                elseif not UserInputService.TouchEnabled then
-                    if not xcFireRateScanDone then scanXCFireRateObjects() end
-                    if #xcFireRateObjects == 0 then
-                        -- The game can create weapon data after injection/respawn.
-                        xcFireRateScanDone = false
-                        scanXCFireRateObjects()
-                    end
-                    applyXCFireRate()
-                else
-                    -- Never use broad getgc property writes on mobile.
-                    restoreXCFireRates()
+                if not xcFireRateScanDone then scanXCFireRateObjects() end
+                if #xcFireRateObjects == 0 then
+                    -- The game can create weapon data after injection/respawn.
+                    xcFireRateScanDone = false
+                    scanXCFireRateObjects()
                 end
+                applyXCFireRate()
             elseif wasEnabled then
-                restoreXCNativeFireRate(nil)
                 restoreXCFireRates()
             end
             wasEnabled = XCConfig.fireRateEnabled
         end)
-    end
-end)
-
--- Native hold-to-fire for semi-automatic weapons. This replaces the old
--- Automatic property mutation without generating mouse input on phones.
-task.spawn(function()
-    local heldLast = false
-    local heldWeapon = nil
-    local nextShot = 0
-    while xcSessionActive() and task.wait(0.01) do
-        if not (XCConfig.fireRateEnabled and lazyFeatureRequests.fireRate)
-            or not resolveXCFireRateGetWeapon() then
-            heldLast, heldWeapon, nextShot = false, nil, 0
-            continue
-        end
-        local okWeapon, weapon = pcall(xcFireRateGetWeapon)
-        local record = okWeapon and weapon and xcFireRateWeaponRecords[weapon] or nil
-        local held = record and record.OriginalAutomatic ~= true and weapon.IsFireHeld == true
-        if not held then
-            heldLast, heldWeapon, nextShot = false, weapon, 0
-            continue
-        end
-        if weapon ~= heldWeapon or not heldLast then
-            heldWeapon, heldLast = weapon, true
-            nextShot = os.clock() + math.max(tonumber(record.Rate) or 0.08, 0.03)
-            continue
-        end
-        local now = os.clock()
-        if now >= nextShot and type(weapon.shoot) == "function"
-            and not weapon.IsShooting and not weapon.IsBurstShooting then
-            nextShot = now + math.max(tonumber(record.Rate) or 0.08, 0.03)
-            pcall(function() weapon:shoot() end)
-        end
     end
 end)
 
@@ -9097,13 +7817,6 @@ end)
 local xcSilentSendHooked = false
 function setupXCSilentSendHook()
     if xcSilentSendHooked then return end
-    if xcBulletInterceptHooked or xcMobileCameraSilentHooked then
-        xcSilentSendHooked = true
-        return
-    end
-    -- InventoryController is the authoritative and safer interception point.
-    -- Never install a second random/changing pass for the same shot.
-    if bloxStrikeShootHooked and not UserInputService.TouchEnabled then return end
     if type(getgc) ~= "function" or type(hookfunction) ~= "function" then return end
 
     local sendFunc = nil
@@ -9128,7 +7841,7 @@ function setupXCSilentSendHook()
     end)
 
     if type(sendFunc) ~= "function" then return end
-    if shootContainer and rawget(shootContainer, "__XCSilentSendHookV28") then
+    if shootContainer and rawget(shootContainer, "__XCSilentSendHooked") then
         xcSilentSendHooked = true
         return
     end
@@ -9136,28 +7849,30 @@ function setupXCSilentSendHook()
     local oldSend
     oldSend = hookfunction(sendFunc, function(...)
         local args = {...}
-        if type(args[1]) == "table" then
-            local prepare = sharedXCEnv and sharedXCEnv.XCPrepareSilentSendPayloadV28
-            local okPrepare, prepared = pcall(function()
-                if type(prepare) == "function" then return prepare(args[1]) end
-                return prepareXCSilentShotPayload(args[1], true)
-            end)
-            if okPrepare and type(prepared) == "table" then args[1] = prepared end
+        if XCConfig.silentAimEnabled and type(args[1]) == "table" and type(args[1].Bullets) == "table" then
+            local targetPart = getSilentAimTarget and getSilentAimTarget() or silentAimResolved
+            if targetPart then
+                local chance = math.clamp(tonumber(XCConfig.silentAimHitChance) or 100, 0, 100)
+                local allowed = chance >= 100 or math.random(1, 100) <= chance
+                if allowed then
+                    silentAimResolved = targetPart
+                    for _, bullet in pairs(args[1].Bullets) do
+                        if type(bullet) == "table" and type(bullet.Hits) == "table" then
+                            for _, hitData in pairs(bullet.Hits) do
+                                if type(hitData) == "table" then
+                                    hitData.Instance = targetPart
+                                    hitData.Position = targetPart.Position
+                                end
+                            end
+                        end
+                    end
+                end
+            end
         end
-
-        -- Suppress a persistent pre-v23 Send hook while it forwards our copied
-        -- payload. This prevents double hit-chance rolls and in-place rewrites.
-        local silentWasEnabled = XCConfig.silentAimEnabled
-        XCConfig.silentAimEnabled = false
-        local results = table.pack(pcall(oldSend, unpack(args)))
-        XCConfig.silentAimEnabled = silentWasEnabled
-        if not results[1] then error(results[2], 0) end
-        return table.unpack(results, 2, results.n)
+        return oldSend(unpack(args))
     end)
 
     if shootContainer then rawset(shootContainer, "__XCSilentSendHooked", true) end
-    if shootContainer then rawset(shootContainer, "__XCSilentSendHookV23", true) end
-    if shootContainer then rawset(shootContainer, "__XCSilentSendHookV28", true) end
     xcSilentSendHooked = true
 end
 
@@ -9165,8 +7880,6 @@ end
 -- ENGINE LAUNCH / XC VISUAL EXTENSION
 -- ==========================================
 pcall(setupSilentAimHooks)
-pcall(setupXCNativeSilentHook)
-pcall(setupXCBulletInterceptHookV29)
 pcall(setupBloxStrikeShootHook)
 pcall(setupXCCharacterInputHook)
 task.spawn(function()
@@ -9180,11 +7893,8 @@ task.spawn(function()
     end
 end)
 task.spawn(function()
-    while xcSessionActive() and not xcSilentSendHooked
-        and not xcBulletInterceptHooked and not xcMobileCameraSilentHooked
-        and (UserInputService.TouchEnabled or not bloxStrikeShootHooked) do
-        if XCConfig.silentAimEnabled and lazyFeatureRequests.silentFallback
-            and (UserInputService.TouchEnabled or not bloxStrikeShootHooked) then
+    while xcSessionActive() and not xcSilentSendHooked do
+        if XCConfig.silentAimEnabled and lazyFeatureRequests.silentFallback then
             setupXCSilentSendHook()
             if not xcSilentSendHooked then task.wait(1.5) end
         else
