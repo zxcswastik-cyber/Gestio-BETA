@@ -1,3 +1,256 @@
+-- ==========================================
+-- XC / Panda Auth (PUSL-V4)
+-- ==========================================
+do
+    local pandaOk, PUSL = pcall(function()
+        local source = game:HttpGet("https://secure.pandauth.com/pv4/lib")
+        local loader = loadstring(source)
+        assert(type(loader) == "function", "invalid Panda library response")
+        return loader()
+    end)
+    if not pandaOk or not PUSL or type(PUSL.configure) ~= "function" then
+        return warn("[XC/Panda] Library failed to initialize: " .. tostring(PUSL))
+    end
+
+    local configured, configureError = pcall(PUSL.configure, {
+        serviceId = "xosecity",
+    })
+    if not configured then
+        return warn("[XC/Panda] Configuration failed: " .. tostring(configureError))
+    end
+
+    local authResult
+    local function getPandaKeyUrl()
+        if type(PUSL.getKeyUrl) ~= "function" then return nil end
+        local ok, url = pcall(PUSL.getKeyUrl)
+        return ok and type(url) == "string" and url or nil
+    end
+
+    local function validatePandaKey(key)
+        key = tostring(key or ""):match("^%s*(.-)%s*$")
+        if key == "" then return false, "Введите ключ" end
+        local ok, result = pcall(PUSL.validate, key)
+        if not ok then return false, "Ошибка проверки: " .. tostring(result) end
+        if type(result) ~= "table" then return false, "Panda вернула неверный ответ" end
+        if result.success then
+            authResult = result
+            if type(getgenv) == "function" then
+                getgenv().XC_PANDA_KEY = key
+            end
+            return true
+        end
+        return false, tostring(result.message or result.error or "Ключ недействителен")
+    end
+
+    local presetKey
+    if type(getgenv) == "function" then
+        presetKey = getgenv().XC_PANDA_KEY
+    end
+    local authenticated = false
+    if type(presetKey) == "string" and presetKey ~= "" then
+        authenticated = select(1, validatePandaKey(presetKey))
+    end
+
+    if not authenticated then
+        local Players = game:GetService("Players")
+        local UserInputService = game:GetService("UserInputService")
+        local localPlayer = Players.LocalPlayer or Players.PlayerAdded:Wait()
+        local resolved = false
+
+        local authGui = Instance.new("ScreenGui")
+        authGui.Name = "XC_PandaAuth"
+        authGui.ResetOnSpawn = false
+        authGui.IgnoreGuiInset = true
+        authGui.DisplayOrder = 100000
+        authGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+        local parented = pcall(function()
+            local guiParent = type(gethui) == "function" and gethui() or game:GetService("CoreGui")
+            authGui.Parent = guiParent
+        end)
+        if not parented or not authGui.Parent then
+            authGui.Parent = localPlayer:WaitForChild("PlayerGui")
+        end
+
+        local shade = Instance.new("Frame")
+        shade.Size = UDim2.fromScale(1, 1)
+        shade.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+        shade.BackgroundTransparency = 0.35
+        shade.BorderSizePixel = 0
+        shade.Parent = authGui
+
+        local panel = Instance.new("Frame")
+        panel.Name = "Panel"
+        panel.AnchorPoint = Vector2.new(0.5, 0.5)
+        panel.Position = UDim2.fromScale(0.5, 0.5)
+        panel.Size = UDim2.fromOffset(UserInputService.TouchEnabled and 310 or 360, 228)
+        panel.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
+        panel.BorderColor3 = Color3.fromRGB(135, 190, 0)
+        panel.BorderSizePixel = 1
+        panel.Parent = shade
+
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, 6)
+        corner.Parent = panel
+
+        local accent = Instance.new("Frame")
+        accent.Size = UDim2.new(1, 0, 0, 3)
+        accent.BackgroundColor3 = Color3.fromRGB(152, 204, 0)
+        accent.BorderSizePixel = 0
+        accent.Parent = panel
+
+        local title = Instance.new("TextLabel")
+        title.Position = UDim2.fromOffset(18, 17)
+        title.Size = UDim2.new(1, -36, 0, 28)
+        title.BackgroundTransparency = 1
+        title.Font = Enum.Font.GothamBold
+        title.Text = "XC  |  KEY SYSTEM"
+        title.TextColor3 = Color3.fromRGB(235, 235, 235)
+        title.TextSize = 18
+        title.TextXAlignment = Enum.TextXAlignment.Left
+        title.Parent = panel
+
+        local subtitle = Instance.new("TextLabel")
+        subtitle.Position = UDim2.fromOffset(18, 47)
+        subtitle.Size = UDim2.new(1, -36, 0, 20)
+        subtitle.BackgroundTransparency = 1
+        subtitle.Font = Enum.Font.Gotham
+        subtitle.Text = "Введите ключ Panda Auth для запуска XC"
+        subtitle.TextColor3 = Color3.fromRGB(145, 145, 145)
+        subtitle.TextSize = 12
+        subtitle.TextXAlignment = Enum.TextXAlignment.Left
+        subtitle.Parent = panel
+
+        local keyBox = Instance.new("TextBox")
+        keyBox.Position = UDim2.fromOffset(18, 78)
+        keyBox.Size = UDim2.new(1, -36, 0, 40)
+        keyBox.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+        keyBox.BorderColor3 = Color3.fromRGB(52, 52, 52)
+        keyBox.ClearTextOnFocus = false
+        keyBox.Font = Enum.Font.Code
+        keyBox.PlaceholderText = "Panda key..."
+        keyBox.PlaceholderColor3 = Color3.fromRGB(95, 95, 95)
+        keyBox.Text = ""
+        keyBox.TextColor3 = Color3.fromRGB(235, 235, 235)
+        keyBox.TextSize = 13
+        keyBox.TextXAlignment = Enum.TextXAlignment.Left
+        keyBox.Parent = panel
+        local keyPadding = Instance.new("UIPadding")
+        keyPadding.PaddingLeft = UDim.new(0, 10)
+        keyPadding.PaddingRight = UDim.new(0, 10)
+        keyPadding.Parent = keyBox
+
+        local function makeButton(text, xScale, xOffset, widthScale, widthOffset)
+            local button = Instance.new("TextButton")
+            button.Position = UDim2.new(xScale, xOffset, 0, 132)
+            button.Size = UDim2.new(widthScale, widthOffset, 0, 36)
+            button.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+            button.BorderColor3 = Color3.fromRGB(65, 65, 65)
+            button.AutoButtonColor = false
+            button.Font = Enum.Font.GothamBold
+            button.Text = text
+            button.TextColor3 = Color3.fromRGB(225, 225, 225)
+            button.TextSize = 12
+            button.Parent = panel
+            return button
+        end
+
+        local getKeyButton = makeButton("GET KEY", 0, 18, 0.5, -23)
+        local verifyButton = makeButton("VERIFY", 0.5, 5, 0.5, -23)
+        verifyButton.BackgroundColor3 = Color3.fromRGB(112, 154, 0)
+        verifyButton.BorderColor3 = Color3.fromRGB(152, 204, 0)
+
+        local status = Instance.new("TextLabel")
+        status.Position = UDim2.fromOffset(18, 178)
+        status.Size = UDim2.new(1, -36, 0, 31)
+        status.BackgroundTransparency = 1
+        status.Font = Enum.Font.Gotham
+        status.Text = "Ключ не сохраняется на диск"
+        status.TextColor3 = Color3.fromRGB(125, 125, 125)
+        status.TextSize = 11
+        status.TextWrapped = true
+        status.TextXAlignment = Enum.TextXAlignment.Left
+        status.Parent = panel
+
+        getKeyButton.Activated:Connect(function()
+            local url = getPandaKeyUrl()
+            if not url then
+                status.Text = "Не удалось получить ссылку"
+                status.TextColor3 = Color3.fromRGB(220, 75, 75)
+                return
+            end
+            if type(setclipboard) == "function" then
+                pcall(setclipboard, url)
+                status.Text = "Ссылка скопирована в буфер обмена"
+            else
+                keyBox.Text = url
+                keyBox:CaptureFocus()
+                status.Text = "Скопируйте ссылку из поля"
+            end
+            status.TextColor3 = Color3.fromRGB(152, 204, 0)
+        end)
+
+        local checking = false
+        local function submitKey()
+            if checking then return end
+            checking = true
+            verifyButton.Text = "CHECKING..."
+            status.Text = "Проверка ключа..."
+            status.TextColor3 = Color3.fromRGB(180, 180, 180)
+            task.spawn(function()
+                local success, message = validatePandaKey(keyBox.Text)
+                checking = false
+                if success then
+                    authenticated = true
+                    resolved = true
+                    status.Text = "Ключ принят. Запуск XC..."
+                    status.TextColor3 = Color3.fromRGB(152, 204, 0)
+                else
+                    verifyButton.Text = "VERIFY"
+                    status.Text = message
+                    status.TextColor3 = Color3.fromRGB(220, 75, 75)
+                end
+            end)
+        end
+        verifyButton.Activated:Connect(submitKey)
+        keyBox.FocusLost:Connect(function(enterPressed)
+            if enterPressed then submitKey() end
+        end)
+
+        local dragging, dragStart, panelStart
+        panel.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1
+                or input.UserInputType == Enum.UserInputType.Touch then
+                dragging = true
+                dragStart = input.Position
+                panelStart = panel.Position
+            end
+        end)
+        panel.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1
+                or input.UserInputType == Enum.UserInputType.Touch then dragging = false end
+        end)
+        local dragConnection = UserInputService.InputChanged:Connect(function(input)
+            if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement
+                or input.UserInputType == Enum.UserInputType.Touch) then
+                local delta = input.Position - dragStart
+                panel.Position = UDim2.new(panelStart.X.Scale, panelStart.X.Offset + delta.X,
+                    panelStart.Y.Scale, panelStart.Y.Offset + delta.Y)
+            end
+        end)
+
+        while not resolved and authGui.Parent do task.wait(0.05) end
+        dragConnection:Disconnect()
+        authGui:Destroy()
+    end
+
+    if not authenticated or type(authResult) ~= "table" or not authResult.success then
+        return warn("[XC/Panda] Authentication cancelled or failed. Get a key: "
+            .. tostring(getPandaKeyUrl() or "unavailable"))
+    end
+    print("[XC/Panda] Authenticated. Premium:", authResult.isPremium == true)
+end
+
 -- XC cleaned UI build
 -- Unified XC lime/dark interface
 pcall(function()
@@ -305,7 +558,12 @@ local XCConfig = {
     gloveChangerEnabled = false,
     selectedGloveModel = "Sports Gloves",
     selectedGloveSkin = "Default",
-    weaponSkinSelections = {}
+    skinEditorWeapon = "AK-47",
+    skinEditorFinish = "Default",
+    skinWear = 0,
+    knifeWear = 0,
+    weaponSkinSelections = {},
+    weaponSkinWear = {}
 }
 
 -- Immutable startup snapshot used by Settings > Config Manager > RESET.
@@ -475,7 +733,7 @@ local themeLibrary = {
         Enemy_Accent = Color3.fromRGB(152, 204, 0),
         Enemy_Fill = Color3.fromRGB(112, 151, 0),
         Enemy_Hidden = Color3.fromRGB(112, 116, 122),
-        NametagTextColor = Color3.fromRGB(235, 235, 235),
+        NametagTextColor = Color3.fromRGB(152, 204, 0),
         HealthHigh = Color3.fromRGB(152, 204, 0),
         HealthMid = Color3.fromRGB(205, 170, 42),
         HealthLow = Color3.fromRGB(205, 72, 72),
@@ -1841,7 +2099,7 @@ function refreshXCSkinData()
 
     for weaponName, skins in pairs(skinData.SkinSelections) do
         if XCConfig.weaponSkinSelections[weaponName] == nil then
-            XCConfig.weaponSkinSelections[weaponName] = skins[1] or "Default"
+            XCConfig.weaponSkinSelections[weaponName] = "Default"
         end
     end
 
@@ -1879,6 +2137,82 @@ function getXCKnifeChoices()
         choices = {"Butterfly Knife", "Karambit", "Bayonet"}
     end
     choices[#choices + 1] = "Default"
+    return choices
+end
+
+function getXCWeaponSkinChoices()
+    refreshXCSkinData()
+    local choices = {}
+    for weaponName, skins in pairs(skinData.SkinSelections or {}) do
+        if not skinData.KnifeSet[weaponName] and not skinData.GloveSelections[weaponName] and #skins > 0 then
+            choices[#choices + 1] = weaponName
+        end
+    end
+    table.sort(choices)
+    if #choices == 0 then choices = {"AK-47", "M4A1", "AWP", "Desert Eagle"} end
+    if not table.find(choices, XCConfig.skinEditorWeapon) then XCConfig.skinEditorWeapon = choices[1] end
+    return choices
+end
+
+function getXCAllFinishChoices()
+    refreshXCSkinData()
+    local set, choices = {Default = true}, {"Default"}
+    for _, skins in pairs(skinData.SkinSelections or {}) do
+        for _, skinName in ipairs(skins) do
+            if not set[skinName] then
+                set[skinName] = true
+                choices[#choices + 1] = skinName
+            end
+        end
+    end
+    table.sort(choices, function(a, b)
+        if a == "Default" then return true end
+        if b == "Default" then return false end
+        return a:lower() < b:lower()
+    end)
+    return choices
+end
+
+function getXCSkinChoicesForWeapon(weaponName)
+    refreshXCSkinData()
+    local choices = {"Default"}
+    for _, skinName in ipairs(skinData.SkinSelections[weaponName] or {}) do choices[#choices + 1] = skinName end
+    return choices
+end
+
+function getXCGloveSkinChoices(modelName)
+    refreshXCSkinData()
+    local choices = {"Default"}
+    for _, skinName in ipairs(skinData.GloveSelections[modelName] or {}) do
+        if skinName ~= "Default" then choices[#choices + 1] = skinName end
+    end
+    return choices
+end
+
+function getXCGloveModelChoices()
+    refreshXCSkinData()
+    local choices = {"Default"}
+    for _, folder in ipairs(skinData.GloveFolders or {}) do choices[#choices + 1] = folder.Name end
+    if #choices == 1 then choices = {"Default", "Sports Gloves", "Driver Gloves"} end
+    return choices
+end
+
+function getXCAllGloveSkinChoices()
+    refreshXCSkinData()
+    local set, choices = {Default = true}, {"Default"}
+    for _, skins in pairs(skinData.GloveSelections or {}) do
+        for _, skinName in ipairs(skins) do
+            if not set[skinName] then
+                set[skinName] = true
+                choices[#choices + 1] = skinName
+            end
+        end
+    end
+    table.sort(choices, function(a, b)
+        if a == "Default" then return true end
+        if b == "Default" then return false end
+        return a:lower() < b:lower()
+    end)
     return choices
 end
 
@@ -1962,12 +2296,12 @@ function applyXCKnifeChanger()
     local modelChanged = view.CameraModelWeapon ~= selectedKnife
     view.CameraModelWeapon = selectedKnife
     view.Skin = selectedSkin ~= "Default" and selectedSkin or nil
-    view.Float = 0
+    view.Float = math.clamp(tonumber(XCConfig.knifeWear) or 0, 0, 1)
     if modelChanged or not view.Model or not view.Model.Parent then
         if not constructXCKnifeView(view, weapon.Character or player.Character, weapon) then return false end
     end
     if view.Model and view.Model.Parent then
-        applySurfaceAppearanceSkin(view.Model, selectedKnife, selectedSkin)
+        applySurfaceAppearanceSkin(view.Model, selectedKnife, selectedSkin, XCConfig.knifeWear)
     end
     skinData.LastError = nil
     return true
@@ -1984,17 +2318,31 @@ function getCurrentWeaponModel()
     return nil
 end
 
-function applySurfaceAppearanceSkin(model, weaponName, skinName)
+function applySurfaceAppearanceSkin(model, weaponName, skinName, wear)
     if not model or not skinData.SkinsRoot then return end
     if not weaponName or not skinName or skinName == "Default" then return end
 
     local weaponFolder = skinData.SkinsRoot:FindFirstChild(weaponName)
     local skinFolder = weaponFolder and weaponFolder:FindFirstChild(skinName)
     local cameraFolder = skinFolder and skinFolder:FindFirstChild("Camera")
-    local factoryNew = cameraFolder and cameraFolder:FindFirstChild("Factory New")
-    if not factoryNew then return end
+    if not cameraFolder then return end
+    local textureFolder = nil
+    if skinData.SkinLibrary and type(skinData.SkinLibrary.GetAllSkinsForWeapon) == "function"
+        and type(skinData.SkinLibrary.GetWearNameForFloat) == "function" then
+        pcall(function()
+            for _, info in ipairs(skinData.SkinLibrary.GetAllSkinsForWeapon(weaponName) or {}) do
+                if type(info) == "table" and info.skin == skinName then
+                    local wearName = skinData.SkinLibrary.GetWearNameForFloat(info, math.clamp(tonumber(wear) or 0, 0, 1))
+                    textureFolder = cameraFolder:FindFirstChild(wearName)
+                    break
+                end
+            end
+        end)
+    end
+    textureFolder = textureFolder or cameraFolder:FindFirstChild("Factory New") or cameraFolder:GetChildren()[1]
+    if not textureFolder then return end
 
-    for _, appearance in ipairs(factoryNew:GetChildren()) do
+    for _, appearance in ipairs(textureFolder:GetChildren()) do
         if appearance:IsA("SurfaceAppearance") then
             local targetPart = model:FindFirstChild(appearance.Name, true)
             if targetPart and targetPart:IsA("BasePart") then
@@ -2005,6 +2353,45 @@ function applySurfaceAppearanceSkin(model, weaponName, skinName)
             end
         end
     end
+end
+
+function applyXCSelectedWeaponSkin()
+    if not XCConfig.skinChangerEnabled or not refreshXCSkinData() or type(skinData.GetWeapon) ~= "function" then return false end
+    local ok, weapon = pcall(skinData.GetWeapon)
+    if not ok or type(weapon) ~= "table" or weapon.IsDestroyed
+        or (weapon.Player ~= nil and weapon.Player ~= player) then return false end
+    local view = weapon.Viewmodel
+    local model = view and view.Model
+    if not view or not model or not model.Parent then return false end
+    local melee = skinData.KnifeSet[weapon.Name] or (type(weapon.Properties) == "table" and weapon.Properties.Class == "Melee")
+    if melee then return applyXCKnifeChanger() end
+
+    local weaponName = view.CameraModelWeapon or view.Weapon or weapon.Name
+    local skinName = XCConfig.weaponSkinSelections[weaponName]
+    if skinName == nil then return false end
+    if type(skinName) ~= "string" or skinName == "" or skinName == "Default" then
+        return restoreXCSelectedWeaponSkin(weaponName)
+    end
+    local wear = math.clamp(tonumber(XCConfig.weaponSkinWear[weaponName]) or 0, 0, 1)
+    view.Skin = skinName
+    view.Float = wear
+    applySurfaceAppearanceSkin(model, weaponName, skinName, wear)
+    return true
+end
+
+function restoreXCSelectedWeaponSkin(weaponName)
+    if type(skinData.GetWeapon) ~= "function" then return false end
+    local ok, weapon = pcall(skinData.GetWeapon)
+    if not ok or type(weapon) ~= "table" or weapon.IsDestroyed then return false end
+    local view = weapon.Viewmodel
+    local currentName = view and (view.CameraModelWeapon or view.Weapon or weapon.Name)
+    if not view or (weaponName and currentName ~= weaponName) then return false end
+    if view.Skin == nil and (tonumber(view.Float) or 0) == 0 then return true end
+    view.Skin = nil
+    view.Float = 0
+    local character = weapon.Character or player.Character
+    if character and character.Parent then constructXCKnifeView(view, character, weapon) end
+    return true
 end
 
 local lastBloxModuleScan = 0
@@ -2050,7 +2437,12 @@ function scanAndMorphKnives(root)
         local selectedSkin = XCConfig.weaponSkinSelections[selectedWeapon]
             or (selectedWeapon == XCConfig.selectedKnifeType and XCConfig.selectedSkin)
             or "Default"
-        applySurfaceAppearanceSkin(weaponModel, selectedWeapon, selectedSkin)
+        applySurfaceAppearanceSkin(
+            weaponModel,
+            selectedWeapon,
+            selectedSkin,
+            XCConfig.weaponSkinWear[selectedWeapon] or (selectedWeapon == XCConfig.selectedKnifeType and XCConfig.knifeWear) or 0
+        )
     end
 end
 
@@ -2101,6 +2493,7 @@ task.spawn(function()
         pcall(function()
             if XCConfig.skinChangerEnabled then
                 applyXCKnifeChanger()
+                applyXCSelectedWeaponSkin()
             end
             if XCConfig.gloveChangerEnabled then
                 applyXCGloves()
@@ -3154,9 +3547,12 @@ end
 
 -- ==========================================================================
 -- [ CUBE CHECKER ]
--- camera-ray surface marker.
+-- Crosshair penetration probe: lime = the equipped weapon can exit the hit
+-- surface, red = the surface is not penetrable with its native properties.
 -- ==========================================================================
 do
+    local CAN_PENETRATE = Color3.fromRGB(152, 204, 0)
+    local BLOCKED = Color3.fromRGB(220, 55, 62)
     local cubePart = Instance.new("Part")
     cubePart.Name = "XC_CubeChecker"
     cubePart.Anchored = true
@@ -3165,7 +3561,7 @@ do
     cubePart.CanQuery = false
     cubePart.CastShadow = false
     cubePart.Material = Enum.Material.Neon
-    cubePart.Transparency = 0.98
+    cubePart.Transparency = 0.82
     cubePart.Size = Vector3.new(1.5, 1.5, 0.01)
 
     local cubeOutline = Instance.new("SelectionBox")
@@ -3173,12 +3569,99 @@ do
     cubeOutline.Adornee = cubePart
     cubeOutline.Color3 = Color3.fromRGB(210, 45, 55)
     cubeOutline.LineThickness = 0.04
-    cubeOutline.Transparency = 0.2
+    cubeOutline.Transparency = 0.05
     cubeOutline.Parent = cubePart
 
     local cubeRayParams = RaycastParams.new()
     cubeRayParams.FilterType = Enum.RaycastFilterType.Exclude
     cubeRayParams.IgnoreWater = true
+
+    local cubeGetWeapon = nil
+    local cubeNextResolve = 0
+    local cubeNextProbe = 0
+    local cubeResult = nil
+    local cubeColor = BLOCKED
+
+    local function resolveCubeWeapon()
+        if type(cubeGetWeapon) == "function" then
+            local ok, weapon = pcall(cubeGetWeapon)
+            if ok and type(weapon) == "table" then return weapon end
+        end
+        if os.clock() < cubeNextResolve then return nil end
+        cubeNextResolve = os.clock() + 1
+        pcall(function()
+            local controllers = ReplicatedStorage:FindFirstChild("Controllers")
+            local inventoryScript = controllers and controllers:FindFirstChild("InventoryController")
+            local inventory = inventoryScript and require(inventoryScript)
+            if type(inventory) == "table" and type(inventory.peekCurrentEquippedForMovement) == "function" then
+                cubeGetWeapon = inventory.peekCurrentEquippedForMovement
+            end
+        end)
+        if type(cubeGetWeapon) == "function" then
+            local ok, weapon = pcall(cubeGetWeapon)
+            if ok then return weapon end
+        end
+        return nil
+    end
+
+    local function ensureCubeRaycast()
+        if xcNativeRaycast and type(xcNativeRaycast.cast) == "function"
+            and type(xcNativeRaycast.castThrough) == "function" and type(xcNativeGetRayIgnore) == "function" then
+            return true
+        end
+        pcall(function()
+            local sharedFolder = ReplicatedStorage:FindFirstChild("Shared")
+            local components = ReplicatedStorage:FindFirstChild("Components")
+            local common = components and components:FindFirstChild("Common")
+            local raycastScript = sharedFolder and sharedFolder:FindFirstChild("Raycast")
+            local ignoreScript = common and common:FindFirstChild("GetRayIgnore")
+            if raycastScript and ignoreScript then
+                xcNativeRaycast = require(raycastScript)
+                xcNativeGetRayIgnore = require(ignoreScript)
+            end
+        end)
+        return xcNativeRaycast and type(xcNativeRaycast.cast) == "function"
+            and type(xcNativeRaycast.castThrough) == "function" and type(xcNativeGetRayIgnore) == "function"
+    end
+
+    local function probeCubePenetration(origin, direction, distance)
+        if not ensureCubeRaycast() then return nil, BLOCKED end
+        local ignore = xcNativeGetRayIgnore()
+        local first = xcNativeRaycast.cast(origin, direction * distance, nil, ignore)
+        if type(first) ~= "table" or not first.instance or typeof(first.position) ~= "Vector3" then
+            return nil, BLOCKED
+        end
+
+        local normal = typeof(first.normal) == "Vector3" and first.normal or -direction
+        local hitCharacter = first.instance:FindFirstAncestorOfClass("Model")
+        if hitCharacter and Players:GetPlayerFromCharacter(hitCharacter) then
+            return {Position = first.position, Normal = normal}, CAN_PENETRATE
+        end
+
+        local weapon = resolveCubeWeapon()
+        local properties = weapon and weapon.Bullet and weapon.Bullet.Properties
+        local penetration = math.max(0, tonumber(properties and properties.Penetration) or 0)
+        if penetration <= 0 then
+            return {Position = first.position, Normal = normal}, BLOCKED
+        end
+
+        local hits = xcNativeRaycast.castThrough(
+            first.position - direction * 0.001,
+            direction * (penetration + 0.001),
+            penetration,
+            ignore
+        )
+        local canExit = false
+        if type(hits) == "table" then
+            for index, hit in ipairs(hits) do
+                if index % 2 == 0 and type(hit) == "table" and hit.instance then
+                    canExit = true
+                    break
+                end
+            end
+        end
+        return {Position = first.position, Normal = normal}, canExit and CAN_PENETRATE or BLOCKED
+    end
 
     local cubeRenderConnection = RunService.RenderStepped:Connect(function()
         pcall(function()
@@ -3197,23 +3680,34 @@ do
             local size = math.clamp(tonumber(XCConfig.cubeCheckerSize) or 1.5, 0.1, 10)
             local lineThickness = math.clamp(tonumber(XCConfig.cubeCheckerLineThickness) or 0.04, 0.01, 0.2)
             local outlineTransparency = math.clamp(tonumber(XCConfig.cubeCheckerTransparency) or 0.2, 0, 1)
-            local col = XCConfig.cubeCheckerRainbow
-                and Color3.fromHSV((os.clock() * 0.2) % 1, 1, 1)
-                or rgb(XCConfig.bulletTracerColorR, XCConfig.bulletTracerColorG, XCConfig.bulletTracerColorB)
-
-            cubeRayParams.FilterDescendantsInstances = {player.Character, cubePart}
             local origin = cam.CFrame.Position
-            local result = Workspace:Raycast(origin, cam.CFrame.LookVector * distance, cubeRayParams)
+            local direction = cam.CFrame.LookVector
+            local now = os.clock()
+            if now >= cubeNextProbe then
+                cubeNextProbe = now + 0.075
+                cubeResult, cubeColor = probeCubePenetration(origin, direction, distance)
+                if not cubeResult then
+                    cubeRayParams.FilterDescendantsInstances = {player.Character, cubePart}
+                    local fallback = Workspace:Raycast(origin, direction * distance, cubeRayParams)
+                    if fallback then
+                        cubeResult = {Position = fallback.Position, Normal = fallback.Normal}
+                        cubeColor = BLOCKED
+                    end
+                end
+            end
 
-            if not result then
+            if not cubeResult then
                 cubePart.Parent = nil
                 return
             end
 
             cubePart.Size = Vector3.new(size, size, 0.01)
-            cubePart.Color = col
-            cubePart.CFrame = CFrame.lookAt(result.Position + result.Normal * 0.02, result.Position + result.Normal)
-            cubeOutline.Color3 = col
+            cubePart.Color = cubeColor
+            cubePart.CFrame = CFrame.lookAt(
+                cubeResult.Position + cubeResult.Normal * 0.02,
+                cubeResult.Position + cubeResult.Normal
+            )
+            cubeOutline.Color3 = cubeColor
             cubeOutline.LineThickness = lineThickness
             cubeOutline.Transparency = outlineTransparency
             cubePart.Parent = Workspace
@@ -5518,7 +6012,7 @@ function getOrCreateScreenEsp(plr)
     weaponCard.ZIndex = 8
     Instance.new("UICorner", weaponCard).CornerRadius = UDim.new(0, 3)
     local weaponCardStroke = Instance.new("UIStroke", weaponCard)
-    weaponCardStroke.Color = currentTheme.Border
+    weaponCardStroke.Color = currentTheme.Enemy_Accent
     weaponCardStroke.Thickness = 1
     weaponCardStroke.Transparency = 1
     weaponCardStroke.Enabled = false
@@ -5538,9 +6032,9 @@ function getOrCreateScreenEsp(plr)
     weaponViewport.Size = UDim2.fromScale(1, 1)
     weaponViewport.Position = UDim2.fromOffset(0, 0)
     weaponViewport.BackgroundTransparency = 1
-    weaponViewport.Ambient = Color3.fromRGB(255, 255, 255)
-    weaponViewport.LightColor = Color3.fromRGB(255, 255, 255)
-    weaponViewport.LightDirection = Vector3.new(-1, -0.6, -1)
+    weaponViewport.Ambient = Color3.fromRGB(72, 96, 0)
+    weaponViewport.LightColor = currentTheme.Enemy_Accent
+    weaponViewport.LightDirection = Vector3.new(-1, -0.45, -1)
     weaponViewport.Visible = false
     weaponViewport.ZIndex = 9
     local weaponWorld = Instance.new("WorldModel", weaponViewport)
@@ -5588,6 +6082,7 @@ function getOrCreateScreenEsp(plr)
     local cardStroke = Instance.new("UIStroke", tagCard)
     cardStroke.Color = currentTheme.Border
     cardStroke.Thickness = 0.8
+    cardStroke.Enabled = false
 
     local pad = Instance.new("UIPadding", tagCard)
     pad.PaddingRight = UDim.new(0, 6)
@@ -5747,8 +6242,15 @@ function buildXCWeaponViewport(esp, weaponName, tool, character)
                 object.CanCollide = false
                 object.CanTouch = false
                 object.CanQuery = false
+                object.CastShadow = false
+                object.Color = currentTheme.Enemy_Accent
+                object.Material = Enum.Material.SmoothPlastic
+                object.Reflectance = 0.06
+                if object:IsA("MeshPart") then object.TextureID = "" end
                 if object.Transparency < 0.98 then table.insert(visibleParts, object) end
             end
+        elseif object:IsA("SurfaceAppearance") or object:IsA("Decal") or object:IsA("Texture") then
+            object:Destroy()
         end
     end
 
@@ -5779,9 +6281,9 @@ function buildXCWeaponViewport(esp, weaponName, tool, character)
     local viewDirection = longOnX and Vector3.new(0, 0.08, 1) or Vector3.new(1, 0.08, 0)
     local horizontalSize = longOnX and boundsSize.X or boundsSize.Z
     local depthSize = longOnX and boundsSize.Z or boundsSize.X
-    local fieldOfView = 28
+    local fieldOfView = 24
     local tangent = math.tan(math.rad(fieldOfView * 0.5))
-    local viewportAspect = 36 / 15
+    local viewportAspect = 2.6
     local distanceForWidth = horizontalSize / math.max(0.01, 2 * tangent * viewportAspect)
     local distanceForHeight = boundsSize.Y / math.max(0.01, 2 * tangent)
     local cameraDistance = math.max(distanceForWidth, distanceForHeight, 0.35) * 1.18 + depthSize * 0.5
@@ -5808,12 +6310,15 @@ function updateXCWeaponPreview(esp, plr, char, sideColor, boxPosX, boxPosY, boxW
         buildXCWeaponViewport(esp, weaponName, tool, char)
     end
 
-    esp.WeaponCardStroke.Color = sideColor
-    esp.WeaponImage.ImageColor3 = sideColor
-    local iconWidth = math.floor(math.clamp(boxWidth * 1.35, 22, 58) + 0.5)
-    local iconHeight = math.floor(math.clamp(iconWidth * 0.42, 10, 24) + 0.5)
+    local weaponLime = currentTheme.Enemy_Accent
+    esp.WeaponCardStroke.Color = weaponLime
+    esp.WeaponImage.ImageColor3 = weaponLime
+    esp.WeaponViewport.Ambient = Color3.fromRGB(72, 96, 0)
+    esp.WeaponViewport.LightColor = weaponLime
+    local iconWidth = math.floor(math.clamp(boxWidth * 1.5, 28, 72) + 0.5)
+    local iconHeight = math.floor(math.clamp(iconWidth * 0.38, 12, 28) + 0.5)
     esp.WeaponCard.Size = UDim2.fromOffset(iconWidth, iconHeight)
-    esp.WeaponCard.Position = UDim2.fromOffset(boxPosX + boxWidth * 0.5, boxPosY + boxHeight + 2)
+    esp.WeaponCard.Position = UDim2.fromOffset(boxPosX + boxWidth * 0.5, boxPosY + boxHeight + 3)
     esp.WeaponCard.Visible = weaponName ~= nil and esp.WeaponReady
 end
 
@@ -5872,7 +6377,13 @@ function getXCCharacterScreenRect(esp, char, rootPart)
     end
 
     local rootPosition = rootPart.Position
-    local rootScreen = camera:WorldToViewportPoint(rootPosition)
+    local currentFov = math.clamp(tonumber(camera.FieldOfView) or 70, 10, 120)
+    if esp.LastProjectionFov and math.abs(esp.LastProjectionFov - currentFov) > 0.05 then
+        esp.SmoothRect = nil
+    end
+    esp.LastProjectionFov = currentFov
+
+    local rootScreen = camera:WorldToViewportPoint(rootPosition + Vector3.new(0, 0.15, 0))
     if rootScreen.Z <= 0.2 then
         esp.SmoothRect = nil
         return nil
@@ -5881,27 +6392,23 @@ function getXCCharacterScreenRect(esp, char, rootPart)
     local preferredAspect = math.clamp(tonumber(XCConfig.espBoxAspect) or 0.52, 0.38, 0.8)
     local perspectiveScale = math.clamp(tonumber(XCConfig.espPerspectiveScale) or 1, 0.65, 1.5)
 
-    -- Use a constant six-stud body span instead of animated limbs/accessories.
-    -- This makes size respond only to distance/FOV and prevents flattening.
-    local topScreen = camera:WorldToViewportPoint(rootPosition + Vector3.new(0, 3.15, 0))
-    local bottomScreen = camera:WorldToViewportPoint(rootPosition - Vector3.new(0, 2.85, 0))
-    if topScreen.Z <= 0.2 or bottomScreen.Z <= 0.2 then
+    -- Project a fixed six-stud body against a virtual 70-degree camera. The
+    -- position still follows the real camera, while box size depends only on
+    -- target depth and distance—not Custom FOV or its render order.
+    local cameraSpace = camera.CFrame:PointToObjectSpace(rootPosition)
+    local depth = -cameraSpace.Z
+    if depth <= 0.2 then
         esp.SmoothRect = nil
         return nil
     end
 
-    local projectedHeight = math.abs(bottomScreen.Y - topScreen.Y) * perspectiveScale
-    -- Neutralize only XC's custom camera FOV so ESP keeps the same readable
-    -- size when the user changes FOV. Distance perspective remains intact.
-    if XCConfig.customFovEnabled then
-        local actualFov = math.clamp(tonumber(camera.FieldOfView) or 70, 10, 120)
-        projectedHeight *= math.tan(math.rad(actualFov * 0.5)) / math.tan(math.rad(35))
-    end
+    local referenceFocal = viewport.Y / (2 * math.tan(math.rad(35)))
+    local projectedHeight = (6 * referenceFocal / depth) * perspectiveScale
     local maxHeight = math.max(80, viewport.Y * 0.72)
     local height = math.clamp(projectedHeight, 16, maxHeight)
     local width = height * preferredAspect
     local centerScreenX = rootScreen.X
-    local centerScreenY = (topScreen.Y + bottomScreen.Y) * 0.5
+    local centerScreenY = rootScreen.Y
     local target = {
         X = centerScreenX - width * 0.5,
         Y = centerScreenY - height * 0.5,
@@ -6086,8 +6593,8 @@ function renderTacticalOverlay()
 
                     if XCConfig.nametagsEnabled then
                         esp.TagCard.BackgroundTransparency = XCConfig.tagTransparency
-                        esp.TagCardStroke.Color = sideColor
-                        esp.TagLabel.TextColor3 = sideColor
+                        esp.TagCardStroke.Enabled = false
+                        esp.TagLabel.TextColor3 = currentTheme.Enemy_Accent
                         esp.TagLabel.TextSize = XCConfig.espTextSize
 
                         local baseName = plr.DisplayName or plr.Name
@@ -7368,7 +7875,7 @@ function buildXCUI()
         tab_Visuals = "Visuals: ESP, chams and on-screen combat feedback.",
         tab_World = "World: lighting, weather, scope and camera tools.",
         tab_Misc = "Utilities: session helpers, animations and viewmodel controls.",
-        tab_Skins = "Cosmetics: knives, gloves, weapon materials and bullet effects.",
+        tab_Skins = "Inventory changer: weapon finishes, wear, knives and gloves.",
         tab_Players = "Players: target rules, priority player and ESP details.",
         tab_Configs = "Settings: interface, quick actions and configuration profiles.",
     }
@@ -7992,15 +8499,20 @@ function buildXCUI()
         arrowRight.Rotation = -42
         arrowRight.Parent = arrow
 
+        local function resolvedValues()
+            local list = type(values) == "function" and values() or values
+            return type(list) == "table" and #list > 0 and list or {"Default"}
+        end
         local function refresh(value)
             valueText.Text = tostring(value)
             valueText.TextColor3 = C.Text
         end
-        refresh(XCConfig[key] or values[1])
+        local initialValues = resolvedValues()
+        refresh(XCConfig[key] or initialValues[1])
         refreshers[key] = refreshers[key] or {}
         table.insert(refreshers[key], refresh)
         button.Activated:Connect(function()
-            openDropdown(button, key, values, onChanged, refresh)
+            openDropdown(button, key, resolvedValues(), onChanged, refresh)
         end)
         attachHelp(holder, key)
         registerSearch(holder, label .. " " .. key)
@@ -8163,7 +8675,7 @@ function buildXCUI()
             healthBack.Size = UDim2.fromOffset(4, height)
             healthBack.Visible = XCConfig.healthBarEnabled
             tag.Position = UDim2.new(0.5, 0, 0.55, -height * 0.5 - 3)
-            tag.TextColor3 = color
+            tag.TextColor3 = currentTheme.Enemy_Accent
             tag.Visible = XCConfig.nametagsEnabled
 
             local left = canvas.AbsoluteSize.X * 0.5 - width * 0.5
@@ -8211,8 +8723,10 @@ function buildXCUI()
             if value then
                 hookBloxStrikeModules(true)
                 applyXCKnifeChanger()
+                applyXCSelectedWeaponSkin()
             else
                 restoreXCKnifeModel()
+                restoreXCSelectedWeaponSkin()
             end
         elseif key == "gloveChangerEnabled" and value then applyXCGloves()
         elseif key == "nightModeEnabled" then
@@ -8619,31 +9133,102 @@ function buildXCUI()
     addChoice(R, "Freelook bind", "freelookKey", {"LeftAlt", "RightAlt", "F3", "F4", "F5", "F6"})
 
     task.wait()
-    L, R = columns("Skins", "Cosmetics", "Bullet effects")
-    section(L, "Skin changer")
+    L, R = columns("Skins", "Weapon inventory", "Knife & gloves")
+    section(L, "Inventory changer")
     toggle(L, "Skin changer", "skinChangerEnabled")
-    toggle(L, "Glove changer", "gloveChangerEnabled")
-    addChoice(L, "Knife", "selectedKnifeType", getXCKnifeChoices(), function()
+    addChoice(L, "Weapon", "skinEditorWeapon", getXCWeaponSkinChoices(), function(weaponName)
+        local selected = XCConfig.weaponSkinSelections[weaponName] or "Default"
+        XCConfig.skinEditorFinish = selected
+        XCConfig.skinWear = XCConfig.weaponSkinWear[weaponName] or 0
+        refreshConfigControls("skinEditorFinish", selected)
+        refreshConfigControls("skinWear", XCConfig.skinWear)
+    end)
+    addChoice(L, "Finish", "skinEditorFinish", function()
+        return getXCSkinChoicesForWeapon(XCConfig.skinEditorWeapon)
+    end, function(finish)
+        local weaponName = XCConfig.skinEditorWeapon
+        XCConfig.weaponSkinSelections[weaponName] = finish
+        XCConfig.weaponSkinWear[weaponName] = XCConfig.skinWear
+        applyXCSelectedWeaponSkin()
+    end)
+    addSlider(L, "Wear float", "skinWear", 0, 1, 0.01, "", function(value)
+        local weaponName = XCConfig.skinEditorWeapon
+        XCConfig.weaponSkinWear[weaponName] = value
+        applyXCSelectedWeaponSkin()
+    end)
+    addButton(L, "USE HELD WEAPON", function()
+        refreshXCSkinData()
+        local ok, weapon = type(skinData.GetWeapon) == "function" and pcall(skinData.GetWeapon)
+        local view = ok and weapon and weapon.Viewmodel
+        local weaponName = view and (view.CameraModelWeapon or view.Weapon) or (weapon and weapon.Name)
+        if weaponName and skinData.SkinSelections[weaponName] then
+            XCConfig.skinEditorWeapon = weaponName
+            XCConfig.skinEditorFinish = XCConfig.weaponSkinSelections[weaponName] or "Default"
+            XCConfig.skinWear = XCConfig.weaponSkinWear[weaponName] or 0
+            refreshConfigControls("skinEditorWeapon", weaponName)
+            refreshConfigControls("skinEditorFinish", XCConfig.skinEditorFinish)
+            refreshConfigControls("skinWear", XCConfig.skinWear)
+        end
+    end)
+    addButton(L, "APPLY SELECTED SKIN", function()
+        local weaponName = XCConfig.skinEditorWeapon
+        XCConfig.weaponSkinSelections[weaponName] = XCConfig.skinEditorFinish
+        XCConfig.weaponSkinWear[weaponName] = XCConfig.skinWear
+        applyXCSelectedWeaponSkin()
+    end)
+    addButton(L, "RESET SELECTED WEAPON", function()
+        local weaponName = XCConfig.skinEditorWeapon
+        XCConfig.weaponSkinSelections[weaponName] = "Default"
+        XCConfig.weaponSkinWear[weaponName] = 0
+        XCConfig.skinEditorFinish = "Default"
+        XCConfig.skinWear = 0
+        refreshConfigControls("skinEditorFinish", "Default")
+        refreshConfigControls("skinWear", 0)
+        restoreXCSelectedWeaponSkin(weaponName)
+    end)
+
+    section(R, "Knife changer")
+    addChoice(R, "Knife model", "selectedKnifeType", getXCKnifeChoices(), function()
+        XCConfig.selectedSkin = "Default"
+        refreshConfigControls("selectedSkin", "Default")
         applyXCKnifeChanger()
     end)
-    addChoice(L, "Skin", "selectedSkin", {"Fade", "Doppler", "Crimson Web", "Default"}, function()
-        applyXCKnifeChanger()
+    addChoice(R, "Knife finish", "selectedSkin", function()
+        return getXCSkinChoicesForWeapon(XCConfig.selectedKnifeType)
+    end, function() applyXCKnifeChanger() end)
+    addSlider(R, "Knife wear", "knifeWear", 0, 1, 0.01, "", function() applyXCKnifeChanger() end)
+    section(R, "Glove changer")
+    toggle(R, "Glove changer", "gloveChangerEnabled")
+    addChoice(R, "Glove model", "selectedGloveModel", getXCGloveModelChoices(), function()
+        XCConfig.selectedGloveSkin = "Default"
+        refreshConfigControls("selectedGloveSkin", "Default")
+        applyXCGloves()
     end)
-    addChoice(L, "Glove model", "selectedGloveModel", {"Sports Gloves", "Driver Gloves", "Default"})
-    section(L, "Weapon chams")
-    toggle(L, "Weapon chams", "weaponChamsEnabled")
-    addChoice(L, "Weapon material", "weaponChamsMode", {"Glass", "ForceField", "Metal", "Highlight", "Neon"})
-    section(R, "Bullet tracers")
-    toggle(R, "Bullet trail", "bulletTrailEnabled")
-    toggle(R, "Bullet flash", "bulletFlashEnabled")
-    toggle(R, "Bullet impacts", "bulletImpactEnabled")
-    toggle(R, "Rainbow trail", "bulletTracerRainbow")
-    addChoice(R, "Trail style", "bulletTracerStyle", {"Block", "Cylinder"})
-    addSlider(R, "Trail duration", "bulletTracerDuration", 0.05, 3, 0.05, "s")
-    addSlider(R, "Trail width", "bulletTracerWidth", 0.02, 0.5, 0.01, "")
-    section(R, "Surface marker")
-    toggle(R, "Cube checker", "cubeCheckerEnabled")
-    addSlider(R, "Cube distance", "cubeCheckerDistance", 1, 100, 1, "")
+    addChoice(R, "Glove finish", "selectedGloveSkin", function()
+        return getXCGloveSkinChoices(XCConfig.selectedGloveModel)
+    end, function() applyXCGloves() end)
+    addButton(R, "APPLY KNIFE & GLOVES", function()
+        applyXCKnifeChanger()
+        applyXCGloves()
+    end)
+    addButton(R, "RESET ALL SKINS", function()
+        table.clear(XCConfig.weaponSkinSelections)
+        table.clear(XCConfig.weaponSkinWear)
+        XCConfig.skinEditorFinish = "Default"
+        XCConfig.skinWear = 0
+        XCConfig.selectedKnifeType = "Default"
+        XCConfig.selectedSkin = "Default"
+        XCConfig.selectedGloveModel = "Default"
+        XCConfig.selectedGloveSkin = "Default"
+        restoreXCKnifeModel()
+        restoreXCSelectedWeaponSkin()
+        refreshConfigControls("skinEditorFinish", "Default")
+        refreshConfigControls("skinWear", 0)
+        refreshConfigControls("selectedKnifeType", "Default")
+        refreshConfigControls("selectedSkin", "Default")
+        refreshConfigControls("selectedGloveModel", "Default")
+        refreshConfigControls("selectedGloveSkin", "Default")
+    end)
 
     task.wait()
     L, R = columns("Misc", "Utilities", "Viewmodel")
@@ -8666,6 +9251,20 @@ function buildXCUI()
     addSlider(R, "Hands pitch", "customHandsPitch", -45, 45, 1, "°")
     addSlider(R, "Hands yaw", "customHandsYaw", -45, 45, 1, "°")
     addSlider(R, "Hands roll", "customHandsRoll", -90, 90, 1, "°")
+    section(R, "Weapon visuals")
+    toggle(R, "Weapon chams", "weaponChamsEnabled")
+    addChoice(R, "Weapon material", "weaponChamsMode", {"Glass", "ForceField", "Metal", "Highlight", "Neon"})
+    section(R, "Bullet effects")
+    toggle(R, "Bullet trail", "bulletTrailEnabled")
+    toggle(R, "Bullet flash", "bulletFlashEnabled")
+    toggle(R, "Bullet impacts", "bulletImpactEnabled")
+    toggle(R, "Rainbow trail", "bulletTracerRainbow")
+    addChoice(R, "Trail style", "bulletTracerStyle", {"Block", "Cylinder"})
+    addSlider(R, "Trail duration", "bulletTracerDuration", 0.05, 3, 0.05, "s")
+    addSlider(R, "Trail width", "bulletTracerWidth", 0.02, 0.5, 0.01, "")
+    section(R, "Penetration checker")
+    toggle(R, "Cube checker", "cubeCheckerEnabled")
+    addSlider(R, "Cube distance", "cubeCheckerDistance", 1, 100, 1, "")
 
     task.wait()
     L, R = columns("Players", "Target filtering", "Overlay options")
