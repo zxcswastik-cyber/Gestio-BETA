@@ -9317,13 +9317,58 @@ function buildXCUI()
         parent = activeSectionByParent[parent] or parent
         local holder = Instance.new("Frame", parent)
         holder.Name = "SkinImageGallery"
-        holder.Size = UDim2.new(1, 0, 0, 318)
+        holder.Size = UDim2.new(1, 0, 0, 388)
         holder.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
         holder.BorderColor3 = C.Border
         holder.BorderSizePixel = 1
 
+        local categoryButtons = {}
+        local categoryBar = Instance.new("Frame", holder)
+        categoryBar.Position = UDim2.fromOffset(6, 5)
+        categoryBar.Size = UDim2.new(1, -12, 0, 25)
+        categoryBar.BackgroundTransparency = 1
+        for index, modeName in ipairs({"Weapon", "Knife", "Gloves"}) do
+            local button = Instance.new("TextButton", categoryBar)
+            button.Position = UDim2.new((index-1)/3, index==1 and 0 or 2, 0, 0)
+            button.Size = UDim2.new(1/3, -3, 1, 0)
+            button.BackgroundColor3 = C.Control
+            button.BorderColor3 = C.Border
+            button.BorderSizePixel = 1
+            button.Text = ({Weapon="WEAPONS",Knife="KNIVES",Gloves="GLOVES"})[modeName]
+            button.TextColor3 = C.Muted
+            button.Font = Enum.Font.Code
+            button.TextSize = 9
+            button.AutoButtonColor = false
+            categoryButtons[modeName] = button
+            button.Activated:Connect(function()
+                XCConfig.skinGalleryMode = modeName
+                refreshSkinGallery()
+                scheduleConfigAutoSave()
+            end)
+        end
+
+        local itemBar = Instance.new("ScrollingFrame", holder)
+        itemBar.Position = UDim2.fromOffset(6, 35)
+        itemBar.Size = UDim2.new(1, -12, 0, UserInputService.TouchEnabled and 36 or 31)
+        itemBar.BackgroundColor3 = C.Panel
+        itemBar.BorderColor3 = C.Border
+        itemBar.BorderSizePixel = 1
+        itemBar.ScrollBarThickness = 2
+        itemBar.ScrollBarImageColor3 = C.Lime
+        itemBar.ScrollingDirection = Enum.ScrollingDirection.X
+        itemBar.CanvasSize = UDim2.new()
+        local itemLayout = Instance.new("UIListLayout", itemBar)
+        itemLayout.FillDirection = Enum.FillDirection.Horizontal
+        itemLayout.Padding = UDim.new(0, 4)
+        itemLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        local itemPadding = Instance.new("UIPadding", itemBar)
+        itemPadding.PaddingLeft = UDim.new(0, 4)
+        itemPadding.PaddingRight = UDim.new(0, 4)
+        itemPadding.PaddingTop = UDim.new(0, 3)
+        itemPadding.PaddingBottom = UDim.new(0, 3)
+
         local heading = Instance.new("TextLabel", holder)
-        heading.Position = UDim2.fromOffset(7, 4)
+        heading.Position = UDim2.fromOffset(7, UserInputService.TouchEnabled and 75 or 70)
         heading.Size = UDim2.new(1, -14, 0, 20)
         heading.BackgroundTransparency = 1
         heading.TextColor3 = C.Text
@@ -9332,8 +9377,8 @@ function buildXCUI()
         heading.TextXAlignment = Enum.TextXAlignment.Left
 
         local grid = Instance.new("ScrollingFrame", holder)
-        grid.Position = UDim2.fromOffset(6, 27)
-        grid.Size = UDim2.new(1, -12, 1, -33)
+        grid.Position = UDim2.fromOffset(6, UserInputService.TouchEnabled and 96 or 91)
+        grid.Size = UDim2.new(1, -12, 1, UserInputService.TouchEnabled and -102 or -97)
         grid.BackgroundTransparency = 1
         grid.BorderSizePixel = 0
         grid.ScrollBarThickness = 2
@@ -9341,7 +9386,7 @@ function buildXCUI()
         grid.AutomaticCanvasSize = Enum.AutomaticSize.Y
         grid.CanvasSize = UDim2.new()
         local layout = Instance.new("UIGridLayout", grid)
-        layout.CellSize = UDim2.new(0.5, -4, 0, UserInputService.TouchEnabled and 102 or 88)
+        layout.CellSize = UDim2.new(0.25, -5, 0, UserInputService.TouchEnabled and 102 or 88)
         layout.CellPadding = UDim2.fromOffset(5, 5)
         layout.SortOrder = Enum.SortOrder.LayoutOrder
         local padding = Instance.new("UIPadding", grid)
@@ -9427,6 +9472,27 @@ function buildXCUI()
             elseif XCConfig.skinGalleryMode=="Gloves" then return XCConfig.selectedGloveSkin end
             return XCConfig.weaponSkinSelections[itemName] or "Default"
         end
+        local function categoryItems()
+            if XCConfig.skinGalleryMode=="Knife" then return getXCKnifeChoices()
+            elseif XCConfig.skinGalleryMode=="Gloves" then return getXCGloveModelChoices() end
+            return getXCWeaponSkinChoices()
+        end
+        local function selectItem(itemName, resetFinish)
+            if XCConfig.skinGalleryMode=="Knife" then
+                XCConfig.selectedKnifeType=itemName
+                if resetFinish then XCConfig.selectedSkin="Default" end
+                applyXCKnifeChanger()
+            elseif XCConfig.skinGalleryMode=="Gloves" then
+                XCConfig.selectedGloveModel=itemName
+                if resetFinish then XCConfig.selectedGloveSkin="Default" end
+                applyXCGloves()
+            else
+                XCConfig.skinEditorWeapon=itemName
+                XCConfig.skinEditorFinish=XCConfig.weaponSkinSelections[itemName] or "Default"
+                XCConfig.skinWear=XCConfig.weaponSkinWear[itemName] or 0
+                refreshConfigControls("skinWear",XCConfig.skinWear)
+            end
+        end
         local function updateCardSelection(itemName)
             local selected=currentSelection(itemName)
             for skinName,card in pairs(cards) do
@@ -9441,12 +9507,38 @@ function buildXCUI()
             gallerySerial+=1;local serial=gallerySerial
             refreshXCSkinData();table.clear(cards)
             for _,child in ipairs(grid:GetChildren()) do if child~=layout and child~=padding then child:Destroy() end end
+            for _,child in ipairs(itemBar:GetChildren()) do if child~=itemLayout and child~=itemPadding then child:Destroy() end end
+            for modeName,button in pairs(categoryButtons) do
+                local active=modeName==XCConfig.skinGalleryMode
+                button.BackgroundColor3=active and C.Lime:Lerp(C.Panel,0.72) or C.Control
+                button.BorderColor3=active and C.Lime or C.Border
+                button.TextColor3=active and C.White or C.Muted
+            end
+            local items=categoryItems()
             local itemName=currentItem()
+            if not table.find(items,itemName) then itemName=items[1] or "Default";selectItem(itemName,false) end
+            local itemWidthTotal=8
+            for index,name in ipairs(items) do
+                local width=math.clamp(#tostring(name)*7+20,68,132)
+                local itemButton=Instance.new("TextButton",itemBar)
+                itemButton.Name="Item_"..tostring(name);itemButton.LayoutOrder=index
+                itemButton.Size=UDim2.fromOffset(width,UserInputService.TouchEnabled and 28 or 23)
+                itemButton.BackgroundColor3=name==itemName and C.Lime:Lerp(C.Panel,0.72) or C.Control
+                itemButton.BorderColor3=name==itemName and C.Lime or C.Border;itemButton.BorderSizePixel=1
+                itemButton.Text=tostring(name);itemButton.TextColor3=name==itemName and C.White or C.Text
+                itemButton.Font=Enum.Font.Code;itemButton.TextSize=9;itemButton.AutoButtonColor=false
+                itemButton.Activated:Connect(function()
+                    if name==currentItem() then return end
+                    selectItem(name,true);refreshSkinGallery();scheduleConfigAutoSave()
+                end)
+                itemWidthTotal+=width+4
+            end
+            itemBar.CanvasSize=UDim2.fromOffset(itemWidthTotal,0)
             local choices
             if XCConfig.skinGalleryMode=="Gloves" then choices=getXCGloveSkinChoices(itemName)
             else choices=getXCSkinChoicesForWeapon(itemName) end
             local previewJobs={}
-            heading.Text=string.format("%s  •  %s  •  %d SKINS",XCConfig.skinGalleryMode:upper(),tostring(itemName):upper(),#choices)
+            heading.Text=string.format("%s  >  SKINS  (%d)",tostring(itemName):upper(),#choices)
             for index,skinName in ipairs(choices) do
                 local card=Instance.new("TextButton",grid)
                 card.Name="Skin_"..skinName;card.LayoutOrder=index;card.BackgroundColor3=C.Panel
@@ -9991,76 +10083,50 @@ function buildXCUI()
     addChoice(R, "Freelook bind", "freelookKey", {"LeftAlt", "RightAlt", "F3", "F4", "F5", "F6"})
 
     task.wait()
-    L, R = columns("Skins", "Skin changer", "Skin gallery")
-    section(L, "Skin changer")
-    toggle(L, "Skin changer", "skinChangerEnabled")
-    addChoice(L, "Weapon", "skinEditorWeapon", getXCWeaponSkinChoices(), function(weaponName)
-        local selected = XCConfig.weaponSkinSelections[weaponName] or "Default"
-        XCConfig.skinEditorFinish = selected
-        XCConfig.skinWear = XCConfig.weaponSkinWear[weaponName] or 0
-        refreshConfigControls("skinEditorFinish", selected)
-        refreshConfigControls("skinWear", XCConfig.skinWear)
-        if XCConfig.skinGalleryMode=="Weapon" then refreshSkinGallery() end
-    end)
-    addSlider(L, "Wear float", "skinWear", 0, 1, 0.01, "", function(value)
+    local S = createPanel(pages["Skins"], "Skin changer", 0, 1)
+    section(S, "Weapons and skins")
+    addSkinGallery(S)
+    section(S, "Skin changer")
+    toggle(S, "Skin changer", "skinChangerEnabled")
+    addSlider(S, "Weapon wear", "skinWear", 0, 1, 0.01, "", function(value)
         local weaponName = XCConfig.skinEditorWeapon
         XCConfig.weaponSkinWear[weaponName] = value
         applyXCSelectedWeaponSkin()
     end)
-    addButton(L, "USE HELD WEAPON", function()
+    addSlider(S, "Knife wear", "knifeWear", 0, 1, 0.01, "", function() applyXCKnifeChanger() end)
+    addButton(S, "OPEN HELD WEAPON", function()
         refreshXCSkinData()
         local ok, weapon = type(skinData.GetWeapon) == "function" and pcall(skinData.GetWeapon)
         local view = ok and weapon and weapon.Viewmodel
         local weaponName = view and (view.CameraModelWeapon or view.Weapon) or (weapon and weapon.Name)
         if weaponName and skinData.SkinSelections[weaponName] then
+            XCConfig.skinGalleryMode = "Weapon"
             XCConfig.skinEditorWeapon = weaponName
             XCConfig.skinEditorFinish = XCConfig.weaponSkinSelections[weaponName] or "Default"
             XCConfig.skinWear = XCConfig.weaponSkinWear[weaponName] or 0
-            refreshConfigControls("skinEditorWeapon", weaponName)
-            refreshConfigControls("skinEditorFinish", XCConfig.skinEditorFinish)
             refreshConfigControls("skinWear", XCConfig.skinWear)
-            if XCConfig.skinGalleryMode=="Weapon" then refreshSkinGallery() end
+            refreshSkinGallery()
         end
     end)
-    addButton(L, "APPLY SELECTED SKIN", function()
-        local weaponName = XCConfig.skinEditorWeapon
-        XCConfig.weaponSkinSelections[weaponName] = XCConfig.skinEditorFinish
-        XCConfig.weaponSkinWear[weaponName] = XCConfig.skinWear
-        applyXCSelectedWeaponSkin()
-    end)
-    addButton(L, "RESET SELECTED WEAPON", function()
-        local weaponName = XCConfig.skinEditorWeapon
-        XCConfig.weaponSkinSelections[weaponName] = "Default"
-        XCConfig.weaponSkinWear[weaponName] = 0
-        XCConfig.skinEditorFinish = "Default"
-        XCConfig.skinWear = 0
-        refreshConfigControls("skinEditorFinish", "Default")
-        refreshConfigControls("skinWear", 0)
-        restoreXCSelectedWeaponSkin(weaponName)
+    addButton(S, "RESET CURRENT SKIN", function()
+        if XCConfig.skinGalleryMode=="Knife" then
+            XCConfig.selectedSkin="Default";applyXCKnifeChanger()
+        elseif XCConfig.skinGalleryMode=="Gloves" then
+            XCConfig.selectedGloveSkin="Default";applyXCGloves()
+        else
+            local weaponName=XCConfig.skinEditorWeapon
+            XCConfig.weaponSkinSelections[weaponName]="Default";XCConfig.weaponSkinWear[weaponName]=0
+            XCConfig.skinEditorFinish="Default";XCConfig.skinWear=0;refreshConfigControls("skinWear",0)
+            restoreXCSelectedWeaponSkin(weaponName)
+        end
         refreshSkinGallery()
     end)
-
-    section(L, "Knife")
-    addChoice(L, "Knife model", "selectedKnifeType", getXCKnifeChoices(), function()
-        XCConfig.selectedSkin = "Default"
-        refreshConfigControls("selectedSkin", "Default")
-        applyXCKnifeChanger()
-        if XCConfig.skinGalleryMode=="Knife" then refreshSkinGallery() end
-    end)
-    addSlider(L, "Knife wear", "knifeWear", 0, 1, 0.01, "", function() applyXCKnifeChanger() end)
-    section(L, "Gloves")
-    addChoice(L, "Glove model", "selectedGloveModel", getXCGloveModelChoices(), function()
-        XCConfig.selectedGloveSkin = "Default"
-        refreshConfigControls("selectedGloveSkin", "Default")
-        applyXCGloves()
-        if XCConfig.skinGalleryMode=="Gloves" then refreshSkinGallery() end
-    end)
-    addButton(L, "APPLY ALL SKINS", function()
+    addButton(S, "APPLY ALL SKINS", function()
         applyXCSelectedWeaponSkin()
         applyXCKnifeChanger()
         applyXCGloves()
     end)
-    addButton(L, "RESET ALL SKINS", function()
+    addButton(S, "RESET ALL SKINS", function()
         table.clear(XCConfig.weaponSkinSelections)
         table.clear(XCConfig.weaponSkinWear)
         XCConfig.skinEditorFinish = "Default"
@@ -10071,18 +10137,9 @@ function buildXCUI()
         XCConfig.selectedGloveSkin = "Default"
         restoreXCKnifeModel()
         restoreXCSelectedWeaponSkin()
-        refreshConfigControls("skinEditorFinish", "Default")
         refreshConfigControls("skinWear", 0)
-        refreshConfigControls("selectedKnifeType", "Default")
-        refreshConfigControls("selectedSkin", "Default")
-        refreshConfigControls("selectedGloveModel", "Default")
-        refreshConfigControls("selectedGloveSkin", "Default")
         refreshSkinGallery()
     end)
-    section(R, "Image selection")
-    addChoice(R,"Category","skinGalleryMode",{"Weapon","Knife","Gloves"},function() refreshSkinGallery() end)
-    addSkinGallery(R)
-
     task.wait()
     L, R = columns("Misc", "Utilities", "Viewmodel")
     section(L, "Session")
