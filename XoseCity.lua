@@ -577,6 +577,7 @@ local XCConfig = {
     selectedGloveSkin = "Default",
     skinEditorWeapon = "AK-47",
     skinEditorFinish = "Default",
+    skinGalleryMode = "Weapon",
     skinWear = 0,
     knifeWear = 0,
     weaponSkinSelections = {},
@@ -2505,7 +2506,7 @@ function scanAndMorphKnives(root)
 end
 
 function applyXCGloves()
-    if not XCConfig.gloveChangerEnabled then return end
+    if not XCConfig.skinChangerEnabled or XCConfig.selectedGloveModel == "Default" then return end
     refreshXCSkinData()
     if not skinData.SkinsRoot then return end
 
@@ -2553,7 +2554,7 @@ task.spawn(function()
                 applyXCKnifeChanger()
                 applyXCSelectedWeaponSkin()
             end
-            if XCConfig.gloveChangerEnabled then
+            if XCConfig.skinChangerEnabled and XCConfig.selectedGloveModel ~= "Default" then
                 applyXCGloves()
             end
         end)
@@ -8003,6 +8004,7 @@ function buildXCUI()
     -- here lets live theme changes recolor both letters without rebuilding UI.
     local openButtonThemeRefresh = function() end
     local refreshESPPreview = function() end
+    local refreshSkinGallery = function() end
 
     local function applyMenuTheme()
         local old = {Main=C.Main, Sidebar=C.Sidebar, Panel=C.Panel, Control=C.Control,
@@ -9063,157 +9065,382 @@ function buildXCUI()
         parent = activeSectionByParent[parent] or parent
         local card = Instance.new("Frame")
         card.Name = "ESPPreview"
-        card.Size = UDim2.new(1, 0, 0, 154)
+        card.Size = UDim2.new(1, 0, 0, 190)
         card.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
         card.BorderColor3 = C.Border
         card.BorderSizePixel = 1
+        card.ClipsDescendants = true
         card.Parent = parent
 
-        local title = Instance.new("TextLabel")
+        local title = Instance.new("TextLabel", card)
         title.Size = UDim2.new(1, -76, 0, 20)
         title.Position = UDim2.fromOffset(7, 3)
         title.BackgroundTransparency = 1
-        title.Text = "LIVE ESP PREVIEW"
+        title.Text = "PLAYER ESP PREVIEW"
         title.TextColor3 = C.Text
         title.Font = Enum.Font.Code
         title.TextSize = 9
         title.TextXAlignment = Enum.TextXAlignment.Left
-        title.Parent = card
 
         local previewVisible = true
-        local mode = Instance.new("TextButton")
+        local mode = Instance.new("TextButton", card)
         mode.Size = UDim2.fromOffset(67, 18)
         mode.Position = UDim2.new(1, -72, 0, 4)
         mode.BackgroundColor3 = C.Control
         mode.BorderColor3 = C.Border
         mode.BorderSizePixel = 1
-        mode.TextColor3 = C.Lime
         mode.Font = Enum.Font.Code
         mode.TextSize = 8
         mode.AutoButtonColor = false
-        mode.Parent = card
 
-        local canvas = Instance.new("Frame")
+        local canvas = Instance.new("Frame", card)
         canvas.Size = UDim2.new(1, -12, 1, -31)
         canvas.Position = UDim2.fromOffset(6, 26)
         canvas.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
         canvas.BorderSizePixel = 0
         canvas.ClipsDescendants = true
-        canvas.Parent = card
 
-        local body = Instance.new("Frame")
+        -- All preview objects share one fixed local coordinate space. This
+        -- avoids mixing AbsolutePosition with local offsets when the menu is
+        -- scaled, scrolled or opened on a phone.
+        local root = Instance.new("Frame", canvas)
+        root.Name = "PreviewSpace"
+        root.AnchorPoint = Vector2.new(0.5, 0.5)
+        root.Position = UDim2.fromScale(0.5, 0.54)
+        root.Size = UDim2.fromOffset(126, 142)
+        root.BackgroundTransparency = 1
+
+        local body = Instance.new("Frame", root)
         body.AnchorPoint = Vector2.new(0.5, 0.5)
-        body.Position = UDim2.fromScale(0.5, 0.55)
-        body.Size = UDim2.fromOffset(18, 62)
-        body.BackgroundColor3 = C.Lime
+        body.Position = UDim2.fromOffset(63, 75)
+        body.Size = UDim2.fromOffset(18, 56)
         body.BackgroundTransparency = 0.72
         body.BorderSizePixel = 0
-        body.Parent = canvas
-        local head = Instance.new("Frame")
-        head.AnchorPoint = Vector2.new(0.5, 1)
-        head.Position = UDim2.new(0.5, 0, 0, -2)
-        head.Size = UDim2.fromOffset(18, 18)
-        head.BackgroundColor3 = C.Lime
+        local head = Instance.new("Frame", root)
+        head.AnchorPoint = Vector2.new(0.5, 0.5)
+        head.Position = UDim2.fromOffset(63, 37)
+        head.Size = UDim2.fromOffset(17, 17)
         head.BackgroundTransparency = 0.72
         head.BorderSizePixel = 0
-        head.Parent = body
-        local headCorner = Instance.new("UICorner")
-        headCorner.CornerRadius = UDim.new(1, 0)
-        headCorner.Parent = head
+        Instance.new("UICorner", head).CornerRadius = UDim.new(1, 0)
 
-        local box = Instance.new("Frame")
+        local boxOutlineFrame = Instance.new("Frame", root)
+        boxOutlineFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+        boxOutlineFrame.Position = UDim2.fromOffset(63, 70)
+        boxOutlineFrame.BackgroundTransparency = 1
+        local boxOutline = Instance.new("UIStroke", boxOutlineFrame)
+        boxOutline.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        boxOutline.Color = Color3.fromRGB(3, 3, 3)
+        local box = Instance.new("Frame", root)
         box.AnchorPoint = Vector2.new(0.5, 0.5)
-        box.Position = UDim2.fromScale(0.5, 0.55)
+        box.Position = UDim2.fromOffset(63, 70)
         box.BackgroundTransparency = 1
-        box.Parent = canvas
-        local boxStroke = Instance.new("UIStroke")
-        boxStroke.Thickness = 1
-        boxStroke.Parent = box
+        local boxStroke = Instance.new("UIStroke", box)
+        boxStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
         local cornerLines = {}
         for index = 1, 8 do
-            local line = Instance.new("Frame")
+            local line = Instance.new("Frame", root)
             line.BorderSizePixel = 0
-            line.Parent = canvas
             cornerLines[index] = line
         end
 
-        local healthBack = Instance.new("Frame")
-        healthBack.AnchorPoint = Vector2.new(1, 0.5)
+        local healthBack = Instance.new("Frame", root)
+        healthBack.AnchorPoint = Vector2.new(1, 0)
         healthBack.BackgroundColor3 = Color3.fromRGB(4, 4, 4)
         healthBack.BorderSizePixel = 0
-        healthBack.Parent = canvas
-        local healthFill = Instance.new("Frame")
+        local healthFill = Instance.new("Frame", healthBack)
         healthFill.AnchorPoint = Vector2.new(0, 1)
         healthFill.Position = UDim2.new(0, 1, 1, -1)
         healthFill.Size = UDim2.new(1, -2, 0.72, -1)
-        healthFill.BackgroundColor3 = Color3.fromRGB(112, 196, 64)
         healthFill.BorderSizePixel = 0
-        healthFill.Parent = healthBack
+        local healthGradient = Instance.new("UIGradient", healthFill)
+        healthGradient.Rotation = 90
 
-        local tag = Instance.new("TextLabel")
+        local tag = Instance.new("TextLabel", root)
         tag.AnchorPoint = Vector2.new(0.5, 1)
+        tag.Position = UDim2.fromOffset(63, 23)
+        tag.Size = UDim2.fromOffset(124, 16)
         tag.BackgroundTransparency = 1
         tag.Text = "enemy [42m] [72HP]"
         tag.Font = Enum.Font.Code
         tag.TextSize = 9
-        tag.Parent = canvas
+
+        local function makeLine(a, b, thickness)
+            local delta, middle = b - a, (a + b) * 0.5
+            local line = Instance.new("Frame", root)
+            line.AnchorPoint = Vector2.new(0.5, 0.5)
+            line.Position = UDim2.fromOffset(middle.X, middle.Y)
+            line.Size = UDim2.fromOffset(delta.Magnitude, thickness or 1)
+            line.Rotation = math.deg(math.atan2(delta.Y, delta.X))
+            line.BorderSizePixel = 0
+            return line
+        end
+        local skeletonLines = {
+            makeLine(Vector2.new(63,45),Vector2.new(63,70),1),
+            makeLine(Vector2.new(63,53),Vector2.new(48,68),1),
+            makeLine(Vector2.new(63,53),Vector2.new(78,68),1),
+            makeLine(Vector2.new(63,70),Vector2.new(51,99),1),
+            makeLine(Vector2.new(63,70),Vector2.new(75,99),1),
+        }
+        local tracer = makeLine(Vector2.new(7,137),Vector2.new(63,37),1)
+        local headDot = Instance.new("Frame", root)
+        headDot.AnchorPoint = Vector2.new(0.5,0.5)
+        headDot.Position = UDim2.fromOffset(63,37)
+        headDot.Size = UDim2.fromOffset(5,5)
+        headDot.BorderSizePixel = 0
+        Instance.new("UICorner",headDot).CornerRadius = UDim.new(1,0)
+
+        local weaponIcon = Instance.new("Frame", root)
+        weaponIcon.AnchorPoint = Vector2.new(0.5,0)
+        weaponIcon.Position = UDim2.fromOffset(63,111)
+        weaponIcon.Size = UDim2.fromOffset(38,12)
+        weaponIcon.BackgroundTransparency = 1
+        local weaponBody = Instance.new("Frame",weaponIcon)
+        weaponBody.Position = UDim2.fromOffset(3,2);weaponBody.Size=UDim2.fromOffset(25,4);weaponBody.BorderSizePixel=0
+        local weaponBarrel = Instance.new("Frame",weaponIcon)
+        weaponBarrel.Position = UDim2.fromOffset(27,3);weaponBarrel.Size=UDim2.fromOffset(9,2);weaponBarrel.BorderSizePixel=0
+        local weaponGrip = Instance.new("Frame",weaponIcon)
+        weaponGrip.Position = UDim2.fromOffset(17,5);weaponGrip.Size=UDim2.fromOffset(4,7);weaponGrip.Rotation=18;weaponGrip.BorderSizePixel=0
 
         local function refreshPreview()
             local color = previewVisible and currentTheme.Enemy_Accent or currentTheme.Enemy_Hidden
+            local height = math.clamp(76 * (tonumber(XCConfig.espPerspectiveScale) or 1), 58, 94)
+            local width = math.clamp(height * (tonumber(XCConfig.espBoxAspect) or 0.52), 27, 57)
+            local left, top = 63-width*0.5, 70-height*0.5
+            local thick = math.clamp(tonumber(XCConfig.boxThickness) or 1,1,3)
             mode.Text = previewVisible and "VISIBLE" or "HIDDEN"
             mode.TextColor3 = color
-            local height = 58 * math.clamp(tonumber(XCConfig.espPerspectiveScale) or 1, 0.65, 1.5)
-            local width = height * math.clamp(tonumber(XCConfig.espBoxAspect) or 0.52, 0.38, 0.8)
-            box.Size = UDim2.fromOffset(width, height)
-            boxStroke.Color = color
-            boxStroke.Thickness = tonumber(XCConfig.boxThickness) or 1
+            box.Size = UDim2.fromOffset(width,height)
+            boxOutlineFrame.Size = UDim2.fromOffset(width,height)
+            boxStroke.Color = color;boxStroke.Thickness = thick
+            boxOutline.Thickness = thick+2;boxOutline.Transparency = 0.1
             box.Visible = XCConfig.boxEspEnabled and not XCConfig.cornerBoxEnabled
-            body.BackgroundColor3 = color
-            head.BackgroundColor3 = color
-            body.Visible = XCConfig.chamsEnabled
-            healthBack.Position = UDim2.new(0.5, -width * 0.5 - 4, 0.55, 0)
-            healthBack.Size = UDim2.fromOffset(4, height)
-            healthBack.Visible = XCConfig.healthBarEnabled
-            healthFill.BackgroundColor3 = previewVisible and currentTheme.HealthHigh or currentTheme.Enemy_Hidden
-            tag.Position = UDim2.new(0.5, 0, 0.55, -height * 0.5 - 3)
-            tag.TextColor3 = currentTheme.Enemy_Accent
-            tag.Visible = XCConfig.nametagsEnabled
-
-            local left = canvas.AbsoluteSize.X * 0.5 - width * 0.5
-            local top = canvas.AbsoluteSize.Y * 0.55 - height * 0.5
-            local length = math.floor(math.clamp(width * 0.30, 4, 28) + 0.5)
-            local specs = {
-                {left, top, length, 1}, {left, top, 1, length},
-                {left + width - length, top, length, 1}, {left + width - 1, top, 1, length},
-                {left, top + height - 1, length, 1}, {left, top + height - length, 1, length},
-                {left + width - length, top + height - 1, length, 1}, {left + width - 1, top + height - length, 1, length},
-            }
-            for index, line in ipairs(cornerLines) do
-                local spec = specs[index]
-                line.Position = UDim2.fromOffset(spec[1], spec[2])
-                line.Size = UDim2.fromOffset(spec[3], spec[4])
-                line.BackgroundColor3 = color
-                line.Visible = XCConfig.cornerBoxEnabled
+            boxOutlineFrame.Visible = box.Visible and XCConfig.espBoxOutline
+            body.BackgroundColor3=color;head.BackgroundColor3=color
+            body.Visible=XCConfig.chamsEnabled;head.Visible=XCConfig.chamsEnabled
+            healthBack.Position=UDim2.fromOffset(left-3,top);healthBack.Size=UDim2.fromOffset(4,height)
+            healthBack.Visible=XCConfig.healthBarEnabled
+            local hpHigh=previewVisible and currentTheme.HealthHigh or currentTheme.Enemy_Hidden
+            local hpMid=previewVisible and currentTheme.HealthMid or currentTheme.Enemy_Hidden
+            local hpLow=previewVisible and currentTheme.HealthLow or currentTheme.Enemy_Hidden
+            healthFill.BackgroundColor3=Color3.new(1,1,1)
+            healthGradient.Color=ColorSequence.new({ColorSequenceKeypoint.new(0,hpHigh),ColorSequenceKeypoint.new(0.55,hpMid),ColorSequenceKeypoint.new(1,hpLow)})
+            local tagText="enemy"
+            if XCConfig.espShowDistance then tagText..=" [42m]" end
+            if XCConfig.espShowHealth then tagText..=" [72HP]" end
+            if XCConfig.tagShowWeapon and not XCConfig.weaponEspEnabled then tagText..=" [AK-47]" end
+            tag.Text=tagText;tag.TextColor3=color;tag.TextSize=XCConfig.espTextSize;tag.Visible=XCConfig.nametagsEnabled
+            local length=math.clamp(math.floor(width*0.32+0.5),6,16)
+            local specs={{left,top,length,thick},{left,top,thick,length},{left+width-length,top,length,thick},{left+width-thick,top,thick,length},
+                {left,top+height-thick,length,thick},{left,top+height-length,thick,length},{left+width-length,top+height-thick,length,thick},{left+width-thick,top+height-length,thick,length}}
+            for index,line in ipairs(cornerLines) do local spec=specs[index]
+                line.Position=UDim2.fromOffset(spec[1],spec[2]);line.Size=UDim2.fromOffset(spec[3],spec[4]);line.BackgroundColor3=color
+                line.Visible=XCConfig.cornerBoxEnabled
             end
+            for _,line in ipairs(skeletonLines) do line.BackgroundColor3=color;line.Visible=XCConfig.skeletonEspEnabled end
+            tracer.BackgroundColor3=color;tracer.Visible=XCConfig.tracersEnabled
+            headDot.BackgroundColor3=color;headDot.Visible=XCConfig.headDotEnabled
+            weaponBody.BackgroundColor3=color;weaponBarrel.BackgroundColor3=color;weaponGrip.BackgroundColor3=color
+            weaponIcon.Visible=XCConfig.weaponEspEnabled
         end
         refreshESPPreview = refreshPreview
-
-        mode.Activated:Connect(function()
-            previewVisible = not previewVisible
-            refreshPreview()
-        end)
-        for _, key in ipairs({"boxEspEnabled", "cornerBoxEnabled", "healthBarEnabled", "nametagsEnabled", "chamsEnabled",
-            "espPerspectiveScale", "espBoxAspect", "boxThickness", "espVisibleR", "espVisibleG", "espVisibleB",
-            "espHiddenR", "espHiddenG", "espHiddenB", "espHealthHighR", "espHealthHighG", "espHealthHighB",
-            "espHealthMidR", "espHealthMidG", "espHealthMidB", "espHealthLowR", "espHealthLowG", "espHealthLowB"}) do
-            refreshers[key] = refreshers[key] or {}
-            table.insert(refreshers[key], refreshPreview)
+        mode.Activated:Connect(function() previewVisible=not previewVisible;refreshPreview() end)
+        for _,key in ipairs({"boxEspEnabled","cornerBoxEnabled","healthBarEnabled","nametagsEnabled","chamsEnabled","skeletonEspEnabled",
+            "tracersEnabled","headDotEnabled","weaponEspEnabled","espPerspectiveScale","espBoxAspect","boxThickness","espBoxOutline",
+            "espTextSize","espShowDistance","espShowHealth","tagShowWeapon",
+            "espVisibleR","espVisibleG","espVisibleB","espHiddenR","espHiddenG","espHiddenB","espHealthHighR","espHealthHighG","espHealthHighB",
+            "espHealthMidR","espHealthMidG","espHealthMidB","espHealthLowR","espHealthLowG","espHealthLowB"}) do
+            refreshers[key]=refreshers[key] or {};table.insert(refreshers[key],refreshPreview)
         end
         task.defer(refreshPreview)
-        table.insert(connections, canvas:GetPropertyChangedSignal("AbsoluteSize"):Connect(refreshPreview))
-        registerSearch(card, "esp preview visible hidden box corner health nametag chams")
+        registerSearch(card,"player esp preview box corner health nametag chams skeleton tracer head dot weapon")
         return card
+    end
+
+    local function addSkinGallery(parent)
+        parent = activeSectionByParent[parent] or parent
+        local holder = Instance.new("Frame", parent)
+        holder.Name = "SkinImageGallery"
+        holder.Size = UDim2.new(1, 0, 0, 318)
+        holder.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+        holder.BorderColor3 = C.Border
+        holder.BorderSizePixel = 1
+
+        local heading = Instance.new("TextLabel", holder)
+        heading.Position = UDim2.fromOffset(7, 4)
+        heading.Size = UDim2.new(1, -14, 0, 20)
+        heading.BackgroundTransparency = 1
+        heading.TextColor3 = C.Text
+        heading.Font = Enum.Font.Code
+        heading.TextSize = 9
+        heading.TextXAlignment = Enum.TextXAlignment.Left
+
+        local grid = Instance.new("ScrollingFrame", holder)
+        grid.Position = UDim2.fromOffset(6, 27)
+        grid.Size = UDim2.new(1, -12, 1, -33)
+        grid.BackgroundTransparency = 1
+        grid.BorderSizePixel = 0
+        grid.ScrollBarThickness = 2
+        grid.ScrollBarImageColor3 = C.Lime
+        grid.AutomaticCanvasSize = Enum.AutomaticSize.Y
+        grid.CanvasSize = UDim2.new()
+        local layout = Instance.new("UIGridLayout", grid)
+        layout.CellSize = UDim2.new(0.5, -4, 0, UserInputService.TouchEnabled and 102 or 88)
+        layout.CellPadding = UDim2.fromOffset(5, 5)
+        layout.SortOrder = Enum.SortOrder.LayoutOrder
+        local padding = Instance.new("UIPadding", grid)
+        padding.PaddingRight = UDim.new(0, 2)
+        padding.PaddingBottom = UDim.new(0, 4)
+
+        local function normalizeImage(value)
+            if type(value)=="number" and value>0 then return "rbxassetid://"..math.floor(value) end
+            if type(value)~="string" or value=="" then return nil end
+            if value:match("^%d+$") then return "rbxassetid://"..value end
+            if value:find("rbxasset",1,true) or value:find("http",1,true) then return value end
+            return nil
+        end
+        local function findPreviewImage(itemName, skinName)
+            local folder=skinData.SkinsRoot and skinData.SkinsRoot:FindFirstChild(itemName)
+            local skinFolder=folder and folder:FindFirstChild(skinName)
+            if skinFolder then
+                for _,key in ipairs({"Image","Icon","Thumbnail","Preview","ImageId","IconId","ThumbnailId"}) do
+                    local image=normalizeImage(skinFolder:GetAttribute(key));if image then return image end
+                end
+                for _,object in ipairs(skinFolder:GetDescendants()) do
+                    local lower=object.Name:lower()
+                    if lower:find("image",1,true) or lower:find("icon",1,true) or lower:find("thumbnail",1,true) or lower:find("preview",1,true) then
+                        if object:IsA("StringValue") or object:IsA("IntValue") or object:IsA("NumberValue") then
+                            local image=normalizeImage(object.Value);if image then return image end
+                        elseif object:IsA("ImageLabel") or object:IsA("ImageButton") then
+                            local image=normalizeImage(object.Image);if image then return image end
+                        end
+                    end
+                end
+            end
+            if skinData.SkinLibrary and type(skinData.SkinLibrary.GetAllSkinsForWeapon)=="function" then
+                local ok,entries=pcall(skinData.SkinLibrary.GetAllSkinsForWeapon,itemName)
+                if ok and type(entries)=="table" then for _,info in ipairs(entries) do
+                    if type(info)=="table" and (info.skin==skinName or info.name==skinName) then
+                        for _,key in ipairs({"image","Image","icon","Icon","thumbnail","Thumbnail","preview","Preview"}) do
+                            local image=normalizeImage(info[key]);if image then return image end
+                        end
+                    end
+                end end
+            end
+            return nil
+        end
+        local function addModelPreview(viewport,itemName,skinName)
+            local asset=skinData.WeaponAssets and skinData.WeaponAssets:FindFirstChild(itemName)
+            if not asset then
+                local assets=ReplicatedStorage:FindFirstChild("Assets")
+                for _,rootName in ipairs({"Gloves","Viewmodels","Models","Characters"}) do
+                    local rootFolder=assets and assets:FindFirstChild(rootName)
+                    asset=rootFolder and rootFolder:FindFirstChild(itemName,true)
+                    if asset then break end
+                end
+            end
+            if not asset then return false end
+            local source=asset:IsA("Model") and asset or asset:FindFirstChildWhichIsA("Model",true)
+            if not source or not source:FindFirstChildWhichIsA("BasePart",true) then return false end
+            local ok,model=pcall(function() source.Archivable=true;return source:Clone() end)
+            if not ok or not model then return false end
+            for _,object in ipairs(model:GetDescendants()) do
+                if object:IsA("Script") or object:IsA("LocalScript") or object:IsA("ModuleScript")
+                    or object:IsA("ParticleEmitter") or object:IsA("Trail") or object:IsA("Beam") then object:Destroy()
+                elseif object:IsA("BasePart") then object.Anchored=true;object.CanCollide=false;object.CastShadow=false end
+            end
+            pcall(applySurfaceAppearanceSkin,model,itemName,skinName,0)
+            local world=Instance.new("WorldModel",viewport);model.Parent=world
+            local cam=Instance.new("Camera",viewport);cam.FieldOfView=34;viewport.CurrentCamera=cam
+            local boundsOk,bounds,size=pcall(function() local cf,sz=model:GetBoundingBox();return cf,sz end)
+            if not boundsOk then model:Destroy();return false end
+            local radius=math.max(size.X,size.Y,size.Z,1)
+            cam.CFrame=CFrame.lookAt(bounds.Position+Vector3.new(radius*1.35,radius*0.45,radius*1.55),bounds.Position)
+            return true
+        end
+
+        local gallerySerial=0
+        local cards={}
+        local function currentItem()
+            if XCConfig.skinGalleryMode=="Knife" then return XCConfig.selectedKnifeType
+            elseif XCConfig.skinGalleryMode=="Gloves" then return XCConfig.selectedGloveModel end
+            return XCConfig.skinEditorWeapon
+        end
+        local function currentSelection(itemName)
+            if XCConfig.skinGalleryMode=="Knife" then return XCConfig.selectedSkin
+            elseif XCConfig.skinGalleryMode=="Gloves" then return XCConfig.selectedGloveSkin end
+            return XCConfig.weaponSkinSelections[itemName] or "Default"
+        end
+        local function updateCardSelection(itemName)
+            local selected=currentSelection(itemName)
+            for skinName,card in pairs(cards) do
+                local active=skinName==selected
+                card.BorderColor3=active and C.Lime or C.Border
+                card.BorderSizePixel=active and 2 or 1
+                local check=card:FindFirstChild("Selected")
+                if check then check.Visible=active;check.TextColor3=C.Lime end
+            end
+        end
+        refreshSkinGallery=function()
+            gallerySerial+=1;local serial=gallerySerial
+            refreshXCSkinData();table.clear(cards)
+            for _,child in ipairs(grid:GetChildren()) do if child~=layout and child~=padding then child:Destroy() end end
+            local itemName=currentItem()
+            local choices
+            if XCConfig.skinGalleryMode=="Gloves" then choices=getXCGloveSkinChoices(itemName)
+            else choices=getXCSkinChoicesForWeapon(itemName) end
+            local previewJobs={}
+            heading.Text=string.format("%s  •  %s  •  %d SKINS",XCConfig.skinGalleryMode:upper(),tostring(itemName):upper(),#choices)
+            for index,skinName in ipairs(choices) do
+                local card=Instance.new("TextButton",grid)
+                card.Name="Skin_"..skinName;card.LayoutOrder=index;card.BackgroundColor3=C.Panel
+                card.BorderColor3=C.Border;card.BorderSizePixel=1;card.Text="";card.AutoButtonColor=false;cards[skinName]=card
+                local visual=Instance.new("ViewportFrame",card)
+                visual.Name="Preview";visual.Position=UDim2.fromOffset(3,3);visual.Size=UDim2.new(1,-6,1,-25)
+                visual.BackgroundColor3=C.Control;visual.BorderSizePixel=0;visual.Ambient=Color3.fromRGB(190,190,190)
+                visual.LightColor=Color3.fromRGB(255,255,255);visual.LightDirection=Vector3.new(-1,-0.5,-1)
+                local label=Instance.new("TextLabel",card)
+                label.Position=UDim2.new(0,4,1,-21);label.Size=UDim2.new(1,-8,0,18);label.BackgroundTransparency=1
+                label.Text=skinName;label.TextColor3=C.Text;label.Font=Enum.Font.Code;label.TextSize=8;label.TextTruncate=Enum.TextTruncate.AtEnd
+                local selected=Instance.new("TextLabel",card)
+                selected.Name="Selected";selected.Position=UDim2.fromOffset(5,4);selected.Size=UDim2.fromOffset(13,13)
+                selected.BackgroundColor3=Color3.fromRGB(4,4,4);selected.BackgroundTransparency=0.2;selected.Text="✓"
+                selected.Font=Enum.Font.Code;selected.TextSize=10;selected.Visible=false;selected.ZIndex=5
+                local imageId=findPreviewImage(itemName,skinName)
+                if imageId then
+                    local image=Instance.new("ImageLabel",visual);image.Size=UDim2.fromScale(1,1);image.BackgroundTransparency=1
+                    image.Image=imageId;image.ScaleType=Enum.ScaleType.Fit
+                else
+                    previewJobs[#previewJobs+1]=function()
+                        if serial~=gallerySerial or not visual.Parent then return end
+                        if not addModelPreview(visual,itemName,skinName) then
+                            local fallback=Instance.new("TextLabel",visual);fallback.Size=UDim2.fromScale(1,1);fallback.BackgroundTransparency=1
+                            fallback.Text=skinName=="Default" and "DEFAULT" or itemName;fallback.TextColor3=C.Muted
+                            fallback.Font=Enum.Font.Code;fallback.TextSize=8;fallback.TextWrapped=true
+                        end
+                    end
+                end
+                card.Activated:Connect(function()
+                    if XCConfig.skinGalleryMode=="Knife" then XCConfig.selectedSkin=skinName;refreshConfigControls("selectedSkin",skinName);applyXCKnifeChanger()
+                    elseif XCConfig.skinGalleryMode=="Gloves" then XCConfig.selectedGloveSkin=skinName;XCConfig.gloveChangerEnabled=true;refreshConfigControls("selectedGloveSkin",skinName);applyXCGloves()
+                    else XCConfig.skinEditorFinish=skinName;XCConfig.weaponSkinSelections[itemName]=skinName
+                        XCConfig.weaponSkinWear[itemName]=XCConfig.skinWear;refreshConfigControls("skinEditorFinish",skinName);applyXCSelectedWeaponSkin() end
+                    updateCardSelection(itemName);scheduleConfigAutoSave()
+                end)
+            end
+            updateCardSelection(itemName)
+            task.spawn(function()
+                for _,job in ipairs(previewJobs) do
+                    RunService.Heartbeat:Wait()
+                    if serial~=gallerySerial then return end
+                    job()
+                end
+            end)
+        end
+        task.defer(refreshSkinGallery)
+        registerSearch(holder,"skin changer image gallery weapon knife glove previews")
+        return holder
     end
 
     local function specialToggle(key, value)
@@ -9226,10 +9453,12 @@ function buildXCUI()
         elseif key == "jumpCircleEnabled" then
             if value and player.Character then initJumpCircleForCharacter(player.Character) else clearActiveJumpCircle() end
         elseif key == "skinChangerEnabled" then
+            XCConfig.gloveChangerEnabled = value
             if value then
                 hookBloxStrikeModules(true)
                 applyXCKnifeChanger()
                 applyXCSelectedWeaponSkin()
+                applyXCGloves()
             else
                 restoreXCKnifeModel()
                 restoreXCSelectedWeaponSkin()
@@ -9707,8 +9936,8 @@ function buildXCUI()
     addChoice(R, "Freelook bind", "freelookKey", {"LeftAlt", "RightAlt", "F3", "F4", "F5", "F6"})
 
     task.wait()
-    L, R = columns("Skins", "Weapon inventory", "Knife & gloves")
-    section(L, "Inventory changer")
+    L, R = columns("Skins", "Skin changer", "Skin gallery")
+    section(L, "Skin changer")
     toggle(L, "Skin changer", "skinChangerEnabled")
     addChoice(L, "Weapon", "skinEditorWeapon", getXCWeaponSkinChoices(), function(weaponName)
         local selected = XCConfig.weaponSkinSelections[weaponName] or "Default"
@@ -9716,14 +9945,7 @@ function buildXCUI()
         XCConfig.skinWear = XCConfig.weaponSkinWear[weaponName] or 0
         refreshConfigControls("skinEditorFinish", selected)
         refreshConfigControls("skinWear", XCConfig.skinWear)
-    end)
-    addChoice(L, "Finish", "skinEditorFinish", function()
-        return getXCSkinChoicesForWeapon(XCConfig.skinEditorWeapon)
-    end, function(finish)
-        local weaponName = XCConfig.skinEditorWeapon
-        XCConfig.weaponSkinSelections[weaponName] = finish
-        XCConfig.weaponSkinWear[weaponName] = XCConfig.skinWear
-        applyXCSelectedWeaponSkin()
+        if XCConfig.skinGalleryMode=="Weapon" then refreshSkinGallery() end
     end)
     addSlider(L, "Wear float", "skinWear", 0, 1, 0.01, "", function(value)
         local weaponName = XCConfig.skinEditorWeapon
@@ -9742,6 +9964,7 @@ function buildXCUI()
             refreshConfigControls("skinEditorWeapon", weaponName)
             refreshConfigControls("skinEditorFinish", XCConfig.skinEditorFinish)
             refreshConfigControls("skinWear", XCConfig.skinWear)
+            if XCConfig.skinGalleryMode=="Weapon" then refreshSkinGallery() end
         end
     end)
     addButton(L, "APPLY SELECTED SKIN", function()
@@ -9759,33 +9982,30 @@ function buildXCUI()
         refreshConfigControls("skinEditorFinish", "Default")
         refreshConfigControls("skinWear", 0)
         restoreXCSelectedWeaponSkin(weaponName)
+        refreshSkinGallery()
     end)
 
-    section(R, "Knife changer")
-    addChoice(R, "Knife model", "selectedKnifeType", getXCKnifeChoices(), function()
+    section(L, "Knife")
+    addChoice(L, "Knife model", "selectedKnifeType", getXCKnifeChoices(), function()
         XCConfig.selectedSkin = "Default"
         refreshConfigControls("selectedSkin", "Default")
         applyXCKnifeChanger()
+        if XCConfig.skinGalleryMode=="Knife" then refreshSkinGallery() end
     end)
-    addChoice(R, "Knife finish", "selectedSkin", function()
-        return getXCSkinChoicesForWeapon(XCConfig.selectedKnifeType)
-    end, function() applyXCKnifeChanger() end)
-    addSlider(R, "Knife wear", "knifeWear", 0, 1, 0.01, "", function() applyXCKnifeChanger() end)
-    section(R, "Glove changer")
-    toggle(R, "Glove changer", "gloveChangerEnabled")
-    addChoice(R, "Glove model", "selectedGloveModel", getXCGloveModelChoices(), function()
+    addSlider(L, "Knife wear", "knifeWear", 0, 1, 0.01, "", function() applyXCKnifeChanger() end)
+    section(L, "Gloves")
+    addChoice(L, "Glove model", "selectedGloveModel", getXCGloveModelChoices(), function()
         XCConfig.selectedGloveSkin = "Default"
         refreshConfigControls("selectedGloveSkin", "Default")
         applyXCGloves()
+        if XCConfig.skinGalleryMode=="Gloves" then refreshSkinGallery() end
     end)
-    addChoice(R, "Glove finish", "selectedGloveSkin", function()
-        return getXCGloveSkinChoices(XCConfig.selectedGloveModel)
-    end, function() applyXCGloves() end)
-    addButton(R, "APPLY KNIFE & GLOVES", function()
+    addButton(L, "APPLY ALL SKINS", function()
+        applyXCSelectedWeaponSkin()
         applyXCKnifeChanger()
         applyXCGloves()
     end)
-    addButton(R, "RESET ALL SKINS", function()
+    addButton(L, "RESET ALL SKINS", function()
         table.clear(XCConfig.weaponSkinSelections)
         table.clear(XCConfig.weaponSkinWear)
         XCConfig.skinEditorFinish = "Default"
@@ -9802,7 +10022,11 @@ function buildXCUI()
         refreshConfigControls("selectedSkin", "Default")
         refreshConfigControls("selectedGloveModel", "Default")
         refreshConfigControls("selectedGloveSkin", "Default")
+        refreshSkinGallery()
     end)
+    section(R, "Image selection")
+    addChoice(R,"Category","skinGalleryMode",{"Weapon","Knife","Gloves"},function() refreshSkinGallery() end)
+    addSkinGallery(R)
 
     task.wait()
     L, R = columns("Misc", "Utilities", "Viewmodel")
@@ -10017,6 +10241,7 @@ function buildXCUI()
             for _, refresh in ipairs(keyRefreshers) do refresh(XCConfig[key]) end
         end
         applyMenuTheme()
+        refreshSkinGallery()
     end
 
     section(L, "quick actions")
