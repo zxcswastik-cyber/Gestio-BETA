@@ -2082,6 +2082,7 @@ local skinData = {
     GloveSelections = {},
     GloveFolders = {},
     ModifiedKnife = nil,
+    AppliedWeapons = setmetatable({}, {__mode = "k"}),
     Ready = false,
     LastRefresh = 0,
     LastError = nil
@@ -2302,6 +2303,13 @@ function restoreXCKnifeModel()
     if not record then return end
     local view, weapon = record.View, record.Weapon
     if not view or not weapon or view.IsDestroyed or weapon.IsDestroyed then return end
+    -- A knife view may survive briefly after switching to a firearm. Never
+    -- reconstruct that stale view: doing so can replace the newly equipped
+    -- gun's model/controller. The game already disposes an unequipped knife.
+    if type(skinData.GetWeapon) == "function" then
+        local ok, equipped = pcall(skinData.GetWeapon)
+        if not ok or not equipped or equipped.Viewmodel ~= view then return end
+    end
     view.CameraModelWeapon = record.CameraModelWeapon
     view.Skin = record.Skin
     view.Float = record.Float
@@ -2414,6 +2422,32 @@ function applySurfaceAppearanceSkin(model, weaponName, skinName, wear)
     end
 end
 
+function captureXCWeaponSkinState(view, model, weaponName)
+    local existing = skinData.AppliedWeapons[view]
+    if existing and existing.Model == model and existing.WeaponName == weaponName then return existing end
+    local record = {
+        WeaponName = weaponName,
+        Model = model,
+        Skin = view.Skin,
+        Float = view.Float,
+        Surfaces = setmetatable({}, {__mode = "k"})
+    }
+    for _, part in ipairs(model:GetDescendants()) do
+        if part:IsA("BasePart") then
+            local appearances = {}
+            for _, child in ipairs(part:GetChildren()) do
+                if child:IsA("SurfaceAppearance") then
+                    local ok, clone = pcall(function() return child:Clone() end)
+                    if ok and clone then appearances[#appearances + 1] = clone end
+                end
+            end
+            record.Surfaces[part] = appearances
+        end
+    end
+    skinData.AppliedWeapons[view] = record
+    return record
+end
+
 function applyXCSelectedWeaponSkin()
     if not XCConfig.skinChangerEnabled or not refreshXCSkinData() or type(skinData.GetWeapon) ~= "function" then return false end
     local ok, weapon = pcall(skinData.GetWeapon)
@@ -2427,14 +2461,18 @@ function applyXCSelectedWeaponSkin()
 
     local weaponName = view.CameraModelWeapon or view.Weapon or weapon.Name
     local skinName = XCConfig.weaponSkinSelections[weaponName]
-    if skinName == nil then return false end
+    if skinName == nil then return restoreXCSelectedWeaponSkin(weaponName) end
     if type(skinName) ~= "string" or skinName == "" or skinName == "Default" then
         return restoreXCSelectedWeaponSkin(weaponName)
     end
     local wear = math.clamp(tonumber(XCConfig.weaponSkinWear[weaponName]) or 0, 0, 1)
+    local record = captureXCWeaponSkinState(view, model, weaponName)
+    if record.AppliedSkin == skinName and record.AppliedWear == wear then return true end
     view.Skin = skinName
     view.Float = wear
     applySurfaceAppearanceSkin(model, weaponName, skinName, wear)
+    record.AppliedSkin = skinName
+    record.AppliedWear = wear
     return true
 end
 
@@ -2445,11 +2483,28 @@ function restoreXCSelectedWeaponSkin(weaponName)
     local view = weapon.Viewmodel
     local currentName = view and (view.CameraModelWeapon or view.Weapon or weapon.Name)
     if not view or (weaponName and currentName ~= weaponName) then return false end
-    if view.Skin == nil and (tonumber(view.Float) or 0) == 0 then return true end
-    view.Skin = nil
-    view.Float = 0
-    local character = weapon.Character or player.Character
-    if character and character.Parent then constructXCKnifeView(view, character, weapon) end
+    local record = skinData.AppliedWeapons[view]
+    -- Default/unconfigured firearms must remain completely untouched. The old
+    -- implementation reconstructed every viewmodel here with the knife path,
+    -- which could remove the gun model and invalidate its firing controller.
+    if not record then return true end
+    skinData.AppliedWeapons[view] = nil
+    if record.WeaponName ~= currentName then return true end
+    view.Skin = record.Skin
+    view.Float = record.Float
+    if record.Model and record.Model.Parent then
+        for part, appearances in pairs(record.Surfaces) do
+            if part and part.Parent then
+                for _, child in ipairs(part:GetChildren()) do
+                    if child:IsA("SurfaceAppearance") then child:Destroy() end
+                end
+                for _, appearance in ipairs(appearances) do
+                    local ok, clone = pcall(function() return appearance:Clone() end)
+                    if ok and clone then clone.Parent = part end
+                end
+            end
+        end
+    end
     return true
 end
 
