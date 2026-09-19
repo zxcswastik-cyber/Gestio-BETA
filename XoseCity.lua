@@ -7273,6 +7273,8 @@ function resetXCCharacterInputState()
     xcCharacterInputHook.AntiStarted = nil
     xcCharacterInputHook.AntiLastStep = nil
     xcCharacterInputHook.RandomYaw = nil
+    xcCharacterInputHook.AntiComputedStep = nil
+    xcCharacterInputHook.AntiComputedRandomYaw = nil
     xcCharacterInputHook.AntiFireUntil = 0
 end
 
@@ -7286,6 +7288,58 @@ function restoreXCCharacterInputHook()
     end
     state.Ready = false
     resetXCCharacterInputState()
+end
+
+-- One resolver is shared by the native input hook and the compatibility
+-- fallback. This keeps every preset visually identical on both paths and
+-- avoids running a second anti-aim engine.
+local function resolveXCAntiAimYaw(mode, originalYaw, elapsed, step, state, rootPart)
+    local baseDegrees = tonumber(XCConfig.antiAimYaw) or 180
+    local jitterDegrees = math.clamp(tonumber(XCConfig.antiAimJitter) or 60, 0, 180)
+    local spinDegrees = (elapsed * math.max(10, tonumber(XCConfig.spinSpeed) or 50) * 6) % 360
+    local side = step % 2 == 0 and -1 or 1
+    local baseYaw = originalYaw + math.rad(baseDegrees)
+
+    if mode == "Backwards" then
+        return originalYaw + math.pi
+    elseif mode == "Jitter" then
+        return baseYaw + math.rad(jitterDegrees * side)
+    elseif mode == "Spin" then
+        return baseYaw + math.rad(spinDegrees)
+    elseif mode == "Random" then
+        if state.AntiComputedStep ~= step or state.AntiComputedRandomYaw == nil then
+            state.AntiComputedStep = step
+            state.AntiComputedRandomYaw = math.random(-180, 180)
+        end
+        return baseYaw + math.rad(state.AntiComputedRandomYaw)
+    elseif mode == "Gamesense Center Jitter" then
+        return baseYaw + math.rad(jitterDegrees * 0.5 * side)
+    elseif mode == "Gamesense 3-Way" then
+        local phase = step % 3
+        local offset = phase == 0 and -jitterDegrees or (phase == 1 and 0 or jitterDegrees)
+        return baseYaw + math.rad(offset)
+    elseif mode == "Gamesense Sway" then
+        local interval = math.max(0.04, tonumber(XCConfig.antiAimInterval) or 0.15)
+        return baseYaw + math.rad(math.sin(elapsed * math.pi / interval) * jitterDegrees)
+    elseif mode == "NeverLose Adaptive" then
+        local velocity = rootPart and rootPart:IsA("BasePart") and rootPart.AssemblyLinearVelocity or Vector3.zero
+        local horizontalSpeed = Vector3.new(velocity.X, 0, velocity.Z).Magnitude
+        local scale = horizontalSpeed > 3 and 1 or 0.35
+        return baseYaw + math.rad(jitterDegrees * scale * side)
+    elseif mode == "NeverLose Defensive" then
+        local flick = step % 4 == 0 and math.min(110, math.max(45, jitterDegrees)) * side or 0
+        return baseYaw + math.rad(flick)
+    elseif mode == "NixWare Sideways" then
+        return baseYaw + math.rad(90 * side)
+    elseif mode == "NixWare Spin Jitter" then
+        return baseYaw + math.rad(spinDegrees + jitterDegrees * 0.5 * side)
+    elseif mode == "Memesense Legit" then
+        local subtleBase = math.clamp(baseDegrees, -35, 35)
+        return originalYaw + math.rad(subtleBase + math.min(jitterDegrees, 12) * side)
+    elseif mode == "Memesense Low Delta" then
+        return originalYaw + math.pi + math.rad(math.min(jitterDegrees, 35) * side)
+    end
+    return baseYaw
 end
 
 function setupXCCharacterInputHook()
@@ -7386,22 +7440,12 @@ function setupXCCharacterInputHook()
                     local elapsed = math.max(0, now - xcCharacterInputHook.AntiStarted)
                     local interval = math.max(0.04, tonumber(XCConfig.antiAimInterval) or 0.15)
                     local step = math.floor(elapsed / interval)
-                    local side = step % 2 == 0 and -1 or 1
                     local originalYaw = tonumber(result.LookYaw) or 0
-                    local yaw = originalYaw + math.rad(tonumber(XCConfig.antiAimYaw) or 180)
                     local mode = tostring(XCConfig.antiAimMode or "Static")
-                    if mode == "Backwards" then
-                        yaw = originalYaw + math.pi
-                    elseif mode == "Jitter" then
-                        yaw += math.rad(tonumber(XCConfig.antiAimJitter) or 60) * side
-                    elseif mode == "Spin" then
-                        yaw += math.rad((elapsed * math.max(10, tonumber(XCConfig.spinSpeed) or 50) * 6) % 360)
-                    elseif mode == "Random" then
-                        if xcCharacterInputHook.AntiLastStep ~= step or not xcCharacterInputHook.RandomYaw then
-                            xcCharacterInputHook.RandomYaw = math.rad(math.random(-180, 180))
-                        end
-                        yaw += xcCharacterInputHook.RandomYaw
-                    end
+                    local rootPart = model:FindFirstChild("HumanoidRootPart")
+                    local yaw = resolveXCAntiAimYaw(
+                        mode, originalYaw, elapsed, step, xcCharacterInputHook, rootPart
+                    )
                     yaw = (yaw + math.pi) % (math.pi * 2) - math.pi
                     local move = result.Move or Vector2.zero
                     if move.Magnitude > 1 then move = move.Unit end
@@ -7440,6 +7484,9 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     local hum = char and char:FindFirstChildOfClass("Humanoid")
 
     if not XCConfig.antiAimEnabled then
+        XCFeatureState.antiAimStarted = nil
+        XCFeatureState.AntiComputedStep = nil
+        XCFeatureState.AntiComputedRandomYaw = nil
         if hum and savedAutoRotate ~= nil then
             hum.AutoRotate = savedAutoRotate
             savedAutoRotate = nil
@@ -7462,29 +7509,17 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         hum.AutoRotate = false
     end
 
-    local mode = tostring(XCConfig.antiAimMode or "Spin")
     local activeCamera = Workspace.CurrentCamera or camera
     if not activeCamera then return end
     local _, cameraYaw = activeCamera.CFrame:ToOrientation()
-    local targetYaw
-    if mode == "Spin" then
-        currentSpinAngle = (currentSpinAngle + (XCConfig.spinSpeed * 6 * dt)) % 360
-        targetYaw = math.rad(currentSpinAngle)
-    elseif mode == "Backwards" then
-        targetYaw = cameraYaw + math.pi
-    elseif mode == "Jitter" then
-        local interval = math.max(0.04, tonumber(XCConfig.antiAimInterval) or 0.15)
-        local side = math.floor(os.clock() / interval) % 2 == 0 and -1 or 1
-        targetYaw = cameraYaw + math.rad((tonumber(XCConfig.antiAimYaw) or 180) + side * (tonumber(XCConfig.antiAimJitter) or 60))
-    elseif mode == "Random" then
-        if os.clock() >= XCFeatureState.antiAimNextChange then
-            XCFeatureState.antiAimNextChange = os.clock() + math.max(0.04, tonumber(XCConfig.antiAimInterval) or 0.15)
-            XCFeatureState.antiAimRandomYaw = math.random(-180, 180)
-        end
-        targetYaw = cameraYaw + math.rad(XCFeatureState.antiAimRandomYaw)
-    else
-        targetYaw = cameraYaw + math.rad(tonumber(XCConfig.antiAimYaw) or 180)
-    end
+    local now = os.clock()
+    XCFeatureState.antiAimStarted = XCFeatureState.antiAimStarted or now
+    local elapsed = now - XCFeatureState.antiAimStarted
+    local interval = math.max(0.04, tonumber(XCConfig.antiAimInterval) or 0.15)
+    local step = math.floor(elapsed / interval)
+    local mode = tostring(XCConfig.antiAimMode or "Spin")
+    local targetYaw = resolveXCAntiAimYaw(mode, cameraYaw, elapsed, step, XCFeatureState, hrp)
+    targetYaw = (targetYaw + math.pi) % (math.pi * 2) - math.pi
     hrp.CFrame = CFrame.new(hrp.Position) * CFrame.Angles(0, targetYaw, 0)
 end))
 
@@ -8201,7 +8236,7 @@ function buildXCUI()
         skeletonDistanceFade = "Gradually fades skeleton lines at long distances.",
         noSmokeEnabled = "Disables detected BloxStrike smoke emitters and restores them when turned off.",
         hitSoundEnabled = "Plays the selected local sound when enemy health decreases.",
-        antiAimMode = "Spin, backwards, jitter, random or static anti-aim direction.",
+        antiAimMode = "Static, jitter, spin and XC adaptations of Gamesense, NeverLose, NixWare or Memesense anti-aim styles.",
         nightModeEnabled = "Applies the selected lighting preset locally.",
         worldSkyboxEnabled = "Applies the selected custom skybox locally.",
         worldPostFXEnabled = "Enables local color correction and post-processing.",
@@ -9939,7 +9974,13 @@ function buildXCUI()
     L, R = columns("AntiAim", "Anti-aim", "Movement")
     section(L, "Anti-aim")
     toggle(L, "Anti-aim", "antiAimEnabled")
-    addChoice(L, "Anti-aim mode", "antiAimMode", {"Spin", "Backwards", "Jitter", "Random", "Static"})
+    addChoice(L, "Anti-aim mode", "antiAimMode", {
+        "Static", "Backwards", "Jitter", "Spin", "Random",
+        "Gamesense Center Jitter", "Gamesense 3-Way", "Gamesense Sway",
+        "NeverLose Adaptive", "NeverLose Defensive",
+        "NixWare Sideways", "NixWare Spin Jitter",
+        "Memesense Legit", "Memesense Low Delta"
+    })
     addSlider(L, "Spin speed", "spinSpeed", 10, 150, 1, "")
     addSlider(L, "Base yaw", "antiAimYaw", -180, 180, 1, "°")
     addSlider(L, "Jitter range", "antiAimJitter", 0, 180, 1, "°")
