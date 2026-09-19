@@ -1,3 +1,256 @@
+-- ==========================================
+-- XC / Panda Auth (PUSL-V4)
+-- ==========================================
+do
+    local pandaOk, PUSL = pcall(function()
+        local source = game:HttpGet("https://secure.pandauth.com/pv4/lib")
+        local loader = loadstring(source)
+        assert(type(loader) == "function", "invalid Panda library response")
+        return loader()
+    end)
+    if not pandaOk or not PUSL or type(PUSL.configure) ~= "function" then
+        return warn("[XC/Panda] Library failed to initialize: " .. tostring(PUSL))
+    end
+
+    local configured, configureError = pcall(PUSL.configure, {
+        serviceId = "xosecity",
+    })
+    if not configured then
+        return warn("[XC/Panda] Configuration failed: " .. tostring(configureError))
+    end
+
+    local authResult
+    local function getPandaKeyUrl()
+        if type(PUSL.getKeyUrl) ~= "function" then return nil end
+        local ok, url = pcall(PUSL.getKeyUrl)
+        return ok and type(url) == "string" and url or nil
+    end
+
+    local function validatePandaKey(key)
+        key = tostring(key or ""):match("^%s*(.-)%s*$")
+        if key == "" then return false, "Введите ключ" end
+        local ok, result = pcall(PUSL.validate, key)
+        if not ok then return false, "Ошибка проверки: " .. tostring(result) end
+        if type(result) ~= "table" then return false, "Panda вернула неверный ответ" end
+        if result.success then
+            authResult = result
+            if type(getgenv) == "function" then
+                getgenv().XC_PANDA_KEY = key
+            end
+            return true
+        end
+        return false, tostring(result.message or result.error or "Ключ недействителен")
+    end
+
+    local presetKey
+    if type(getgenv) == "function" then
+        presetKey = getgenv().XC_PANDA_KEY
+    end
+    local authenticated = false
+    if type(presetKey) == "string" and presetKey ~= "" then
+        authenticated = select(1, validatePandaKey(presetKey))
+    end
+
+    if not authenticated then
+        local Players = game:GetService("Players")
+        local UserInputService = game:GetService("UserInputService")
+        local localPlayer = Players.LocalPlayer or Players.PlayerAdded:Wait()
+        local resolved = false
+
+        local authGui = Instance.new("ScreenGui")
+        authGui.Name = "XC_PandaAuth"
+        authGui.ResetOnSpawn = false
+        authGui.IgnoreGuiInset = true
+        authGui.DisplayOrder = 100000
+        authGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+        local parented = pcall(function()
+            local guiParent = type(gethui) == "function" and gethui() or game:GetService("CoreGui")
+            authGui.Parent = guiParent
+        end)
+        if not parented or not authGui.Parent then
+            authGui.Parent = localPlayer:WaitForChild("PlayerGui")
+        end
+
+        local shade = Instance.new("Frame")
+        shade.Size = UDim2.fromScale(1, 1)
+        shade.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+        shade.BackgroundTransparency = 0.35
+        shade.BorderSizePixel = 0
+        shade.Parent = authGui
+
+        local panel = Instance.new("Frame")
+        panel.Name = "Panel"
+        panel.AnchorPoint = Vector2.new(0.5, 0.5)
+        panel.Position = UDim2.fromScale(0.5, 0.5)
+        panel.Size = UDim2.fromOffset(UserInputService.TouchEnabled and 310 or 360, 228)
+        panel.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
+        panel.BorderColor3 = Color3.fromRGB(135, 190, 0)
+        panel.BorderSizePixel = 1
+        panel.Parent = shade
+
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, 6)
+        corner.Parent = panel
+
+        local accent = Instance.new("Frame")
+        accent.Size = UDim2.new(1, 0, 0, 3)
+        accent.BackgroundColor3 = Color3.fromRGB(152, 204, 0)
+        accent.BorderSizePixel = 0
+        accent.Parent = panel
+
+        local title = Instance.new("TextLabel")
+        title.Position = UDim2.fromOffset(18, 17)
+        title.Size = UDim2.new(1, -36, 0, 28)
+        title.BackgroundTransparency = 1
+        title.Font = Enum.Font.GothamBold
+        title.Text = "XC  |  KEY SYSTEM"
+        title.TextColor3 = Color3.fromRGB(235, 235, 235)
+        title.TextSize = 18
+        title.TextXAlignment = Enum.TextXAlignment.Left
+        title.Parent = panel
+
+        local subtitle = Instance.new("TextLabel")
+        subtitle.Position = UDim2.fromOffset(18, 47)
+        subtitle.Size = UDim2.new(1, -36, 0, 20)
+        subtitle.BackgroundTransparency = 1
+        subtitle.Font = Enum.Font.Gotham
+        subtitle.Text = "Введите ключ Panda Auth для запуска XC"
+        subtitle.TextColor3 = Color3.fromRGB(145, 145, 145)
+        subtitle.TextSize = 12
+        subtitle.TextXAlignment = Enum.TextXAlignment.Left
+        subtitle.Parent = panel
+
+        local keyBox = Instance.new("TextBox")
+        keyBox.Position = UDim2.fromOffset(18, 78)
+        keyBox.Size = UDim2.new(1, -36, 0, 40)
+        keyBox.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+        keyBox.BorderColor3 = Color3.fromRGB(52, 52, 52)
+        keyBox.ClearTextOnFocus = false
+        keyBox.Font = Enum.Font.Code
+        keyBox.PlaceholderText = "Panda key..."
+        keyBox.PlaceholderColor3 = Color3.fromRGB(95, 95, 95)
+        keyBox.Text = ""
+        keyBox.TextColor3 = Color3.fromRGB(235, 235, 235)
+        keyBox.TextSize = 13
+        keyBox.TextXAlignment = Enum.TextXAlignment.Left
+        keyBox.Parent = panel
+        local keyPadding = Instance.new("UIPadding")
+        keyPadding.PaddingLeft = UDim.new(0, 10)
+        keyPadding.PaddingRight = UDim.new(0, 10)
+        keyPadding.Parent = keyBox
+
+        local function makeButton(text, xScale, xOffset, widthScale, widthOffset)
+            local button = Instance.new("TextButton")
+            button.Position = UDim2.new(xScale, xOffset, 0, 132)
+            button.Size = UDim2.new(widthScale, widthOffset, 0, 36)
+            button.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+            button.BorderColor3 = Color3.fromRGB(65, 65, 65)
+            button.AutoButtonColor = false
+            button.Font = Enum.Font.GothamBold
+            button.Text = text
+            button.TextColor3 = Color3.fromRGB(225, 225, 225)
+            button.TextSize = 12
+            button.Parent = panel
+            return button
+        end
+
+        local getKeyButton = makeButton("GET KEY", 0, 18, 0.5, -23)
+        local verifyButton = makeButton("VERIFY", 0.5, 5, 0.5, -23)
+        verifyButton.BackgroundColor3 = Color3.fromRGB(112, 154, 0)
+        verifyButton.BorderColor3 = Color3.fromRGB(152, 204, 0)
+
+        local status = Instance.new("TextLabel")
+        status.Position = UDim2.fromOffset(18, 178)
+        status.Size = UDim2.new(1, -36, 0, 31)
+        status.BackgroundTransparency = 1
+        status.Font = Enum.Font.Gotham
+        status.Text = "Ключ не сохраняется на диск"
+        status.TextColor3 = Color3.fromRGB(125, 125, 125)
+        status.TextSize = 11
+        status.TextWrapped = true
+        status.TextXAlignment = Enum.TextXAlignment.Left
+        status.Parent = panel
+
+        getKeyButton.Activated:Connect(function()
+            local url = getPandaKeyUrl()
+            if not url then
+                status.Text = "Не удалось получить ссылку"
+                status.TextColor3 = Color3.fromRGB(220, 75, 75)
+                return
+            end
+            if type(setclipboard) == "function" then
+                pcall(setclipboard, url)
+                status.Text = "Ссылка скопирована в буфер обмена"
+            else
+                keyBox.Text = url
+                keyBox:CaptureFocus()
+                status.Text = "Скопируйте ссылку из поля"
+            end
+            status.TextColor3 = Color3.fromRGB(152, 204, 0)
+        end)
+
+        local checking = false
+        local function submitKey()
+            if checking then return end
+            checking = true
+            verifyButton.Text = "CHECKING..."
+            status.Text = "Проверка ключа..."
+            status.TextColor3 = Color3.fromRGB(180, 180, 180)
+            task.spawn(function()
+                local success, message = validatePandaKey(keyBox.Text)
+                checking = false
+                if success then
+                    authenticated = true
+                    resolved = true
+                    status.Text = "Ключ принят. Запуск XC..."
+                    status.TextColor3 = Color3.fromRGB(152, 204, 0)
+                else
+                    verifyButton.Text = "VERIFY"
+                    status.Text = message
+                    status.TextColor3 = Color3.fromRGB(220, 75, 75)
+                end
+            end)
+        end
+        verifyButton.Activated:Connect(submitKey)
+        keyBox.FocusLost:Connect(function(enterPressed)
+            if enterPressed then submitKey() end
+        end)
+
+        local dragging, dragStart, panelStart
+        panel.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1
+                or input.UserInputType == Enum.UserInputType.Touch then
+                dragging = true
+                dragStart = input.Position
+                panelStart = panel.Position
+            end
+        end)
+        panel.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1
+                or input.UserInputType == Enum.UserInputType.Touch then dragging = false end
+        end)
+        local dragConnection = UserInputService.InputChanged:Connect(function(input)
+            if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement
+                or input.UserInputType == Enum.UserInputType.Touch) then
+                local delta = input.Position - dragStart
+                panel.Position = UDim2.new(panelStart.X.Scale, panelStart.X.Offset + delta.X,
+                    panelStart.Y.Scale, panelStart.Y.Offset + delta.Y)
+            end
+        end)
+
+        while not resolved and authGui.Parent do task.wait(0.05) end
+        dragConnection:Disconnect()
+        authGui:Destroy()
+    end
+
+    if not authenticated or type(authResult) ~= "table" or not authResult.success then
+        return warn("[XC/Panda] Authentication cancelled or failed. Get a key: "
+            .. tostring(getPandaKeyUrl() or "unavailable"))
+    end
+    print("[XC/Panda] Authenticated. Premium:", authResult.isPremium == true)
+end
+
 -- XC cleaned UI build
 -- Unified XC lime/dark interface
 pcall(function()
@@ -66,6 +319,23 @@ local XCConfig = {
     customHandsYaw = 0,
     customHandsRoll = 0,
     uiScale = 1.0,
+    menuThemePreset = "XC Lime",
+    menuTransparency = 0,
+    menuAccentR = 152, menuAccentG = 204, menuAccentB = 0,
+    menuBackgroundR = 17, menuBackgroundG = 17, menuBackgroundB = 17,
+    menuPanelR = 12, menuPanelG = 12, menuPanelB = 12,
+    menuTextR = 235, menuTextG = 235, menuTextB = 235,
+    linkMenuAndEspColor = false,
+    espVisibleR = 152, espVisibleG = 204, espVisibleB = 0,
+    espHiddenR = 112, espHiddenG = 116, espHiddenB = 122,
+    espHealthHighR = 152, espHealthHighG = 204, espHealthHighB = 0,
+    espHealthMidR = 205, espHealthMidG = 170, espHealthMidB = 42,
+    espHealthLowR = 205, espHealthLowG = 72, espHealthLowB = 72,
+    grenadeHER = 255, grenadeHEG = 45, grenadeHEB = 55,
+    grenadeSmokeR = 180, grenadeSmokeG = 185, grenadeSmokeB = 195,
+    grenadeMolotovR = 255, grenadeMolotovG = 95, grenadeMolotovB = 35,
+    advancedCategory = "Combat",
+    advancedSettingKey = "aimFov",
     watermarkEnabled = true,
     watermarkShowFPS = true,
     watermarkShowPing = true,
@@ -305,7 +575,12 @@ local XCConfig = {
     gloveChangerEnabled = false,
     selectedGloveModel = "Sports Gloves",
     selectedGloveSkin = "Default",
-    weaponSkinSelections = {}
+    skinEditorWeapon = "AK-47",
+    skinEditorFinish = "Default",
+    skinWear = 0,
+    knifeWear = 0,
+    weaponSkinSelections = {},
+    weaponSkinWear = {}
 }
 
 -- Immutable startup snapshot used by Settings > Config Manager > RESET.
@@ -343,6 +618,19 @@ if tonumber(XCConfig.espFixedBoxHeight) == 64 or tonumber(XCConfig.espFixedBoxHe
     XCConfig.espFixedBoxHeight = 36
 end
 XCConfig.espPerspectiveScale = math.clamp(tonumber(XCConfig.espPerspectiveScale) or 1, 0.65, 1.5)
+XCConfig.uiScale = math.clamp(tonumber(XCConfig.uiScale) or 1, 0.65, 1.25)
+XCConfig.menuTransparency = math.clamp(tonumber(XCConfig.menuTransparency) or 0, 0, 0.45)
+for _, colorKey in ipairs({
+    "menuAccentR", "menuAccentG", "menuAccentB", "menuBackgroundR", "menuBackgroundG", "menuBackgroundB",
+    "menuPanelR", "menuPanelG", "menuPanelB", "menuTextR", "menuTextG", "menuTextB",
+    "espVisibleR", "espVisibleG", "espVisibleB", "espHiddenR", "espHiddenG", "espHiddenB",
+    "espHealthHighR", "espHealthHighG", "espHealthHighB", "espHealthMidR", "espHealthMidG", "espHealthMidB",
+    "espHealthLowR", "espHealthLowG", "espHealthLowB",
+    "grenadeHER", "grenadeHEG", "grenadeHEB", "grenadeSmokeR", "grenadeSmokeG", "grenadeSmokeB",
+    "grenadeMolotovR", "grenadeMolotovG", "grenadeMolotovB"
+}) do
+    XCConfig[colorKey] = math.clamp(math.floor((tonumber(XCConfig[colorKey]) or 0) + 0.5), 0, 255)
+end
 
 local UI_Bind_Registry = {}
 -- Expensive executor scans are opt-in for the current session. Persisted
@@ -366,10 +654,17 @@ local Lighting = game:GetService("Lighting")
 local Workspace = game:GetService("Workspace")
 local Stats = game:GetService("Stats")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local SoundService = game:GetService("SoundService")
+local ContentProvider = game:GetService("ContentProvider")
 local VirtualInputManager = nil
-pcall(function()
-    VirtualInputManager = game:GetService("VirtualInputManager")
-end)
+-- A synthetic mouse event changes Roblox's preferred input to desktop and
+-- makes Blox Strike remove its mobile buttons. Never create that path on a
+-- touch device; mobile combat uses native weapon methods instead.
+if not UserInputService.TouchEnabled then
+    pcall(function()
+        VirtualInputManager = game:GetService("VirtualInputManager")
+    end)
+end
 
 -- ==========================================
 -- CLIENT ENVIRONMENT VALIDATION XC
@@ -468,7 +763,7 @@ local themeLibrary = {
         Enemy_Accent = Color3.fromRGB(152, 204, 0),
         Enemy_Fill = Color3.fromRGB(112, 151, 0),
         Enemy_Hidden = Color3.fromRGB(112, 116, 122),
-        NametagTextColor = Color3.fromRGB(235, 235, 235),
+        NametagTextColor = Color3.fromRGB(152, 204, 0),
         HealthHigh = Color3.fromRGB(152, 204, 0),
         HealthMid = Color3.fromRGB(205, 170, 42),
         HealthLow = Color3.fromRGB(205, 72, 72),
@@ -479,6 +774,42 @@ local themeLibrary = {
 }
 
 local currentTheme = themeLibrary["XC Lime"]
+
+local function xcConfigColor(prefix, fallback)
+    local r = tonumber(XCConfig[prefix .. "R"])
+    local g = tonumber(XCConfig[prefix .. "G"])
+    local b = tonumber(XCConfig[prefix .. "B"])
+    if not r or not g or not b then return fallback end
+    return Color3.fromRGB(math.clamp(r, 0, 255), math.clamp(g, 0, 255), math.clamp(b, 0, 255))
+end
+
+function syncXCUserTheme()
+    local menuAccent = xcConfigColor("menuAccent", currentTheme.Accent)
+    local menuBackground = xcConfigColor("menuBackground", currentTheme.Background)
+    local menuPanel = xcConfigColor("menuPanel", currentTheme.CardBg)
+    local menuText = xcConfigColor("menuText", currentTheme.TextPrimary)
+    local visible = XCConfig.linkMenuAndEspColor and menuAccent
+        or xcConfigColor("espVisible", currentTheme.Enemy_Accent)
+    currentTheme.Background = menuBackground
+    currentTheme.Sidebar = menuBackground:Lerp(Color3.new(0, 0, 0), 0.24)
+    currentTheme.CardBg = menuPanel
+    currentTheme.Border = menuPanel:Lerp(menuText, 0.17)
+    currentTheme.TextPrimary = menuText
+    currentTheme.TextSecondary = menuText:Lerp(menuBackground, 0.48)
+    currentTheme.Accent = menuAccent
+    currentTheme.AccentHover = menuAccent:Lerp(Color3.new(1, 1, 1), 0.18)
+    currentTheme.Enemy_Accent = visible
+    currentTheme.Enemy_Fill = visible:Lerp(Color3.new(0, 0, 0), 0.24)
+    currentTheme.Enemy_Hidden = xcConfigColor("espHidden", currentTheme.Enemy_Hidden)
+    currentTheme.NametagTextColor = visible
+    currentTheme.HealthHigh = xcConfigColor("espHealthHigh", visible)
+    currentTheme.HealthMid = xcConfigColor("espHealthMid", currentTheme.HealthMid)
+    currentTheme.HealthLow = xcConfigColor("espHealthLow", currentTheme.HealthLow)
+    currentTheme.HEColor = xcConfigColor("grenadeHE", currentTheme.HEColor)
+    currentTheme.SmokeColor = xcConfigColor("grenadeSmoke", currentTheme.SmokeColor)
+    currentTheme.MolotovColor = xcConfigColor("grenadeMolotov", currentTheme.MolotovColor)
+end
+syncXCUserTheme()
 
 -- ==========================================
 -- XC NOTIFICATION CENTER
@@ -677,6 +1008,8 @@ local silentAimHooked = false
 local silentAimCamHooked = false
 local bloxStrikeShootHooked = false
 local xcNativeSilentHooked = false
+local xcBulletInterceptHooked = false
+local xcMobileCameraSilentHooked = false
 
 local function setXCSilentAimRequested(value)
     if sharedXCEnv then sharedXCEnv.XCSilentAimRequestedV25 = value == true end
@@ -725,12 +1058,15 @@ end
 -- the following rounds and can make the weapon stop after a short burst.
 -- XC therefore copies only the mutable path and leaves the game's source table
 -- completely untouched.
-local function prepareXCSilentShotPayload(data)
+local function prepareXCSilentShotPayload(data, forceSendStage)
     -- When the native bullet ray hook is available, the shot has already been
     -- redirected before Fire Rate / InventoryController serialize it. Do not
     -- perform a second target roll or payload rewrite here.
-    if xcNativeSilentHooked then return data, false end
-    if not XCConfig.silentAimEnabled
+    if not forceSendStage and (xcNativeSilentHooked or UserInputService.TouchEnabled) then
+        return data, false
+    end
+    local silentEnabled = forceSendStage and isXCSilentAimRequested() or XCConfig.silentAimEnabled
+    if not silentEnabled
         or type(data) ~= "table"
         or type(data.Bullets) ~= "table" then
         return data, false
@@ -743,7 +1079,15 @@ local function prepareXCSilentShotPayload(data)
     if chance < 100 and math.random(1, 100) > chance then return data, false end
 
     local camPos, aimPos = nil, nil
-    if silentAimCamPosAim then camPos, aimPos = silentAimCamPosAim(targetPart) end
+    if forceSendStage then
+        local activeCamera = Workspace.CurrentCamera or camera
+        if activeCamera then
+            camPos = activeCamera.CFrame.Position
+            aimPos = getKinematicAimPosition(targetPart)
+        end
+    elseif silentAimCamPosAim then
+        camPos, aimPos = silentAimCamPosAim(targetPart)
+    end
     if not camPos or not aimPos then return data, false end
 
     local shotData = {}
@@ -807,13 +1151,16 @@ local function prepareXCSilentShotPayload(data)
 end
 
 if sharedXCEnv then
-    sharedXCEnv.XCPrepareSilentShotPayloadV23 = prepareXCSilentShotPayload
+    -- v35: persistent legacy wrappers may survive reinjection. Keep their
+    -- callbacks inert so Silent Aim is driven only by Bullet._performRaycast.
+    sharedXCEnv.XCPrepareSilentShotPayloadV23 = function(data) return data, false end
+    sharedXCEnv.XCPrepareSilentSendPayloadV28 = function(data)
+        return data, false
+    end
 end
 
 local function dispatchXCPrepareSilentShotPayload(data)
-    local prepare = sharedXCEnv and sharedXCEnv.XCPrepareSilentShotPayloadV23 or prepareXCSilentShotPayload
-    if type(prepare) ~= "function" then return data, false end
-    return prepare(data)
+    return data, false
 end
 
 -- Legacy XC hooks remain alive after reinjection. Disable their old in-place
@@ -958,14 +1305,15 @@ local noRecoil = {
 }
 
 local fireStartConn = UserInputService.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+    -- Every mobile control is a Touch. Do not flag movement/menu touches as fire.
+    if not UserInputService.TouchEnabled and input.UserInputType == Enum.UserInputType.MouseButton1 then
         noRecoil.isShooting = true
     end
 end)
 table.insert(connections, fireStartConn)
 
 local fireEndConn = UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+    if not UserInputService.TouchEnabled and input.UserInputType == Enum.UserInputType.MouseButton1 then
         noRecoil.isShooting = false
     end
 end)
@@ -1004,6 +1352,8 @@ function getXCHealth(char, plr, hum)
     end
     if type(health) ~= "number" and plr then health = plr:GetAttribute("Health") end
     if type(maximum) ~= "number" and plr then maximum = plr:GetAttribute("MaxHealth") end
+    if type(health) ~= "number" then health = tonumber(health) end
+    if type(maximum) ~= "number" then maximum = tonumber(maximum) end
     if type(health) ~= "number" and hum then health = hum.Health end
     if type(maximum) ~= "number" and hum then maximum = hum.MaxHealth end
     if type(health) ~= "number" or health ~= health then return nil, nil end
@@ -1031,7 +1381,7 @@ registerXCLocalHitCandidate = function(hitInstance)
     local healthKey = hum or targetCharacter
     local pending = hitmarkerPendingHits[healthKey]
     if pending and pending.Expires > os.clock() then
-        pending.Expires = os.clock() + 0.8
+        pending.Expires = os.clock() + 1.5
         pending.HitCount += 1
         return
     end
@@ -1039,7 +1389,7 @@ registerXCLocalHitCandidate = function(hitInstance)
         Character = targetCharacter,
         Player = targetPlayer,
         Health = health,
-        Expires = os.clock() + 0.8,
+        Expires = os.clock() + 1.5,
         HitCount = 1,
     }
 end
@@ -1103,12 +1453,8 @@ function isVisibleThroughWalls(targetPart, targetChar)
     local dir = targetPart.Position - origin
     
     local hit = Workspace:Raycast(origin, dir, wallRayParams)
-    if hit then
-        if hit.Instance:IsDescendantOf(targetChar) or hit.Instance == targetPart then
-            return true
-        end
-    end
-    return false
+    if not hit then return true end
+    return hit.Instance == targetPart or hit.Instance:IsDescendantOf(targetChar)
 end
 
 -- ==========================================
@@ -1117,10 +1463,9 @@ end
 getSilentAimTarget = function()
     local cam = Workspace.CurrentCamera or camera
     if not cam then return nil end
-    local camPos = cam.CFrame.Position
-    local camLook = cam.CFrame.LookVector
-    local maxAngle = math.rad(XCConfig.silentAimFov)
-    local best, bestAngle = nil, maxAngle
+    local screenCenter = cam.ViewportSize * 0.5
+    local maxRadius = math.max(1, tonumber(XCConfig.silentAimFov) or 150)
+    local best, bestRadius = nil, maxRadius
     for _, plr in ipairs(Players:GetPlayers()) do
         if plr == player then continue end
         if XCConfig.silentAimTeamCheck and isAlly(plr) then continue end
@@ -1130,14 +1475,18 @@ getSilentAimTarget = function()
         local part = char:FindFirstChild(XCConfig.silentAimAimHead and "Head" or "HumanoidRootPart")
             or char:FindFirstChild("Torso")
         if not part or not part:IsA("BasePart") then continue end
-        if XCConfig.silentAimVisibleCheck and not isVisibleThroughWalls(part, char) then
-            continue
+        -- Visibility and wall penetration are independent controls. Turning
+        -- Visible check off must never grant wallbang by itself.
+        if not XCConfig.wallbangEnabled or XCConfig.silentAimVisibleCheck then
+            local visible = isVisibleThroughWalls(part, char)
+            if not visible then continue end
         end
         local predictedPos = getKinematicAimPosition(part)
-        local dir = (predictedPos - camPos).Unit
-        local angle = math.acos(math.clamp(camLook:Dot(dir), -1, 1))
-        if angle < bestAngle then
-            bestAngle = angle
+        local point, onScreen = cam:WorldToViewportPoint(predictedPos)
+        if not onScreen or point.Z <= 0 then continue end
+        local radius = (Vector2.new(point.X, point.Y) - screenCenter).Magnitude
+        if radius < bestRadius then
+            bestRadius = radius
             best = part
         end
     end
@@ -1157,10 +1506,112 @@ silentAimCamPosAim = function(targetPart)
     return camPos, aimPos
 end
 
+-- v31: a mobile touch is not necessarily a shot (movement, jump, reload and
+-- menu buttons are touches too). Gate Silent Aim with the equipped weapon's
+-- real shoot() call instead of the global Touch input state.
+local xcSilentShotContextV31 = nil
+local xcSilentShootWrappedV31 = sharedXCEnv and sharedXCEnv.XCSilentShootWrappedV31
+if type(xcSilentShootWrappedV31) ~= "table" then
+    xcSilentShootWrappedV31 = setmetatable({}, {__mode = "k"})
+    if sharedXCEnv then sharedXCEnv.XCSilentShootWrappedV31 = xcSilentShootWrappedV31 end
+end
+
+local function enterXCSilentShotV31(weapon)
+    local thread = coroutine.running()
+    local context = sharedXCEnv and sharedXCEnv.XCSilentShotContextV31 or xcSilentShotContextV31
+    if context and context.Thread == thread then
+        context.Depth = (context.Depth or 1) + 1
+        return context
+    end
+
+    local targetPart = nil
+    local allowed = false
+    if isXCSilentAimRequested() then
+        targetPart = getSilentAimTarget and getSilentAimTarget() or silentAimResolved
+        local chance = math.clamp(tonumber(XCConfig.silentAimHitChance) or 100, 0, 100)
+        allowed = targetPart ~= nil and targetPart.Parent ~= nil
+            and (chance >= 100 or math.random(1, 100) <= chance)
+    end
+
+    context = {
+        Thread = thread,
+        Weapon = weapon,
+        Target = targetPart,
+        Allowed = allowed,
+        CameraUsed = false,
+        PayloadUsed = false,
+        Depth = 1,
+    }
+    xcSilentShotContextV31 = context
+    if sharedXCEnv then sharedXCEnv.XCSilentShotContextV31 = context end
+    return context
+end
+
+local function leaveXCSilentShotV31()
+    local context = sharedXCEnv and sharedXCEnv.XCSilentShotContextV31 or xcSilentShotContextV31
+    if not context or context.Thread ~= coroutine.running() then return end
+    context.Depth = (context.Depth or 1) - 1
+    if context.Depth > 0 then return end
+    xcSilentShotContextV31 = nil
+    if sharedXCEnv then sharedXCEnv.XCSilentShotContextV31 = nil end
+end
+
+if sharedXCEnv then
+    sharedXCEnv.XCEnterSilentShotV31 = enterXCSilentShotV31
+    sharedXCEnv.XCLeaveSilentShotV31 = leaveXCSilentShotV31
+end
+
+local function getXCSilentShotContextV31(requireAllowed)
+    local context = sharedXCEnv and sharedXCEnv.XCSilentShotContextV31 or xcSilentShotContextV31
+    if not context or context.Thread ~= coroutine.running() then return nil end
+    if requireAllowed and (not context.Allowed or not context.Target or not context.Target.Parent) then
+        return nil
+    end
+    return context
+end
+
+local function wrapXCEquippedShootV31()
+    if not UserInputService.TouchEnabled then return false end
+    local controllers = ReplicatedStorage:FindFirstChild("Controllers")
+    local moduleScript = controllers and controllers:FindFirstChild("InventoryController")
+    local inventory = moduleScript and require(moduleScript)
+    local getter = inventory and inventory.peekCurrentEquippedForMovement
+    local weapon = type(getter) == "function" and getter() or nil
+    if type(weapon) ~= "table" or type(weapon.shoot) ~= "function" or weapon.IsDestroyed then
+        return false
+    end
+
+    local record = xcSilentShootWrappedV31[weapon]
+    if record and weapon.shoot == record.Wrapper then return true end
+
+    local originalShoot = weapon.shoot
+    local wrapper
+    wrapper = function(self, ...)
+        local enter = sharedXCEnv and sharedXCEnv.XCEnterSilentShotV31 or enterXCSilentShotV31
+        local leave = sharedXCEnv and sharedXCEnv.XCLeaveSilentShotV31 or leaveXCSilentShotV31
+        if type(enter) == "function" then enter(self) end
+        local results = table.pack(pcall(originalShoot, self, ...))
+        if type(leave) == "function" then leave() end
+        if not results[1] then error(results[2], 0) end
+        return table.unpack(results, 2, results.n)
+    end
+
+    local ok = pcall(function() weapon.shoot = wrapper end)
+    if ok and weapon.shoot == wrapper then
+        xcSilentShootWrappedV31[weapon] = {Wrapper = wrapper, Original = originalShoot}
+        return true
+    end
+    return false
+end
+
 function setupSilentAimHooks()
     if silentAimHooked and silentAimCamHooked then return end
 
-    if not silentAimHooked and hookmetamethod then
+    if not silentAimHooked and UserInputService.TouchEnabled then
+        -- Native bullet redirection is used on mobile. Do not create/access a
+        -- Mouse object because some mobile executors report it as desktop input.
+        silentAimHooked = true
+    elseif not silentAimHooked and hookmetamethod then
         pcall(function()
             local mouse = player:GetMouse()
             local oldIndex
@@ -1181,19 +1632,54 @@ function setupSilentAimHooks()
         silentAimHooked = true
     end
 
+    if UserInputService.TouchEnabled and xcNativeSilentHooked then
+        silentAimCamHooked = true
+    end
+
     if not silentAimCamHooked and hookmetamethod and getnamecallmethod then
-        pcall(function()
+        local cameraHookInstalled = pcall(function()
             local oldNamecall
             oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
                 local method = getnamecallmethod()
                 local args = {...}
 
-                if XCConfig.silentAimEnabled and silentAimResolved and noRecoil.isShooting
-                    and self == camera
+                local activeCamera = Workspace.CurrentCamera or camera
+                if self == activeCamera
                     and (method == "ViewportPointToRay" or method == "ScreenPointToRay") then
-                    local camPos, aimPos = silentAimCamPosAim()
-                    if camPos then
-                        return Ray.new(camPos, (aimPos - camPos).Unit)
+                    if UserInputService.TouchEnabled then
+                        local context = getXCSilentShotContextV31(true)
+
+                        -- A v30 namecall hook can survive reinjection. Mask the
+                        -- request while obtaining the untouched game ray so the
+                        -- obsolete broad touch gate cannot run underneath v31.
+                        local requested = sharedXCEnv and sharedXCEnv.XCSilentAimRequestedV25
+                        if sharedXCEnv then sharedXCEnv.XCSilentAimRequestedV25 = false end
+                        local originalRay = oldNamecall(self, ...)
+                        if sharedXCEnv then sharedXCEnv.XCSilentAimRequestedV25 = requested end
+
+                        if context and typeof(originalRay) == "Ray" then
+                            context.CameraUsed = true
+                            local aimPos = getKinematicAimPosition(context.Target)
+                            local delta = aimPos - originalRay.Origin
+                            if delta.Magnitude > 0.001 then
+                                local magnitude = originalRay.Direction.Magnitude
+                                return Ray.new(originalRay.Origin, delta.Unit * (magnitude > 0.001 and magnitude or 1))
+                            end
+                        end
+                        return originalRay
+                    elseif isXCSilentAimRequested() and noRecoil.isShooting then
+                        local targetPart = silentAimResolved
+                        if targetPart and targetPart.Parent then
+                            local originalRay = oldNamecall(self, ...)
+                            if typeof(originalRay) == "Ray" then
+                                local aimPos = getKinematicAimPosition(targetPart)
+                                local delta = aimPos - originalRay.Origin
+                                if delta.Magnitude > 0.001 then
+                                    local magnitude = originalRay.Direction.Magnitude
+                                    return Ray.new(originalRay.Origin, delta.Unit * (magnitude > 0.001 and magnitude or 1))
+                                end
+                            end
+                        end
                     end
                 end
 
@@ -1242,14 +1728,17 @@ function setupSilentAimHooks()
                 return oldNamecall(self, ...)
             end)
         end)
-        silentAimCamHooked = true
+        silentAimCamHooked = cameraHookInstalled
+        if UserInputService.TouchEnabled and cameraHookInstalled then
+            xcMobileCameraSilentHooked = true
+        end
     end
 end
 
 -- Native Blox Strike Silent Aim path. Redirecting Bullet._performRaycast keeps
 -- Silent Aim independent from character LookYaw (Spin/Jitter anti-aim) and
--- from the weapon's FireRate. The InventoryController payload hook below is
--- retained only for game versions where these weapon modules are unavailable.
+-- from the weapon's FireRate. No Camera, Mouse or Send payload fallback is
+-- allowed: if this native module is unavailable, Silent Aim stays in WAIT.
 local xcNativeRaycast = nil
 local xcNativeGetRayIgnore = nil
 
@@ -1300,21 +1789,96 @@ local function castXCNativeSilentShot(origin, direction, properties)
     return result
 end
 
+-- ScriptAdap target pass, executed only from the real Bullet raycast. The
+-- native ray module is also used for visibility so target selection and the
+-- weapon's collision rules cannot disagree.
+local function selectXCNativeSilentTarget(origin, properties)
+    local cam = Workspace.CurrentCamera or camera
+    if not cam or typeof(origin) ~= "Vector3" or not xcNativeRaycast
+        or type(xcNativeRaycast.cast) ~= "function" or type(xcNativeGetRayIgnore) ~= "function" then
+        return nil
+    end
+
+    local center = cam.ViewportSize * 0.5
+    local radiusLimit = math.max(1, tonumber(XCConfig.silentAimFov) or 150)
+    local range = math.max(1, tonumber(properties and properties.Range) or 500)
+    local ignore = xcNativeGetRayIgnore()
+    local candidates = {}
+
+    for _, targetPlayer in ipairs(Players:GetPlayers()) do
+        if targetPlayer == player then continue end
+        if XCConfig.silentAimTeamCheck and isAlly(targetPlayer) then continue end
+        local character = targetPlayer.Character
+        local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+        if not isEntityAlive(character, humanoid) then continue end
+        local part = character:FindFirstChild(XCConfig.silentAimAimHead and "Head" or "HumanoidRootPart")
+            or character:FindFirstChild("UpperTorso") or character:FindFirstChild("Torso")
+        if not part or not part:IsA("BasePart") then continue end
+
+        -- ScriptAdap aims at the live part position. Applying prediction before
+        -- the visibility cast can move the point outside the character and make
+        -- every valid target look obstructed.
+        local position = part.Position
+        local point, onScreen = cam:WorldToViewportPoint(position)
+        local distance = (position - origin).Magnitude
+        if onScreen and point.Z > 0 and distance > 0.05 and distance <= range then
+            local radius = (Vector2.new(point.X, point.Y) - center).Magnitude
+            if radius <= radiusLimit then
+                candidates[#candidates + 1] = {
+                    Player = targetPlayer,
+                    Character = character,
+                    Part = part,
+                    Position = position,
+                    Radius = radius,
+                }
+            end
+        end
+    end
+
+    table.sort(candidates, function(a, b)
+        if a.Radius ~= b.Radius then return a.Radius < b.Radius end
+        return a.Player.UserId < b.Player.UserId
+    end)
+
+    for _, candidate in ipairs(candidates) do
+        local offset = candidate.Position - origin
+        local first = xcNativeRaycast.cast(origin, offset.Unit * (offset.Magnitude + 0.05), nil, ignore)
+        local firstInstance = type(first) == "table" and (first.instance or first.Instance) or nil
+        local visible = not firstInstance or (typeof(firstInstance) == "Instance"
+            and (firstInstance == candidate.Part or firstInstance:IsDescendantOf(candidate.Character)))
+
+        if visible then return candidate end
+        if XCConfig.wallbangEnabled and not XCConfig.silentAimVisibleCheck then
+            local penetrated = castXCNativeSilentShot(origin, offset.Unit, properties or {})
+            if penetrated and type(penetrated.Hits) == "table" then
+                for _, impact in ipairs(penetrated.Hits) do
+                    local instance = impact.Instance or impact.instance
+                    if typeof(instance) == "Instance" and not impact.Exit
+                        and instance:IsDescendantOf(candidate.Character) then
+                        return candidate
+                    end
+                end
+            end
+        end
+    end
+    return nil
+end
+
 local function redirectXCNativeSilentShot(bullet, shot)
-    -- Use a dedicated request flag: persistent v23/v24 payload wrappers may
-    -- temporarily mask XCConfig.silentAimEnabled while calling the game.
     if not isXCSilentAimRequested() or type(shot) ~= "table"
         or typeof(shot.Origin) ~= "Vector3" then return shot end
-    if type(bullet) ~= "table" or bullet.IsDestroyed or bullet.IsActive == false then return shot end
+    if type(bullet) ~= "table" or bullet.IsDestroyed or not bullet.IsActive then return shot end
     local weapon = bullet.Weapon
-    if weapon and weapon.Player and weapon.Player ~= player then return shot end
+    if not weapon or weapon.Player ~= player then return shot end
 
-    local targetPart = getSilentAimTarget and getSilentAimTarget() or silentAimResolved
-    if not targetPart or not targetPart.Parent then return shot end
     local chance = math.clamp(tonumber(XCConfig.silentAimHitChance) or 100, 0, 100)
     if chance < 100 and math.random(1, 100) > chance then return shot end
 
-    local aimPosition = getKinematicAimPosition(targetPart)
+    local target = selectXCNativeSilentTarget(shot.Origin, bullet.Properties or {})
+    local targetPart = target and target.Part
+    if not targetPart or not targetPart.Parent then return shot end
+
+    local aimPosition = target.Position
     local offset = aimPosition - shot.Origin
     if offset.Magnitude < 0.05 then return shot end
 
@@ -1325,10 +1889,18 @@ local function redirectXCNativeSilentShot(bullet, shot)
     return redirected
 end
 
-if sharedXCEnv then sharedXCEnv.XCNativeSilentRedirectV24 = redirectXCNativeSilentShot end
+if sharedXCEnv then
+    -- Disable persistent pre-v36 redirectors; the new wrapper below owns the
+    -- only per-bullet redirect and performs Hit Chance exactly once.
+    sharedXCEnv.XCNativeSilentRedirectV24 = function(_, shot) return shot end
+    sharedXCEnv.XCNativeSilentRedirectV36 = redirectXCNativeSilentShot
+end
 
 function setupXCNativeSilentHook()
     if xcNativeSilentHooked then return true end
+    -- ScriptAdap-compatible path: hook the weapon's real raycast on every
+    -- platform. It runs once per actual local shot and cannot consume mobile
+    -- UI touches or block automatic/burst fire.
     local installed = false
     pcall(function()
         local components = ReplicatedStorage:FindFirstChild("Components")
@@ -1350,7 +1922,7 @@ function setupXCNativeSilentHook()
 
         xcNativeRaycast = raycastModule
         xcNativeGetRayIgnore = getRayIgnore
-        if rawget(bulletModule, "__XCSilentRayHookV24") then
+        if rawget(bulletModule, "__XCSilentRayHookV36") then
             installed = true
             return
         end
@@ -1358,25 +1930,142 @@ function setupXCNativeSilentHook()
         local originalRaycast = bulletModule._performRaycast
         bulletModule._performRaycast = function(self, spread, ...)
             local shot = originalRaycast(self, spread, ...)
-            local redirect = sharedXCEnv and sharedXCEnv.XCNativeSilentRedirectV24 or redirectXCNativeSilentShot
+            local redirect = sharedXCEnv and sharedXCEnv.XCNativeSilentRedirectV36 or redirectXCNativeSilentShot
             if type(redirect) ~= "function" then return shot end
             local ok, redirected = pcall(redirect, self, shot)
             return ok and redirected or shot
         end
-        rawset(bulletModule, "__XCSilentRayHookV24", true)
+        rawset(bulletModule, "__XCSilentRayHookV36", true)
         installed = bulletModule._performRaycast ~= originalRaycast
     end)
     xcNativeSilentHooked = installed
     return installed
 end
 
--- ==========================================
--- CHAMS COLORS NO WORK & HITMARKER VARS NO WORK
--- ==========================================
-local chamsColorVisible = Color3.fromRGB(152, 204, 0)
-local chamsColorHidden = Color3.fromRGB(112, 116, 122)
-local chamsColorAlly = Color3.fromRGB(194, 220, 112)
-local chamsOutlineColor = Color3.fromRGB(235, 235, 235)
+-- Mobile bullet interception v29. The game still executes its original
+-- Bullet._performRaycast and builds the canonical shot/Hits payload. XC only
+-- redirects the ray arguments while that exact local bullet is being cast.
+local function beginXCBulletInterceptV29(bullet)
+    if xcMobileCameraSilentHooked then return nil end
+    if not isXCSilentAimRequested() or type(bullet) ~= "table"
+        or bullet.IsDestroyed or bullet.IsActive == false then return nil end
+    local weapon = bullet.Weapon
+    if not weapon or (weapon.Player and weapon.Player ~= player) then return nil end
+
+    local targetPart = getSilentAimTarget and getSilentAimTarget() or silentAimResolved
+    if not targetPart or not targetPart.Parent then return nil end
+    local chance = math.clamp(tonumber(XCConfig.silentAimHitChance) or 100, 0, 100)
+    if chance < 100 and math.random(1, 100) > chance then return nil end
+
+    return {
+        Thread = coroutine.running(),
+        Target = targetPart,
+        AimPosition = targetPart.Position,
+        Direction = nil,
+        Used = false,
+    }
+end
+
+if sharedXCEnv then sharedXCEnv.XCBeginBulletInterceptV29 = beginXCBulletInterceptV29 end
+
+local xcBulletInterceptContextV29 = nil
+local function getXCActiveBulletInterceptV29()
+    local context = sharedXCEnv and sharedXCEnv.XCBulletInterceptContextV29 or xcBulletInterceptContextV29
+    if not context then return nil end
+    local thread = coroutine.running()
+    if context.Thread and context.Thread ~= thread then return nil end
+    return context
+end
+
+local function redirectXCRaycastArgumentsV29(origin, direction, firstCast)
+    local context = getXCActiveBulletInterceptV29()
+    if not context or typeof(origin) ~= "Vector3" or typeof(direction) ~= "Vector3"
+        or direction.Magnitude <= 0.001 then return direction end
+    if firstCast and context.Used then return direction end
+
+    local delta = context.AimPosition - origin
+    if delta.Magnitude <= 0.05 then return direction end
+    local redirectedUnit = delta.Unit
+    if firstCast then
+        context.Used = true
+        context.Direction = redirectedUnit
+    elseif context.Direction then
+        redirectedUnit = context.Direction
+    end
+    return redirectedUnit * direction.Magnitude
+end
+
+function setupXCBulletInterceptHookV29()
+    if xcBulletInterceptHooked then return true end
+    if xcNativeSilentHooked then return false end
+    if xcMobileCameraSilentHooked then return false end
+    if not UserInputService.TouchEnabled or type(hookfunction) ~= "function" then return false end
+    local installed = false
+    pcall(function()
+        local components = ReplicatedStorage:FindFirstChild("Components")
+        local weaponFolder = components and components:FindFirstChild("Weapon")
+        local classes = weaponFolder and weaponFolder:FindFirstChild("Classes")
+        local bulletScript = classes and classes:FindFirstChild("Bullet")
+        local sharedFolder = ReplicatedStorage:FindFirstChild("Shared")
+        local raycastScript = sharedFolder and sharedFolder:FindFirstChild("Raycast")
+        if not bulletScript or not raycastScript then return end
+
+        local bulletModule = require(bulletScript)
+        local raycastModule = require(raycastScript)
+        if type(bulletModule) ~= "table" or type(bulletModule._performRaycast) ~= "function"
+            or type(raycastModule) ~= "table" or type(raycastModule.cast) ~= "function"
+            or type(raycastModule.castThrough) ~= "function" then return end
+
+        if not (sharedXCEnv and sharedXCEnv.XCRaycastArgumentHooksV29) then
+            local oldCast
+            oldCast = hookfunction(raycastModule.cast, function(origin, direction, ...)
+                direction = redirectXCRaycastArgumentsV29(origin, direction, true)
+                return oldCast(origin, direction, ...)
+            end)
+
+            local oldCastThrough
+            oldCastThrough = hookfunction(raycastModule.castThrough, function(origin, direction, ...)
+                direction = redirectXCRaycastArgumentsV29(origin, direction, false)
+                return oldCastThrough(origin, direction, ...)
+            end)
+            if sharedXCEnv then sharedXCEnv.XCRaycastArgumentHooksV29 = true end
+        end
+
+        if rawget(bulletModule, "__XCBulletInterceptV29") then
+            installed = true
+            return
+        end
+
+        local originalPerformRaycast = bulletModule._performRaycast
+        bulletModule._performRaycast = function(self, spread, ...)
+            local begin = sharedXCEnv and sharedXCEnv.XCBeginBulletInterceptV29 or beginXCBulletInterceptV29
+            local okContext, context = pcall(begin, self)
+            if not okContext then context = nil end
+            local previous = sharedXCEnv and sharedXCEnv.XCBulletInterceptContextV29 or xcBulletInterceptContextV29
+            xcBulletInterceptContextV29 = context
+            if sharedXCEnv then sharedXCEnv.XCBulletInterceptContextV29 = context end
+
+            local results = table.pack(pcall(originalPerformRaycast, self, spread, ...))
+            xcBulletInterceptContextV29 = previous
+            if sharedXCEnv then sharedXCEnv.XCBulletInterceptContextV29 = previous end
+            if not results[1] then error(results[2], 0) end
+
+            local shot = results[2]
+            if context and context.Used and context.Direction and type(shot) == "table" then
+                local redirectedShot = table.clone(shot)
+                redirectedShot.Direction = context.Direction
+                results[2] = redirectedShot
+                silentAimResolved = context.Target
+                if registerXCLocalHitCandidate then registerXCLocalHitCandidate(context.Target) end
+            end
+            return table.unpack(results, 2, results.n)
+        end
+        rawset(bulletModule, "__XCBulletInterceptV29", true)
+        installed = true
+    end)
+    xcBulletInterceptHooked = installed
+    return installed
+end
 
 -- ==========================================
 -- XC SKINCHANGER
@@ -1468,7 +2157,7 @@ function refreshXCSkinData()
 
     for weaponName, skins in pairs(skinData.SkinSelections) do
         if XCConfig.weaponSkinSelections[weaponName] == nil then
-            XCConfig.weaponSkinSelections[weaponName] = skins[1] or "Default"
+            XCConfig.weaponSkinSelections[weaponName] = "Default"
         end
     end
 
@@ -1506,6 +2195,82 @@ function getXCKnifeChoices()
         choices = {"Butterfly Knife", "Karambit", "Bayonet"}
     end
     choices[#choices + 1] = "Default"
+    return choices
+end
+
+function getXCWeaponSkinChoices()
+    refreshXCSkinData()
+    local choices = {}
+    for weaponName, skins in pairs(skinData.SkinSelections or {}) do
+        if not skinData.KnifeSet[weaponName] and not skinData.GloveSelections[weaponName] and #skins > 0 then
+            choices[#choices + 1] = weaponName
+        end
+    end
+    table.sort(choices)
+    if #choices == 0 then choices = {"AK-47", "M4A1", "AWP", "Desert Eagle"} end
+    if not table.find(choices, XCConfig.skinEditorWeapon) then XCConfig.skinEditorWeapon = choices[1] end
+    return choices
+end
+
+function getXCAllFinishChoices()
+    refreshXCSkinData()
+    local set, choices = {Default = true}, {"Default"}
+    for _, skins in pairs(skinData.SkinSelections or {}) do
+        for _, skinName in ipairs(skins) do
+            if not set[skinName] then
+                set[skinName] = true
+                choices[#choices + 1] = skinName
+            end
+        end
+    end
+    table.sort(choices, function(a, b)
+        if a == "Default" then return true end
+        if b == "Default" then return false end
+        return a:lower() < b:lower()
+    end)
+    return choices
+end
+
+function getXCSkinChoicesForWeapon(weaponName)
+    refreshXCSkinData()
+    local choices = {"Default"}
+    for _, skinName in ipairs(skinData.SkinSelections[weaponName] or {}) do choices[#choices + 1] = skinName end
+    return choices
+end
+
+function getXCGloveSkinChoices(modelName)
+    refreshXCSkinData()
+    local choices = {"Default"}
+    for _, skinName in ipairs(skinData.GloveSelections[modelName] or {}) do
+        if skinName ~= "Default" then choices[#choices + 1] = skinName end
+    end
+    return choices
+end
+
+function getXCGloveModelChoices()
+    refreshXCSkinData()
+    local choices = {"Default"}
+    for _, folder in ipairs(skinData.GloveFolders or {}) do choices[#choices + 1] = folder.Name end
+    if #choices == 1 then choices = {"Default", "Sports Gloves", "Driver Gloves"} end
+    return choices
+end
+
+function getXCAllGloveSkinChoices()
+    refreshXCSkinData()
+    local set, choices = {Default = true}, {"Default"}
+    for _, skins in pairs(skinData.GloveSelections or {}) do
+        for _, skinName in ipairs(skins) do
+            if not set[skinName] then
+                set[skinName] = true
+                choices[#choices + 1] = skinName
+            end
+        end
+    end
+    table.sort(choices, function(a, b)
+        if a == "Default" then return true end
+        if b == "Default" then return false end
+        return a:lower() < b:lower()
+    end)
     return choices
 end
 
@@ -1589,12 +2354,12 @@ function applyXCKnifeChanger()
     local modelChanged = view.CameraModelWeapon ~= selectedKnife
     view.CameraModelWeapon = selectedKnife
     view.Skin = selectedSkin ~= "Default" and selectedSkin or nil
-    view.Float = 0
+    view.Float = math.clamp(tonumber(XCConfig.knifeWear) or 0, 0, 1)
     if modelChanged or not view.Model or not view.Model.Parent then
         if not constructXCKnifeView(view, weapon.Character or player.Character, weapon) then return false end
     end
     if view.Model and view.Model.Parent then
-        applySurfaceAppearanceSkin(view.Model, selectedKnife, selectedSkin)
+        applySurfaceAppearanceSkin(view.Model, selectedKnife, selectedSkin, XCConfig.knifeWear)
     end
     skinData.LastError = nil
     return true
@@ -1611,17 +2376,31 @@ function getCurrentWeaponModel()
     return nil
 end
 
-function applySurfaceAppearanceSkin(model, weaponName, skinName)
+function applySurfaceAppearanceSkin(model, weaponName, skinName, wear)
     if not model or not skinData.SkinsRoot then return end
     if not weaponName or not skinName or skinName == "Default" then return end
 
     local weaponFolder = skinData.SkinsRoot:FindFirstChild(weaponName)
     local skinFolder = weaponFolder and weaponFolder:FindFirstChild(skinName)
     local cameraFolder = skinFolder and skinFolder:FindFirstChild("Camera")
-    local factoryNew = cameraFolder and cameraFolder:FindFirstChild("Factory New")
-    if not factoryNew then return end
+    if not cameraFolder then return end
+    local textureFolder = nil
+    if skinData.SkinLibrary and type(skinData.SkinLibrary.GetAllSkinsForWeapon) == "function"
+        and type(skinData.SkinLibrary.GetWearNameForFloat) == "function" then
+        pcall(function()
+            for _, info in ipairs(skinData.SkinLibrary.GetAllSkinsForWeapon(weaponName) or {}) do
+                if type(info) == "table" and info.skin == skinName then
+                    local wearName = skinData.SkinLibrary.GetWearNameForFloat(info, math.clamp(tonumber(wear) or 0, 0, 1))
+                    textureFolder = cameraFolder:FindFirstChild(wearName)
+                    break
+                end
+            end
+        end)
+    end
+    textureFolder = textureFolder or cameraFolder:FindFirstChild("Factory New") or cameraFolder:GetChildren()[1]
+    if not textureFolder then return end
 
-    for _, appearance in ipairs(factoryNew:GetChildren()) do
+    for _, appearance in ipairs(textureFolder:GetChildren()) do
         if appearance:IsA("SurfaceAppearance") then
             local targetPart = model:FindFirstChild(appearance.Name, true)
             if targetPart and targetPart:IsA("BasePart") then
@@ -1632,6 +2411,45 @@ function applySurfaceAppearanceSkin(model, weaponName, skinName)
             end
         end
     end
+end
+
+function applyXCSelectedWeaponSkin()
+    if not XCConfig.skinChangerEnabled or not refreshXCSkinData() or type(skinData.GetWeapon) ~= "function" then return false end
+    local ok, weapon = pcall(skinData.GetWeapon)
+    if not ok or type(weapon) ~= "table" or weapon.IsDestroyed
+        or (weapon.Player ~= nil and weapon.Player ~= player) then return false end
+    local view = weapon.Viewmodel
+    local model = view and view.Model
+    if not view or not model or not model.Parent then return false end
+    local melee = skinData.KnifeSet[weapon.Name] or (type(weapon.Properties) == "table" and weapon.Properties.Class == "Melee")
+    if melee then return applyXCKnifeChanger() end
+
+    local weaponName = view.CameraModelWeapon or view.Weapon or weapon.Name
+    local skinName = XCConfig.weaponSkinSelections[weaponName]
+    if skinName == nil then return false end
+    if type(skinName) ~= "string" or skinName == "" or skinName == "Default" then
+        return restoreXCSelectedWeaponSkin(weaponName)
+    end
+    local wear = math.clamp(tonumber(XCConfig.weaponSkinWear[weaponName]) or 0, 0, 1)
+    view.Skin = skinName
+    view.Float = wear
+    applySurfaceAppearanceSkin(model, weaponName, skinName, wear)
+    return true
+end
+
+function restoreXCSelectedWeaponSkin(weaponName)
+    if type(skinData.GetWeapon) ~= "function" then return false end
+    local ok, weapon = pcall(skinData.GetWeapon)
+    if not ok or type(weapon) ~= "table" or weapon.IsDestroyed then return false end
+    local view = weapon.Viewmodel
+    local currentName = view and (view.CameraModelWeapon or view.Weapon or weapon.Name)
+    if not view or (weaponName and currentName ~= weaponName) then return false end
+    if view.Skin == nil and (tonumber(view.Float) or 0) == 0 then return true end
+    view.Skin = nil
+    view.Float = 0
+    local character = weapon.Character or player.Character
+    if character and character.Parent then constructXCKnifeView(view, character, weapon) end
+    return true
 end
 
 local lastBloxModuleScan = 0
@@ -1677,7 +2495,12 @@ function scanAndMorphKnives(root)
         local selectedSkin = XCConfig.weaponSkinSelections[selectedWeapon]
             or (selectedWeapon == XCConfig.selectedKnifeType and XCConfig.selectedSkin)
             or "Default"
-        applySurfaceAppearanceSkin(weaponModel, selectedWeapon, selectedSkin)
+        applySurfaceAppearanceSkin(
+            weaponModel,
+            selectedWeapon,
+            selectedSkin,
+            XCConfig.weaponSkinWear[selectedWeapon] or (selectedWeapon == XCConfig.selectedKnifeType and XCConfig.knifeWear) or 0
+        )
     end
 end
 
@@ -1728,6 +2551,7 @@ task.spawn(function()
         pcall(function()
             if XCConfig.skinChangerEnabled then
                 applyXCKnifeChanger()
+                applyXCSelectedWeaponSkin()
             end
             if XCConfig.gloveChangerEnabled then
                 applyXCGloves()
@@ -1752,6 +2576,7 @@ local spectatorListLabel = nil
 local spectatorCounterLabel = nil
 local handsLastModel = nil
 local handsLastPivot = nil
+local handsNativeHooked = false
 
 function setNoFallDamage(enabled)
     if not enabled then return end
@@ -1780,7 +2605,7 @@ function playXCAnimation()
     if not XCConfig.animationsEnabled then return end
     local char = player and player.Character
     local hum = char and char:FindFirstChildOfClass("Humanoid")
-    local controller = char and char:FindFirstChildOfClass("AnimationController")
+    local controller = char and char:FindFirstChildWhichIsA("AnimationController", true)
     local animationHost = controller or hum
     if not char or not animationHost then return end
     local animator = animationHost:FindFirstChildOfClass("Animator")
@@ -1796,6 +2621,9 @@ function playXCAnimation()
     animationObject.Name = "XCAnimation"
     animationObject.AnimationId = "rbxassetid://" .. id
     local ok, track = pcall(function() return animator:LoadAnimation(animationObject) end)
+    if (not ok or not track) and hum then
+        ok, track = pcall(function() return hum:LoadAnimation(animationObject) end)
+    end
     if not ok or not track then
         stopXCAnimation()
         return
@@ -1890,7 +2718,7 @@ function updateSpectatorGui()
     spectatorFrame.Size = UDim2.new(0, 210, 0, math.max(88, 64 + math.min(#lines, 8) * 14))
 end
 
-function applyXCHandsOffset()
+function applyXCHandsOffset(view)
     if not XCConfig.customHandsEnabled then
         handsLastModel = nil
         handsLastPivot = nil
@@ -1898,7 +2726,7 @@ function applyXCHandsOffset()
     end
     local cam = Workspace.CurrentCamera or camera
     if not cam then return end
-    local model = getCurrentWeaponModel()
+    local model = type(view) == "table" and view.Model or getCurrentWeaponModel()
     if not model or not model:IsA("Model") then return end
     if handsLastModel ~= model then
         handsLastModel = model
@@ -1909,16 +2737,50 @@ function applyXCHandsOffset()
         * CFrame.Angles(math.rad(XCConfig.customHandsPitch), math.rad(XCConfig.customHandsYaw), math.rad(XCConfig.customHandsRoll))
     pcall(function()
         model:PivotTo(cam.CFrame * offset * cam.CFrame:ToObjectSpace(original))
+        if type(view) == "table" and view.LargeWeaponModel and view.SmallWeaponModel then
+            view.LargeWeaponModel:PivotTo(view.SmallWeaponModel:GetPivot())
+        end
     end)
+end
+
+-- Apply the offset immediately after the native viewmodel render. This keeps
+-- the native pose as the baseline and prevents a RenderStepped offset from
+-- accumulating/drifting each frame.
+function setupXCCustomHandsHook()
+    pcall(function()
+        local classes = ReplicatedStorage:FindFirstChild("Classes")
+        local weaponComponent = classes and classes:FindFirstChild("WeaponComponent")
+        local viewClasses = weaponComponent and weaponComponent:FindFirstChild("Classes")
+        local viewScript = viewClasses and viewClasses:FindFirstChild("Viewmodel")
+        local viewmodel = viewScript and require(viewScript)
+        if type(viewmodel) ~= "table" or type(viewmodel.render) ~= "function" then return end
+        if sharedXCEnv then sharedXCEnv.XCApplyHandsV33 = applyXCHandsOffset end
+        if rawget(viewmodel, "__XCCustomHandsHookV33") then
+            handsNativeHooked = true
+            return
+        end
+        local originalRender = viewmodel.render
+        viewmodel.render = function(view, ...)
+            local results = table.pack(originalRender(view, ...))
+            local callback = sharedXCEnv and sharedXCEnv.XCApplyHandsV33 or applyXCHandsOffset
+            if type(callback) == "function" then pcall(callback, view) end
+            return table.unpack(results, 1, results.n)
+        end
+        rawset(viewmodel, "__XCCustomHandsHookV33", true)
+        handsNativeHooked = true
+    end)
+    return handsNativeHooked
 end
 
 -- Lightweight background update for the extra modules.
 local spectatorUpdateAccumulator = 0
 local animationUpdateAccumulator = 0
+local animationRetryAccumulator = 0
 table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     if not XCConfig.noFallDamageEnabled
         and not XCConfig.spectatorListEnabled
         and not XCConfig.customHandsEnabled
+        and not XCConfig.animationsEnabled
         and not animationTrack then
         if spectatorFrame then spectatorFrame.Visible = false end
         return
@@ -1939,7 +2801,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     elseif spectatorFrame then
         spectatorFrame.Visible = false
     end
-    if XCConfig.customHandsEnabled then
+    if XCConfig.customHandsEnabled and not handsNativeHooked then
         applyXCHandsOffset()
     end
     if animationTrack and animationTrack.IsPlaying then
@@ -1949,6 +2811,14 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
             animationTrack.Looped = XCConfig.animationLoop
             pcall(function() animationTrack:AdjustSpeed(math.clamp(XCConfig.animationSpeed, 0.1, 3)) end)
         end
+    elseif XCConfig.animationsEnabled and (not animationTrack or XCConfig.animationLoop) then
+        animationRetryAccumulator += dt
+        if animationRetryAccumulator >= 1 then
+            animationRetryAccumulator = 0
+            playXCAnimation()
+        end
+    else
+        animationRetryAccumulator = 0
     end
 end))
 
@@ -1975,6 +2845,8 @@ local xcCharacterInputHook = {
     AntiLastStep = nil,
     RandomYaw = nil,
     AntiFireUntil = 0,
+    Calls = 0,
+    LastCall = 0,
     LastError = nil,
 }
 
@@ -2127,7 +2999,7 @@ hitmarkerDamage.Position = UDim2.fromOffset(0, XCConfig.hitmarkerSize + 7)
 hitmarkerDamage.Size = UDim2.fromOffset(92, 18)
 hitmarkerDamage.BackgroundTransparency = 1
 hitmarkerDamage.Text = ""
-hitmarkerDamage.TextColor3 = Color3.fromRGB(152, 204, 0)
+hitmarkerDamage.TextColor3 = currentTheme.Enemy_Accent
 hitmarkerDamage.TextStrokeColor3 = Color3.fromRGB(8, 8, 8)
 hitmarkerDamage.TextStrokeTransparency = 0.15
 hitmarkerDamage.TextTransparency = 1
@@ -2170,6 +3042,7 @@ function showHitmarker(damage)
     if shownDamage and shownDamage > 0 then
         hitmarkerDamage.Position = UDim2.fromOffset(0, size + 7)
         hitmarkerDamage.Text = string.format("-%d HP", math.max(1, math.floor(shownDamage + 0.5)))
+        hitmarkerDamage.TextColor3 = currentTheme.Enemy_Accent
         hitmarkerDamage.TextTransparency = 0
         hitmarkerDamage.TextStrokeTransparency = 0.15
         hitmarkerDamage.Visible = true
@@ -2615,10 +3488,11 @@ function applyWorldSkybox()
     local data = worldSkyboxData[XCConfig.worldSkyboxPreset]
     if not data or not XCConfig.worldSkyboxEnabled then return end
     pcall(function()
-        if not originalSkybox then
-            local existing = Lighting:FindFirstChildOfClass("Sky")
-            if existing and existing.Name ~= "XCWorldSky" then
-                originalSkybox = existing:Clone()
+        -- Blox Strike can recreate its native Sky during a round change. Keep
+        -- exactly one active Sky, as in the reference implementation.
+        for _, existing in ipairs(Lighting:GetChildren()) do
+            if existing:IsA("Sky") and existing.Name ~= "XCWorldSky" then
+                if not originalSkybox then originalSkybox = existing:Clone() end
                 existing:Destroy()
             end
         end
@@ -2662,6 +3536,7 @@ function updateWorldPostFX()
         fx.Name = "XCWorldColorFX"
         fx.Parent = Lighting
     end
+    fx.Enabled = true
     fx.Saturation = math.clamp(XCConfig.worldSaturation or 0, -1, 1)
     fx.Contrast = math.clamp(XCConfig.worldContrast or 0, -1, 1)
     fx.TintColor = XCFeatureState.worldTonePresets[XCConfig.worldTonePreset]
@@ -2731,9 +3606,12 @@ end
 
 -- ==========================================================================
 -- [ CUBE CHECKER ]
--- camera-ray surface marker.
+-- Crosshair penetration probe: lime = the equipped weapon can exit the hit
+-- surface, red = the surface is not penetrable with its native properties.
 -- ==========================================================================
 do
+    local CAN_PENETRATE = Color3.fromRGB(152, 204, 0)
+    local BLOCKED = Color3.fromRGB(220, 55, 62)
     local cubePart = Instance.new("Part")
     cubePart.Name = "XC_CubeChecker"
     cubePart.Anchored = true
@@ -2742,7 +3620,7 @@ do
     cubePart.CanQuery = false
     cubePart.CastShadow = false
     cubePart.Material = Enum.Material.Neon
-    cubePart.Transparency = 0.98
+    cubePart.Transparency = 0.82
     cubePart.Size = Vector3.new(1.5, 1.5, 0.01)
 
     local cubeOutline = Instance.new("SelectionBox")
@@ -2750,12 +3628,99 @@ do
     cubeOutline.Adornee = cubePart
     cubeOutline.Color3 = Color3.fromRGB(210, 45, 55)
     cubeOutline.LineThickness = 0.04
-    cubeOutline.Transparency = 0.2
+    cubeOutline.Transparency = 0.05
     cubeOutline.Parent = cubePart
 
     local cubeRayParams = RaycastParams.new()
     cubeRayParams.FilterType = Enum.RaycastFilterType.Exclude
     cubeRayParams.IgnoreWater = true
+
+    local cubeGetWeapon = nil
+    local cubeNextResolve = 0
+    local cubeNextProbe = 0
+    local cubeResult = nil
+    local cubeColor = BLOCKED
+
+    local function resolveCubeWeapon()
+        if type(cubeGetWeapon) == "function" then
+            local ok, weapon = pcall(cubeGetWeapon)
+            if ok and type(weapon) == "table" then return weapon end
+        end
+        if os.clock() < cubeNextResolve then return nil end
+        cubeNextResolve = os.clock() + 1
+        pcall(function()
+            local controllers = ReplicatedStorage:FindFirstChild("Controllers")
+            local inventoryScript = controllers and controllers:FindFirstChild("InventoryController")
+            local inventory = inventoryScript and require(inventoryScript)
+            if type(inventory) == "table" and type(inventory.peekCurrentEquippedForMovement) == "function" then
+                cubeGetWeapon = inventory.peekCurrentEquippedForMovement
+            end
+        end)
+        if type(cubeGetWeapon) == "function" then
+            local ok, weapon = pcall(cubeGetWeapon)
+            if ok then return weapon end
+        end
+        return nil
+    end
+
+    local function ensureCubeRaycast()
+        if xcNativeRaycast and type(xcNativeRaycast.cast) == "function"
+            and type(xcNativeRaycast.castThrough) == "function" and type(xcNativeGetRayIgnore) == "function" then
+            return true
+        end
+        pcall(function()
+            local sharedFolder = ReplicatedStorage:FindFirstChild("Shared")
+            local components = ReplicatedStorage:FindFirstChild("Components")
+            local common = components and components:FindFirstChild("Common")
+            local raycastScript = sharedFolder and sharedFolder:FindFirstChild("Raycast")
+            local ignoreScript = common and common:FindFirstChild("GetRayIgnore")
+            if raycastScript and ignoreScript then
+                xcNativeRaycast = require(raycastScript)
+                xcNativeGetRayIgnore = require(ignoreScript)
+            end
+        end)
+        return xcNativeRaycast and type(xcNativeRaycast.cast) == "function"
+            and type(xcNativeRaycast.castThrough) == "function" and type(xcNativeGetRayIgnore) == "function"
+    end
+
+    local function probeCubePenetration(origin, direction, distance)
+        if not ensureCubeRaycast() then return nil, BLOCKED end
+        local ignore = xcNativeGetRayIgnore()
+        local first = xcNativeRaycast.cast(origin, direction * distance, nil, ignore)
+        if type(first) ~= "table" or not first.instance or typeof(first.position) ~= "Vector3" then
+            return nil, BLOCKED
+        end
+
+        local normal = typeof(first.normal) == "Vector3" and first.normal or -direction
+        local hitCharacter = first.instance:FindFirstAncestorOfClass("Model")
+        if hitCharacter and Players:GetPlayerFromCharacter(hitCharacter) then
+            return {Position = first.position, Normal = normal}, CAN_PENETRATE
+        end
+
+        local weapon = resolveCubeWeapon()
+        local properties = weapon and weapon.Bullet and weapon.Bullet.Properties
+        local penetration = math.max(0, tonumber(properties and properties.Penetration) or 0)
+        if penetration <= 0 then
+            return {Position = first.position, Normal = normal}, BLOCKED
+        end
+
+        local hits = xcNativeRaycast.castThrough(
+            first.position - direction * 0.001,
+            direction * (penetration + 0.001),
+            penetration,
+            ignore
+        )
+        local canExit = false
+        if type(hits) == "table" then
+            for index, hit in ipairs(hits) do
+                if index % 2 == 0 and type(hit) == "table" and hit.instance then
+                    canExit = true
+                    break
+                end
+            end
+        end
+        return {Position = first.position, Normal = normal}, canExit and CAN_PENETRATE or BLOCKED
+    end
 
     local cubeRenderConnection = RunService.RenderStepped:Connect(function()
         pcall(function()
@@ -2774,23 +3739,34 @@ do
             local size = math.clamp(tonumber(XCConfig.cubeCheckerSize) or 1.5, 0.1, 10)
             local lineThickness = math.clamp(tonumber(XCConfig.cubeCheckerLineThickness) or 0.04, 0.01, 0.2)
             local outlineTransparency = math.clamp(tonumber(XCConfig.cubeCheckerTransparency) or 0.2, 0, 1)
-            local col = XCConfig.cubeCheckerRainbow
-                and Color3.fromHSV((os.clock() * 0.2) % 1, 1, 1)
-                or rgb(XCConfig.bulletTracerColorR, XCConfig.bulletTracerColorG, XCConfig.bulletTracerColorB)
-
-            cubeRayParams.FilterDescendantsInstances = {player.Character, cubePart}
             local origin = cam.CFrame.Position
-            local result = Workspace:Raycast(origin, cam.CFrame.LookVector * distance, cubeRayParams)
+            local direction = cam.CFrame.LookVector
+            local now = os.clock()
+            if now >= cubeNextProbe then
+                cubeNextProbe = now + 0.075
+                cubeResult, cubeColor = probeCubePenetration(origin, direction, distance)
+                if not cubeResult then
+                    cubeRayParams.FilterDescendantsInstances = {player.Character, cubePart}
+                    local fallback = Workspace:Raycast(origin, direction * distance, cubeRayParams)
+                    if fallback then
+                        cubeResult = {Position = fallback.Position, Normal = fallback.Normal}
+                        cubeColor = BLOCKED
+                    end
+                end
+            end
 
-            if not result then
+            if not cubeResult then
                 cubePart.Parent = nil
                 return
             end
 
             cubePart.Size = Vector3.new(size, size, 0.01)
-            cubePart.Color = col
-            cubePart.CFrame = CFrame.lookAt(result.Position + result.Normal * 0.02, result.Position + result.Normal)
-            cubeOutline.Color3 = col
+            cubePart.Color = cubeColor
+            cubePart.CFrame = CFrame.lookAt(
+                cubeResult.Position + cubeResult.Normal * 0.02,
+                cubeResult.Position + cubeResult.Normal
+            )
+            cubeOutline.Color3 = cubeColor
             cubeOutline.LineThickness = lineThickness
             cubeOutline.Transparency = outlineTransparency
             cubePart.Parent = Workspace
@@ -3212,9 +4188,14 @@ XCFeatureState = {
         Skeet = "rbxassetid://83717596220569",
         Neverlose = "rbxassetid://139452805868562",
         Bell = "rbxassetid://96481309571950",
+        Bell2 = "rbxassetid://124010691633262",
         Bubble = "rbxassetid://104824514322839",
         Rust = "rbxassetid://1255040462",
         Coins = "rbxassetid://5613553529",
+        Agro1 = "rbxassetid://132463144859699",
+        Agro2 = "rbxassetid://102651850556408",
+        Schaater = "rbxassetid://17405655409",
+        Pick = "rbxassetid://8616930816",
     },
     skeletonEdges = {
         {"Head", "Neck"}, {"Neck", "Waist"},
@@ -3278,22 +4259,26 @@ function applyXCSmokeState()
     end)
 end
 
+local xcHitSoundPreloaded = {}
 function playXCHitSound(force)
     if not force and not XCConfig.hitSoundEnabled then return end
-    pcall(function()
-        local soundService = game:GetService("SoundService")
-        local sound = Instance.new("Sound")
-        sound.Name = "XCHitSound"
-        sound.SoundId = XCFeatureState.hitSounds[XCConfig.hitSoundPreset] or XCFeatureState.hitSounds.Skeet
-        sound.Volume = math.clamp(tonumber(XCConfig.hitSoundVolume) or 1, 0.1, 3)
-        sound.PlaybackSpeed = 1
-        sound.Parent = soundService
-        if type(soundService.PlayLocalSound) == "function" then
-            soundService:PlayLocalSound(sound)
-        else
-            sound:Play()
-        end
-        game:GetService("Debris"):AddItem(sound, 4)
+    task.spawn(function()
+        local ok = pcall(function()
+            local sound = Instance.new("Sound")
+            sound.Name = "XCHitSound"
+            sound.SoundId = XCFeatureState.hitSounds[XCConfig.hitSoundPreset] or XCFeatureState.hitSounds.Skeet
+            sound.Volume = math.clamp(tonumber(XCConfig.hitSoundVolume) or 1, 0.1, 3)
+            sound.PlaybackSpeed = 1
+            sound.Parent = SoundService
+            if not xcHitSoundPreloaded[sound.SoundId] then
+                xcHitSoundPreloaded[sound.SoundId] = true
+                pcall(function() ContentProvider:PreloadAsync({sound}) end)
+            end
+            local played = pcall(function() SoundService:PlayLocalSound(sound) end)
+            if not played then sound:Play() end
+            game:GetService("Debris"):AddItem(sound, 5)
+        end)
+        if not ok then return end
     end)
 end
 
@@ -3648,6 +4633,8 @@ end))
 -- CLEANUP ROUTINES
 -- ==========================================
 function cleanup()
+    XCConfig.silentAimEnabled = false
+    setXCSilentAimRequested(false)
     pcall(restoreXCKnifeModel)
     setXCStreamerMode(false)
     stopXCCameraMode()
@@ -3689,11 +4676,7 @@ function cleanup()
         end)
     end
     for _, gUi in pairs(grenadePool) do
-        pcall(function()
-            gUi.Tag:Destroy()
-            gUi.RadiusCircle:Destroy()
-            for _, l in ipairs(gUi.Lines) do l:Destroy() end
-        end)
+        pcall(function() destroyXCGrenadeUI(gUi) end)
     end
     for _, danger in pairs(grenadeDangerPool) do
         pcall(function() destroyXCGrenadeDanger(danger) end)
@@ -3732,6 +4715,14 @@ function cleanup()
     
     restoreLightingState()
     restoreXCSmoke()
+    if genv and type(genv.XCRestoreWeaponState) == "function" then
+        pcall(genv.XCRestoreWeaponState)
+        genv.XCRestoreWeaponState = nil
+    end
+    if sharedXCEnv then
+        sharedXCEnv.XCSilentAimRequestedV25 = false
+        sharedXCEnv.XCBulletInterceptContextV29 = nil
+    end
 
     pcall(function() if targetGui:FindFirstChild("XCScreenGui") then targetGui.XCScreenGui:Destroy() end end)
     pcall(function() if targetGui:FindFirstChild("XCToggleGui") then targetGui.XCToggleGui:Destroy() end end)
@@ -3860,30 +4851,56 @@ function isEntityCharacter(inst)
     return false
 end
 
+local function setXCGrenadeLine(line, a, b, color, thickness, transparency)
+    if not a or not b then line.Visible = false return end
+    local delta = b - a
+    if delta.Magnitude < 0.5 then line.Visible = false return end
+    line.Size = UDim2.fromOffset(delta.Magnitude + 1, thickness)
+    line.Position = UDim2.fromOffset((a.X + b.X) * 0.5, (a.Y + b.Y) * 0.5)
+    line.Rotation = math.deg(math.atan2(delta.Y, delta.X))
+    line.BackgroundColor3 = color
+    line.BackgroundTransparency = transparency
+    line.Visible = true
+end
+
 function getOrCreateGrenadeUI(nadeInstance)
     if grenadePool[nadeInstance] then return grenadePool[nadeInstance] end
 
     local tag = Instance.new("Frame", grenadeContainer)
-    tag.Size = UDim2.new(0, 0, 0, 14)
+    tag.Size = UDim2.new(0, 0, 0, 20)
     tag.AutomaticSize = Enum.AutomaticSize.X
     tag.AnchorPoint = Vector2.new(0.5, 1)
-    tag.BackgroundColor3 = Color3.fromRGB(18, 19, 22)
-    tag.BackgroundTransparency = 0.35
+    tag.BackgroundColor3 = Color3.fromRGB(8, 10, 12)
+    tag.BackgroundTransparency = 0.12
     tag.BorderSizePixel = 0
     tag.Visible = false
-    Instance.new("UICorner", tag).CornerRadius = UDim.new(0, 3)
+    tag.ZIndex = 12
+    Instance.new("UICorner", tag).CornerRadius = UDim.new(0, 4)
+    local tagStroke = Instance.new("UIStroke", tag)
+    tagStroke.Thickness = 1
+    tagStroke.Transparency = 0.22
 
     local pad = Instance.new("UIPadding", tag)
-    pad.PaddingLeft = UDim.new(0, 4)
-    pad.PaddingRight = UDim.new(0, 4)
+    pad.PaddingLeft = UDim.new(0, 9)
+    pad.PaddingRight = UDim.new(0, 7)
+
+    local accent = Instance.new("Frame", tag)
+    accent.Name = "Accent"
+    accent.AnchorPoint = Vector2.new(0, 0.5)
+    accent.Position = UDim2.new(0, -7, 0.5, 0)
+    accent.Size = UDim2.fromOffset(2, 12)
+    accent.BorderSizePixel = 0
+    accent.ZIndex = 13
+    Instance.new("UICorner", accent).CornerRadius = UDim.new(1, 0)
 
     local lbl = Instance.new("TextLabel", tag)
     lbl.AutomaticSize = Enum.AutomaticSize.X
     lbl.Size = UDim2.new(0, 0, 1, 0)
     lbl.BackgroundTransparency = 1
-    lbl.TextSize = 9
+    lbl.TextSize = 9.5
     lbl.Font = Enum.Font.GothamBold
     lbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+    lbl.ZIndex = 13
 
     local radiusCircle = Instance.new("Frame", grenadeContainer)
     radiusCircle.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -3894,155 +4911,253 @@ function getOrCreateGrenadeUI(nadeInstance)
     local radStroke = Instance.new("UIStroke", radiusCircle)
     radStroke.Thickness = 1.5
 
+    local landingGlow = Instance.new("Frame", grenadeContainer)
+    landingGlow.Name = "GrenadeLandingGlow"
+    landingGlow.AnchorPoint = Vector2.new(0.5, 0.5)
+    landingGlow.Size = UDim2.fromOffset(15, 15)
+    landingGlow.BorderSizePixel = 0
+    landingGlow.Rotation = 45
+    landingGlow.BackgroundTransparency = 0.72
+    landingGlow.Visible = false
+    landingGlow.ZIndex = 9
+    Instance.new("UICorner", landingGlow).CornerRadius = UDim.new(0, 3)
+
+    local landing = Instance.new("Frame", grenadeContainer)
+    landing.Name = "GrenadeLanding"
+    landing.AnchorPoint = Vector2.new(0.5, 0.5)
+    landing.Size = UDim2.fromOffset(8, 8)
+    landing.BorderSizePixel = 0
+    landing.Rotation = 45
+    landing.Visible = false
+    landing.ZIndex = 11
+    Instance.new("UICorner", landing).CornerRadius = UDim.new(0, 2)
+    local landingStroke = Instance.new("UIStroke", landing)
+    landingStroke.Color = Color3.fromRGB(5, 6, 7)
+    landingStroke.Thickness = 1
+
     local data = {
         Tag = tag,
+        TagStroke = tagStroke,
+        Accent = accent,
         Label = lbl,
         RadiusCircle = radiusCircle,
         RadiusStroke = radStroke,
-        Lines = {}
+        Landing = landing,
+        LandingGlow = landingGlow,
+        Lines = {},
+        RadiusLines = {},
+        PathWorld = {},
+        LandingWorld = nil,
+        RadiusCenter = nil,
+        NextTrajectory = 0,
+        NextRadius = 0,
     }
 
-    for j = 1, 8 do
+    for j = 1, 18 do
+        local glow = Instance.new("Frame", grenadeContainer)
+        glow.Name = "TrajectoryGlow_" .. j
+        glow.BorderSizePixel = 0
+        glow.AnchorPoint = Vector2.new(0.5, 0.5)
+        glow.Visible = false
+        glow.ZIndex = 8
+        local core = Instance.new("Frame", grenadeContainer)
+        core.Name = "TrajectoryCore_" .. j
+        core.BorderSizePixel = 0
+        core.AnchorPoint = Vector2.new(0.5, 0.5)
+        core.Visible = false
+        core.ZIndex = 10
+        table.insert(data.Lines, {Glow = glow, Core = core})
+    end
+
+    for j = 1, 24 do
         local seg = Instance.new("Frame", grenadeContainer)
+        seg.Name = "GrenadeRadius_" .. j
         seg.BorderSizePixel = 0
         seg.AnchorPoint = Vector2.new(0.5, 0.5)
         seg.Visible = false
-        table.insert(data.Lines, seg)
+        seg.ZIndex = 7
+        table.insert(data.RadiusLines, seg)
     end
 
     grenadePool[nadeInstance] = data
     return data
 end
 
+function hideXCGrenadeUI(ui)
+    ui.Tag.Visible = false
+    ui.RadiusCircle.Visible = false
+    ui.Landing.Visible = false
+    ui.LandingGlow.Visible = false
+    for _, line in ipairs(ui.Lines) do
+        line.Glow.Visible = false
+        line.Core.Visible = false
+    end
+    for _, line in ipairs(ui.RadiusLines) do line.Visible = false end
+end
+
+function destroyXCGrenadeUI(ui)
+    hideXCGrenadeUI(ui)
+    ui.Tag:Destroy()
+    ui.RadiusCircle:Destroy()
+    ui.Landing:Destroy()
+    ui.LandingGlow:Destroy()
+    for _, line in ipairs(ui.Lines) do
+        line.Glow:Destroy()
+        line.Core:Destroy()
+    end
+    for _, line in ipairs(ui.RadiusLines) do line:Destroy() end
+end
+
 function renderGrenadeOverlays()
     if not XCConfig.grenadeEspEnabled then
-        for _, v in pairs(grenadePool) do
-            v.Tag.Visible = false
-            v.RadiusCircle.Visible = false
-            for _, l in ipairs(v.Lines) do l.Visible = false end
-        end
+        for _, ui in pairs(grenadePool) do hideXCGrenadeUI(ui) end
         return
     end
 
+    local now = os.clock()
     local camPos = camera.CFrame.Position
     local activeGrenades = {}
 
     for _, item in ipairs(Workspace:GetChildren()) do
         if not isEntityCharacter(item) then
             local nName = item.Name:lower()
-            local isNade = false
-            local nadeType = "NADE"
-            local nadeColor = currentTheme.HEColor
-            local effectRadiusStuds = 14
+            local nadeType, nadeColor, effectRadiusStuds
 
-            if nName:find("molotov") or nName:find("incendiary") or nName:find("fire") then
-                isNade = true
-                nadeType = "MOLOTOV"
-                nadeColor = currentTheme.MolotovColor
-                effectRadiusStuds = 17
-            elseif nName:find("smoke") then
-                isNade = true
-                nadeType = "SMOKE"
-                nadeColor = currentTheme.SmokeColor
-                effectRadiusStuds = 20
-            elseif nName:find("grenade") or nName:find("hegrenade") or nName:find("frag") then
-                isNade = true
-                nadeType = "HE"
-                nadeColor = currentTheme.HEColor
-                effectRadiusStuds = 15
-            elseif nName:find("flash") then
-                isNade = true
-                nadeType = "FLASH"
-                nadeColor = Color3.fromRGB(245, 235, 120)
-                effectRadiusStuds = 10
+            -- Specific types must be checked before generic "grenade" names.
+            if nName:find("molotov", 1, true) or nName:find("incendiary", 1, true)
+                or nName:find("fire", 1, true) then
+                nadeType, nadeColor, effectRadiusStuds = "MOLOTOV", currentTheme.MolotovColor, 17
+            elseif nName:find("smoke", 1, true) then
+                nadeType, nadeColor, effectRadiusStuds = "SMOKE", currentTheme.SmokeColor, 20
+            elseif nName:find("flash", 1, true) then
+                nadeType, nadeColor, effectRadiusStuds = "FLASH", Color3.fromRGB(245, 235, 120), 10
+            elseif nName:find("hegrenade", 1, true) or nName:find("frag", 1, true)
+                or nName:find("grenade", 1, true) then
+                nadeType, nadeColor, effectRadiusStuds = "HE", currentTheme.HEColor, 15
             end
 
-            if isNade then
-                local part = item:IsA("BasePart") and item or item:FindFirstChildWhichIsA("BasePart")
+            if nadeType then
+                local part = item:IsA("BasePart") and item or item:FindFirstChildWhichIsA("BasePart", true)
                 if part and part.Parent and part:IsDescendantOf(Workspace) then
                     local dist = (part.Position - camPos).Magnitude
                     if dist <= XCConfig.grenadeMaxDist then
                         activeGrenades[item] = true
                         local ui = getOrCreateGrenadeUI(item)
-                        local scrPos, onScreen = camera:WorldToViewportPoint(part.Position)
+                        local screen, onScreen = camera:WorldToViewportPoint(part.Position)
+                        ui.Accent.BackgroundColor3 = nadeColor
+                        ui.TagStroke.Color = nadeColor
+                        ui.Label.TextColor3 = nadeColor
+                        ui.Label.Text = string.format("%s  ·  %dm", nadeType, math.floor(dist + 0.5))
+                        ui.Tag.Position = UDim2.fromOffset(screen.X, screen.Y - 9)
+                        ui.Tag.Visible = onScreen and screen.Z > 0
+                        ui.RadiusCircle.Visible = false
 
-                        if onScreen and scrPos.Z > 0 then
-                            ui.Tag.Position = UDim2.new(0, scrPos.X, 0, scrPos.Y - 6)
-                            ui.Label.Text = string.format("%s [%dm]", nadeType, math.floor(dist))
-                            ui.Label.TextColor3 = nadeColor
-                            ui.Tag.Visible = true
-
-                            if XCConfig.showGrenadePath and part.AssemblyLinearVelocity and part.AssemblyLinearVelocity.Magnitude > 2 then
-                                local vel = part.AssemblyLinearVelocity
-                                local simPos = part.Position
-                                local stepTime = 0.08
-                                local grav = Vector3.new(0, -Workspace.Gravity, 0)
-                                
-                                grenadeRayParams.FilterDescendantsInstances = {player.Character, item, camera}
-
-                                for step = 1, #ui.Lines do
-                                    local nextPos = simPos + (vel * stepTime) + (0.5 * grav * stepTime * stepTime)
-                                    vel = vel + (grav * stepTime)
-
-                                    local castHit = Workspace:Raycast(simPos, nextPos - simPos, grenadeRayParams)
-                                    if castHit then nextPos = castHit.Position end
-
-                                    local p1, v1 = camera:WorldToViewportPoint(simPos)
-                                    local p2, v2 = camera:WorldToViewportPoint(nextPos)
-
-                                    if v1 and v2 and p1.Z > 0 and p2.Z > 0 then
-                                        local lFrame = ui.Lines[step]
-                                        local startV2 = Vector2.new(p1.X, p1.Y)
-                                        local endV2 = Vector2.new(p2.X, p2.Y)
-                                        local lDist = (endV2 - startV2).Magnitude
-                                        local center = (startV2 + endV2) * 0.5
-                                        local angle = math.deg(math.atan2(endV2.Y - startV2.Y, endV2.X - startV2.X))
-
-                                        lFrame.Size = UDim2.new(0, lDist, 0, 1.2)
-                                        lFrame.Position = UDim2.new(0, center.X, 0, center.Y)
-                                        lFrame.Rotation = angle
-                                        lFrame.BackgroundColor3 = nadeColor
-                                        lFrame.Visible = true
-                                    else
-                                        ui.Lines[step].Visible = false
-                                    end
-
-                                    if castHit then
-                                        for rem = step + 1, #ui.Lines do ui.Lines[rem].Visible = false end
-                                        break
-                                    end
-                                    simPos = nextPos
-                                end
-                            else
-                                for _, l in ipairs(ui.Lines) do l.Visible = false end
-                            end
-
-                            local shouldShowRadius = (nadeType == "MOLOTOV" and XCConfig.showMolotovRadius) or (nadeType == "SMOKE" and XCConfig.showSmokeRadius)
-                            if shouldShowRadius then
-                                grenadeRayParams.FilterDescendantsInstances = {player.Character, item, camera}
-                                local groundCast = Workspace:Raycast(part.Position, Vector3.new(0, -60, 0), grenadeRayParams)
-                                local groundPos = groundCast and groundCast.Position or part.Position
-                                
-                                local cCenter, cVisible = camera:WorldToViewportPoint(groundPos)
-                                local cEdge, _ = camera:WorldToViewportPoint(groundPos + (camera.CFrame.RightVector * effectRadiusStuds))
-
-                                if cVisible and cCenter.Z > 0 then
-                                    local rPix = (Vector2.new(cEdge.X, cEdge.Y) - Vector2.new(cCenter.X, cCenter.Y)).Magnitude
-                                    ui.RadiusCircle.Size = UDim2.new(0, rPix * 2, 0, rPix * 2)
-                                    ui.RadiusCircle.Position = UDim2.new(0, cCenter.X, 0, cCenter.Y)
-                                    ui.RadiusCircle.BackgroundTransparency = 1
-                                    ui.RadiusStroke.Color = nadeColor
-                                    ui.RadiusCircle.Visible = true
+                        grenadeRayParams.FilterDescendantsInstances = {player.Character, item, camera}
+                        local velocity = part.AssemblyLinearVelocity or Vector3.zero
+                        local pathEnabled = XCConfig.showGrenadePath and velocity.Magnitude > 2
+                        if pathEnabled and now >= ui.NextTrajectory then
+                            ui.NextTrajectory = now + (1 / 30)
+                            table.clear(ui.PathWorld)
+                            local simPosition = part.Position
+                            local gravity = Vector3.new(0, -Workspace.Gravity, 0)
+                            local stepTime = 0.075
+                            local bounces = 0
+                            ui.PathWorld[1] = simPosition
+                            ui.LandingWorld = simPosition
+                            for _ = 1, #ui.Lines do
+                                local nextPosition = simPosition + velocity * stepTime
+                                    + gravity * (0.5 * stepTime * stepTime)
+                                local nextVelocity = velocity + gravity * stepTime
+                                local hit = Workspace:Raycast(simPosition, nextPosition - simPosition, grenadeRayParams)
+                                if hit then nextPosition = hit.Position end
+                                ui.PathWorld[#ui.PathWorld + 1] = nextPosition
+                                ui.LandingWorld = nextPosition
+                                if hit then
+                                    bounces += 1
+                                    local reflected = nextVelocity - 2 * nextVelocity:Dot(hit.Normal) * hit.Normal
+                                    velocity = reflected * (hit.Normal.Y > 0.45 and 0.43 or 0.52)
+                                    simPosition = hit.Position + hit.Normal * 0.06
+                                    if bounces >= 3 or velocity.Magnitude < 8 then break end
                                 else
-                                    ui.RadiusCircle.Visible = false
+                                    simPosition = nextPosition
+                                    velocity = nextVelocity
+                                end
+                            end
+                        elseif not pathEnabled then
+                            table.clear(ui.PathWorld)
+                            ui.LandingWorld = nil
+                        end
+
+                        for step, line in ipairs(ui.Lines) do
+                            local worldA, worldB = ui.PathWorld[step], ui.PathWorld[step + 1]
+                            if worldA and worldB then
+                                local p1, visible1 = camera:WorldToViewportPoint(worldA)
+                                local p2, visible2 = camera:WorldToViewportPoint(worldB)
+                                if visible1 and visible2 and p1.Z > 0 and p2.Z > 0 then
+                                    local a = Vector2.new(p1.X, p1.Y)
+                                    local b = Vector2.new(p2.X, p2.Y)
+                                    local progress = step / #ui.Lines
+                                    setXCGrenadeLine(line.Glow, a, b, nadeColor, 4.5, 0.72 + progress * 0.18)
+                                    setXCGrenadeLine(line.Core, a, b, nadeColor, 1.55, 0.05 + progress * 0.45)
+                                else
+                                    line.Glow.Visible = false
+                                    line.Core.Visible = false
                                 end
                             else
-                                ui.RadiusCircle.Visible = false
+                                line.Glow.Visible = false
+                                line.Core.Visible = false
+                            end
+                        end
+
+                        if pathEnabled and ui.LandingWorld then
+                            local landingScreen, landingVisible = camera:WorldToViewportPoint(ui.LandingWorld)
+                            local showLanding = landingVisible and landingScreen.Z > 0
+                            local pulse = 0.65 + math.sin(now * 6) * 0.15
+                            ui.Landing.Position = UDim2.fromOffset(landingScreen.X, landingScreen.Y)
+                            ui.Landing.BackgroundColor3 = nadeColor
+                            ui.Landing.Visible = showLanding
+                            ui.LandingGlow.Position = ui.Landing.Position
+                            ui.LandingGlow.BackgroundColor3 = nadeColor
+                            ui.LandingGlow.BackgroundTransparency = pulse
+                            ui.LandingGlow.Visible = showLanding
+                        else
+                            ui.Landing.Visible = false
+                            ui.LandingGlow.Visible = false
+                            for _, line in ipairs(ui.Lines) do
+                                line.Glow.Visible = false
+                                line.Core.Visible = false
+                            end
+                        end
+
+                        local shouldShowRadius = (nadeType == "MOLOTOV" and XCConfig.showMolotovRadius)
+                            or (nadeType == "SMOKE" and XCConfig.showSmokeRadius)
+                        if shouldShowRadius then
+                            if now >= ui.NextRadius or not ui.RadiusCenter then
+                                ui.NextRadius = now + 0.08
+                                local groundCast = Workspace:Raycast(part.Position + Vector3.new(0, 1, 0),
+                                    Vector3.new(0, -60, 0), grenadeRayParams)
+                                ui.RadiusCenter = groundCast and groundCast.Position or part.Position
+                            end
+                            local groundPosition = ui.RadiusCenter
+                            local points = table.create(#ui.RadiusLines)
+                            for index = 1, #ui.RadiusLines do
+                                local angle = math.pi * 2 * ((index - 1) / #ui.RadiusLines)
+                                local worldPoint = groundPosition + Vector3.new(
+                                    math.cos(angle) * effectRadiusStuds, 0.16,
+                                    math.sin(angle) * effectRadiusStuds
+                                )
+                                local point, visible = camera:WorldToViewportPoint(worldPoint)
+                                points[index] = visible and point.Z > 0 and Vector2.new(point.X, point.Y) or nil
+                            end
+                            for index, line in ipairs(ui.RadiusLines) do
+                                local a = points[index]
+                                local b = points[index == #ui.RadiusLines and 1 or index + 1]
+                                local alternating = index % 2 == 0
+                                setXCGrenadeLine(line, a, b, nadeColor, alternating and 1.8 or 1.2,
+                                    alternating and 0.2 or 0.48)
                             end
                         else
-                            ui.Tag.Visible = false
-                            ui.RadiusCircle.Visible = false
-                            for _, l in ipairs(ui.Lines) do l.Visible = false end
+                            for _, line in ipairs(ui.RadiusLines) do line.Visible = false end
                         end
                     end
                 end
@@ -4050,12 +5165,10 @@ function renderGrenadeOverlays()
         end
     end
 
-    for inst, data in pairs(grenadePool) do
-        if not activeGrenades[inst] or not inst.Parent then
-            data.Tag:Destroy()
-            data.RadiusCircle:Destroy()
-            for _, l in ipairs(data.Lines) do l:Destroy() end
-            grenadePool[inst] = nil
+    for instance, ui in pairs(grenadePool) do
+        if not activeGrenades[instance] or not instance.Parent then
+            destroyXCGrenadeUI(ui)
+            grenadePool[instance] = nil
         end
     end
 end
@@ -4127,18 +5240,46 @@ function createXCGrenadeDanger(object)
     local label = Instance.new("TextLabel", grenadeContainer)
     label.Name = "DangerLabel_" .. kind
     label.AnchorPoint = Vector2.new(0.5, 1)
-    label.Size = UDim2.fromOffset(84, 16)
-    label.BackgroundColor3 = Color3.fromRGB(10, 11, 13)
-    label.BackgroundTransparency = 0.24
+    label.Size = UDim2.fromOffset(90, 20)
+    label.BackgroundColor3 = Color3.fromRGB(8, 10, 12)
+    label.BackgroundTransparency = 0.12
     label.BorderSizePixel = 0
     label.Text = "! " .. kind
     label.TextColor3 = color
-    label.TextSize = 9
+    label.TextSize = 9.5
     label.Font = Enum.Font.GothamBold
     label.Visible = false
     label.ZIndex = 6
-    Instance.new("UICorner", label).CornerRadius = UDim.new(0, 3)
+    Instance.new("UICorner", label).CornerRadius = UDim.new(0, 4)
+    local labelStroke = Instance.new("UIStroke", label)
+    labelStroke.Color = color
+    labelStroke.Thickness = 1
+    labelStroke.Transparency = 0.25
+    local centerGlow = Instance.new("Frame", grenadeContainer)
+    centerGlow.Name = "DangerCenterGlow_" .. kind
+    centerGlow.AnchorPoint = Vector2.new(0.5, 0.5)
+    centerGlow.Size = UDim2.fromOffset(18, 18)
+    centerGlow.BackgroundColor3 = color
+    centerGlow.BackgroundTransparency = 0.76
+    centerGlow.BorderSizePixel = 0
+    centerGlow.Rotation = 45
+    centerGlow.Visible = false
+    centerGlow.ZIndex = 4
+    Instance.new("UICorner", centerGlow).CornerRadius = UDim.new(0, 4)
+    local centerDot = Instance.new("Frame", grenadeContainer)
+    centerDot.Name = "DangerCenter_" .. kind
+    centerDot.AnchorPoint = Vector2.new(0.5, 0.5)
+    centerDot.Size = UDim2.fromOffset(7, 7)
+    centerDot.BackgroundColor3 = color
+    centerDot.BorderSizePixel = 0
+    centerDot.Rotation = 45
+    centerDot.Visible = false
+    centerDot.ZIndex = 7
+    Instance.new("UICorner", centerDot).CornerRadius = UDim.new(0, 2)
     data.Label = label
+    data.LabelStroke = labelStroke
+    data.CenterGlow = centerGlow
+    data.CenterDot = centerDot
     grenadeDangerPool[object] = data
     return data
 end
@@ -4147,11 +5288,15 @@ function destroyXCGrenadeDanger(data)
     if not data then return end
     for _, line in ipairs(data.Segments or {}) do pcall(function() line:Destroy() end) end
     pcall(function() data.Label:Destroy() end)
+    pcall(function() data.CenterGlow:Destroy() end)
+    pcall(function() data.CenterDot:Destroy() end)
 end
 
 function hideXCGrenadeDanger(data)
     for _, line in ipairs(data.Segments) do line.Visible = false end
     data.Label.Visible = false
+    data.CenterGlow.Visible = false
+    data.CenterDot.Visible = false
 end
 
 function computeXCZoneBounds(object, fallbackPart, fallbackRadius)
@@ -4270,21 +5415,28 @@ function renderXCGrenadeDangerZones()
                 local a = allPoints[index]
                 local b = allPoints[index == #data.Segments and 1 or index + 1]
                 if a and b then
-                    local delta = b - a
-                    line.Size = UDim2.fromOffset(delta.Magnitude + 1, 2)
-                    line.Position = UDim2.fromOffset((a.X + b.X) * 0.5, (a.Y + b.Y) * 0.5)
-                    line.Rotation = math.deg(math.atan2(delta.Y, delta.X))
-                    line.BackgroundColor3 = data.Color
-                    line.BackgroundTransparency = 1 - opacity
-                    line.Visible = true
+                    local gap = index % 3 == 0 and 0.13 or 0.045
+                    setXCGrenadeLine(line, a:Lerp(b, gap), b:Lerp(a, gap), data.Color,
+                        index % 3 == 0 and 2.2 or 1.55,
+                        math.clamp(1 - opacity + (index % 3 == 0 and 0.08 or 0), 0, 0.9))
                 else
                     line.Visible = false
                 end
             end
             local centerScreen, centerVisible = camera:WorldToViewportPoint(center + Vector3.new(0, 0.35, 0))
             data.Label.TextColor3 = data.Color
+            data.LabelStroke.Color = data.Color
+            data.Label.Text = string.format("!  %s  ·  %dm", data.Kind,
+                math.floor((center - camPosition).Magnitude + 0.5))
             data.Label.Position = UDim2.fromOffset(centerScreen.X, centerScreen.Y - 4)
             data.Label.Visible = centerVisible and centerScreen.Z > 0
+            data.CenterDot.Position = UDim2.fromOffset(centerScreen.X, centerScreen.Y)
+            data.CenterDot.BackgroundColor3 = data.Color
+            data.CenterDot.Visible = centerVisible and centerScreen.Z > 0
+            data.CenterGlow.Position = data.CenterDot.Position
+            data.CenterGlow.BackgroundColor3 = data.Color
+            data.CenterGlow.BackgroundTransparency = 0.72 + math.sin(now * 5) * 0.1
+            data.CenterGlow.Visible = data.CenterDot.Visible
         end
     end
 end
@@ -4838,7 +5990,23 @@ function triggerbotFire(vp)
             return
         end
 
-        if VirtualInputManager then
+        -- Blox Strike keeps weapons outside Roblox Tool instances. Invoke its
+        -- native shoot method so mobile input mode is not changed to Mouse.
+        local nativeFired = false
+        pcall(function()
+            local controllers = ReplicatedStorage:FindFirstChild("Controllers")
+            local scriptObject = controllers and controllers:FindFirstChild("InventoryController")
+            local inventory = scriptObject and require(scriptObject)
+            local getter = inventory and inventory.peekCurrentEquippedForMovement
+            local weapon = type(getter) == "function" and getter() or nil
+            if weapon and type(weapon.shoot) == "function" then
+                weapon:shoot()
+                nativeFired = true
+            end
+        end)
+        if nativeFired then return end
+
+        if VirtualInputManager and not UserInputService.TouchEnabled then
             VirtualInputManager:SendMouseButtonEvent(vp.X * 0.5, vp.Y * 0.5, 0, true, game, 0)
             task.wait(0.01)
             VirtualInputManager:SendMouseButtonEvent(vp.X * 0.5, vp.Y * 0.5, 0, false, game, 0)
@@ -5039,6 +6207,14 @@ function getOrCreateScreenEsp(plr)
     healthBarFill.BackgroundColor3 = currentTheme.HealthHigh
     healthBarFill.BorderSizePixel = 0
     Instance.new("UICorner", healthBarFill).CornerRadius = UDim.new(0, 2)
+    local healthGradient = Instance.new("UIGradient", healthBarFill)
+    healthGradient.Name = "HealthGradient"
+    healthGradient.Rotation = 90
+    healthGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(152, 204, 0)),
+        ColorSequenceKeypoint.new(0.55, Color3.fromRGB(210, 196, 55)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(220, 65, 55)),
+    })
 
     local weaponCard = Instance.new("Frame", overlayContainer)
     weaponCard.Name = "WeaponIcon_" .. plr.Name
@@ -5052,31 +6228,42 @@ function getOrCreateScreenEsp(plr)
     weaponCard.ZIndex = 8
     Instance.new("UICorner", weaponCard).CornerRadius = UDim.new(0, 3)
     local weaponCardStroke = Instance.new("UIStroke", weaponCard)
-    weaponCardStroke.Color = currentTheme.Border
+    weaponCardStroke.Color = currentTheme.Enemy_Accent
     weaponCardStroke.Thickness = 1
     weaponCardStroke.Transparency = 1
     weaponCardStroke.Enabled = false
 
+    local weaponImageShadow = Instance.new("ImageLabel", weaponCard)
+    weaponImageShadow.Name = "ImageShadow"
+    weaponImageShadow.Size = UDim2.new(1, -4, 1, -4)
+    weaponImageShadow.Position = UDim2.fromOffset(3, 3)
+    weaponImageShadow.BackgroundTransparency = 1
+    weaponImageShadow.ScaleType = Enum.ScaleType.Fit
+    weaponImageShadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
+    weaponImageShadow.ImageTransparency = 0.28
+    weaponImageShadow.Visible = false
+    weaponImageShadow.ZIndex = 8
+
     local weaponImage = Instance.new("ImageLabel", weaponCard)
     weaponImage.Name = "Image"
-    weaponImage.Size = UDim2.fromScale(1, 1)
-    weaponImage.Position = UDim2.fromOffset(0, 0)
+    weaponImage.Size = UDim2.new(1, -4, 1, -4)
+    weaponImage.Position = UDim2.fromOffset(2, 1)
     weaponImage.BackgroundTransparency = 1
     weaponImage.ScaleType = Enum.ScaleType.Fit
     weaponImage.ImageColor3 = currentTheme.Enemy_Accent
     weaponImage.Visible = false
-    weaponImage.ZIndex = 9
+    weaponImage.ZIndex = 10
 
     local weaponViewport = Instance.new("ViewportFrame", weaponCard)
     weaponViewport.Name = "Viewport"
-    weaponViewport.Size = UDim2.fromScale(1, 1)
-    weaponViewport.Position = UDim2.fromOffset(0, 0)
+    weaponViewport.Size = UDim2.new(1, -4, 1, -4)
+    weaponViewport.Position = UDim2.fromOffset(2, 1)
     weaponViewport.BackgroundTransparency = 1
-    weaponViewport.Ambient = Color3.fromRGB(255, 255, 255)
-    weaponViewport.LightColor = Color3.fromRGB(255, 255, 255)
-    weaponViewport.LightDirection = Vector3.new(-1, -0.6, -1)
+    weaponViewport.Ambient = Color3.fromRGB(72, 96, 0)
+    weaponViewport.LightColor = currentTheme.Enemy_Accent
+    weaponViewport.LightDirection = Vector3.new(-1, -0.45, -1)
     weaponViewport.Visible = false
-    weaponViewport.ZIndex = 9
+    weaponViewport.ZIndex = 10
     local weaponWorld = Instance.new("WorldModel", weaponViewport)
     local weaponCamera = Instance.new("Camera", weaponViewport)
     weaponViewport.CurrentCamera = weaponCamera
@@ -5122,6 +6309,7 @@ function getOrCreateScreenEsp(plr)
     local cardStroke = Instance.new("UIStroke", tagCard)
     cardStroke.Color = currentTheme.Border
     cardStroke.Thickness = 0.8
+    cardStroke.Enabled = false
 
     local pad = Instance.new("UIPadding", tagCard)
     pad.PaddingRight = UDim.new(0, 6)
@@ -5153,6 +6341,7 @@ function getOrCreateScreenEsp(plr)
         HealthBarFill = healthBarFill,
         WeaponCard = weaponCard,
         WeaponCardStroke = weaponCardStroke,
+        WeaponImageShadow = weaponImageShadow,
         WeaponImage = weaponImage,
         WeaponViewport = weaponViewport,
         WeaponWorld = weaponWorld,
@@ -5197,6 +6386,8 @@ end
 function clearXCWeaponPreview(esp)
     esp.WeaponImage.Image = ""
     esp.WeaponImage.Visible = false
+    esp.WeaponImageShadow.Image = ""
+    esp.WeaponImageShadow.Visible = false
     esp.WeaponViewport.Visible = false
     esp.WeaponWorld:ClearAllChildren()
     esp.WeaponReady = false
@@ -5235,7 +6426,9 @@ function buildXCWeaponViewport(esp, weaponName, tool, character)
 
     if tool and type(tool.TextureId) == "string" and tool.TextureId ~= "" then
         esp.WeaponImage.Image = tool.TextureId
+        esp.WeaponImageShadow.Image = tool.TextureId
         esp.WeaponImage.Visible = true
+        esp.WeaponImageShadow.Visible = true
         esp.WeaponReady = true
         return true
     end
@@ -5243,7 +6436,9 @@ function buildXCWeaponViewport(esp, weaponName, tool, character)
         local embedded = tool:FindFirstChildWhichIsA("ImageLabel", true)
         if embedded and embedded.Image ~= "" then
             esp.WeaponImage.Image = embedded.Image
+            esp.WeaponImageShadow.Image = embedded.Image
             esp.WeaponImage.Visible = true
+            esp.WeaponImageShadow.Visible = true
             esp.WeaponReady = true
             return true
         end
@@ -5281,8 +6476,15 @@ function buildXCWeaponViewport(esp, weaponName, tool, character)
                 object.CanCollide = false
                 object.CanTouch = false
                 object.CanQuery = false
+                object.CastShadow = false
+                object.Color = currentTheme.Enemy_Accent
+                object.Material = Enum.Material.Neon
+                object.Reflectance = 0
+                if object:IsA("MeshPart") then object.TextureID = "" end
                 if object.Transparency < 0.98 then table.insert(visibleParts, object) end
             end
+        elseif object:IsA("SurfaceAppearance") or object:IsA("Decal") or object:IsA("Texture") then
+            object:Destroy()
         end
     end
 
@@ -5313,9 +6515,9 @@ function buildXCWeaponViewport(esp, weaponName, tool, character)
     local viewDirection = longOnX and Vector3.new(0, 0.08, 1) or Vector3.new(1, 0.08, 0)
     local horizontalSize = longOnX and boundsSize.X or boundsSize.Z
     local depthSize = longOnX and boundsSize.Z or boundsSize.X
-    local fieldOfView = 28
+    local fieldOfView = 24
     local tangent = math.tan(math.rad(fieldOfView * 0.5))
-    local viewportAspect = 36 / 15
+    local viewportAspect = 2.6
     local distanceForWidth = horizontalSize / math.max(0.01, 2 * tangent * viewportAspect)
     local distanceForHeight = boundsSize.Y / math.max(0.01, 2 * tangent)
     local cameraDistance = math.max(distanceForWidth, distanceForHeight, 0.35) * 1.18 + depthSize * 0.5
@@ -5342,12 +6544,16 @@ function updateXCWeaponPreview(esp, plr, char, sideColor, boxPosX, boxPosY, boxW
         buildXCWeaponViewport(esp, weaponName, tool, char)
     end
 
-    esp.WeaponCardStroke.Color = sideColor
-    esp.WeaponImage.ImageColor3 = sideColor
-    local iconWidth = math.floor(math.clamp(boxWidth * 1.35, 22, 58) + 0.5)
-    local iconHeight = math.floor(math.clamp(iconWidth * 0.42, 10, 24) + 0.5)
+    local weaponLime = currentTheme.Enemy_Accent
+    esp.WeaponCardStroke.Color = weaponLime
+    esp.WeaponImage.ImageColor3 = weaponLime
+    esp.WeaponImageShadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
+    esp.WeaponViewport.Ambient = weaponLime
+    esp.WeaponViewport.LightColor = Color3.fromRGB(225, 255, 160)
+    local iconWidth = math.floor(math.clamp(boxWidth * 1.45, 42, 68) + 0.5)
+    local iconHeight = math.floor(math.clamp(iconWidth * 0.38, 18, 27) + 0.5)
     esp.WeaponCard.Size = UDim2.fromOffset(iconWidth, iconHeight)
-    esp.WeaponCard.Position = UDim2.fromOffset(boxPosX + boxWidth * 0.5, boxPosY + boxHeight + 2)
+    esp.WeaponCard.Position = UDim2.fromOffset(boxPosX + boxWidth * 0.5, boxPosY + boxHeight + 3)
     esp.WeaponCard.Visible = weaponName ~= nil and esp.WeaponReady
 end
 
@@ -5396,9 +6602,9 @@ function hideTacticalOverlay()
     end
 end
 
--- Produces one perspective-correct rectangle shared by Box ESP, Corner Box
--- and Health Bar. A stable world-space body height is projected to the screen,
--- so near targets grow and distant targets shrink without width distortion.
+-- Produces one stable rectangle shared by Box ESP, Corner Box and Health Bar.
+-- Screen position always uses the current camera frame (no positional lerp),
+-- while size follows true camera-to-target distance and is independent of FOV.
 function getXCCharacterScreenRect(esp, char, rootPart)
     if esp.Character ~= char then
         esp.Character = char
@@ -5406,7 +6612,13 @@ function getXCCharacterScreenRect(esp, char, rootPart)
     end
 
     local rootPosition = rootPart.Position
-    local rootScreen = camera:WorldToViewportPoint(rootPosition)
+    local currentFov = math.clamp(tonumber(camera.FieldOfView) or 70, 10, 120)
+    if esp.LastProjectionFov and math.abs(esp.LastProjectionFov - currentFov) > 0.05 then
+        esp.SmoothRect = nil
+    end
+    esp.LastProjectionFov = currentFov
+
+    local rootScreen = camera:WorldToViewportPoint(rootPosition + Vector3.new(0, 0.15, 0))
     if rootScreen.Z <= 0.2 then
         esp.SmoothRect = nil
         return nil
@@ -5415,21 +6627,22 @@ function getXCCharacterScreenRect(esp, char, rootPart)
     local preferredAspect = math.clamp(tonumber(XCConfig.espBoxAspect) or 0.52, 0.38, 0.8)
     local perspectiveScale = math.clamp(tonumber(XCConfig.espPerspectiveScale) or 1, 0.65, 1.5)
 
-    -- Use a constant six-stud body span instead of animated limbs/accessories.
-    -- This makes size respond only to distance/FOV and prevents flattening.
-    local topScreen = camera:WorldToViewportPoint(rootPosition + Vector3.new(0, 3.15, 0))
-    local bottomScreen = camera:WorldToViewportPoint(rootPosition - Vector3.new(0, 2.85, 0))
-    if topScreen.Z <= 0.2 or bottomScreen.Z <= 0.2 then
+    -- Project a fixed six-stud body against a virtual 70-degree camera. The
+    -- position follows the live camera, while box size uses radial distance
+    -- only—not camera yaw, Custom FOV, or render order.
+    local distance = (rootPosition - camera.CFrame.Position).Magnitude
+    if distance <= 0.2 then
         esp.SmoothRect = nil
         return nil
     end
 
-    local projectedHeight = math.abs(bottomScreen.Y - topScreen.Y) * perspectiveScale
+    local referenceFocal = viewport.Y / (2 * math.tan(math.rad(35)))
+    local projectedHeight = (6 * referenceFocal / distance) * perspectiveScale
     local maxHeight = math.max(80, viewport.Y * 0.72)
     local height = math.clamp(projectedHeight, 16, maxHeight)
     local width = height * preferredAspect
     local centerScreenX = rootScreen.X
-    local centerScreenY = (topScreen.Y + bottomScreen.Y) * 0.5
+    local centerScreenY = rootScreen.Y
     local target = {
         X = centerScreenX - width * 0.5,
         Y = centerScreenY - height * 0.5,
@@ -5440,19 +6653,14 @@ function getXCCharacterScreenRect(esp, char, rootPart)
     local alpha = 1 - smooth
     local old = esp.SmoothRect
     if old then
-        local oldCenterX = old.X + old.W * 0.5
-        local oldCenterY = old.Y + old.H * 0.5
-        local jump = math.abs(oldCenterX - centerScreenX) + math.abs(oldCenterY - centerScreenY)
-        if jump < math.max(140, viewport.Y * 0.28) then
-            centerScreenX = oldCenterX + (centerScreenX - oldCenterX) * alpha
-            centerScreenY = oldCenterY + (centerScreenY - oldCenterY) * alpha
-            height = old.H + (height - old.H) * alpha
-            width = height * preferredAspect
-            target.X = centerScreenX - width * 0.5
-            target.Y = centerScreenY - height * 0.5
-            target.W = width
-            target.H = height
-        end
+        -- Only dimensions are smoothed. Smoothing X/Y makes ESP visibly trail
+        -- behind targets whenever the player rotates the camera at high FOV.
+        height = old.H + (height - old.H) * alpha
+        width = height * preferredAspect
+        target.X = centerScreenX - width * 0.5
+        target.Y = centerScreenY - height * 0.5
+        target.W = width
+        target.H = height
     end
 
     target.X = math.floor(target.X + 0.5)
@@ -5597,15 +6805,28 @@ function renderTacticalOverlay()
                         esp.HealthBarFill.Position = UDim2.new(0, 1, 1, -1)
                         esp.HealthBarFill.Size = UDim2.fromOffset(barWidth - 2, fillHeight)
                         
-                        esp.HealthBarFill.BackgroundColor3 = sideColor:Lerp(Color3.fromRGB(38, 40, 43), (1 - hpPercent) * 0.35)
+                        esp.HealthBarFill.BackgroundColor3 = Color3.new(1, 1, 1)
+                        local healthGradient = esp.HealthBarFill:FindFirstChild("HealthGradient")
+                        local healthHigh = isVisible and currentTheme.HealthHigh or currentTheme.Enemy_Hidden
+                        local healthMid = isVisible and currentTheme.HealthMid or currentTheme.Enemy_Hidden
+                        local healthLow = isVisible and currentTheme.HealthLow or currentTheme.Enemy_Hidden
+                        if healthGradient and (esp.HealthGradientHigh ~= healthHigh
+                            or esp.HealthGradientMid ~= healthMid or esp.HealthGradientLow ~= healthLow) then
+                            healthGradient.Color = ColorSequence.new({
+                                ColorSequenceKeypoint.new(0, healthHigh),
+                                ColorSequenceKeypoint.new(0.55, healthMid),
+                                ColorSequenceKeypoint.new(1, healthLow),
+                            })
+                            esp.HealthGradientHigh, esp.HealthGradientMid, esp.HealthGradientLow = healthHigh, healthMid, healthLow
+                        end
                     else
                         esp.HealthBarBg.Visible = false
                     end
 
                     if XCConfig.nametagsEnabled then
                         esp.TagCard.BackgroundTransparency = XCConfig.tagTransparency
-                        esp.TagCardStroke.Color = sideColor
-                        esp.TagLabel.TextColor3 = sideColor
+                        esp.TagCardStroke.Enabled = false
+                        esp.TagLabel.TextColor3 = currentTheme.Enemy_Accent
                         esp.TagLabel.TextSize = XCConfig.espTextSize
 
                         local baseName = plr.DisplayName or plr.Name
@@ -5708,8 +6929,8 @@ function attachEspToPlayer(plr)
     hl.FillTransparency = XCConfig.chamsFillTransparency
     hl.OutlineTransparency = XCConfig.chamsOutlineTransparency
     hl.Enabled = false
-    hl.FillColor = chamsColorVisible
-    hl.OutlineColor = chamsOutlineColor
+    hl.FillColor = currentTheme.Enemy_Accent
+    hl.OutlineColor = currentTheme.TextPrimary
     hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
     hl.Parent = holder
 
@@ -5815,6 +7036,8 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
     else
         setXCSilentAimRequested(false)
         silentAimResolved = nil
+        xcSilentShotContextV31 = nil
+        if sharedXCEnv then sharedXCEnv.XCSilentShotContextV31 = nil end
     end
 
     if (XCConfig.rcsEnabled or XCConfig.noRecoilEnabled) and noRecoil.isShooting then
@@ -5833,11 +7056,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
                 lastTriggerTick = tick()
                 pcall(function()
                     local vp = camera.ViewportSize
-                    if VirtualInputManager then
-                        VirtualInputManager:SendMouseButtonEvent(vp.X * 0.5, vp.Y * 0.5, 0, true, game, 0)
-                        task.wait(0.01)
-                        VirtualInputManager:SendMouseButtonEvent(vp.X * 0.5, vp.Y * 0.5, 0, false, game, 0)
-                    end
+                    triggerbotFire(vp)
                 end)
             end
         end
@@ -5903,12 +7122,12 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
                     data.Highlight.FillTransparency = XCConfig.chamsFillTransparency
                     data.Highlight.OutlineTransparency = XCConfig.chamsOutlineTransparency
                     if ally then
-                        data.Highlight.FillColor = chamsColorAlly
-                        data.Highlight.OutlineColor = chamsOutlineColor
+                        data.Highlight.FillColor = currentTheme.Enemy_Accent:Lerp(currentTheme.TextPrimary, 0.45)
+                        data.Highlight.OutlineColor = currentTheme.TextPrimary
                     else
-                        local chamsAccent = isVisible and chamsColorVisible or chamsColorHidden
-                        data.Highlight.FillColor = XCConfig.chamsOcclusion and chamsAccent or chamsColorVisible
-                        data.Highlight.OutlineColor = XCConfig.chamsOcclusion and chamsAccent or chamsColorVisible
+                        local chamsAccent = isVisible and currentTheme.Enemy_Accent or currentTheme.Enemy_Hidden
+                        data.Highlight.FillColor = XCConfig.chamsOcclusion and chamsAccent or currentTheme.Enemy_Accent
+                        data.Highlight.OutlineColor = XCConfig.chamsOcclusion and chamsAccent or currentTheme.Enemy_Accent
                     end
                 end
             else
@@ -6034,6 +7253,8 @@ function setupXCCharacterInputHook()
 
         xcCharacterInputHook.Wrapper = function(character, context, ...)
             local input = original(character, context, ...)
+            xcCharacterInputHook.Calls = (xcCharacterInputHook.Calls or 0) + 1
+            xcCharacterInputHook.LastCall = os.clock()
             if type(input) ~= "table" or not xcSessionActive() then return input end
             local success, modified = pcall(function()
                 local model = player.Character
@@ -6172,7 +7393,11 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
 
     -- The native Blox Strike input hook is authoritative. The HRP rotation
     -- below remains only as a compatibility fallback for other experiences.
-    if xcCharacterInputHook.Ready then return end
+    -- Some executors allow replacing SampleInput but the game continues to
+    -- call a cached closure. Treat the hook as authoritative only when it was
+    -- actually invoked recently; otherwise use the compatible HRP fallback.
+    if xcCharacterInputHook.Ready
+        and os.clock() - (xcCharacterInputHook.LastCall or 0) < 0.5 then return end
 
     if not hrp or not hum or hum.Health <= 0 then return end
 
@@ -6568,7 +7793,11 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
         end
     end
 
-    if activeMode == "Normal" and XCConfig.bunnyHopEnabled and not xcCharacterInputHook.Ready then
+    -- Keep the reference Humanoid/velocity path active even when the native
+    -- SampleInput hook exists. The hook requests a server-valid jump; this
+    -- path supplies the configured speed/air-strafe and is also a fallback on
+    -- executors where SampleInput assignment succeeds but is not consumed.
+    if activeMode == "Normal" and XCConfig.bunnyHopEnabled then
         local paused = not XCFeatureState.bhopWindowFocused
             or UserInputService:GetFocusedTextBox() ~= nil
             or GuiService.MenuIsOpen
@@ -6662,18 +7891,22 @@ end
 function buildXCUI()
     setAntiAfkEnabled(XCConfig.antiAfkEnabled)
 
+    local function configColor(prefix, fallback) return xcConfigColor(prefix, fallback) end
+    local initialMain = configColor("menuBackground", Color3.fromRGB(17, 17, 17))
+    local initialPanel = configColor("menuPanel", Color3.fromRGB(12, 12, 12))
+    local initialText = configColor("menuText", Color3.fromRGB(235, 235, 235))
     local C = {
-        Main = Color3.fromRGB(17, 17, 17),
-        Sidebar = Color3.fromRGB(13, 13, 13),
-        Panel = Color3.fromRGB(12, 12, 12),
-        Control = Color3.fromRGB(25, 25, 25),
-        Control2 = Color3.fromRGB(35, 35, 35),
-        Border = Color3.fromRGB(44, 44, 44),
+        Main = initialMain,
+        Sidebar = initialMain:Lerp(Color3.new(0, 0, 0), 0.24),
+        Panel = initialPanel,
+        Control = initialPanel:Lerp(initialText, 0.06),
+        Control2 = initialPanel:Lerp(initialText, 0.11),
+        Border = initialPanel:Lerp(initialText, 0.17),
         Black = Color3.fromRGB(0, 0, 0),
-        Lime = Color3.fromRGB(152, 204, 0),
-        White = Color3.fromRGB(235, 235, 235),
-        Text = Color3.fromRGB(200, 200, 200),
-        Muted = Color3.fromRGB(110, 110, 110),
+        Lime = configColor("menuAccent", Color3.fromRGB(152, 204, 0)),
+        White = initialText,
+        Text = initialText:Lerp(initialMain, 0.14),
+        Muted = initialText:Lerp(initialMain, 0.53),
     }
 
     local toggleGui = Instance.new("ScreenGui")
@@ -6691,11 +7924,17 @@ function buildXCUI()
     screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     screenGui.Parent = targetGui
 
+    local function getViewportSize()
+        local activeCamera = Workspace.CurrentCamera or camera
+        return (activeCamera and activeCamera.ViewportSize) or Vector2.new(1280, 720)
+    end
+
     local main = Instance.new("Frame")
     main.Name = "SkeetMain"
     main.Size = UDim2.fromOffset(680, 450)
     main.Position = UDim2.new(0.5, -340, 0.5, -225)
     main.BackgroundColor3 = C.Main
+    main.BackgroundTransparency = XCConfig.menuTransparency
     main.BorderColor3 = C.Border
     main.BorderSizePixel = 1
     main.Active = true
@@ -6711,16 +7950,19 @@ function buildXCUI()
     scale.Parent = main
 
     local function updateScale()
-        local viewport = screenGui.AbsoluteSize
+        local viewport = getViewportSize()
         if viewport.X <= 0 or viewport.Y <= 0 then return end
-        local preferred = UserInputService.TouchEnabled and 0.82 or 1
+        local preferred = (UserInputService.TouchEnabled and 0.82 or 1)
+            * math.clamp(tonumber(XCConfig.uiScale) or 1, 0.65, 1.25)
         if XCConfig.settingsCompactMode then preferred *= 0.88 end
         scale.Scale = math.min(preferred, (viewport.X - 20) / 680, (viewport.Y - 20) / 450)
         main.Position = UDim2.new(0.5, -340 * scale.Scale, 0.5, -225 * scale.Scale)
     end
     updateScale()
     task.defer(updateScale)
-    table.insert(connections, screenGui:GetPropertyChangedSignal("AbsoluteSize"):Connect(updateScale))
+    if Workspace.CurrentCamera then
+        table.insert(connections, Workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(updateScale))
+    end
 
     local topLine = Instance.new("Frame")
     topLine.Size = UDim2.new(1, -4, 0, 2)
@@ -6752,9 +7994,65 @@ function buildXCUI()
     sidebar.Size = UDim2.new(0, 48, 1, -4)
     sidebar.Position = UDim2.fromOffset(2, 2)
     sidebar.BackgroundColor3 = C.Sidebar
+    sidebar.BackgroundTransparency = math.clamp(XCConfig.menuTransparency * 0.7, 0, 0.4)
     sidebar.BorderColor3 = C.Border
     sidebar.BorderSizePixel = 1
     sidebar.Parent = main
+
+    -- Filled after the floating XC button is created. Keeping this callback
+    -- here lets live theme changes recolor both letters without rebuilding UI.
+    local openButtonThemeRefresh = function() end
+    local refreshESPPreview = function() end
+
+    local function applyMenuTheme()
+        local old = {Main=C.Main, Sidebar=C.Sidebar, Panel=C.Panel, Control=C.Control,
+            Control2=C.Control2, Border=C.Border, Lime=C.Lime, White=C.White, Text=C.Text, Muted=C.Muted}
+        local newMain = configColor("menuBackground", old.Main)
+        local newPanel = configColor("menuPanel", old.Panel)
+        local newText = configColor("menuText", old.White)
+        local nextColors = {
+            Main=newMain, Sidebar=newMain:Lerp(Color3.new(0,0,0),0.24), Panel=newPanel,
+            Control=newPanel:Lerp(newText,0.06), Control2=newPanel:Lerp(newText,0.11),
+            Border=newPanel:Lerp(newText,0.17), Lime=configColor("menuAccent",old.Lime),
+            White=newText, Text=newText:Lerp(newMain,0.14), Muted=newText:Lerp(newMain,0.53),
+        }
+        local function replaceColor(value)
+            for role, previous in pairs(old) do if value == previous then return nextColors[role] end end
+            return value
+        end
+        for _, root in ipairs({screenGui, toggleGui}) do
+            local objects = {root}
+            for _, object in ipairs(root:GetDescendants()) do objects[#objects+1] = object end
+            for _, object in ipairs(objects) do pcall(function()
+                if object:IsA("GuiObject") then
+                    object.BackgroundColor3 = replaceColor(object.BackgroundColor3)
+                    object.BorderColor3 = replaceColor(object.BorderColor3)
+                end
+                if object:IsA("TextLabel") or object:IsA("TextButton") or object:IsA("TextBox") then
+                    object.TextColor3 = replaceColor(object.TextColor3)
+                end
+                if object:IsA("TextBox") then object.PlaceholderColor3 = replaceColor(object.PlaceholderColor3) end
+                if object:IsA("ImageLabel") or object:IsA("ImageButton") then object.ImageColor3 = replaceColor(object.ImageColor3) end
+                if object:IsA("UIStroke") then object.Color = replaceColor(object.Color) end
+                if object:IsA("ScrollingFrame") then object.ScrollBarImageColor3 = replaceColor(object.ScrollBarImageColor3) end
+            end) end
+        end
+        for role, value in pairs(nextColors) do C[role] = value end
+        main.BackgroundColor3 = C.Main
+        main.BackgroundTransparency = math.clamp(tonumber(XCConfig.menuTransparency) or 0, 0, 0.45)
+        sidebar.BackgroundColor3 = C.Sidebar
+        sidebar.BackgroundTransparency = math.clamp(main.BackgroundTransparency * 0.7, 0, 0.4)
+        topLine.BackgroundColor3 = C.Lime
+        gradient.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0,C.Lime:Lerp(Color3.fromRGB(0,170,255),0.45)),
+            ColorSequenceKeypoint.new(0.48,C.Lime:Lerp(C.White,0.2)),
+            ColorSequenceKeypoint.new(1,C.Lime),
+        })
+        syncXCUserTheme()
+        refreshESPPreview()
+        openButtonThemeRefresh()
+        updateScale()
+    end
 
     local sideLayout = Instance.new("UIListLayout")
     sideLayout.Padding = UDim.new(0, 1)
@@ -6832,7 +8130,7 @@ function buildXCUI()
         rageBotEnabled = "Aggressive target selection using the Rage FOV and priority settings.",
         noRecoilEnabled = "Suppresses supported weapon and camera recoil callbacks.",
         noSpreadEnabled = "Requests zero spread from supported weapon calculations.",
-        wallbangEnabled = "Allows target selection through surfaces when supported by the game.",
+        wallbangEnabled = "Allows Silent Aim to select targets through surfaces; without it hidden targets are always rejected.",
         thirdPersonEnabled = "Moves the native camera behind the character.",
         bunnyHopEnabled = "Smooth XC Bhop with grounded timing and optional air control.",
         bhopMode = "Hold requires jump input; Automatic keeps hopping while movement is active.",
@@ -6842,7 +8140,6 @@ function buildXCUI()
         bhopAcceleration = "How quickly horizontal velocity approaches the configured Bhop speed.",
         flightEnabled = "Moves the character along the camera direction.",
         chamsEnabled = "Adds a local highlight to valid player models.",
-        grenadeEspEnabled = "Shows nearby grenade labels, paths and effect radiuses.",
         skeletonEspEnabled = "Draws a lightweight R6/R15 skeleton at 30 updates per second.",
         skeletonDistanceFade = "Gradually fades skeleton lines at long distances.",
         noSmokeEnabled = "Disables detected BloxStrike smoke emitters and restores them when turned off.",
@@ -6870,6 +8167,13 @@ function buildXCUI()
         priorityPlayerName = "Roblox player selected as the preferred target. The list uses live server usernames.",
         customScopeEnabled = "Draws the XC scope overlay when scoped.",
         customHandsEnabled = "Offsets the detected first-person weapon or hands model.",
+        grenadeEspEnabled = "Shows styled grenade labels, bounce trajectory and landing marker.",
+        showGrenadePath = "Predicts the grenade arc with surface bounces and a landing marker.",
+        grenadeDangerZonesEnabled = "Draws perspective-correct smoke, fire and grenade danger rings.",
+        showMolotovRadius = "Shows the projected fire effect radius on the ground.",
+        showSmokeRadius = "Shows the projected smoke effect radius on the ground.",
+        grenadeDangerOpacity = "Controls danger-ring visibility without changing trajectory brightness.",
+        weaponEspEnabled = "Shows a compact lime weapon silhouette below the player box.",
         spectatorListEnabled = "Shows players currently observing the local player when detectable.",
         settingsAutoSave = "Saves the current profile shortly after a UI setting changes.",
         menuKey = "Keyboard shortcut used to show or hide XC.",
@@ -6878,7 +8182,7 @@ function buildXCUI()
         tab_Visuals = "Visuals: ESP, chams and on-screen combat feedback.",
         tab_World = "World: lighting, weather, scope and camera tools.",
         tab_Misc = "Utilities: session helpers, animations and viewmodel controls.",
-        tab_Skins = "Cosmetics: knives, gloves, weapon materials and bullet effects.",
+        tab_Skins = "Inventory changer: weapon finishes, wear, knives and gloves.",
         tab_Players = "Players: target rules, priority player and ESP details.",
         tab_Configs = "Settings: interface, quick actions and configuration profiles.",
     }
@@ -6925,7 +8229,7 @@ function buildXCUI()
         helpPopup.Visible = true
         task.defer(function()
             if not helpPopup.Visible or not target.Parent then return end
-            local viewport = screenGui.AbsoluteSize
+            local viewport = getViewportSize()
             local width = helpPopup.AbsoluteSize.X
             local height = math.max(helpPopup.AbsoluteSize.Y, 34)
             local x = math.clamp(target.AbsolutePosition.X, 6, math.max(6, viewport.X - width - 6))
@@ -7128,7 +8432,7 @@ function buildXCUI()
                 return "FALL", Color3.fromRGB(220, 170, 72)
             end
             if not xcCharacterInputHook.Ready then return "WAIT", Color3.fromRGB(220, 170, 72) end
-        elseif key == "silentAimEnabled" and not bloxStrikeShootHooked and not silentAimHooked then
+        elseif key == "silentAimEnabled" and not xcNativeSilentHooked then
             return "WAIT", Color3.fromRGB(220, 170, 72)
         end
         return "ON", C.Lime
@@ -7351,7 +8655,7 @@ function buildXCUI()
         local visibleRows = math.min(#values, UserInputService.TouchEnabled and 5 or 7)
         local popupHeight = visibleRows * rowHeight + 2
         local buttonPos, buttonSize = button.AbsolutePosition, button.AbsoluteSize
-        local viewport = screenGui.AbsoluteSize
+        local viewport = getViewportSize()
         local belowY = buttonPos.Y + buttonSize.Y + 2
         local aboveY = buttonPos.Y - popupHeight - 2
         local openAbove = belowY + popupHeight > viewport.Y - 6 and aboveY >= 6
@@ -7502,15 +8806,20 @@ function buildXCUI()
         arrowRight.Rotation = -42
         arrowRight.Parent = arrow
 
+        local function resolvedValues()
+            local list = type(values) == "function" and values() or values
+            return type(list) == "table" and #list > 0 and list or {"Default"}
+        end
         local function refresh(value)
             valueText.Text = tostring(value)
             valueText.TextColor3 = C.Text
         end
-        refresh(XCConfig[key] or values[1])
+        local initialValues = resolvedValues()
+        refresh(XCConfig[key] or initialValues[1])
         refreshers[key] = refreshers[key] or {}
         table.insert(refreshers[key], refresh)
         button.Activated:Connect(function()
-            openDropdown(button, key, values, onChanged, refresh)
+            openDropdown(button, key, resolvedValues(), onChanged, refresh)
         end)
         attachHelp(holder, key)
         registerSearch(holder, label .. " " .. key)
@@ -7554,6 +8863,200 @@ function buildXCUI()
         padding.Parent = note
         registerSearch(note, message)
         return note
+    end
+
+    local activeColorPopup
+    local activeColorConnections = {}
+    local function closeColorPopup()
+        for _, connection in ipairs(activeColorConnections) do pcall(function() connection:Disconnect() end) end
+        table.clear(activeColorConnections)
+        if activeColorPopup then activeColorPopup:Destroy(); activeColorPopup = nil end
+    end
+
+    local function addColorPicker(parent, label, prefix, onChanged)
+        parent = activeSectionByParent[parent] or parent
+        local holder = Instance.new("Frame")
+        holder.Name = prefix .. "ColorPicker"
+        holder.Size = UDim2.new(1, 0, 0, UserInputService.TouchEnabled and 32 or 26)
+        holder.BackgroundTransparency = 1
+        holder.Parent = parent
+        local title = Instance.new("TextLabel")
+        title.Size = UDim2.new(1, -94, 1, 0)
+        title.BackgroundTransparency = 1
+        title.Text = label
+        title.TextColor3 = C.Text
+        title.Font = Enum.Font.Code
+        title.TextSize = 10
+        title.TextXAlignment = Enum.TextXAlignment.Left
+        title.Parent = holder
+        local hexLabel = Instance.new("TextLabel")
+        hexLabel.Size = UDim2.fromOffset(58, 18)
+        hexLabel.Position = UDim2.new(1, -88, 0.5, -9)
+        hexLabel.BackgroundTransparency = 1
+        hexLabel.TextColor3 = C.Muted
+        hexLabel.Font = Enum.Font.Code
+        hexLabel.TextSize = 9
+        hexLabel.TextXAlignment = Enum.TextXAlignment.Right
+        hexLabel.Parent = holder
+        local swatch = Instance.new("TextButton")
+        swatch.Size = UDim2.fromOffset(UserInputService.TouchEnabled and 27 or 23, UserInputService.TouchEnabled and 27 or 19)
+        swatch.Position = UDim2.new(1, -(UserInputService.TouchEnabled and 27 or 23), 0.5, -(UserInputService.TouchEnabled and 13 or 9))
+        swatch.BorderColor3 = C.Black
+        swatch.BorderSizePixel = 1
+        swatch.Text = ""
+        swatch.AutoButtonColor = false
+        swatch.Parent = holder
+        Instance.new("UICorner", swatch).CornerRadius = UDim.new(0, 3)
+
+        local function readColor()
+            return configColor(prefix, Color3.fromRGB(255, 255, 255))
+        end
+        local function refresh()
+            local color = readColor()
+            swatch.BackgroundColor3 = color
+            hexLabel.Text = string.format("#%02X%02X%02X",
+                math.floor(color.R * 255 + 0.5), math.floor(color.G * 255 + 0.5), math.floor(color.B * 255 + 0.5))
+        end
+        refresh()
+        for _, suffix in ipairs({"R", "G", "B"}) do
+            local key = prefix .. suffix
+            refreshers[key] = refreshers[key] or {}
+            table.insert(refreshers[key], refresh)
+        end
+
+        swatch.Activated:Connect(function()
+            closeColorPopup()
+            local popup = Instance.new("Frame")
+            activeColorPopup = popup
+            popup.Name = "Palette_" .. prefix
+            popup.Size = UDim2.fromOffset(238, 180)
+            local absolute = swatch.AbsolutePosition
+            local viewport = getViewportSize()
+            popup.Position = UDim2.fromOffset(
+                math.clamp(absolute.X - 205, 6, math.max(6, viewport.X - 244)),
+                math.clamp(absolute.Y + swatch.AbsoluteSize.Y + 4, 6, math.max(6, viewport.Y - 186)))
+            popup.BackgroundColor3 = C.Panel
+            popup.BorderColor3 = C.Border
+            popup.BorderSizePixel = 1
+            popup.ZIndex = 300
+            popup.Parent = screenGui
+            local popupStroke = Instance.new("UIStroke", popup)
+            popupStroke.Color = C.Black
+            popupStroke.Thickness = 1
+            local popupTitle = Instance.new("TextLabel", popup)
+            popupTitle.Position = UDim2.fromOffset(8, 3)
+            popupTitle.Size = UDim2.new(1, -34, 0, 20)
+            popupTitle.BackgroundTransparency = 1
+            popupTitle.Text = label:upper()
+            popupTitle.TextColor3 = C.Text
+            popupTitle.Font = Enum.Font.Code
+            popupTitle.TextSize = 9
+            popupTitle.TextXAlignment = Enum.TextXAlignment.Left
+            popupTitle.ZIndex = 301
+            local close = Instance.new("TextButton", popup)
+            close.Size = UDim2.fromOffset(22, 20)
+            close.Position = UDim2.new(1, -25, 0, 2)
+            close.BackgroundTransparency = 1
+            close.Text = "×"
+            close.TextColor3 = C.Muted
+            close.Font = Enum.Font.Code
+            close.TextSize = 16
+            close.ZIndex = 302
+            close.Activated:Connect(closeColorPopup)
+
+            local selected = readColor()
+            local hue, saturation, value = selected:ToHSV()
+            local sv = Instance.new("Frame", popup)
+            sv.Position = UDim2.fromOffset(8, 25)
+            sv.Size = UDim2.fromOffset(170, 108)
+            sv.BackgroundColor3 = Color3.fromHSV(hue, 1, 1)
+            sv.BorderSizePixel = 0
+            sv.Active = true
+            sv.ZIndex = 301
+            local white = Instance.new("Frame", sv)
+            white.Size = UDim2.fromScale(1, 1); white.BorderSizePixel = 0; white.BackgroundColor3 = Color3.new(1,1,1); white.ZIndex = 302
+            local whiteGradient = Instance.new("UIGradient", white)
+            whiteGradient.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0,0),NumberSequenceKeypoint.new(1,1)})
+            local black = Instance.new("Frame", sv)
+            black.Size = UDim2.fromScale(1, 1); black.BorderSizePixel = 0; black.BackgroundColor3 = Color3.new(0,0,0); black.ZIndex = 303
+            local blackGradient = Instance.new("UIGradient", black)
+            blackGradient.Rotation = 90
+            blackGradient.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0,1),NumberSequenceKeypoint.new(1,0)})
+            local cursor = Instance.new("Frame", sv)
+            cursor.AnchorPoint = Vector2.new(0.5,0.5); cursor.Size = UDim2.fromOffset(8,8); cursor.BackgroundTransparency = 1
+            cursor.BorderColor3 = Color3.new(1,1,1); cursor.BorderSizePixel = 1; cursor.ZIndex = 305
+
+            local hueBar = Instance.new("Frame", popup)
+            hueBar.Position = UDim2.fromOffset(8, 141); hueBar.Size = UDim2.fromOffset(170, 14)
+            hueBar.BorderSizePixel = 0; hueBar.Active = true; hueBar.ZIndex = 301
+            local hueGradient = Instance.new("UIGradient", hueBar)
+            hueGradient.Color = ColorSequence.new({
+                ColorSequenceKeypoint.new(0,Color3.fromRGB(255,0,0)), ColorSequenceKeypoint.new(0.17,Color3.fromRGB(255,255,0)),
+                ColorSequenceKeypoint.new(0.33,Color3.fromRGB(0,255,0)), ColorSequenceKeypoint.new(0.5,Color3.fromRGB(0,255,255)),
+                ColorSequenceKeypoint.new(0.67,Color3.fromRGB(0,0,255)), ColorSequenceKeypoint.new(0.83,Color3.fromRGB(255,0,255)),
+                ColorSequenceKeypoint.new(1,Color3.fromRGB(255,0,0))})
+            local hueCursor = Instance.new("Frame", hueBar)
+            hueCursor.AnchorPoint = Vector2.new(0.5,0.5); hueCursor.Size = UDim2.fromOffset(3,18)
+            hueCursor.Position = UDim2.new(hue,0,0.5,0); hueCursor.BackgroundColor3 = Color3.new(1,1,1)
+            hueCursor.BorderColor3 = Color3.new(0,0,0); hueCursor.BorderSizePixel = 1; hueCursor.ZIndex = 304
+
+            local preview = Instance.new("Frame", popup)
+            preview.Position = UDim2.fromOffset(187, 26); preview.Size = UDim2.fromOffset(42,42)
+            preview.BorderColor3 = C.Black; preview.BorderSizePixel = 1; preview.ZIndex = 301
+            Instance.new("UICorner", preview).CornerRadius = UDim.new(0,4)
+            local hex = Instance.new("TextBox", popup)
+            hex.Position = UDim2.fromOffset(184, 78); hex.Size = UDim2.fromOffset(47,24)
+            hex.BackgroundColor3 = C.Control; hex.BorderColor3 = C.Black; hex.BorderSizePixel = 1
+            hex.ClearTextOnFocus = false; hex.TextColor3 = C.Text; hex.Font = Enum.Font.Code; hex.TextSize = 9; hex.ZIndex = 301
+
+            local function commitColor(color)
+                XCConfig[prefix.."R"] = math.floor(color.R*255+0.5)
+                XCConfig[prefix.."G"] = math.floor(color.G*255+0.5)
+                XCConfig[prefix.."B"] = math.floor(color.B*255+0.5)
+                preview.BackgroundColor3 = color
+                hex.Text = string.format("%02X%02X%02X",XCConfig[prefix.."R"],XCConfig[prefix.."G"],XCConfig[prefix.."B"])
+                cursor.Position = UDim2.fromScale(saturation,1-value)
+                hueCursor.Position = UDim2.new(hue,0,0.5,0)
+                refresh()
+                if onChanged then onChanged(color) end
+                scheduleConfigAutoSave()
+            end
+            local function updateSV(position)
+                saturation = math.clamp((position.X-sv.AbsolutePosition.X)/math.max(1,sv.AbsoluteSize.X),0,1)
+                value = 1-math.clamp((position.Y-sv.AbsolutePosition.Y)/math.max(1,sv.AbsoluteSize.Y),0,1)
+                commitColor(Color3.fromHSV(hue,saturation,value))
+            end
+            local function updateHue(position)
+                hue = math.clamp((position.X-hueBar.AbsolutePosition.X)/math.max(1,hueBar.AbsoluteSize.X),0,1)
+                sv.BackgroundColor3 = Color3.fromHSV(hue,1,1)
+                commitColor(Color3.fromHSV(hue,saturation,value))
+            end
+            local draggingSV, draggingHue = false, false
+            sv.InputBegan:Connect(function(input) if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then draggingSV=true; updateSV(input.Position) end end)
+            hueBar.InputBegan:Connect(function(input) if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then draggingHue=true; updateHue(input.Position) end end)
+            local paletteMoveConnection = UserInputService.InputChanged:Connect(function(input)
+                if input.UserInputType==Enum.UserInputType.MouseMovement or input.UserInputType==Enum.UserInputType.Touch then
+                    if draggingSV then updateSV(input.Position) elseif draggingHue then updateHue(input.Position) end
+                end
+            end)
+            table.insert(activeColorConnections,paletteMoveConnection)
+            table.insert(connections,paletteMoveConnection)
+            local paletteEndConnection = UserInputService.InputEnded:Connect(function(input)
+                if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then draggingSV=false; draggingHue=false end
+            end)
+            table.insert(activeColorConnections,paletteEndConnection)
+            table.insert(connections,paletteEndConnection)
+            hex.FocusLost:Connect(function(enterPressed)
+                local valueText = hex.Text:gsub("#","")
+                if enterPressed and valueText:match("^[%x][%x][%x][%x][%x][%x]$") then
+                    local color = Color3.fromRGB(tonumber(valueText:sub(1,2),16),tonumber(valueText:sub(3,4),16),tonumber(valueText:sub(5,6),16))
+                    hue,saturation,value = color:ToHSV(); sv.BackgroundColor3 = Color3.fromHSV(hue,1,1); commitColor(color)
+                end
+            end)
+            commitColor(selected)
+        end)
+        registerSearch(holder,label.." color palette "..prefix)
+        return holder
     end
 
     local function addESPPreview(parent)
@@ -7672,8 +9175,9 @@ function buildXCUI()
             healthBack.Position = UDim2.new(0.5, -width * 0.5 - 4, 0.55, 0)
             healthBack.Size = UDim2.fromOffset(4, height)
             healthBack.Visible = XCConfig.healthBarEnabled
+            healthFill.BackgroundColor3 = previewVisible and currentTheme.HealthHigh or currentTheme.Enemy_Hidden
             tag.Position = UDim2.new(0.5, 0, 0.55, -height * 0.5 - 3)
-            tag.TextColor3 = color
+            tag.TextColor3 = currentTheme.Enemy_Accent
             tag.Visible = XCConfig.nametagsEnabled
 
             local left = canvas.AbsoluteSize.X * 0.5 - width * 0.5
@@ -7693,12 +9197,16 @@ function buildXCUI()
                 line.Visible = XCConfig.cornerBoxEnabled
             end
         end
+        refreshESPPreview = refreshPreview
 
         mode.Activated:Connect(function()
             previewVisible = not previewVisible
             refreshPreview()
         end)
-        for _, key in ipairs({"boxEspEnabled", "cornerBoxEnabled", "healthBarEnabled", "nametagsEnabled", "chamsEnabled", "espPerspectiveScale", "espBoxAspect", "boxThickness"}) do
+        for _, key in ipairs({"boxEspEnabled", "cornerBoxEnabled", "healthBarEnabled", "nametagsEnabled", "chamsEnabled",
+            "espPerspectiveScale", "espBoxAspect", "boxThickness", "espVisibleR", "espVisibleG", "espVisibleB",
+            "espHiddenR", "espHiddenG", "espHiddenB", "espHealthHighR", "espHealthHighG", "espHealthHighB",
+            "espHealthMidR", "espHealthMidG", "espHealthMidB", "espHealthLowR", "espHealthLowG", "espHealthLowB"}) do
             refreshers[key] = refreshers[key] or {}
             table.insert(refreshers[key], refreshPreview)
         end
@@ -7721,8 +9229,10 @@ function buildXCUI()
             if value then
                 hookBloxStrikeModules(true)
                 applyXCKnifeChanger()
+                applyXCSelectedWeaponSkin()
             else
                 restoreXCKnifeModel()
+                restoreXCSelectedWeaponSkin()
             end
         elseif key == "gloveChangerEnabled" and value then applyXCGloves()
         elseif key == "nightModeEnabled" then
@@ -7752,6 +9262,10 @@ function buildXCUI()
         elseif key == "antiAfkEnabled" then setAntiAfkEnabled(value)
         elseif key == "spectatorListEnabled" and value then buildSpectatorGui()
         elseif key == "animationsEnabled" then if value then playXCAnimation() else stopXCAnimation() end
+        elseif key == "customHandsEnabled" then
+            handsLastModel = nil
+            handsLastPivot = nil
+            if value then setupXCCustomHandsHook() end
         elseif key == "weaponChamsEnabled" then setWeaponVisuals()
         elseif key == "customScopeEnabled" then updateCustomScope()
         elseif key == "customFovEnabled" and not value then
@@ -7772,6 +9286,63 @@ function buildXCUI()
     end
     local function toggle(parent, label, key)
         return addToggle(parent, label, key, function(v) specialToggle(key, v) end)
+    end
+
+    local advancedCategories = {"Combat","Visuals","Movement","World & Camera","Skins","Interface","Misc"}
+    local function advancedCategoryForKey(key)
+        local lower=tostring(key):lower()
+        if lower:find("skin",1,true) or lower:find("knife",1,true) or lower:find("glove",1,true) then return "Skins" end
+        if lower:find("menu",1,true) or lower:find("uiscale",1,true) or lower:find("settings",1,true)
+            or lower:find("watermark",1,true) or lower:find("advanced",1,true) or lower:find("linkmenu",1,true) then return "Interface" end
+        if lower:find("antiaim",1,true) or lower:find("bhop",1,true) or lower:find("bunny",1,true)
+            or lower:find("slide",1,true) or lower:find("flight",1,true) or lower:find("walk",1,true)
+            or lower:find("speed",1,true) or lower:find("thirdperson",1,true) then return "Movement" end
+        if lower:find("world",1,true) or lower:find("night",1,true) or lower:find("weather",1,true)
+            or lower:find("fog",1,true) or lower:find("smoke",1,true) or lower:find("flash",1,true)
+            or lower:find("scope",1,true) or lower:find("fov",1,true) or lower:find("freecam",1,true)
+            or lower:find("freelook",1,true) or lower:find("customhands",1,true) or lower:find("fullbright",1,true) then return "World & Camera" end
+        if lower:find("aim",1,true) or lower:find("trigger",1,true) or lower:find("rage",1,true)
+            or lower:find("recoil",1,true) or lower:find("spread",1,true) or lower:find("firerate",1,true)
+            or lower:find("rcs",1,true) or lower:find("wallbang",1,true) or lower:find("prediction",1,true) then return "Combat" end
+        if lower:find("esp",1,true) or lower:find("chams",1,true) or lower:find("box",1,true)
+            or lower:find("tag",1,true) or lower:find("skeleton",1,true) or lower:find("tracer",1,true)
+            or lower:find("grenade",1,true) or lower:find("sound",1,true) or lower:find("hit",1,true)
+            or lower:find("bullet",1,true) or lower:find("cube",1,true) or lower:find("head",1,true) then return "Visuals" end
+        return "Misc"
+    end
+    local function getAdvancedSettingKeys(category)
+        local keys={}
+        for key,value in pairs(XCConfig) do local t=type(value)
+            if (t=="boolean" or t=="number" or t=="string") and key~="advancedCategory" and key~="advancedSettingKey"
+                and advancedCategoryForKey(key)==category then keys[#keys+1]=key end
+        end
+        table.sort(keys,function(a,b)return a:lower()<b:lower() end)
+        return #keys>0 and keys or {"menuKey"}
+    end
+    local function applyXCSettingRuntime(key,value)
+        if XCConfig[key]==nil then return false end
+        local previousType=type(XCConfig[key]); local lower=key:lower()
+        if previousType=="number" then
+            value=tonumber(value); if not value or value~=value or math.abs(value)>1000000 then return false end
+            if (lower:find("color",1,true) or lower:find("accent",1,true) or lower:find("background",1,true)
+                or lower:find("panel",1,true) or lower:find("text",1,true) or lower:find("visible",1,true)
+                or lower:find("hidden",1,true) or lower:find("grenade",1,true)) and lower:match("[rgb]$") then
+                value=math.clamp(math.floor(value+0.5),0,255)
+            elseif lower:find("transparency",1,true) or lower:find("opacity",1,true) then value=math.clamp(value,0,1)
+            elseif key=="uiScale" then value=math.clamp(value,0.65,1.25)
+            elseif lower:find("hitchance",1,true) then value=math.clamp(value,0,100) end
+        end
+        XCConfig[key]=value; refreshConfigControls(key,value)
+        if previousType=="boolean" then specialToggle(key,value==true) end
+        if lower:find("menu",1,true) or key=="uiScale" or key=="linkMenuAndEspColor"
+            or lower:find("espvisible",1,true) or lower:find("esphidden",1,true) or lower:find("grenade",1,true) then applyMenuTheme()
+        elseif lower:find("world",1,true) or lower:find("night",1,true) or lower:find("fog",1,true) then updateWorldChanger();updateWorldPostFX()
+        elseif lower:find("weather",1,true) then applyXCWeather();updateWorldChanger()
+        elseif lower:find("scope",1,true) then updateCustomScope()
+        elseif lower:find("weaponchams",1,true) then setWeaponVisuals()
+        elseif lower:find("knife",1,true) or lower:find("skin",1,true) then applyXCKnifeChanger();applyXCSelectedWeaponSkin()
+        elseif lower:find("glove",1,true) then applyXCGloves() end
+        scheduleConfigAutoSave(); return true
     end
 
     local ICON_OFF = Color3.fromRGB(88, 88, 88)
@@ -7958,13 +9529,13 @@ function buildXCUI()
 
     section(L, "Silent aim")
     toggle(L, "Silent aim", "silentAimEnabled")
-    addSlider(L, "Silent FOV", "silentAimFov", 10, 360, 1, "°")
+    addSlider(L, "Silent FOV", "silentAimFov", 10, 360, 1, "px")
     addSlider(L, "Hit chance", "silentAimHitChance", 1, 100, 1, "%")
     toggle(L, "Team check", "silentAimTeamCheck")
     toggle(L, "Visible check", "silentAimVisibleCheck")
     toggle(L, "Aim at head", "silentAimAimHead")
     toggle(L, "Perfect silent", "pSilentEnabled")
-    toggle(L, "Wall penetration", "wallbangEnabled")
+    toggle(L, "Wallbang", "wallbangEnabled")
 
     section(L, "Triggerbot")
     toggle(L, "Triggerbot", "triggerbotEnabled")
@@ -8049,7 +9620,11 @@ function buildXCUI()
     addESPPreview(R)
     section(R, "ESP indicators")
     toggle(R, "Grenade ESP", "grenadeEspEnabled")
+    toggle(R, "Trajectory prediction", "showGrenadePath")
     toggle(R, "Grenade danger zones", "grenadeDangerZonesEnabled")
+    toggle(R, "Molotov radius", "showMolotovRadius")
+    toggle(R, "Smoke radius", "showSmokeRadius")
+    addSlider(R, "Danger opacity", "grenadeDangerOpacity", 0.1, 1, 0.05, "")
     toggle(R, "Sound position ESP", "soundPositionEspEnabled")
     addSlider(R, "Sound marker duration", "soundEspDuration", 0.4, 2.5, 0.05, "s")
     toggle(R, "Tracers", "tracersEnabled")
@@ -8057,7 +9632,7 @@ function buildXCUI()
     section(R, "Hit feedback")
     toggle(R, "Hitmarker", "hitmarkerEnabled")
     toggle(R, "Hit sound", "hitSoundEnabled")
-    addChoice(R, "Hit sound preset", "hitSoundPreset", {"Skeet", "Neverlose", "Bell", "Bubble", "Rust", "Coins"}, function()
+    addChoice(R, "Hit sound preset", "hitSoundPreset", {"Skeet", "Neverlose", "Bell", "Bell2", "Bubble", "Rust", "Agro1", "Agro2", "Coins", "Schaater", "Pick"}, function()
         playXCHitSound(true)
     end)
     addSlider(R, "Hit sound volume", "hitSoundVolume", 0.1, 3, 0.1, "x")
@@ -8087,7 +9662,12 @@ function buildXCUI()
     addSlider(L, "Stars", "worldSkyStars", 0, 5000, 100, "", function() updateWorldChanger() end)
     toggle(L, "Sun & moon", "worldSkyCelestial")
     toggle(L, "Post FX", "worldPostFXEnabled")
-    addChoice(L, "Tone preset", "worldTonePreset", {"Neutral", "XC Lime", "Cold", "Warm", "Purple"}, function() updateWorldChanger() end)
+    addChoice(L, "Tone preset", "worldTonePreset", {"Neutral", "XC Lime", "Cold", "Warm", "Purple", "Custom"}, function() updateWorldChanger() end)
+    addColorPicker(L, "Custom world tint", "worldColor", function()
+        XCConfig.worldTonePreset = "Custom"
+        refreshConfigControls("worldTonePreset", "Custom")
+        updateWorldPostFX()
+    end)
     addSlider(L, "Exposure", "worldExposure", -3, 3, 0.1, "", function() updateWorldChanger() end)
     addSlider(L, "Saturation", "worldSaturation", -1, 1, 0.05, "", function() updateWorldChanger() end)
     addSlider(L, "Contrast", "worldContrast", -1, 1, 0.05, "", function() updateWorldChanger() end)
@@ -8112,6 +9692,8 @@ function buildXCUI()
     toggle(R, "Remove original scope", "scopeRemoveOriginal")
     toggle(R, "Scope crosshair", "scopeCrosshairEnabled")
     addChoice(R, "Crosshair style", "scopeCrosshairStyle", {"Cross", "T", "X", "Dot"})
+    addColorPicker(R, "Crosshair color", "scopeCrosshairColor")
+    addColorPicker(R, "Crosshair outline", "scopeCrosshairOutline")
     addSlider(R, "Scope FOV", "scopeFov", 10, 120, 1, "°")
     addSlider(R, "Crosshair gap", "scopeCrosshairGap", 0, 80, 1, "")
     addSlider(R, "Crosshair length", "scopeCrosshairLength", 5, 300, 1, "")
@@ -8125,31 +9707,102 @@ function buildXCUI()
     addChoice(R, "Freelook bind", "freelookKey", {"LeftAlt", "RightAlt", "F3", "F4", "F5", "F6"})
 
     task.wait()
-    L, R = columns("Skins", "Cosmetics", "Bullet effects")
-    section(L, "Skin changer")
+    L, R = columns("Skins", "Weapon inventory", "Knife & gloves")
+    section(L, "Inventory changer")
     toggle(L, "Skin changer", "skinChangerEnabled")
-    toggle(L, "Glove changer", "gloveChangerEnabled")
-    addChoice(L, "Knife", "selectedKnifeType", getXCKnifeChoices(), function()
+    addChoice(L, "Weapon", "skinEditorWeapon", getXCWeaponSkinChoices(), function(weaponName)
+        local selected = XCConfig.weaponSkinSelections[weaponName] or "Default"
+        XCConfig.skinEditorFinish = selected
+        XCConfig.skinWear = XCConfig.weaponSkinWear[weaponName] or 0
+        refreshConfigControls("skinEditorFinish", selected)
+        refreshConfigControls("skinWear", XCConfig.skinWear)
+    end)
+    addChoice(L, "Finish", "skinEditorFinish", function()
+        return getXCSkinChoicesForWeapon(XCConfig.skinEditorWeapon)
+    end, function(finish)
+        local weaponName = XCConfig.skinEditorWeapon
+        XCConfig.weaponSkinSelections[weaponName] = finish
+        XCConfig.weaponSkinWear[weaponName] = XCConfig.skinWear
+        applyXCSelectedWeaponSkin()
+    end)
+    addSlider(L, "Wear float", "skinWear", 0, 1, 0.01, "", function(value)
+        local weaponName = XCConfig.skinEditorWeapon
+        XCConfig.weaponSkinWear[weaponName] = value
+        applyXCSelectedWeaponSkin()
+    end)
+    addButton(L, "USE HELD WEAPON", function()
+        refreshXCSkinData()
+        local ok, weapon = type(skinData.GetWeapon) == "function" and pcall(skinData.GetWeapon)
+        local view = ok and weapon and weapon.Viewmodel
+        local weaponName = view and (view.CameraModelWeapon or view.Weapon) or (weapon and weapon.Name)
+        if weaponName and skinData.SkinSelections[weaponName] then
+            XCConfig.skinEditorWeapon = weaponName
+            XCConfig.skinEditorFinish = XCConfig.weaponSkinSelections[weaponName] or "Default"
+            XCConfig.skinWear = XCConfig.weaponSkinWear[weaponName] or 0
+            refreshConfigControls("skinEditorWeapon", weaponName)
+            refreshConfigControls("skinEditorFinish", XCConfig.skinEditorFinish)
+            refreshConfigControls("skinWear", XCConfig.skinWear)
+        end
+    end)
+    addButton(L, "APPLY SELECTED SKIN", function()
+        local weaponName = XCConfig.skinEditorWeapon
+        XCConfig.weaponSkinSelections[weaponName] = XCConfig.skinEditorFinish
+        XCConfig.weaponSkinWear[weaponName] = XCConfig.skinWear
+        applyXCSelectedWeaponSkin()
+    end)
+    addButton(L, "RESET SELECTED WEAPON", function()
+        local weaponName = XCConfig.skinEditorWeapon
+        XCConfig.weaponSkinSelections[weaponName] = "Default"
+        XCConfig.weaponSkinWear[weaponName] = 0
+        XCConfig.skinEditorFinish = "Default"
+        XCConfig.skinWear = 0
+        refreshConfigControls("skinEditorFinish", "Default")
+        refreshConfigControls("skinWear", 0)
+        restoreXCSelectedWeaponSkin(weaponName)
+    end)
+
+    section(R, "Knife changer")
+    addChoice(R, "Knife model", "selectedKnifeType", getXCKnifeChoices(), function()
+        XCConfig.selectedSkin = "Default"
+        refreshConfigControls("selectedSkin", "Default")
         applyXCKnifeChanger()
     end)
-    addChoice(L, "Skin", "selectedSkin", {"Fade", "Doppler", "Crimson Web", "Default"}, function()
-        applyXCKnifeChanger()
+    addChoice(R, "Knife finish", "selectedSkin", function()
+        return getXCSkinChoicesForWeapon(XCConfig.selectedKnifeType)
+    end, function() applyXCKnifeChanger() end)
+    addSlider(R, "Knife wear", "knifeWear", 0, 1, 0.01, "", function() applyXCKnifeChanger() end)
+    section(R, "Glove changer")
+    toggle(R, "Glove changer", "gloveChangerEnabled")
+    addChoice(R, "Glove model", "selectedGloveModel", getXCGloveModelChoices(), function()
+        XCConfig.selectedGloveSkin = "Default"
+        refreshConfigControls("selectedGloveSkin", "Default")
+        applyXCGloves()
     end)
-    addChoice(L, "Glove model", "selectedGloveModel", {"Sports Gloves", "Driver Gloves", "Default"})
-    section(L, "Weapon chams")
-    toggle(L, "Weapon chams", "weaponChamsEnabled")
-    addChoice(L, "Weapon material", "weaponChamsMode", {"Glass", "ForceField", "Metal", "Highlight", "Neon"})
-    section(R, "Bullet tracers")
-    toggle(R, "Bullet trail", "bulletTrailEnabled")
-    toggle(R, "Bullet flash", "bulletFlashEnabled")
-    toggle(R, "Bullet impacts", "bulletImpactEnabled")
-    toggle(R, "Rainbow trail", "bulletTracerRainbow")
-    addChoice(R, "Trail style", "bulletTracerStyle", {"Block", "Cylinder"})
-    addSlider(R, "Trail duration", "bulletTracerDuration", 0.05, 3, 0.05, "s")
-    addSlider(R, "Trail width", "bulletTracerWidth", 0.02, 0.5, 0.01, "")
-    section(R, "Surface marker")
-    toggle(R, "Cube checker", "cubeCheckerEnabled")
-    addSlider(R, "Cube distance", "cubeCheckerDistance", 1, 100, 1, "")
+    addChoice(R, "Glove finish", "selectedGloveSkin", function()
+        return getXCGloveSkinChoices(XCConfig.selectedGloveModel)
+    end, function() applyXCGloves() end)
+    addButton(R, "APPLY KNIFE & GLOVES", function()
+        applyXCKnifeChanger()
+        applyXCGloves()
+    end)
+    addButton(R, "RESET ALL SKINS", function()
+        table.clear(XCConfig.weaponSkinSelections)
+        table.clear(XCConfig.weaponSkinWear)
+        XCConfig.skinEditorFinish = "Default"
+        XCConfig.skinWear = 0
+        XCConfig.selectedKnifeType = "Default"
+        XCConfig.selectedSkin = "Default"
+        XCConfig.selectedGloveModel = "Default"
+        XCConfig.selectedGloveSkin = "Default"
+        restoreXCKnifeModel()
+        restoreXCSelectedWeaponSkin()
+        refreshConfigControls("skinEditorFinish", "Default")
+        refreshConfigControls("skinWear", 0)
+        refreshConfigControls("selectedKnifeType", "Default")
+        refreshConfigControls("selectedSkin", "Default")
+        refreshConfigControls("selectedGloveModel", "Default")
+        refreshConfigControls("selectedGloveSkin", "Default")
+    end)
 
     task.wait()
     L, R = columns("Misc", "Utilities", "Viewmodel")
@@ -8172,6 +9825,22 @@ function buildXCUI()
     addSlider(R, "Hands pitch", "customHandsPitch", -45, 45, 1, "°")
     addSlider(R, "Hands yaw", "customHandsYaw", -45, 45, 1, "°")
     addSlider(R, "Hands roll", "customHandsRoll", -90, 90, 1, "°")
+    section(R, "Weapon visuals")
+    toggle(R, "Weapon chams", "weaponChamsEnabled")
+    addChoice(R, "Weapon material", "weaponChamsMode", {"Glass", "ForceField", "Metal", "Highlight", "Neon"})
+    addColorPicker(R, "Weapon color", "weaponChamsColor", function() setWeaponVisuals() end)
+    section(R, "Bullet effects")
+    toggle(R, "Bullet trail", "bulletTrailEnabled")
+    toggle(R, "Bullet flash", "bulletFlashEnabled")
+    toggle(R, "Bullet impacts", "bulletImpactEnabled")
+    toggle(R, "Rainbow trail", "bulletTracerRainbow")
+    addColorPicker(R, "Trail color", "bulletTracerColor")
+    addChoice(R, "Trail style", "bulletTracerStyle", {"Block", "Cylinder"})
+    addSlider(R, "Trail duration", "bulletTracerDuration", 0.05, 3, 0.05, "s")
+    addSlider(R, "Trail width", "bulletTracerWidth", 0.02, 0.5, 0.01, "")
+    section(R, "Penetration checker")
+    toggle(R, "Cube checker", "cubeCheckerEnabled")
+    addSlider(R, "Cube distance", "cubeCheckerDistance", 1, 100, 1, "")
 
     task.wait()
     L, R = columns("Players", "Target filtering", "Overlay options")
@@ -8196,6 +9865,39 @@ function buildXCUI()
 
     task.wait()
     L, R = columns("Configs", "Interface", "Config manager")
+    local menuPresets={
+        ["XC Lime"]={17,17,17,12,12,12,152,204,0,235,235,235},
+        ["Midnight"]={10,13,20,8,10,17,65,142,255,232,238,248},
+        ["Violet"]={16,12,21,12,9,17,166,92,255,239,232,248},
+        ["Crimson"]={19,11,13,14,8,10,232,58,78,245,232,235},
+        ["Ice"]={9,17,19,7,13,15,0,205,220,230,245,247},
+    }
+    local function applyMenuPreset(name)
+        local values=menuPresets[name]; if not values then return end
+        local keys={"menuBackgroundR","menuBackgroundG","menuBackgroundB","menuPanelR","menuPanelG","menuPanelB",
+            "menuAccentR","menuAccentG","menuAccentB","menuTextR","menuTextG","menuTextB"}
+        for index,key in ipairs(keys) do XCConfig[key]=values[index];refreshConfigControls(key,values[index]) end
+        applyMenuTheme();scheduleConfigAutoSave()
+    end
+    section(L,"menu appearance")
+    addChoice(L,"Theme preset","menuThemePreset",{"XC Lime","Midnight","Violet","Crimson","Ice"},applyMenuPreset)
+    addSlider(L,"Interface scale","uiScale",0.65,1.25,0.05,"x",applyMenuTheme)
+    addSlider(L,"Menu transparency","menuTransparency",0,0.45,0.05,"",applyMenuTheme)
+    addToggle(L,"Link menu and ESP color","linkMenuAndEspColor",function() applyMenuTheme() end)
+    addColorPicker(L,"Menu accent","menuAccent",applyMenuTheme)
+    addColorPicker(L,"Menu background","menuBackground",applyMenuTheme)
+    addColorPicker(L,"Panel surface","menuPanel",applyMenuTheme)
+    addColorPicker(L,"Primary text","menuText",applyMenuTheme)
+    section(L,"ESP palette")
+    addColorPicker(L,"Visible enemy","espVisible",function() syncXCUserTheme();refreshESPPreview() end)
+    addColorPicker(L,"Hidden enemy","espHidden",function() syncXCUserTheme();refreshESPPreview() end)
+    addColorPicker(L,"Health high","espHealthHigh",function() syncXCUserTheme();refreshESPPreview() end)
+    addColorPicker(L,"Health medium","espHealthMid",function() syncXCUserTheme();refreshESPPreview() end)
+    addColorPicker(L,"Health low","espHealthLow",function() syncXCUserTheme();refreshESPPreview() end)
+    section(L,"grenade palette")
+    addColorPicker(L,"HE grenade","grenadeHE",function() syncXCUserTheme() end)
+    addColorPicker(L,"Smoke","grenadeSmoke",function() syncXCUserTheme() end)
+    addColorPicker(L,"Molotov / fire","grenadeMolotov",function() syncXCUserTheme() end)
     section(L, "menu & hud")
     toggle(L, "Notifications", "settingsShowNotifications")
     toggle(L, "Compact mode", "settingsCompactMode")
@@ -8206,6 +9908,50 @@ function buildXCUI()
     toggle(L, "Show name", "watermarkShowName")
     addChoice(L, "Menu key", "menuKey", {"RightShift", "LeftControl", "RightControl", "F6", "F7", "F8", "F9", "F10"})
     addNote(L, "STATUS: ON active  |  WAIT loading  |  FALL fallback  |  ERR failed")
+
+    section(R,"advanced module editor")
+    local refreshAdvancedEditor=function() end
+    addChoice(R,"Module category","advancedCategory",advancedCategories,function(category)
+        local keys=getAdvancedSettingKeys(category);XCConfig.advancedSettingKey=keys[1]
+        refreshConfigControls("advancedSettingKey",keys[1]);task.defer(refreshAdvancedEditor)
+    end)
+    addChoice(R,"Setting","advancedSettingKey",function() return getAdvancedSettingKeys(XCConfig.advancedCategory) end,
+        function() task.defer(refreshAdvancedEditor) end)
+    local editorParent=activeSectionByParent[R] or R
+    local editorType=Instance.new("TextLabel",editorParent)
+    editorType.Size=UDim2.new(1,0,0,17);editorType.BackgroundTransparency=1;editorType.TextColor3=C.Muted
+    editorType.Font=Enum.Font.Code;editorType.TextSize=9;editorType.TextXAlignment=Enum.TextXAlignment.Left
+    local editorValue=Instance.new("TextBox",editorParent)
+    editorValue.Size=UDim2.new(1,0,0,UserInputService.TouchEnabled and 30 or 24);editorValue.BackgroundColor3=C.Control
+    editorValue.BorderColor3=C.Black;editorValue.BorderSizePixel=1;editorValue.ClearTextOnFocus=false
+    editorValue.PlaceholderText="Value";editorValue.TextColor3=C.White;editorValue.PlaceholderColor3=C.Muted
+    editorValue.Font=Enum.Font.Code;editorValue.TextSize=10
+    local editorPadding=Instance.new("UIPadding",editorValue);editorPadding.PaddingLeft=UDim.new(0,7);editorPadding.PaddingRight=UDim.new(0,7)
+    refreshAdvancedEditor=function()
+        local key=XCConfig.advancedSettingKey;local value=XCConfig[key]
+        editorType.Text=string.format("%s  •  %s",tostring(key),type(value):upper());editorValue.Text=tostring(value)
+    end
+    refreshers.advancedCategory=refreshers.advancedCategory or {};refreshers.advancedSettingKey=refreshers.advancedSettingKey or {}
+    table.insert(refreshers.advancedCategory,refreshAdvancedEditor);table.insert(refreshers.advancedSettingKey,refreshAdvancedEditor)
+    local function commitAdvancedEditor()
+        local key=XCConfig.advancedSettingKey;local current=XCConfig[key];local valueType=type(current)
+        local raw=editorValue.Text:match("^%s*(.-)%s*$");local parsed
+        if valueType=="number" then parsed=tonumber(raw);if not parsed then editorType.Text=key.."  •  INVALID NUMBER";return end
+        elseif valueType=="boolean" then local lower=raw:lower()
+            if lower=="true" or lower=="1" or lower=="on" then parsed=true
+            elseif lower=="false" or lower=="0" or lower=="off" then parsed=false
+            else editorType.Text=key.."  •  USE TRUE / FALSE";return end
+        else parsed=raw end
+        if applyXCSettingRuntime(key,parsed) then refreshAdvancedEditor();XCNotify("Setting updated",key.." = "..tostring(XCConfig[key]),"success",1.4) end
+    end
+    editorValue.FocusLost:Connect(function(enterPressed) if enterPressed then commitAdvancedEditor() end end)
+    addButton(R,"APPLY SELECTED VALUE",commitAdvancedEditor)
+    addButton(R,"RESET SELECTED VALUE",function()
+        local key=XCConfig.advancedSettingKey;local default=XCConfigDefaults[key]
+        if default~=nil and type(default)~="table" then applyXCSettingRuntime(key,deepCopyConfigValue(default));refreshAdvancedEditor() end
+    end)
+    addNote(R,"Exact value editor: numbers, text and true/false. Palette colors are saved inside every profile.")
+    task.defer(refreshAdvancedEditor)
     section(R, "profiles")
 
     local configName = "Default"
@@ -8270,7 +10016,7 @@ function buildXCUI()
         for key, keyRefreshers in pairs(refreshers) do
             for _, refresh in ipairs(keyRefreshers) do refresh(XCConfig[key]) end
         end
-        updateScale()
+        applyMenuTheme()
     end
 
     section(L, "quick actions")
@@ -8437,7 +10183,17 @@ function buildXCUI()
     openBtn.BorderColor3 = C.Lime
     openBtn.BorderSizePixel = 1
     openBtn.RichText = true
-    openBtn.Text = '<font color="rgb(152,204,0)">X</font><font color="rgb(255,255,255)">C</font>'
+    openButtonThemeRefresh = function()
+        local accent, textColor = C.Lime, C.White
+        openBtn.BackgroundColor3 = C.Panel
+        openBtn.BorderColor3 = C.Lime
+        openBtn.Text = string.format(
+            '<font color="rgb(%d,%d,%d)">X</font><font color="rgb(%d,%d,%d)">C</font>',
+            math.floor(accent.R*255+0.5), math.floor(accent.G*255+0.5), math.floor(accent.B*255+0.5),
+            math.floor(textColor.R*255+0.5), math.floor(textColor.G*255+0.5), math.floor(textColor.B*255+0.5)
+        )
+    end
+    openButtonThemeRefresh()
     openBtn.TextColor3 = C.White
     openBtn.Font = Enum.Font.GothamBold
     openBtn.TextSize = 23
@@ -8567,7 +10323,14 @@ local function restoreXCNativeFireRate(exceptWeapon)
     for weapon, record in pairs(xcFireRateWeaponRecords) do
         if weapon ~= exceptWeapon then
             pcall(function()
-                if weapon.Properties == record.Applied then weapon.Properties = record.Original end
+                local properties = record.Properties
+                if type(properties) == "table" then
+                    if type(setreadonly) == "function" then setreadonly(properties, false) end
+                    rawset(properties, "FireRate", record.OriginalFireRate)
+                    if type(setreadonly) == "function" and record.Readonly ~= nil then
+                        setreadonly(properties, record.Readonly)
+                    end
+                end
             end)
             xcFireRateWeaponRecords[weapon] = nil
         end
@@ -8582,31 +10345,57 @@ local function applyXCNativeFireRate()
 
     restoreXCNativeFireRate(weapon)
     local record = xcFireRateWeaponRecords[weapon]
-    if record and weapon.Properties ~= record.Applied then
+    if record and weapon.Properties ~= record.Properties then
+        restoreXCNativeFireRate(nil)
         record = nil
-        xcFireRateWeaponRecords[weapon] = nil
     end
     if not record then
-        record = {Original = weapon.Properties}
+        local readonly = nil
+        if type(isreadonly) == "function" then
+            local okReadonly, value = pcall(isreadonly, weapon.Properties)
+            if okReadonly then readonly = value == true end
+        end
+        record = {
+            Properties = weapon.Properties,
+            OriginalFireRate = rawget(weapon.Properties, "FireRate"),
+            OriginalAutomatic = rawget(weapon.Properties, "Automatic"),
+            Readonly = readonly,
+        }
         xcFireRateWeaponRecords[weapon] = record
     end
 
     local requested = math.max(tonumber(XCConfig.fireRate) or 0.03, 0.01)
-    local originalRate = tonumber(record.Original.FireRate) or requested
+    local originalRate = tonumber(record.OriginalFireRate) or requested
     local stableRate = math.max(requested, 0.03, originalRate * 0.40)
-    if record.Applied and record.Rate == stableRate and weapon.Properties == record.Applied then
+    if UserInputService.TouchEnabled then
+        -- Mobile uses the native hold-to-fire loop below. Leave every weapon
+        -- property byte-for-byte unchanged so the game's touch HUD never
+        -- rebuilds itself as a desktop control scheme.
+        record.Rate = stableRate
+        return true
+    end
+    if record.Rate == stableRate
+        and rawget(record.Properties, "FireRate") == stableRate then
         return true
     end
 
-    local properties = table.clone(record.Original)
-    properties.FireRate = stableRate
-    -- Fire Rate on a semi-automatic weapon otherwise changes only cooldown:
-    -- holding the mobile fire button still produces exactly one shot.
-    properties.Automatic = true
-    weapon.Properties = properties
-    record.Applied = properties
+    -- Change only cooldown. Do not change Automatic: Blox Strike rebuilds its
+    -- control scheme when this property changes and can select the desktop HUD.
+    local properties = record.Properties
+    if type(setreadonly) == "function" then setreadonly(properties, false) end
+    rawset(properties, "FireRate", stableRate)
+    if type(setreadonly) == "function" and record.Readonly ~= nil then
+        setreadonly(properties, record.Readonly)
+    end
     record.Rate = stableRate
     return true
+end
+
+if genv then
+    genv.XCRestoreWeaponState = function()
+        restoreXCNativeFireRate(nil)
+        restoreXCFireRates()
+    end
 end
 
 function scanXCFireRateObjects()
@@ -8688,7 +10477,7 @@ task.spawn(function()
                     -- Undo the broad legacy getgc writer once the equipped
                     -- weapon can be modified through its native Properties.
                     if #xcFireRateObjects > 0 then restoreXCFireRates() end
-                else
+                elseif not UserInputService.TouchEnabled then
                     if not xcFireRateScanDone then scanXCFireRateObjects() end
                     if #xcFireRateObjects == 0 then
                         -- The game can create weapon data after injection/respawn.
@@ -8696,6 +10485,9 @@ task.spawn(function()
                         scanXCFireRateObjects()
                     end
                     applyXCFireRate()
+                else
+                    -- Never use broad getgc property writes on mobile.
+                    restoreXCFireRates()
                 end
             elseif wasEnabled then
                 restoreXCNativeFireRate(nil)
@@ -8703,6 +10495,39 @@ task.spawn(function()
             end
             wasEnabled = XCConfig.fireRateEnabled
         end)
+    end
+end)
+
+-- Native hold-to-fire for semi-automatic weapons. This replaces the old
+-- Automatic property mutation without generating mouse input on phones.
+task.spawn(function()
+    local heldLast = false
+    local heldWeapon = nil
+    local nextShot = 0
+    while xcSessionActive() and task.wait(0.01) do
+        if not (XCConfig.fireRateEnabled and lazyFeatureRequests.fireRate)
+            or not resolveXCFireRateGetWeapon() then
+            heldLast, heldWeapon, nextShot = false, nil, 0
+            continue
+        end
+        local okWeapon, weapon = pcall(xcFireRateGetWeapon)
+        local record = okWeapon and weapon and xcFireRateWeaponRecords[weapon] or nil
+        local held = record and record.OriginalAutomatic ~= true and weapon.IsFireHeld == true
+        if not held then
+            heldLast, heldWeapon, nextShot = false, weapon, 0
+            continue
+        end
+        if weapon ~= heldWeapon or not heldLast then
+            heldWeapon, heldLast = weapon, true
+            nextShot = os.clock() + math.max(tonumber(record.Rate) or 0.08, 0.03)
+            continue
+        end
+        local now = os.clock()
+        if now >= nextShot and type(weapon.shoot) == "function"
+            and not weapon.IsShooting and not weapon.IsBurstShooting then
+            nextShot = now + math.max(tonumber(record.Rate) or 0.08, 0.03)
+            pcall(function() weapon:shoot() end)
+        end
     end
 end)
 
@@ -8818,11 +10643,87 @@ end)
 -- XC-STYLE SEND HOOK FALLBACK FOR SILENT AIM
 -- ==========================================
 local xcSilentSendHooked = false
+
+-- Shotguns and some burst weapons do not obtain their direction from a Camera
+-- ray. Adjust their already game-built payload only while Send() serializes it,
+-- then restore every field so automatic fire never inherits a modified shot.
+local function beginXCSilentPayloadTransactionV31(data)
+    if xcNativeSilentHooked or not UserInputService.TouchEnabled or not isXCSilentAimRequested()
+        or type(data) ~= "table" or type(data.Bullets) ~= "table" then return nil end
+
+    local context = getXCSilentShotContextV31(false)
+    if context and context.CameraUsed then return nil end
+
+    local targetPart = context and context.Target or (getSilentAimTarget and getSilentAimTarget() or silentAimResolved)
+    local allowed = context and context.Allowed
+    if not context then
+        local chance = math.clamp(tonumber(XCConfig.silentAimHitChance) or 100, 0, 100)
+        allowed = targetPart ~= nil and targetPart.Parent ~= nil
+            and (chance >= 100 or math.random(1, 100) <= chance)
+    end
+    if not allowed or not targetPart or not targetPart.Parent then return nil end
+
+    local aimPos = getKinematicAimPosition(targetPart)
+    local activeCamera = Workspace.CurrentCamera or camera
+    local fallbackOrigin = activeCamera and activeCamera.CFrame.Position or nil
+    local undo = {}
+
+    local function remember(tbl, key, value)
+        table.insert(undo, {Table = tbl, Key = key, Value = value})
+    end
+
+    for _, bullet in pairs(data.Bullets) do
+        if type(bullet) == "table" then
+            local origin = bullet.Origin or bullet.StartingPoint or bullet.Position or fallbackOrigin
+            if typeof(origin) == "CFrame" then origin = origin.Position end
+            if typeof(origin) == "Vector3" then
+                local delta = aimPos - origin
+                if delta.Magnitude > 0.001 then
+                    if typeof(bullet.Direction) == "Vector3" then
+                        remember(bullet, "Direction", bullet.Direction)
+                        local magnitude = bullet.Direction.Magnitude
+                        bullet.Direction = delta.Unit * (magnitude > 0.001 and magnitude or 1)
+                    end
+                    if typeof(bullet.Ray) == "Ray" then
+                        remember(bullet, "Ray", bullet.Ray)
+                        bullet.Ray = Ray.new(bullet.Ray.Origin, delta.Unit * bullet.Ray.Direction.Magnitude)
+                    end
+                end
+            end
+
+            if type(bullet.Hits) == "table" then
+                for _, hitData in pairs(bullet.Hits) do
+                    if type(hitData) == "table" then
+                        remember(hitData, "Instance", hitData.Instance)
+                        remember(hitData, "Position", hitData.Position)
+                        hitData.Instance = targetPart
+                        hitData.Position = targetPart.Position
+                    end
+                end
+            end
+        end
+    end
+
+    if #undo == 0 then return nil end
+    if context then context.PayloadUsed = true end
+    silentAimResolved = targetPart
+    if registerXCLocalHitCandidate then registerXCLocalHitCandidate(targetPart) end
+
+    return function()
+        for index = #undo, 1, -1 do
+            local item = undo[index]
+            item.Table[item.Key] = item.Value
+        end
+    end
+end
+
+if sharedXCEnv then sharedXCEnv.XCBeginSilentPayloadTransactionV31 = beginXCSilentPayloadTransactionV31 end
+
 function setupXCSilentSendHook()
     if xcSilentSendHooked then return end
     -- InventoryController is the authoritative and safer interception point.
     -- Never install a second random/changing pass for the same shot.
-    if bloxStrikeShootHooked then return end
+    if bloxStrikeShootHooked and not UserInputService.TouchEnabled then return end
     if type(getgc) ~= "function" or type(hookfunction) ~= "function" then return end
 
     local sendFunc = nil
@@ -8847,7 +10748,7 @@ function setupXCSilentSendHook()
     end)
 
     if type(sendFunc) ~= "function" then return end
-    if shootContainer and rawget(shootContainer, "__XCSilentSendHookV23") then
+    if shootContainer and rawget(shootContainer, "__XCSilentSendHookV31") then
         xcSilentSendHooked = true
         return
     end
@@ -8855,8 +10756,19 @@ function setupXCSilentSendHook()
     local oldSend
     oldSend = hookfunction(sendFunc, function(...)
         local args = {...}
-        if type(args[1]) == "table" then
-            args[1] = dispatchXCPrepareSilentShotPayload(args[1])
+        local restorePayload = nil
+        if UserInputService.TouchEnabled and type(args[1]) == "table" then
+            local beginTransaction = sharedXCEnv and sharedXCEnv.XCBeginSilentPayloadTransactionV31
+                or beginXCSilentPayloadTransactionV31
+            local okTransaction, restore = pcall(beginTransaction, args[1])
+            if okTransaction and type(restore) == "function" then restorePayload = restore end
+        elseif type(args[1]) == "table" then
+            local prepare = sharedXCEnv and sharedXCEnv.XCPrepareSilentSendPayloadV28
+            local okPrepare, prepared = pcall(function()
+                if type(prepare) == "function" then return prepare(args[1]) end
+                return prepareXCSilentShotPayload(args[1], true)
+            end)
+            if okPrepare and type(prepared) == "table" then args[1] = prepared end
         end
 
         -- Suppress a persistent pre-v23 Send hook while it forwards our copied
@@ -8865,22 +10777,25 @@ function setupXCSilentSendHook()
         XCConfig.silentAimEnabled = false
         local results = table.pack(pcall(oldSend, unpack(args)))
         XCConfig.silentAimEnabled = silentWasEnabled
+        if restorePayload then pcall(restorePayload) end
         if not results[1] then error(results[2], 0) end
         return table.unpack(results, 2, results.n)
     end)
 
     if shootContainer then rawset(shootContainer, "__XCSilentSendHooked", true) end
     if shootContainer then rawset(shootContainer, "__XCSilentSendHookV23", true) end
+    if shootContainer then rawset(shootContainer, "__XCSilentSendHookV28", true) end
+    if shootContainer then rawset(shootContainer, "__XCSilentSendHookV31", true) end
     xcSilentSendHooked = true
 end
 
 -- ==========================================
 -- ENGINE LAUNCH / XC VISUAL EXTENSION
 -- ==========================================
-pcall(setupSilentAimHooks)
 pcall(setupXCNativeSilentHook)
 pcall(setupBloxStrikeShootHook)
 pcall(setupXCCharacterInputHook)
+pcall(setupXCCustomHandsHook)
 task.spawn(function()
     while xcSessionActive() do
         if not xcCharacterInputHook.Ready and (XCConfig.antiAimEnabled or XCConfig.bunnyHopEnabled) then
@@ -8892,12 +10807,12 @@ task.spawn(function()
     end
 end)
 task.spawn(function()
-    while xcSessionActive() and not xcSilentSendHooked and not bloxStrikeShootHooked do
-        if XCConfig.silentAimEnabled and lazyFeatureRequests.silentFallback and not bloxStrikeShootHooked then
-            setupXCSilentSendHook()
-            if not xcSilentSendHooked then task.wait(1.5) end
+    while xcSessionActive() and not xcNativeSilentHooked do
+        if XCConfig.silentAimEnabled then
+            setupXCNativeSilentHook()
+            if not xcNativeSilentHooked then task.wait(1.0) end
         else
-            task.wait(0.25)
+            task.wait(0.5)
         end
     end
 end)
