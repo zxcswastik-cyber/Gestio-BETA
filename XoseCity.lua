@@ -20,6 +20,38 @@ do
     end
 
     local authResult
+    local pandaKeyFile = "XC_xosecity.key"
+    local pandaDiskCacheAvailable = type(readfile) == "function" and type(writefile) == "function"
+
+    local function readSavedPandaKey()
+        if not pandaDiskCacheAvailable then return nil end
+        local ok, value = pcall(function()
+            if type(isfile) == "function" and not isfile(pandaKeyFile) then return nil end
+            return readfile(pandaKeyFile)
+        end)
+        value = ok and type(value) == "string" and value:match("^%s*(.-)%s*$") or nil
+        return value ~= "" and value or nil
+    end
+
+    local function savePandaKey(key)
+        if not pandaDiskCacheAvailable then return false end
+        local ok = pcall(function()
+            writefile(pandaKeyFile, key)
+        end)
+        return ok
+    end
+
+    local function clearSavedPandaKey()
+        if not pandaDiskCacheAvailable then return end
+        pcall(function()
+            if type(delfile) == "function" and (type(isfile) ~= "function" or isfile(pandaKeyFile)) then
+                delfile(pandaKeyFile)
+            else
+                writefile(pandaKeyFile, "")
+            end
+        end)
+    end
+
     local function getPandaKeyUrl()
         if type(PUSL.getKeyUrl) ~= "function" then return nil end
         local ok, url = pcall(PUSL.getKeyUrl)
@@ -28,27 +60,31 @@ do
 
     local function validatePandaKey(key)
         key = tostring(key or ""):match("^%s*(.-)%s*$")
-        if key == "" then return false, "Введите ключ" end
+        if key == "" then return false, "Введите ключ", false end
         local ok, result = pcall(PUSL.validate, key)
-        if not ok then return false, "Ошибка проверки: " .. tostring(result) end
-        if type(result) ~= "table" then return false, "Panda вернула неверный ответ" end
+        if not ok then return false, "Ошибка проверки: " .. tostring(result), false end
+        if type(result) ~= "table" then return false, "Panda вернула неверный ответ", false end
         if result.success then
             authResult = result
             if type(getgenv) == "function" then
                 getgenv().XC_PANDA_KEY = key
             end
-            return true
+            savePandaKey(key)
+            return true, nil, true
         end
-        return false, tostring(result.message or result.error or "Ключ недействителен")
+        return false, tostring(result.message or result.error or "Ключ недействителен"), true
     end
 
     local presetKey
     if type(getgenv) == "function" then
         presetKey = getgenv().XC_PANDA_KEY
     end
+    presetKey = type(presetKey) == "string" and presetKey ~= "" and presetKey or readSavedPandaKey()
     local authenticated = false
     if type(presetKey) == "string" and presetKey ~= "" then
-        authenticated = select(1, validatePandaKey(presetKey))
+        local cacheValid, _, definitive = validatePandaKey(presetKey)
+        authenticated = cacheValid
+        if not authenticated and definitive then clearSavedPandaKey() end
     end
 
     if not authenticated then
@@ -165,7 +201,9 @@ do
         status.Size = UDim2.new(1, -36, 0, 31)
         status.BackgroundTransparency = 1
         status.Font = Enum.Font.Gotham
-        status.Text = "Ключ не сохраняется на диск"
+        status.Text = pandaDiskCacheAvailable
+            and "После проверки ключ сохранится на этом устройстве"
+            or "Сохранение недоступно в этом инжекторе"
         status.TextColor3 = Color3.fromRGB(125, 125, 125)
         status.TextSize = 11
         status.TextWrapped = true
@@ -539,7 +577,7 @@ local XCConfig = {
     worldColorR = 255,
     worldColorG = 255,
     worldColorB = 255,
-    bulletTracerStyle = "Block",
+    bulletTracerStyle = "Beam",
     bulletTracerDuration = 0.65,
     bulletTracerWidth = 0.08,
     bulletTracerRainbow = false,
@@ -1080,14 +1118,14 @@ local function prepareXCSilentShotPayload(data, forceSendStage)
     if chance < 100 and math.random(1, 100) > chance then return data, false end
 
     local camPos, aimPos = nil, nil
-    if forceSendStage then
+    if silentAimCamPosAim then
+        camPos, aimPos = silentAimCamPosAim(targetPart)
+    elseif forceSendStage then
         local activeCamera = Workspace.CurrentCamera or camera
         if activeCamera then
             camPos = activeCamera.CFrame.Position
             aimPos = getKinematicAimPosition(targetPart)
         end
-    elseif silentAimCamPosAim then
-        camPos, aimPos = silentAimCamPosAim(targetPart)
     end
     if not camPos or not aimPos then return data, false end
 
@@ -1175,6 +1213,266 @@ local function callXCShotWithoutLegacyRewrite(callback, self, data, ...)
     return table.unpack(results, 2, results.n)
 end
 
+-- Bullet visuals are driven by the game's completed local shot, not by mouse
+-- or touch input. This keeps automatic/burst weapons, mobile controls, Silent
+-- Aim and third person on the same authoritative origin and impact point.
+local bulletEffectFolder = nil
+local activeBulletEffectGroups = {}
+
+local function getXCBulletEffectFolder()
+    if bulletEffectFolder and bulletEffectFolder.Parent then return bulletEffectFolder end
+    local old = Workspace:FindFirstChild("XC_BulletEffects")
+    if old then pcall(function() old:Destroy() end) end
+    bulletEffectFolder = Instance.new("Folder")
+    bulletEffectFolder.Name = "XC_BulletEffects"
+    bulletEffectFolder.Parent = Workspace
+    return bulletEffectFolder
+end
+
+local function trackXCBulletEffect(group, lifetime)
+    for index = #activeBulletEffectGroups, 1, -1 do
+        if not activeBulletEffectGroups[index].Parent then
+            table.remove(activeBulletEffectGroups, index)
+        end
+    end
+    activeBulletEffectGroups[#activeBulletEffectGroups + 1] = group
+    while #activeBulletEffectGroups > 24 do
+        local oldest = table.remove(activeBulletEffectGroups, 1)
+        if oldest and oldest.Parent then pcall(function() oldest:Destroy() end) end
+    end
+    task.delay(lifetime + 0.12, function()
+        if group and group.Parent then pcall(function() group:Destroy() end) end
+    end)
+end
+
+local function newXCEffectPart(parent, color)
+    local part = Instance.new("Part")
+    part.Anchored = true
+    part.CanCollide = false
+    part.CanTouch = false
+    part.CanQuery = false
+    part.CastShadow = false
+    part.Material = Enum.Material.Neon
+    part.Color = color
+    part.Parent = parent
+    return part
+end
+
+local function placeXCLinePart(part, from, to, width, cylinder)
+    local distance = (to - from).Magnitude
+    if distance <= 0.001 then return false end
+    if cylinder then
+        part.Shape = Enum.PartType.Cylinder
+        part.Size = Vector3.new(distance, width, width)
+        part.CFrame = CFrame.lookAt(from, to) * CFrame.Angles(0, math.rad(90), 0)
+            * CFrame.new(-distance * 0.5, 0, 0)
+    else
+        part.Size = Vector3.new(width, width, distance)
+        part.CFrame = CFrame.lookAt(from, to) * CFrame.new(0, 0, -distance * 0.5)
+    end
+    return true
+end
+
+local function resolveXCBulletVisualLine(shot, bullet)
+    if type(shot) ~= "table" or typeof(shot.Origin) ~= "Vector3" then return nil end
+    local direction = shot.Direction
+    if typeof(direction) ~= "Vector3" or direction.Magnitude <= 0.001 then return nil end
+    direction = direction.Unit
+    local properties = type(bullet) == "table" and bullet.Properties or nil
+    local distance = math.max(0.1, tonumber(shot.Distance)
+        or tonumber(properties and properties.Range) or 500)
+    local destination = shot.Origin + direction * distance
+
+    -- For a penetrated shot, keep the visual path through the last real entry
+    -- impact. Exit records are ignored so the trail never overshoots wildly.
+    if XCConfig.wallbangEnabled and type(shot.Hits) == "table" then
+        local farthest = distance
+        for _, impact in ipairs(shot.Hits) do
+            local position = type(impact) == "table" and (impact.Position or impact.position) or nil
+            if not impact.Exit and typeof(position) == "Vector3" then
+                local along = (position - shot.Origin):Dot(direction)
+                if along > farthest and along <= (tonumber(properties and properties.Range) or 500) + 0.1 then
+                    farthest = along
+                    destination = position
+                end
+            end
+        end
+    end
+    return shot.Origin, destination
+end
+
+local function renderXCBeam(group, origin, destination, width, color, duration)
+    local startNode = newXCEffectPart(group, color)
+    local endNode = newXCEffectPart(group, color)
+    startNode.Size = Vector3.new(0.05, 0.05, 0.05)
+    endNode.Size = startNode.Size
+    startNode.Transparency = 1
+    endNode.Transparency = 1
+    startNode.Position = origin
+    endNode.Position = destination
+
+    local startAttachment = Instance.new("Attachment")
+    startAttachment.Parent = startNode
+    local endAttachment = Instance.new("Attachment")
+    endAttachment.Parent = endNode
+    local beam = Instance.new("Beam")
+    beam.Attachment0 = startAttachment
+    beam.Attachment1 = endAttachment
+    beam.FaceCamera = true
+    beam.LightEmission = 1
+    beam.Width0 = width * 1.25
+    beam.Width1 = width * 0.35
+    beam.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, color),
+        ColorSequenceKeypoint.new(0.55, color:Lerp(Color3.new(1, 1, 1), 0.5)),
+        ColorSequenceKeypoint.new(1, color),
+    })
+    beam.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0.05),
+        NumberSequenceKeypoint.new(0.8, 0.15),
+        NumberSequenceKeypoint.new(1, 0.75),
+    })
+    beam.Parent = startNode
+    TweenService:Create(beam, TweenInfo.new(duration, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+        Width0 = 0,
+        Width1 = 0,
+    }):Play()
+end
+
+local function renderXCLightning(group, origin, destination, width, color, duration)
+    local delta = destination - origin
+    local distance = delta.Magnitude
+    if distance <= 0.001 then return end
+    local forward = delta.Unit
+    local reference = math.abs(forward:Dot(Vector3.yAxis)) > 0.9 and Vector3.xAxis or Vector3.yAxis
+    local right = forward:Cross(reference).Unit
+    local up = forward:Cross(right).Unit
+    local segments = math.clamp(math.floor(distance / 7), 7, 16)
+    local amplitude = math.clamp(distance * 0.018, width * 2.5, 1.6)
+    local randomizer = Random.new()
+    local previous = origin
+    for index = 1, segments do
+        local alpha = index / segments
+        local point = origin:Lerp(destination, alpha)
+        if index < segments then
+            point += right * randomizer:NextNumber(-amplitude, amplitude)
+                + up * randomizer:NextNumber(-amplitude, amplitude)
+        end
+        local segment = newXCEffectPart(group, color)
+        if placeXCLinePart(segment, previous, point, width * randomizer:NextNumber(0.7, 1.25), false) then
+            segment.Transparency = randomizer:NextNumber(0, 0.18)
+            TweenService:Create(segment, TweenInfo.new(duration * randomizer:NextNumber(0.7, 1),
+                Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Transparency = 1}):Play()
+        else
+            segment:Destroy()
+        end
+        previous = point
+    end
+end
+
+local function renderXCComet(group, origin, destination, width, color, duration)
+    local comet = newXCEffectPart(group, color)
+    comet.Shape = Enum.PartType.Ball
+    comet.Size = Vector3.new(width * 2.8, width * 2.8, width * 2.8)
+    comet.Position = origin
+    local upper = Instance.new("Attachment")
+    upper.Position = Vector3.new(0, width * 0.6, 0)
+    upper.Parent = comet
+    local lower = Instance.new("Attachment")
+    lower.Position = Vector3.new(0, -width * 0.6, 0)
+    lower.Parent = comet
+    local trail = Instance.new("Trail")
+    trail.Attachment0 = upper
+    trail.Attachment1 = lower
+    trail.FaceCamera = true
+    trail.LightEmission = 1
+    trail.Lifetime = math.max(0.08, duration * 0.65)
+    trail.MinLength = 0.03
+    trail.Color = ColorSequence.new(color, color:Lerp(Color3.new(1, 1, 1), 0.55))
+    trail.Transparency = NumberSequence.new(0.05, 1)
+    trail.WidthScale = NumberSequence.new(1, 0)
+    trail.Parent = comet
+    local travelTime = math.clamp(duration * 0.55, 0.08, 0.4)
+    local movement = TweenService:Create(comet, TweenInfo.new(travelTime, Enum.EasingStyle.Quad,
+        Enum.EasingDirection.Out), {Position = destination})
+    movement:Play()
+    task.delay(travelTime, function()
+        if comet.Parent then
+            TweenService:Create(comet, TweenInfo.new(math.max(0.05, duration - travelTime),
+                Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Transparency = 1, Size = Vector3.zero}):Play()
+        end
+    end)
+end
+
+local function renderXCPartTrail(group, origin, destination, width, color, duration, style)
+    local trail = newXCEffectPart(group, color)
+    local cylinder = style == "Cylinder" or style == "Pulse"
+    if not placeXCLinePart(trail, origin, destination, width, cylinder) then trail:Destroy() return end
+    if style == "Pulse" then
+        local distance = (destination - origin).Magnitude
+        local targetSize = cylinder and Vector3.new(distance, width * 3.2, width * 3.2)
+            or Vector3.new(width * 3.2, width * 3.2, distance)
+        TweenService:Create(trail, TweenInfo.new(duration, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+            Size = targetSize,
+            Transparency = 1,
+        }):Play()
+    else
+        TweenService:Create(trail, TweenInfo.new(duration, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            Transparency = 1,
+        }):Play()
+    end
+end
+
+local function renderXCBulletEffects(shot, bullet)
+    if not (XCConfig.bulletTrailEnabled or XCConfig.bulletFlashEnabled or XCConfig.bulletImpactEnabled) then return end
+    local weapon = type(bullet) == "table" and bullet.Weapon or nil
+    if weapon and weapon.Player and weapon.Player ~= player then return end
+    local origin, destination = resolveXCBulletVisualLine(shot, bullet)
+    if not origin or not destination or (destination - origin).Magnitude <= 0.05 then return end
+
+    local duration = math.clamp(tonumber(XCConfig.bulletTracerDuration) or 0.65, 0.05, 3)
+    local width = math.clamp(tonumber(XCConfig.bulletTracerWidth) or 0.08, 0.02, 0.5)
+    local color = XCConfig.bulletTracerRainbow and Color3.fromHSV((os.clock() * 0.35) % 1, 0.9, 1)
+        or rgb(XCConfig.bulletTracerColorR, XCConfig.bulletTracerColorG, XCConfig.bulletTracerColorB)
+    local group = Instance.new("Folder")
+    group.Name = "Shot"
+    group.Parent = getXCBulletEffectFolder()
+
+    if XCConfig.bulletTrailEnabled then
+        local style = tostring(XCConfig.bulletTracerStyle or "Beam")
+        if style == "Lightning" then
+            renderXCLightning(group, origin, destination, width, color, duration)
+        elseif style == "Comet" then
+            renderXCComet(group, origin, destination, width, color, duration)
+        elseif style == "Beam" then
+            renderXCBeam(group, origin, destination, width, color, duration)
+        else
+            renderXCPartTrail(group, origin, destination, width, color, duration, style)
+        end
+    end
+
+    if XCConfig.bulletImpactEnabled then
+        local impact = newXCEffectPart(group, color)
+        impact.Shape = Enum.PartType.Ball
+        local size = math.clamp(tonumber(XCConfig.bulletImpactSize) or 0.35, 0.05, 2)
+        impact.Size = Vector3.new(size, size, size)
+        impact.Position = destination
+        TweenService:Create(impact, TweenInfo.new(math.min(duration, 0.4), Enum.EasingStyle.Back,
+            Enum.EasingDirection.Out), {Size = Vector3.zero, Transparency = 1}):Play()
+    end
+
+    if XCConfig.bulletFlashEnabled then
+        local flash = newXCEffectPart(group, color:Lerp(Color3.new(1, 1, 1), 0.35))
+        flash.Shape = Enum.PartType.Ball
+        flash.Size = Vector3.new(width * 5, width * 5, width * 5)
+        flash.Position = origin
+        TweenService:Create(flash, TweenInfo.new(0.12, Enum.EasingStyle.Quad,
+            Enum.EasingDirection.Out), {Size = Vector3.zero, Transparency = 1}):Play()
+    end
+
+    trackXCBulletEffect(group, duration + (XCConfig.bulletTracerStyle == "Comet" and duration * 0.65 or 0))
+end
+
 function setupBloxStrikeShootHook()
     if bloxStrikeShootHooked then return end
     
@@ -1184,7 +1482,11 @@ function setupBloxStrikeShootHook()
                 local char = player.Character
                 local tool = char and char:FindFirstChildOfClass("Tool")
                 
-                if (XCConfig.bulletTrailEnabled or XCConfig.bulletFlashEnabled) and tool then
+                -- Compatibility fallback only. Blox Strike visuals are emitted
+                -- from Bullet._performRaycast so touch/mouse input cannot create
+                -- fake or duplicate trails.
+                if not xcNativeSilentHooked
+                    and (XCConfig.bulletTrailEnabled or XCConfig.bulletFlashEnabled) and tool then
                     local cam = Workspace.CurrentCamera or camera
                     if not cam then return end
                     
@@ -1199,60 +1501,15 @@ function setupBloxStrikeShootHook()
                     rayParams.FilterDescendantsInstances = {player.Character, camera}
                     rayParams.IgnoreWater = true
                     
-                    local hit = Workspace:Raycast(origin, cam.CFrame.LookVector * 500, rayParams)
-                    local bulletEnd = hit and hit.Position or (origin + cam.CFrame.LookVector * 500)
-                    local dist = (origin - bulletEnd).Magnitude
-
-                    if XCConfig.bulletTrailEnabled then
-                        local trail = Instance.new("Part")
-                        trail.Anchored = true
-                        trail.CanCollide = false
-                        trail.CanTouch = false
-                        trail.CanQuery = false
-                        trail.CastShadow = false
-                        trail.Material = (XCConfig.bulletTracerStyle == "Cylinder") and Enum.Material.Neon or Enum.Material.Neon
-                        trail.Color = XCConfig.bulletTracerRainbow and Color3.fromHSV((os.clock()*0.35)%1,0.9,1) or rgb(XCConfig.bulletTracerColorR,XCConfig.bulletTracerColorG,XCConfig.bulletTracerColorB)
-                        local width = math.clamp(tonumber(XCConfig.bulletTracerWidth) or 0.08, 0.02, 0.5)
-                        if XCConfig.bulletTracerStyle == "Cylinder" then
-                            trail.Shape = Enum.PartType.Cylinder
-                            trail.Size = Vector3.new(dist, width, width)
-                            trail.CFrame = CFrame.lookAt(origin, bulletEnd) * CFrame.Angles(0, math.rad(90), 0) * CFrame.new(-dist/2,0,0)
-                        else
-                            trail.Size = Vector3.new(width, width, dist)
-                            trail.CFrame = CFrame.lookAt(origin, bulletEnd) * CFrame.new(0, 0, -dist / 2)
-                        end
-                        trail.Parent = Workspace
-                        local duration = math.clamp(tonumber(XCConfig.bulletTracerDuration) or 0.65, 0.05, 10)
-                        TweenService:Create(trail, TweenInfo.new(duration, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Transparency = 1}):Play()
-                        task.delay(duration + 0.05, function() pcall(function() trail:Destroy() end) end)
-                    end
-
-                    if XCConfig.bulletImpactEnabled then
-                        local impact = Instance.new("Part")
-                        impact.Anchored = true; impact.CanCollide = false; impact.CanTouch = false; impact.CanQuery = false; impact.CastShadow = false
-                        impact.Shape = Enum.PartType.Ball
-                        impact.Material = Enum.Material.Neon
-                        impact.Color = XCConfig.bulletTracerRainbow and Color3.fromHSV((os.clock()*0.35)%1,0.9,1) or rgb(XCConfig.bulletTracerColorR,XCConfig.bulletTracerColorG,XCConfig.bulletTracerColorB)
-                        local sz = math.clamp(tonumber(XCConfig.bulletImpactSize) or 0.35, 0.05, 2)
-                        impact.Size = Vector3.new(sz,sz,sz)
-                        impact.CFrame = CFrame.new(bulletEnd)
-                        impact.Parent = Workspace
-                        TweenService:Create(impact, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size=Vector3.zero, Transparency=1}):Play()
-                        task.delay(0.4, function() pcall(function() impact:Destroy() end) end)
-                    end
-
-                    if XCConfig.bulletFlashEnabled then
-                        local flash = Instance.new("Part")
-                        flash.Anchored = true; flash.CanCollide = false; flash.CanTouch = false; flash.CanQuery = false; flash.CastShadow = false
-                        flash.Material = Enum.Material.Neon
-                        flash.Color = rgb(255,80,80)
-                        flash.Shape = Enum.PartType.Ball
-                        flash.Size = Vector3.new(0.6,0.6,0.6)
-                        flash.CFrame = CFrame.new(origin)
-                        flash.Parent = Workspace
-                        TweenService:Create(flash, TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size=Vector3.zero, Transparency=1}):Play()
-                        task.delay(0.15, function() pcall(function() flash:Destroy() end) end)
-                    end
+                    local direction = cam.CFrame.LookVector
+                    local hit = Workspace:Raycast(origin, direction * 500, rayParams)
+                    local distance = hit and (hit.Position - origin).Magnitude or 500
+                    renderXCBulletEffects({
+                        Origin = origin,
+                        Direction = direction,
+                        Distance = distance,
+                        Hits = hit and {{Position = hit.Position, Instance = hit.Instance, Exit = false}} or {},
+                    }, nil)
                 end
             end
         end)
@@ -1494,13 +1751,25 @@ getSilentAimTarget = function()
     return best
 end
 
+local function getXCSilentShotOrigin(activeCamera)
+    activeCamera = activeCamera or Workspace.CurrentCamera or camera
+    if XCConfig.thirdPersonEnabled then
+        local character = player.Character
+        local originPart = character and (character:FindFirstChild("CameraPart")
+            or character:FindFirstChild("Head") or character:FindFirstChild("HumanoidRootPart"))
+        if originPart and originPart:IsA("BasePart") then return originPart.Position end
+    end
+    return activeCamera and activeCamera.CFrame.Position or nil
+end
+
 silentAimCamPosAim = function(targetPart)
     targetPart = targetPart or silentAimResolved
     if not (XCConfig.silentAimEnabled and targetPart) then return nil end
     local cam = Workspace.CurrentCamera or camera
     if not cam then return nil end
-    local camPos = cam.CFrame.Position
+    local camPos = getXCSilentShotOrigin(cam)
     local aimPos = getKinematicAimPosition(targetPart)
+    if not camPos then return nil end
 
     -- getKinematicAimPosition() is the single source of prediction.
     -- Do not apply a second lateral lead here.
@@ -1661,10 +1930,11 @@ function setupSilentAimHooks()
                         if context and typeof(originalRay) == "Ray" then
                             context.CameraUsed = true
                             local aimPos = getKinematicAimPosition(context.Target)
-                            local delta = aimPos - originalRay.Origin
+                            local rayOrigin = getXCSilentShotOrigin(activeCamera) or originalRay.Origin
+                            local delta = aimPos - rayOrigin
                             if delta.Magnitude > 0.001 then
                                 local magnitude = originalRay.Direction.Magnitude
-                                return Ray.new(originalRay.Origin, delta.Unit * (magnitude > 0.001 and magnitude or 1))
+                                return Ray.new(rayOrigin, delta.Unit * (magnitude > 0.001 and magnitude or 1))
                             end
                         end
                         return originalRay
@@ -1674,10 +1944,11 @@ function setupSilentAimHooks()
                             local originalRay = oldNamecall(self, ...)
                             if typeof(originalRay) == "Ray" then
                                 local aimPos = getKinematicAimPosition(targetPart)
-                                local delta = aimPos - originalRay.Origin
+                                local rayOrigin = getXCSilentShotOrigin(activeCamera) or originalRay.Origin
+                                local delta = aimPos - rayOrigin
                                 if delta.Magnitude > 0.001 then
                                     local magnitude = originalRay.Direction.Magnitude
-                                    return Ray.new(originalRay.Origin, delta.Unit * (magnitude > 0.001 and magnitude or 1))
+                                    return Ray.new(rayOrigin, delta.Unit * (magnitude > 0.001 and magnitude or 1))
                                 end
                             end
                         end
@@ -1875,26 +2146,41 @@ local function redirectXCNativeSilentShot(bullet, shot)
     local chance = math.clamp(tonumber(XCConfig.silentAimHitChance) or 100, 0, 100)
     if chance < 100 and math.random(1, 100) > chance then return shot end
 
-    local target = selectXCNativeSilentTarget(shot.Origin, bullet.Properties or {})
+    -- In native third person the camera sits behind the avatar, while bullets
+    -- must originate at the character/weapon side. Using the camera-built
+    -- origin makes visibility and the redirected ray disagree near cover.
+    local shotOrigin = XCConfig.thirdPersonEnabled and getXCSilentShotOrigin() or shot.Origin
+    local target = selectXCNativeSilentTarget(shotOrigin, bullet.Properties or {})
     local targetPart = target and target.Part
     if not targetPart or not targetPart.Parent then return shot end
 
     local aimPosition = target.Position
-    local offset = aimPosition - shot.Origin
+    local offset = aimPosition - shotOrigin
     if offset.Magnitude < 0.05 then return shot end
 
-    local redirected = castXCNativeSilentShot(shot.Origin, offset.Unit, bullet.Properties or {})
+    local redirected = castXCNativeSilentShot(shotOrigin, offset.Unit, bullet.Properties or {})
     if not redirected then return shot end
     silentAimResolved = targetPart
     if registerXCLocalHitCandidate then registerXCLocalHitCandidate(targetPart) end
     return redirected
 end
 
+local function processXCNativeLocalShot(bullet, shot)
+    local finalShot = redirectXCNativeSilentShot(bullet, shot)
+    local weapon = type(bullet) == "table" and bullet.Weapon or nil
+    if weapon and weapon.Player == player then
+        pcall(renderXCBulletEffects, finalShot, bullet)
+    end
+    return finalShot
+end
+
 if sharedXCEnv then
     -- Disable persistent pre-v36 redirectors; the new wrapper below owns the
     -- only per-bullet redirect and performs Hit Chance exactly once.
     sharedXCEnv.XCNativeSilentRedirectV24 = function(_, shot) return shot end
-    sharedXCEnv.XCNativeSilentRedirectV36 = redirectXCNativeSilentShot
+    -- Existing v36 wrappers survive reinjection and fetch this callback on
+    -- every shot, so upgrading it also fixes trails without stacking hooks.
+    sharedXCEnv.XCNativeSilentRedirectV36 = processXCNativeLocalShot
 end
 
 function setupXCNativeSilentHook()
@@ -1931,7 +2217,7 @@ function setupXCNativeSilentHook()
         local originalRaycast = bulletModule._performRaycast
         bulletModule._performRaycast = function(self, spread, ...)
             local shot = originalRaycast(self, spread, ...)
-            local redirect = sharedXCEnv and sharedXCEnv.XCNativeSilentRedirectV36 or redirectXCNativeSilentShot
+            local redirect = sharedXCEnv and sharedXCEnv.XCNativeSilentRedirectV36 or processXCNativeLocalShot
             if type(redirect) ~= "function" then return shot end
             local ok, redirected = pcall(redirect, self, shot)
             return ok and redirected or shot
@@ -10212,7 +10498,7 @@ function buildXCUI()
     toggle(R, "Bullet impacts", "bulletImpactEnabled")
     toggle(R, "Rainbow trail", "bulletTracerRainbow")
     addColorPicker(R, "Trail color", "bulletTracerColor")
-    addChoice(R, "Trail style", "bulletTracerStyle", {"Block", "Cylinder"})
+    addChoice(R, "Trail style", "bulletTracerStyle", {"Beam", "Lightning", "Comet", "Pulse", "Block", "Cylinder"})
     addSlider(R, "Trail duration", "bulletTracerDuration", 0.05, 3, 0.05, "s")
     addSlider(R, "Trail width", "bulletTracerWidth", 0.02, 0.5, 0.01, "")
     section(R, "Penetration checker")
